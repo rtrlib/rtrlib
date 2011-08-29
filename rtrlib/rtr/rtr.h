@@ -17,7 +17,7 @@
  * written by Fabian Holler, in cooperation with:
  * INET group, Hamburg University of Applied Sciences,
  * CST group, Freie Universitaet Berlin
- * Webpage: http://rpki.realmv6.org/
+ * Website: http://rpki.realmv6.org/
  */
 
 

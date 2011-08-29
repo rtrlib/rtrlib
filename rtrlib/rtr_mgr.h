@@ -17,7 +17,7 @@
  * written by Fabian Holler, in cooperation with:
  * INET group, Hamburg University of Applied Sciences,
  * CST group, Freie Universitaet Berlin
- * Webpage: http://rpki.realmv6.org/
+ * Website: http://rpki.realmv6.org/
  */
 
 /**
@@ -39,18 +39,16 @@
 #include "rtrlib/rtr/rtr.h"
 
 
-
 /**
  * @brief A linked list that holds a set of rtr_sockets and their preference values.
  * @param pref A rtr_socket with a lower preference value has a higher priority.
  * @param next Pointer to another rtr_server_pool struct or NULL.
  */
 typedef struct rtr_server_pool{
-    u_int pref;
     rtr_socket* rtr_socket;
+    u_int pref;
     struct rtr_server_pool* next;
 } rtr_server_pool;
-
 
 /**
  * @brief A rtr_mgr_socket, holds data associated with this pool.
@@ -62,11 +60,9 @@ typedef struct rtr_mgr_socket{
     rtr_server_pool* config;
 } rtr_mgr_socket;
 
-
-
 /**
  * @brief Initialize all rtr_sockets in config with the supplied values.
- * @param[in] config Includes all  rtr_sockets that will be initialized.
+ * @param[in] config Includes rtr_sockets that will be initialized.
  * @param[in] polling_period If not -1 the polling_period member of the rtr_sockets will be set to this value. See @ref rtr_socket
  * @param[in] cache_timeout If not -1 the polling_period member of the rtr_sockets will be set to this value. See @ref rtr_socket
  * @param[in] update_fp If not NULL the update_fp member of the rtr_sockets will be set to this value. See @ref rtr_socket
@@ -75,8 +71,14 @@ typedef struct rtr_mgr_socket{
  * @param[in] connection_state_fp_len If connection_state_fp is not NULL the update_fp_len member of the rtr_sockets will be set to this value. See @ref rtr_socket
  */
 void rtr_mgr_init(rtr_server_pool* config, const 
-        int polling_period, const int cache_timeout, rtr_update_fp* update_fp, unsigned int
-        update_fp_len, rtr_connection_state_fp* connection_state_fp, unsigned int connection_state_fp_len);
+        int polling_period, const int cache_timeout, rtr_update_fp* update_fp, const unsigned int
+        update_fp_len, rtr_connection_state_fp* connection_state_fp, const unsigned int connection_state_fp_len);
+
+/**
+ * @brief Free all ressources that are associated with the rtr_mgr_socket.
+ * @param[in] socket rtr_mgr_socket.
+ */
+void rtr_mgr_free(rtr_mgr_socket* socket);
 
 /**
  * @brief Initiates the rtr_connection_pool socket, establishes the connection with the set of rtr_sockets with the lowest preference value and treats error like
@@ -95,13 +97,6 @@ int rtr_mgr_start(rtr_mgr_socket* socket, rtr_server_pool* config);
  * @return -1 On error 
  */
 void rtr_mgr_stop(rtr_mgr_socket* socket);
-
-/**
- * @brief Free all ressources that are associated with the rtr_mgr_socket.
- * @param[in] socket rtr_mgr_socket.
- */
-void rtr_mgr_free(rtr_mgr_socket* socket);
-
 
 /**
  * @brief Validate the origin of a BGP route.
