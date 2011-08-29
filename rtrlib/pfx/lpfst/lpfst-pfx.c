@@ -179,7 +179,7 @@ int pfx_table_add(struct pfx_table* pfx_table, const pfx_record* record){
     return PFX_SUCCESS;
 }
 
-int pfx_table_remove(struct pfx_table* pfx_table, pfx_record* record){
+int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* record){
     lpfst_node* root = pfx_get_root(pfx_table, record->prefix.ver);
 
     unsigned int lvl = 0; //tree depth were node was found

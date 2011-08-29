@@ -87,41 +87,14 @@ typedef struct pfx_record{
 } pfx_record;
 
 /**
- * @brief A function pointer that is called if an record was updated
- * @param pfx_table which was updated
- * @param record pfx_record that was modified
- * @param state validation of the record
+ * @brief A function pointer that is called if an record was updated.
+ * @param pfx_table which was updated.
+ * @param record pfx_record that was modified.
+ * @param state validation of the record.
  * pfx_table if a valid record from another rtr_server still exists.
  * servers 
  */
 typedef void (*rtr_update_fp)(struct pfx_table* pfx_table, const pfx_record record, const pfxv_state state);
-
-/**
- * @brief Append pfx_record to pfx_table.
- * @param[in] pfx_table pfx_table to use.
- * @param[in] pfx_record pfx_record that will be added.
- * @return PFX_SUCCESS
- * @return PFX_ERROR
- * @return PFX_DUPLICATE_RECORD
- */
-int pfx_table_add(struct pfx_table* pfx_table, const pfx_record* pfx_record);
-
-/**
- * @brief Remove pfx_record from the pfx_table.
- * @param[in] pfx_table pfx_table to use.
- * @param[in] pfx_record Record that will be removed
- * @return PFX_SUCCESS
- * @return PFX_ERROR
- * @return PFX_RECORD_NOT_FOUND
- */
-int pfx_table_remove(struct pfx_table* pfx_table, pfx_record* pfx_record);
-
-/**
- * @brief Remove all entries from the source rtr_socket_ind in pfx_table 
- * @param[in] pfx_table pfx_table to use.
- * @param[in] rtr_socket_id ID of the rtr_socket
- */
-void pfx_table_remove_from_origin(struct pfx_table* pfx_table, const uintptr_t rtr_socket_id);
 
 /**
  * @brief Initialize the pfx_table struct.
@@ -136,6 +109,34 @@ void pfx_table_init(struct pfx_table* pfx_table, rtr_update_fp update_fp[], cons
  * @param[in] pfx_table pfx_table what will be freed.
  */
 void pfx_table_free(struct pfx_table* pfx_table);
+
+/**
+ * @brief Append pfx_record to pfx_table.
+ * @param[in] pfx_table pfx_table to use.
+ * @param[in] pfx_record pfx_record that will be added.
+ * @return PFX_SUCCESS
+ * @return PFX_ERROR
+ * @return PFX_DUPLICATE_RECORD
+ */
+int pfx_table_add(struct pfx_table* pfx_table, const pfx_record* pfx_record);
+
+/**
+ * @brief Remove pfx_record from the pfx_table.
+ * @param[in] pfx_table pfx_table to use.
+ * @param[in] pfx_record Record that will be removed.
+ * @return PFX_SUCCESS
+ * @return PFX_ERROR
+ * @return PFX_RECORD_NOT_FOUND
+ */
+int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* pfx_record);
+
+/**
+ * @brief Remove all entries from the source rtr_socket_ind in pfx_table 
+ * @param[in] pfx_table pfx_table to use.
+ * @param[in] rtr_socket_id ID of the rtr_socket
+ */
+void pfx_table_remove_from_origin(struct pfx_table* pfx_table, const uintptr_t rtr_socket_id);
+
 
 /**
  * @brief Validate the origin of a BGP-Route
