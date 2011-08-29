@@ -76,14 +76,14 @@ typedef enum pfxv_state{
  * @param prefix IP prefix.
  * @param min_len Minimum prefix length.
  * @param max_len Maximum prefix length.
- * @param rtr_socket_id unique id of the rtr_socket that received this record.
+ * @param socket_id unique id of the rtr_socket that received this record.
  */
 typedef struct pfx_record{
   uint32_t asn;
   ip_addr prefix;
   uint8_t min_len;
   uint8_t max_len;
-  uintptr_t server_id;
+  uintptr_t socket_id;
 } pfx_record;
 
 /**

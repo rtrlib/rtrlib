@@ -27,7 +27,7 @@
 typedef struct data_elem_t{
     uint32_t asn;
     uint8_t max_len;
-    unsigned int server_id;
+    unsigned int socket_id;
 } data_elem;
 
 typedef struct{
@@ -87,7 +87,7 @@ int pfx_append_elem(node_data* data, const pfx_record* record){
         return PFX_ERROR;
     data->ary[data->len - 1].asn = record->asn;
     data->ary[data->len - 1].max_len = record->max_len;
-    data->ary[data->len - 1].server_id = record->server_id;
+    data->ary[data->len - 1].socket_id = record->socket_id;
     return PFX_SUCCESS;
 }
 
@@ -111,7 +111,7 @@ int pfx_create_node(lpfst_node** node, const pfx_record* record){
 
 data_elem* pfx_find_elem(const node_data* data, const pfx_record* record, unsigned int* index){
     for(int i = 0; i < data->len; i++){
-        if(data->ary[i].asn == record->asn && data->ary[i].max_len == record->max_len && data->ary[i].server_id == record->server_id){
+        if(data->ary[i].asn == record->asn && data->ary[i].max_len == record->max_len && data->ary[i].socket_id == record->socket_id){
             if(index != NULL)
                 *index = i;
             return &(data->ary[i]);

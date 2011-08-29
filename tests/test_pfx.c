@@ -60,7 +60,7 @@ void mass_test(){
 
         rec.min_len = 32;
         rec.max_len = 32;
-        rec.server_id = i;
+        rec.socket_id = i;
         rec.asn = i;
         rec.prefix.u.addr4.addr = htonl(i);
         rec.prefix.ver = IPV4;
@@ -104,7 +104,7 @@ void mass_test(){
 
     printf("removing records\n");
     for(uint32_t i = max_i; i >= min_i; i--){
-        rec.server_id = i;
+        rec.socket_id = i;
         rec.min_len = 32;
         rec.max_len = 32;
         rec.asn = i;

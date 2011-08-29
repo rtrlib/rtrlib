@@ -366,7 +366,7 @@ int rtr_update_pfx_table(rtr_socket* rtr_socket, const void* pdu){
         pfxr.prefix.ver = IPV4;
         pfxr.min_len = ipv4->prefix_len;
         pfxr.max_len = ipv4->max_prefix_len;
-        pfxr.server_id = (uintptr_t) rtr_socket; //TODO: is the pointer addr as unique id safe?
+        pfxr.socket_id = (uintptr_t) rtr_socket; //TODO: is the pointer addr as unique id safe?
     }
     else if(type == IPV6_PREFIX){
         pdu_size = sizeof(pdu_ipv6);
@@ -377,7 +377,7 @@ int rtr_update_pfx_table(rtr_socket* rtr_socket, const void* pdu){
         memcpy(pfxr.prefix.u.addr6.addr, ipv6->prefix, sizeof(ipv6->prefix));
         pfxr.min_len = ipv6->prefix_len;
         pfxr.max_len = ipv6->max_prefix_len;
-        pfxr.server_id = (uintptr_t) rtr_socket;
+        pfxr.socket_id = (uintptr_t) rtr_socket;
     }
 
     int rtval;
