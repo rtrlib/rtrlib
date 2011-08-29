@@ -17,7 +17,7 @@
  * written by Fabian Holler, in cooperation with:
  * INET group, Hamburg University of Applied Sciences,
  * CST group, Freie Universitaet Berlin
- * Webpage: https://rpki.realmv6.org/
+ * Webpage: http://rpki.realmv6.org/
  */
 
 #include "rtrlib/transport/transport.h"
