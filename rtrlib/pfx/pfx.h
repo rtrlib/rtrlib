@@ -121,7 +121,7 @@ int pfx_table_remove(struct pfx_table* pfx_table, pfx_record* pfx_record);
  * @param[in] pfx_table pfx_table to use.
  * @param[in] rtr_socket_id ID of the rtr_socket
  */
-void pfx_table_remove_from_origin(struct pfx_table* pfx_table, unsigned int rtr_socket_id);
+void pfx_table_remove_from_origin(struct pfx_table* pfx_table, const uintptr_t rtr_socket_id);
 
 /**
  * @brief Initialize the pfx_table struct.
@@ -129,7 +129,7 @@ void pfx_table_remove_from_origin(struct pfx_table* pfx_table, unsigned int rtr_
  * @param[in] update_fp Array of function pointers that will be called if a record was updated.
  * @param[in] update_fp_len Number of elements in the update_fp array.
  */
-void pfx_table_init(struct pfx_table* pfx_table, rtr_update_fp update_fp[], unsigned int update_fp_len );
+void pfx_table_init(struct pfx_table* pfx_table, rtr_update_fp update_fp[], const unsigned int update_fp_len );
 
 /**
  * @brief Free all memory associcated with pfx_table.
