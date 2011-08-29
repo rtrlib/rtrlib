@@ -98,22 +98,6 @@ typedef struct rtr_socket{
 } rtr_socket;
 
 
-/*
-  Function: rtr_init
-
-  initializes a rtr_socket
-
-  Parameters:
-
-    transport - transport for the rtr_socket
-    polling_period - period between serial querys
-    rtr_socket - socket that will be initialized
-    pfx_table - pfx_table that will be used
-    update_cb - function pointer, will be called at updates of validation record
-    connection_state_cb - function pointer, called if the state of the rtr connection changes
-    rtr_connection_state_fp_len - elements of array
- */
-
 /**
  * @brief Initialize a rtr_socket
  * @param[out] rtr_socket Pointer to allocated rtr_socket that will be initialized.
@@ -124,7 +108,7 @@ typedef struct rtr_socket{
  * @param[in] connection_state_fp
  * @param[in] connection_state_fp_len
  */
-void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table, unsigned int polling_period, unsigned int cache_timeout, rtr_connection_state_fp connection_state_fp[], unsigned int connection_state_fp_len);
+void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table, const unsigned int polling_period, const unsigned int cache_timeout, rtr_connection_state_fp connection_state_fp[], const unsigned int connection_state_fp_len);
 
 
 /**

@@ -43,7 +43,7 @@ int install_sig_handler(){
     return sigaction(SIGUSR1, &sa, NULL);
 }
 
-void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table, unsigned int polling_period, unsigned int cache_timeout, rtr_connection_state_fp connection_state_fp[], unsigned int connection_state_fp_len){
+void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table, const unsigned int polling_period, const unsigned int cache_timeout, rtr_connection_state_fp connection_state_fp[], const unsigned int connection_state_fp_len){
     rtr_socket->tr_socket = tr;
     assert(polling_period <= 3600);
     rtr_socket->polling_period = (polling_period > (3600 - RTR_RECV_TIMEOUT) ? (polling_period - RTR_RECV_TIMEOUT) : polling_period);
