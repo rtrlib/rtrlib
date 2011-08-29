@@ -1,0 +1,89 @@
+Introduction
+------------
+The RTRlib implements the client-side part of the RPKI-RTR library.
+
+It was succesfull tested under Linux and FreeBSD.
+This release contains a beta version of the RTR library and a rtrclient
+program.
+The binary can be found in the tools/ directory. The program connect to an
+RTR-Server over TCP or SSH and prints the validation state of BGP-Prefixes,
+which were received from the RTR-Server, on STDOUT.
+
+
+
+Requirements
+------------
+To build the RTRlib the CMake build system must be installed. If you
+want to establish a connection to an RTR-Server over ssh, the libssh
+0.4.x library must also be installed. Doxygen (optional) is required to
+create the HTML documentation.
+
+Compilation
+-----------
+
+* Generate Makefile:
+
+  Without debugging options
+
+    cmake -D CMAKE_BUILD_TYPE=Release .
+
+  With debug symbols and debug messages:
+
+    cmake -D CMAKE_BUILD_TYPE=Debug .
+
+  If the libssh isn't installed within the systems include and library
+  directories you can run cmake with the following parameters:
+
+      -D LIBSSH_LIBRARY=<path-to-libssh.so>
+      -D LIBSSH_INCLUDE=<include-directory>
+
+  To specify another directory where the RTRlib will be installed, you
+  can pass the following argument to cmake:
+
+      -D CMAKE_INSTALL_PREFIX=<path>
+
+* Build library, tests, and tools
+
+    make
+
+
+Installation
+------------
+To copy libraries and headers to system directories run (optional):
+
+    make install
+
+
+Linking to RTRlib
+----------------------
+The name of the shared library is rtr. To link programs to the RTRlib
+pass gcc the parameter: -lrtr
+
+
+API Documentation
+-----------------
+The RTRlib includes a HTML documentation of the API. To build them,
+doxygen must be installed. The documentation will be located in the
+docs/ directory after you run:
+
+    make doc
+
+
+Directories
+-----------
+* doxygen_examples - example code used in the Doxygen documentation
+* rtrlib           - include and source code files of the RTRlib
+* tests            - unit tests
+* tools            - contains the rtrclients
+
+
+Contact
+-------
+Webpage: https://rpki.realmv6.org/
+
+
+
+
+
+
+/* vim: set tw=72 sts=2 sw=2 ts=2 expandtab: */

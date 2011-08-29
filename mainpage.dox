@@ -1,0 +1,51 @@
+/**
+@mainpage RTRlib
+This is the API documentation of the RPKI/Router Protocol client.
+
+@section Overview
+
+@par
+The library follows a flexible design. The software architecture includes
+different layers to simplify the extension or exchange of individual
+parts.\n
+
+\n
+\image html components.png
+\n
+
+@par
+The lowest layer of the architecture is built by the @ref mod_transport_h.
+It allows for the implementation of different transport channels that
+provide a common interface to exchange PDUs with the cache (i.e., the
+RPKI-RTR server). The current version of the library supports unprotected
+TCP and SSH.\n
+
+@par
+On the top of the transport layer the @ref mod_rtr_h uses a transport
+socket for RTR-specific data exchange with the RTR server. The RTR socket
+implements the RPKI-RTR protocol, i.e., fetches validation records and
+stores them in a prefix table data structure.\n
+
+@par
+The @ref mod_pfx_h stores validated prefix origin data. The abstract data
+structure provides a common interface to add and delete entries as well as
+to verify a specific prefix. The library implements a @ref mod_lpfst_pfx_h,
+but can be extended to other data structures.\n
+
+@par
+On the top of the modular architecture the @ref
+mod_rtr_mgr_h maintains the connection to multiple
+RTR servers. This includes failover mechanisms. It represents the main
+interface for users of the library.
+
+@section RfcDrafts RFCs and Drafts
+The functionality of this library is described by the following IETF RFCs
+and drafts:
+\li <a href="http://tools.ietf.org/html/draft-ietf-sidr-rpki-rtr">draft-ietf-sidr-rpki-rtr</A>
+\li <a href="http://tools.ietf.org/html/draft-ietf-sidr-pfx-validate">draft-ietf-sidr-pfx-validate</a>
+
+For a general overview of the topic have look at the homepage of the <a
+href="http://datatracker.ietf.org/wg/sidr/charter/">IETF SIDR working
+group</a>.
+*/
+

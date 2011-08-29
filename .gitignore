@@ -1,0 +1,20 @@
+## OTHER ##
+.deps
+.libs
+.dirstamp
+.html
+.DS_Store
+*.pyc
+*.cache
+*.html
+*.la
+*.lo
+*.log
+*.m4
+*.o
+*.swp
+*~
+## CMAKE ##
+CMakeFiles/
+cmake_install.cmake
+CMakeCache.txt
