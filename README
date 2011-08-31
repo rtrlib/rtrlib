@@ -1,8 +1,8 @@
 Introduction
 ------------
 The RTRlib implements the client-side part of the RPKI-RTR protocol.
-This release supports the IETF drafts draft-ietf-sidr-rpki-rtr-14 and
-draft-ietf-sidr-pfx-validate-02. It was successfully tested under Linux
+This release supports the IETF drafts draft-ietf-sidr-rpki-rtr-16 and
+draft-ietf-sidr-pfx-validate-02. It was successfully tested on Linux
 and FreeBSD.
 
 This package contains also the rtrclient program. It connects to an
