@@ -24,7 +24,9 @@
  * @defgroup mod_transport_h Transport sockets
  * @brief Interface for RTR transports.
  * A RTR-transport implements the communication channel between a RTR server and client, e.g. SSH, TCP, TCP-AO. \n
- * A transport implemention have to implement an init function with initializes a tr_socket. \n
+ * Before use, a tr_socket must be initialized with a protocol depended init function (e.g tr_tcp_init(...).\n
+ * The tr_* functions call the corresponding function pointers in the passed tr_socket struct and forward the remaining
+ * arguments.
  *
  * @{
  */
@@ -101,15 +103,7 @@ typedef struct tr_socket{
     tr_recv_fp recv_fp;
 } tr_socket;
 
-/* @} */
 
-/**
- * @defgroup mod_transport_conv Transport socket convenience functions
- * @ingroup mod_transport_h
- * @brief The functions call the corresponding function pointer in the tr_socket struct and forward the other function
- * arguments.
- * @{
- */
 
 /**
  * @brief Establish the connection.
