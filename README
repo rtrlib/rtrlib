@@ -1,15 +1,14 @@
 Introduction
 ------------
-This is the first beta release of RTRlib.
 The RTRlib implements the client-side part of the RPKI-RTR protocol.
+This release supports the IETF drafts draft-ietf-sidr-rpki-rtr-14 and
+draft-ietf-sidr-pfx-validate-02. It was successfully tested under Linux
+and FreeBSD.
 
-It was succesfull tested under Linux and FreeBSD.
-This release contains a beta version of the RTR library and a rtrclient
-program.
-The binary can be found in the tools/ directory. The program connect to an
-RTR-Server over TCP or SSH and prints the validation state of BGP-Prefixes,
-which were received from the RTR-Server, on STDOUT.
-
+This package contains also the rtrclient program. It connects to an
+RTR-Server over TCP or SSH and shows on STDOUT the validation state of
+the BGP prefixes, which has been received from the RTR server. The
+binary can be found in the tools/ directory.
 
 Open Issues
 -----------
@@ -18,6 +17,12 @@ Open Issues
 * Thread-safety for the pfst_lpfst datastructure.
 * Threaded execution of the rtr_update_fp and connection_state_fp
   callback.
+
+Release History:
+----------------
+* Version 0.1
+    Beta version
+
 
 Requirements
 ------------
