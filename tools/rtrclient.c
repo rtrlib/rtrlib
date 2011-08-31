@@ -152,8 +152,10 @@ int main(int argc, char** argv){
         privkey = argv[5];
         pubkey = argv[6];
     }
-    else
+    else{
+        print_usage(argv);
         return(EXIT_FAILURE);
+    }
 
     tr_socket* tr_sock;
     if(mode == TCP){
