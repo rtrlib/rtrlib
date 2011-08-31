@@ -71,7 +71,7 @@ docs/ directory after you run:
 
 Directories
 -----------
-* doxygen_examples - example code used in the Doxygen documentation
+* doxygen          - example code and graphics used in the Doxygen documentation
 * rtrlib           - include and source code files of the RTRlib
 * tests            - unit tests
 * tools            - contains the rtrclients
