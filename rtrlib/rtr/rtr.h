@@ -23,8 +23,8 @@
 
 /**
  * @defgroup mod_rtr_h RTR socket
- * @brief An Implementation of the RPKI-RTR protocol\n
- * One rtr_socket communicates with a single RPKI-RTR server.
+ * @brief An RTR socket implements the RPKI-RTR protocol scheme.
+ * @details One rtr_socket communicates with a single RPKI-RTR server.
  * @{
  */
 
@@ -38,26 +38,26 @@
 
 
 /**
- * @brief The states of RTR socket.
+ * @brief States of the RTR socket.
  */
 typedef enum rtr_socket_state{
 /** Socket is closed. */
     RTR_CLOSED,
 /** Socket connection is established. */
     RTR_ESTABLISHED,
-/** Reseting RTR connection. */
+/** Resetting RTR connection. */
     RTR_RESET,
-/** Receiving validation records from the RTR-Server.  */
+/** Receiving validation records from the RTR server.  */
     RTR_SYNC,
-/** No validation records available on RTR-Server. */
+/** No validation records are available on the RTR server. */
     RTR_ERROR_NO_DATA_AVAIL,
 /** Server was unable to answer the last serial or reset query. */
     RTR_ERROR_NO_INCR_UPDATE_AVAIL,
-/** Fatal protocol error occured. */
+/** Fatal protocol error occurred. */
     RTR_ERROR_FATAL,
-/** Error on the transport socket occured. */
+/** Error on the transport socket occurred. */
     RTR_ERROR_TRANSPORT,
-/** rtr_socket is shutting down */
+/** Socket is shutting down */
     RTR_SHUTDOWN 
 } rtr_socket_state;
 
@@ -71,7 +71,7 @@ struct rtr_socket;
 typedef void (*rtr_connection_state_fp)(const struct rtr_socket* rtr_socket, const rtr_socket_state state);
 
 /**
- * @brief A rtr socket.
+ * @brief An RTR socket.
  * @param tr_socket Pointer to an initialized tr_socket that will be used to communicate with the RTR server.
  * @param polling_period Interval in seconds between update queries to the server. Must be <= 3600
  * @param last_update Timestamp of the last validation record update
@@ -100,7 +100,7 @@ typedef struct rtr_socket{
 
 /**
  * @brief Initialize a rtr_socket
- * @param[out] rtr_socket Pointer to allocated rtr_socket that will be initialized.
+ * @param[out] rtr_socket Pointer to the allocated rtr_socket that will be initialized.
  * @param[in] tr Pointer to a tr_socket that will be used for the transport connection.
  * @param[in] polling_period
  * @param[in] cache_timeout

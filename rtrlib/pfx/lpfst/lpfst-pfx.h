@@ -23,9 +23,16 @@
 /**
  * @defgroup mod_lpfst_pfx_h Longest Prefix Tree
  * @ingroup mod_pfx_h
- * @brief An implementation of a pfx_table datastructure using longest prefix first trees (lpfst) for storing 
- * pfx_records. This implementation uses 2 seperate lpfs-trees, one for IPv4 validation records and one IPv6 records.\n
- * See \ref mod_pfx_h "pfx_table" for a list of supported operations of this datastructure.
+ * @brief An implementation of a \ref mod_pfx_h "pfx_table" data structure
+ * using longest prefix first trees (lpfst) for storing @ref pfx_record "pfx_records".
+ * @details This implementation uses two separate lpfs-trees, one for IPv4
+ * validation records and one for IPv6 records.\n
+ * See \ref mod_pfx_h "pfx_table" for a list of supported operations of
+ * this data structure.\n
+ * For general details about the data structure see: <a
+ * href="http://dx.doi.org/10.1016/j.comnet.2007.01.023">Wuu et al. "A
+ * longest prefix first search tree for IP lookup", Computer Networks,
+ * 51(12), pp. 3354-3367, 2007</a>.
  *
  * @{
  */

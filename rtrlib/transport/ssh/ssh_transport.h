@@ -23,9 +23,11 @@
 /**
  * @defgroup mod_ssh_transport_h SSH transport socket
  * @ingroup mod_transport_h
- * @brief An implementation of the SSH protocol as RTR transport.
- * The transport uses libssh for all ssh specific operations.\n
- * See @ref mod_transport_h "transport interface" for a list of supported operations.
+ * @brief An implementation of the SSH protocol for the RTR transport.
+ * @details This transport implementation uses libssh
+ * (http://www.libssh.org/) for all ssh specific operations.\n
+ * See @ref mod_transport_h "transport interface" for a list of supported
+ * operations.
  *
  * @{
  *

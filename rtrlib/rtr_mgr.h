@@ -22,11 +22,15 @@
 
 /**
  * @defgroup mod_rtr_mgr_h RTR connection manager
- * @brief The primary interface for library users.\n
- * Manages a set of rtr_sockets.
- * The RTR connection manager is initialized with a set of rtr_sockets with preference values.
- * It connects to the sockets with the lowest preference values. On errors a connection to the set of server with next
- * lowest priority will be established (see the IETF draft for details about error handling).
+ * @brief The RTR connection manager maintains a set of @ref rtr_socket "RTR sockets".
+ * @warning This function is not yet implemented.
+ * @details The RTR connection manager is initialized with a set of
+ * rtr_sockets. Each of them is configured with a preference value.
+ * It connects to the socket with the lowest preference value.\n
+ * In case of failures, the connection manager establishes
+ * connections to RTR servers with the next lowest preference value (see
+ * the <a href="http://tools.ietf.org/html/draft-ietf-sidr-rpki-rtr">IETF
+ * draft-ietf-sidr-rpki-rtr</a> for details about error handling).
  *
  * @{
  *

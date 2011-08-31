@@ -22,11 +22,13 @@
 
 /**
  * @defgroup mod_transport_h Transport sockets
- * @brief Interface for RTR transports.
- * A RTR-transport implements the communication channel between a RTR server and client, e.g. SSH, TCP, TCP-AO. \n
- * Before use, a tr_socket must be initialized with a protocol depended init function (e.g tr_tcp_init(...).\n
- * The tr_* functions call the corresponding function pointers in the passed tr_socket struct and forward the remaining
- * arguments.
+ * @brief The RTR transport sockets implement the communication channel
+ * (e.g., SSH, TCP, TCP-AO) between an RTR server and client.
+ * @details Before using the transport socket, a tr_socket must be
+ * initialized based on a protocol-dependent init function (e.g.,
+ * tr_tcp_init()).\n
+ * The tr_* functions call the corresponding function pointers, which are
+ * passed in the tr_socket struct, and forward the remaining arguments.
  *
  * @{
  */
@@ -87,11 +89,11 @@ typedef int (*tr_send_fp)(const void* socket, const void* pdu, const size_t len,
  *
  * @param techn_name The name of the protocol that this tr_socket uses.
  * @param socket A pointer to a technology specific socket.
- * @param open_fp Pointer to a function that establish the socket connection.
- * @param close_fp Pointer to a function that close the socket.
+ * @param open_fp Pointer to a function that establishes the socket connection.
+ * @param close_fp Pointer to a function that closes the socket.
  * @param free_fp Pointer to a function that frees all memory allocated with this socket.
- * @param send_fp Pointer to a function which sends data through this socket.
- * @param recv_fp Pointer to a function which receives data from this socket.
+ * @param send_fp Pointer to a function that sends data through this socket.
+ * @param recv_fp Pointer to a function that receives data from this socket.
  */
 typedef struct tr_socket{
     const char* proto_name;

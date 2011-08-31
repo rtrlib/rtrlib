@@ -23,7 +23,7 @@
 /**
  * @defgroup mod_tcp_transport_h TCP transport socket
  * @ingroup mod_transport_h
- * @brief An implementation of the TCP protocol as RTR transport.
+ * @brief An implementation of the TCP protocol for the RTR transport.
  * See @ref mod_transport_h "transport interface" for a list of supported operations.
  *
  * @{
