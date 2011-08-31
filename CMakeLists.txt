@@ -29,7 +29,7 @@ endif(LIBSSH_FOUND)
 #doxygen target
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
-    add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+    add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxygen/Doxyfile
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMENT "Generating doxygen API documentation" VERBATIM)
 endif(DOXYGEN_FOUND)
 
