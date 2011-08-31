@@ -1,6 +1,7 @@
 Introduction
 ------------
-The RTRlib implements the client-side part of the RPKI-RTR library.
+This is the first beta release of RTRlib.
+The RTRlib implements the client-side part of the RPKI-RTR protocol.
 
 It was succesfull tested under Linux and FreeBSD.
 This release contains a beta version of the RTR library and a rtrclient
@@ -10,6 +11,13 @@ RTR-Server over TCP or SSH and prints the validation state of BGP-Prefixes,
 which were received from the RTR-Server, on STDOUT.
 
 
+Open Issues
+-----------
+* The rtr_mgr component isn't implemented yet, only the rtr_sockets
+  could be used to connect to a single RTR-Server.
+* Thread-safety for the pfst_lpfst datastructure.
+* Threaded execution of the rtr_update_fp and connection_state_fp
+  callback.
 
 Requirements
 ------------
@@ -57,7 +65,9 @@ To copy libraries and headers to system directories run (optional):
 Linking to RTRlib
 ----------------------
 The name of the shared library is rtr. To link programs to the RTRlib
-pass gcc the parameter: -lrtr
+pass gcc the parameter:
+
+    -lrtr
 
 
 API Documentation
@@ -71,10 +81,12 @@ docs/ directory after you run:
 
 Directories
 -----------
-* doxygen          - example code and graphics used in the Doxygen documentation
-* rtrlib           - include and source code files of the RTRlib
-* tests            - unit tests
-* tools            - contains the rtrclients
+* cmake/      - CMake modules
+* doxygen/    - Example code and graphics used in the Doxygen
+                documentation
+* rtrlib/     - Header and source code files of the RTRlib
+* tests/      - Unit tests
+* tools/      - Contains the rtrclient
 
 
 Contact
