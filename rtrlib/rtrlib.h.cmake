@@ -1,9 +1,5 @@
 /*
- * This file is part of the RTRlib
- *
- * Copyright (c) by Fabian Holler
- * Copyright (c) by INET group, Hamburg University of Applied Sciences
- * Copyright (c) by CST group, Freie Universitaet Berlin
+ * This file is part of RTRlib.
  *
  * RTRlib is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,7 +14,10 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with RTRlib; see the file COPYING.LESSER.
  *
- * Webpage: https://rpki.realmv6.org/
+ * written by Fabian Holler, in cooperation with:
+ * INET group, Hamburg University of Applied Sciences,
+ * CST group, Freie Universitaet Berlin
+ * Website: http://rpki.realmv6.org/
  */
 
 #ifndef RTRLIB_H
