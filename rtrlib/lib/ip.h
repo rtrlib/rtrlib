@@ -50,7 +50,7 @@ typedef struct {
 
 
 bool ip_addr_is_zero(const ip_addr);
-ip_addr ip_addr_get_bits(const ip_addr* val, const u_int8_t from, const u_int8_t to);
+ip_addr ip_addr_get_bits(const ip_addr* val, const uint8_t from, const uint8_t to);
 
 /**
  * @brief Check if two ip_addr structs are equal

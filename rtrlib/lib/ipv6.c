@@ -22,7 +22,7 @@
 
 #include "rtrlib/lib/ipv6.h"
 #include <assert.h>
-static inline int64_t get_bits64(const u_int64_t val, const u_int8_t from, const u_int8_t to);
+static inline int64_t get_bits64(const uint64_t val, const uint8_t from, const uint8_t to);
 
 inline bool ipv6_addr_equal(ipv6_addr a, ipv6_addr b){
     if(a.addr[0] == b.addr[0] && a.addr[1] == b.addr[1])
@@ -30,18 +30,18 @@ inline bool ipv6_addr_equal(ipv6_addr a, ipv6_addr b){
     return false;
 }
 
-ipv6_addr ipv6_get_bits(const ipv6_addr* val, const u_int8_t from, const u_int8_t to){
+ipv6_addr ipv6_get_bits(const ipv6_addr* val, const uint8_t from, const uint8_t to){
     ipv6_addr result;
 
     if(from < 64){
-        const u_int8_t end = to > 63 ? 63 : to;
+        const uint8_t end = to > 63 ? 63 : to;
         result.addr[0] = get_bits64(val->addr[0], from, end);
     }
     else
         result.addr[0] = 0;
 
     if(to > 63){
-        const u_int8_t start = from < 64 ? 0 : (from - 64);
+        const uint8_t start = from < 64 ? 0 : (from - 64);
         result.addr[1] = get_bits64(val->addr[1], start, (to - 64));
     }
     else
@@ -49,17 +49,17 @@ ipv6_addr ipv6_get_bits(const ipv6_addr* val, const u_int8_t from, const u_int8_
     return result;
 }
 
-static inline int64_t get_bits64(const u_int64_t val, const u_int8_t from, const u_int8_t to){
+static inline int64_t get_bits64(const uint64_t val, const uint8_t from, const uint8_t to){
     assert(to <= 63);
 
     /*
-    u_int64_t mask = ~0;
+    uint64_t mask = ~0;
     mask = (mask << (63 - (to - from))) >> from;
     return (mask & val);
     */
 
-    u_int8_t n = to - from + 1;
-    u_int64_t mask = ~0;
+    uint8_t n = to - from + 1;
+    uint64_t mask = ~0;
     if(n != 64)
         mask = ~(mask << n);
     if(from != 0)

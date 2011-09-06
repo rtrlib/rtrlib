@@ -50,7 +50,7 @@
  */
 typedef struct rtr_server_pool{
     rtr_socket* rtr_socket;
-    u_int pref;
+    uint pref;
     struct rtr_server_pool* next;
 } rtr_server_pool;
 
@@ -112,7 +112,7 @@ void rtr_mgr_stop(rtr_mgr_socket* socket);
  * @return 0 On success.
  * @return -1 On error.
  */
-int rtr_mgr_validate(const rtr_mgr_socket* socket, const u_int32_t asn, const ip_addr* prefix, const u_int8_t mask_len, pfxv_state* result);
+int rtr_mgr_validate(const rtr_mgr_socket* socket, const uint32_t asn, const ip_addr* prefix, const uint8_t mask_len, pfxv_state* result);
 
 #endif
 /* @} */

@@ -132,9 +132,9 @@ int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* pfx_record);
 /**
  * @brief Remove all entries from the source rtr_socket_ind in pfx_table 
  * @param[in] pfx_table pfx_table to use.
- * @param[in] rtr_socket_id ID of the rtr_socket
+ * @param[in] socket_id ID of the rtr_socket
  */
-void pfx_table_remove_from_origin(struct pfx_table* pfx_table, const uintptr_t rtr_socket_id);
+void pfx_table_remove_from_origin(struct pfx_table* pfx_table, const uintptr_t socket_id);
 
 
 /**
@@ -147,7 +147,7 @@ void pfx_table_remove_from_origin(struct pfx_table* pfx_table, const uintptr_t r
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR If an error occured.
  */
-int pfx_validate_origin(const struct pfx_table* pfx_table, const u_int32_t asn, const ip_addr* prefix, const u_int8_t mask_len, pfxv_state* result);
+int pfx_validate_origin(const struct pfx_table* pfx_table, const uint32_t asn, const ip_addr* prefix, const uint8_t mask_len, pfxv_state* result);
 
 #endif
 /* @} */

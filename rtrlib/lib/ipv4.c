@@ -23,12 +23,12 @@
 #include "rtrlib/lib/ipv4.h"
 #include <assert.h>
 
-ipv4_addr ipv4_get_bits(const ipv4_addr* val, const u_int8_t from, const u_int8_t to){
+ipv4_addr ipv4_get_bits(const ipv4_addr* val, const uint8_t from, const uint8_t to){
     assert(to <= 31);
 
-    u_int8_t n = to - from + 1;
+    uint8_t n = to - from + 1;
     ipv4_addr result;
-    u_int32_t mask = ~0;
+    uint32_t mask = ~0;
     if(n != 32)
         mask = ~(mask << n);
 

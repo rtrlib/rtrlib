@@ -36,5 +36,5 @@ typedef struct {
 } ipv6_addr;
 
 extern bool ipv6_addr_equal(ipv6_addr a, ipv6_addr b);
-extern ipv6_addr ipv6_get_bits(const ipv6_addr* val, const u_int8_t from, const u_int8_t to);
+extern ipv6_addr ipv6_get_bits(const ipv6_addr* val, const uint8_t from, const uint8_t to);
 #endif 
