@@ -142,8 +142,6 @@ int pfx_remove_elem(node_data* data, const size_t index){
     return PFX_SUCCESS;
 }
 
-
-
 int pfx_table_add(struct pfx_table* pfx_table, const pfx_record* record){
     lpfst_node* root = pfx_get_root(pfx_table, record->prefix.ver);
 
@@ -184,45 +182,43 @@ int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* record){
 
     unsigned int lvl = 0; //tree depth were node was found
     lpfst_node* node = lpfst_lookup_exact(root, &(record->prefix), record->min_len, &lvl);
-    if(node == NULL)
+    if(node == NULL){
         return PFX_RECORD_NOT_FOUND;
+    }
 
     unsigned int index;
     data_elem* elem = pfx_find_elem(node->data, record, &index);
-    if(elem == NULL)
+    if(elem == NULL){
         return PFX_RECORD_NOT_FOUND;
+    }
 
     node_data* ndata = (node_data*) node->data;
-
-
-    if(pfx_remove_elem(ndata, index) == PFX_ERROR)
+    if(pfx_remove_elem(ndata, index) == PFX_ERROR){
         return PFX_ERROR;
-    if(ndata->len > 0){
-        pfx_notify_clients(pfx_table, record, BGP_PFXV_STATE_INVALID);
-        return PFX_SUCCESS;
     }
 
-    pfxv_state val_state = BGP_PFXV_STATE_NOT_FOUND;
-    if(node->parent != NULL){
-        lvl--;
-        lpfst_node* lnode = lpfst_lookup(node->parent, &(record->prefix), record->min_len, &lvl);
-        if(lnode != NULL){
-            if(pfx_get_state(node->parent, record->asn, record->min_len, &val_state) == PFX_ERROR)
-                return PFX_ERROR;
+    if(pfx_table->update_fp_len > 0){
+        pfxv_state val_state = BGP_PFXV_STATE_NOT_FOUND;
+        if(pfx_validate_origin(pfx_table, record->asn, &(record->prefix), record->min_len, &val_state) == PFX_ERROR){
+            return PFX_ERROR;
         }
-        node = lpfst_remove(node->parent, &(record->prefix), lvl - 1);
+        pfx_notify_clients(pfx_table, record, val_state);
     }
-    else
-        node = lpfst_remove(node, &(record->prefix), lvl);
-    pfx_notify_clients(pfx_table, record, val_state);
 
-    if(node == root){
-        if(record->prefix.ver == IPV4)
-            pfx_table->ipv4 = NULL;
-        else
-            pfx_table->ipv6 = NULL;
+    if(ndata->len == 0){
+        if(node->parent != NULL)
+            lvl--;
+        node = lpfst_remove(node, &(record->prefix), lvl);
+        free(node);
+
+        if(node == root){
+            if(record->prefix.ver == IPV4)
+                pfx_table->ipv4 = NULL;
+            else
+                pfx_table->ipv6 = NULL;
+        }
     }
-    free(node);
+
     return PFX_SUCCESS;
 }
 
@@ -233,7 +229,6 @@ bool pfx_elem_matches(node_data* data, const uint32_t asn, const uint32_t max_le
     }
     return false;
 }
-
 
 int pfx_get_state(const lpfst_node* node, const uint32_t asn, const uint8_t mask_len, pfxv_state* result){
     if(pfx_elem_matches(node->data, asn, mask_len)){
