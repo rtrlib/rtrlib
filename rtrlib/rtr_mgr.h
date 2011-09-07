@@ -50,7 +50,7 @@
  */
 typedef struct rtr_server_pool{
     rtr_socket* rtr_socket;
-    uint pref;
+    unsigned int pref;
     struct rtr_server_pool* next;
 } rtr_server_pool;
 

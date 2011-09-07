@@ -25,7 +25,6 @@
 #include <inttypes.h>
 #include "rtrlib/lib/ip.h"
 
-
 typedef struct lpfst_node_t {
     ip_addr prefix;
     uint8_t len;

@@ -74,10 +74,6 @@ void mass_test(){
         rec.prefix.u.addr6.addr[1] = min_i + 0xFFFFFFFF;
         rec.prefix.u.addr6.addr[0] = htonl(i) + 0xFFFFFFFF;
         assert(pfx_table_add(&pfxt, &rec) == PFX_SUCCESS);
-
-        assert(pfx_validate_origin(&pfxt, i + 1, &(rec.prefix), rec.min_len, &res) == PFX_SUCCESS);
-        assert(res == BGP_PFXV_STATE_VALID);
-
     }
 
     printf("validating..\n");
@@ -111,6 +107,7 @@ void mass_test(){
         rec.prefix.ver = IPV4;
         rec.prefix.u.addr4.addr = htonl(i);
         assert(pfx_table_remove(&pfxt, &rec) == PFX_SUCCESS);
+
         rec.asn = i + 1;
         assert(pfx_table_remove(&pfxt, &rec) == PFX_SUCCESS);
 

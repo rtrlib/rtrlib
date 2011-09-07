@@ -1,0 +1,185 @@
+/*
+ * This file is part of RTRlib.
+ *
+ * RTRlib is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * RTRlib is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with RTRlib; see the file COPYING.LESSER.
+ *
+ * written by Fabian Holler, in cooperation with:
+ * INET group, Hamburg University of Applied Sciences,
+ * CST group, Freie Universitaet Berlin
+ * Website: http://rpki.realmv6.org/
+ */
+
+#include <stdlib.h>
+#include <syscall.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <string.h>
+#include <stdbool.h>
+#include <arpa/inet.h>
+#include "rtrlib/lib/ip.h"
+#include "rtrlib/pfx/lpfst/lpfst-pfx.h"
+#include "rtrlib/lib/test.h"
+
+void print_state(const pfxv_state s){
+    if(s == BGP_PFXV_STATE_VALID)
+        printf("VALID\n");
+    else if(s == BGP_PFXV_STATE_NOT_FOUND)
+        printf("NOT FOUND\n");
+    else if(s == BGP_PFXV_STATE_INVALID)
+        printf("INVALID\n");
+}
+
+void print_pfx_rtval(const int rtval){
+    if(rtval == PFX_SUCCESS)
+        printf("PXF_SUCCESS\n");
+    else if(rtval == PFX_ERROR)
+        printf("PXF_ERROR\n");
+    else if(rtval == PFX_DUPLICATE_RECORD)
+        printf("PXF_DUPLICATE_RECORD\n");
+    else if(rtval == PFX_RECORD_NOT_FOUND)
+        printf("PXF_RECORD_NOT_FOUND\n");
+}
+
+
+uint32_t min_i = 0xFF000000;
+uint32_t max_i = 0xFFFFFFF0;
+
+void rec_insert(pfx_table* pfxt){
+    const int tid = syscall(SYS_gettid);
+    pfx_record rec;
+    rec.min_len = 32;
+    rec.max_len = 32;
+    rec.prefix.ver = IPV4;
+    rec.prefix.u.addr4.addr = 0;
+
+
+    printf("Inserting %u records\n", (max_i - min_i) * 3);
+    for(uint32_t i = max_i; i >= min_i; i--){
+
+        rec.min_len = 32;
+        rec.max_len = 32;
+        rec.socket_id = i;
+        rec.asn = tid % 2;
+        rec.prefix.u.addr4.addr = htonl(i);
+        rec.prefix.ver = IPV4;
+        pfx_table_add(pfxt, &rec);
+        //printf("%i: Record inserted\n", tid);
+        rec.asn = (tid % 2) + 1;
+        pfx_table_add(pfxt, &rec);
+        //printf("%i: Record inserted\n", tid);
+
+        rec.min_len = 128;
+        rec.max_len = 128;
+        rec.prefix.ver = IPV6;
+        rec.prefix.u.addr6.addr[1] = min_i + 0xFFFFFFFF;
+        rec.prefix.u.addr6.addr[0] = htonl(i) + 0xFFFFFFFF;
+        pfx_table_add(pfxt, &rec);
+        //printf("%i: Record inserted\n", tid);
+    }
+}
+void rec_validate(pfx_table* pfxt){
+    const int tid = syscall(SYS_gettid);
+    pfx_record rec;
+    rec.min_len = 32;
+    rec.max_len = 32;
+    rec.prefix.ver = IPV4;
+    rec.prefix.u.addr4.addr = 0;
+    pfxv_state res;
+
+    printf("validating..\n");
+    for(uint32_t i = max_i; i >= min_i; i--){
+        rec.min_len = 32;
+        rec.max_len = 32;
+        rec.prefix.ver = IPV4;
+        rec.prefix.u.addr4.addr = htonl(i);
+        pfx_validate_origin(pfxt, (tid % 2), &(rec.prefix), rec.min_len, &res);
+        //printf("%i: Record validated,status: ", tid);
+        //print_state(res);
+
+        pfx_validate_origin(pfxt, (tid % 2) + 1, &(rec.prefix), rec.min_len, &res);
+        //printf("%i: Record validated,status: ", tid);
+        //print_state(res);
+
+        rec.min_len = 128;
+        rec.max_len = 128;
+        rec.prefix.ver = IPV6;
+        rec.prefix.u.addr6.addr[1] = min_i + 0xFFFFFFFF;
+        rec.prefix.u.addr6.addr[0] = htonl(i) + 0xFFFFFFFF;
+
+        pfx_validate_origin(pfxt, (tid % 2) + 1, &(rec.prefix), rec.min_len, &res);
+        //printf("%i: Record validated,status: ", tid);
+        //print_state(res);
+    }
+}
+void rec_remove(pfx_table* pfxt){
+    const int tid = syscall(SYS_gettid);
+    int rtval;
+    pfx_record rec;
+    rec.min_len = 32;
+    rec.max_len = 32;
+    rec.prefix.ver = IPV4;
+    rec.prefix.u.addr4.addr = 0;
+    printf("removing records\n");
+    for(uint32_t i = max_i; i >= min_i; i--){
+        rec.socket_id = i;
+        rec.min_len = 32;
+        rec.max_len = 32;
+        rec.asn = tid %2;
+        rec.prefix.ver = IPV4;
+        rec.prefix.u.addr4.addr = htonl(i);
+        rtval = pfx_table_remove(pfxt, &rec);
+        //printf("%i: Record removed, rtval: ", tid);
+        //print_pfx_rtval(rtval);
+
+        rec.asn = (tid % 2) + 1;
+        pfx_table_remove(pfxt, &rec);
+        //printf("%i: Record removed, rtval: ", tid);
+        //print_pfx_rtval(rtval);
+
+        rec.prefix.ver = IPV6;
+        rec.min_len = 128;
+        rec.max_len = 128;
+        rec.prefix.u.addr6.addr[1] = min_i + 0xFFFFFFFF;
+        rec.prefix.u.addr6.addr[0] = htonl(i) + 0xFFFFFFFF;
+        pfx_table_remove(pfxt, &rec);
+        //printf("%i: Record removed, rtval: ", tid);
+        //print_pfx_rtval(rtval);
+    }
+    printf("Done\n");
+}
+
+int main(){
+    unsigned int max_threads = 10;
+    pfx_table pfxt;
+    pfx_table_init(&pfxt, NULL, 0);
+    pthread_t threads[max_threads];
+    srand(time(NULL));
+    for(int i=0;i<max_threads;i++){
+        int r = rand() / (RAND_MAX / 3);
+        if(r == 0)
+            pthread_create(&(threads[i]), NULL, (void * (*)(void *)) rec_insert, &pfxt);
+        else if(r == 1)
+                pthread_create(&(threads[i]), NULL, (void * (*)(void *)) rec_remove, &pfxt);
+        else if(r == 2)
+            pthread_create(&(threads[i]), NULL, (void * (*)(void *)) rec_validate, &pfxt);
+        printf("Started Thread %d\n",i);
+        usleep(200);
+
+    }
+    for(int i=0;i<max_threads;i++){
+        pthread_join(threads[i], NULL);
+        printf("Thread %i returned\n", i);
+    }
+}

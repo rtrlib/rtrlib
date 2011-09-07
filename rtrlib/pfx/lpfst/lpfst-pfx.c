@@ -60,13 +60,19 @@ void pfx_table_init(struct pfx_table* pfx_table, rtr_update_fp update_fp[], unsi
     pfx_table->ipv6 = NULL;
     pfx_table->update_fp = update_fp;
     pfx_table->update_fp_len = update_fp_len;
+    //pfx_table->lock = PTHREAD_RWLOCK_INITIALIZER;
+    pthread_rwlock_init(&(pfx_table->lock), NULL);
 }
 
 void pfx_table_destroy(struct pfx_table* pfx_table){
+    pthread_rwlock_wrlock(&(pfx_table->lock));
     if(pfx_table->ipv4 != NULL)
         pfx_delete_tree(&pfx_table->ipv4);
     if(pfx_table->ipv6 != NULL)
         pfx_delete_tree(&pfx_table->ipv6);
+    pthread_rwlock_unlock(&(pfx_table->lock));
+
+    pthread_rwlock_destroy(&(pfx_table->lock));
 }
 
 void pfx_delete_tree(lpfst_node** root){
@@ -99,6 +105,7 @@ int pfx_create_node(lpfst_node** node, const pfx_record* record){
     (*node)->len = record->min_len;
     (*node)->lchild = NULL;
     (*node)->rchild = NULL;
+    (*node)->parent = NULL;
 
     (*node)->data = malloc(sizeof(node_data));
     if((*node)->data == NULL)
@@ -126,13 +133,13 @@ inline lpfst_node* pfx_get_root(const struct pfx_table* pfx_table, const ip_vers
 }
 
 int pfx_remove_elem(node_data* data, const size_t index){
-    //if index is not the last elem int the list, move all other elems backwards in the array
+    //if index is not the last elem in the list, move all other elems backwards in the array
     if(index != data->len - 1){
         for(int i = index; i < data->len -1; i++){
             data->ary[i] = data->ary[i+1];
         }
     }
-    data->len -= 1;
+    data->len--;
     data->ary = realloc(data->ary, sizeof(data_elem) * data->len);
     if(data->len != 0){
         if(data->ary == NULL)
@@ -143,71 +150,77 @@ int pfx_remove_elem(node_data* data, const size_t index){
 }
 
 int pfx_table_add(struct pfx_table* pfx_table, const pfx_record* record){
-    lpfst_node* root = pfx_get_root(pfx_table, record->prefix.ver);
+    pthread_rwlock_wrlock(&(pfx_table->lock));
 
+    lpfst_node* root = pfx_get_root(pfx_table, record->prefix.ver);
     unsigned int lvl = 0;
     if(root != NULL){
         lpfst_node* node = lpfst_lookup_exact(root, &(record->prefix), record->min_len, &lvl);
         if(node != NULL){ //node with prefix exists
-            if(pfx_find_elem(node->data, record, NULL) != NULL)
+            if(pfx_find_elem(node->data, record, NULL) != NULL){
+                pthread_rwlock_unlock(&pfx_table->lock);
                 return PFX_DUPLICATE_RECORD; 
-                //append record to note_data array
+            }
+            //append record to note_data array
+            int rtval = pfx_append_elem(node->data, record);
+            pthread_rwlock_unlock(&pfx_table->lock);
             pfx_notify_clients(pfx_table, record, BGP_PFXV_STATE_VALID);
-            return pfx_append_elem(node->data, record);
+            return rtval;
         }
 
         lpfst_node* new_node = NULL;
-        if(pfx_create_node(&new_node, record) == PFX_ERROR)
+        if(pfx_create_node(&new_node, record) == PFX_ERROR){
+            pthread_rwlock_unlock(&pfx_table->lock);
             return PFX_ERROR;
+        }
         lvl = 0;
         lpfst_insert(root, new_node, lvl);
+        pthread_rwlock_unlock(&pfx_table->lock);
         pfx_notify_clients(pfx_table, record, BGP_PFXV_STATE_VALID);
         return PFX_SUCCESS;
     }
     //tree is empty, record will be the root_node
     lpfst_node* new_node = NULL;
-    if(pfx_create_node(&new_node, record) == PFX_ERROR)
+    if(pfx_create_node(&new_node, record) == PFX_ERROR){
+        pthread_rwlock_unlock(&pfx_table->lock);
         return PFX_ERROR;
+    }
     if(record->prefix.ver == IPV4)
         pfx_table->ipv4 = new_node;
     else
         pfx_table->ipv6 = new_node;
 
+    pthread_rwlock_unlock(&pfx_table->lock);
     pfx_notify_clients(pfx_table, record, BGP_PFXV_STATE_VALID);
     return PFX_SUCCESS;
 }
 
 int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* record){
+    pthread_rwlock_wrlock(&(pfx_table->lock));
     lpfst_node* root = pfx_get_root(pfx_table, record->prefix.ver);
 
     unsigned int lvl = 0; //tree depth were node was found
     lpfst_node* node = lpfst_lookup_exact(root, &(record->prefix), record->min_len, &lvl);
     if(node == NULL){
+        pthread_rwlock_unlock(&pfx_table->lock);
         return PFX_RECORD_NOT_FOUND;
     }
 
     unsigned int index;
     data_elem* elem = pfx_find_elem(node->data, record, &index);
     if(elem == NULL){
+        pthread_rwlock_unlock(&pfx_table->lock);
         return PFX_RECORD_NOT_FOUND;
     }
 
     node_data* ndata = (node_data*) node->data;
+
     if(pfx_remove_elem(ndata, index) == PFX_ERROR){
+        pthread_rwlock_unlock(&pfx_table->lock);
         return PFX_ERROR;
     }
 
-    if(pfx_table->update_fp_len > 0){
-        pfxv_state val_state = BGP_PFXV_STATE_NOT_FOUND;
-        if(pfx_validate_origin(pfx_table, record->asn, &(record->prefix), record->min_len, &val_state) == PFX_ERROR){
-            return PFX_ERROR;
-        }
-        pfx_notify_clients(pfx_table, record, val_state);
-    }
-
     if(ndata->len == 0){
-        if(node->parent != NULL)
-            lvl--;
         node = lpfst_remove(node, &(record->prefix), lvl);
         free(node);
 
@@ -217,6 +230,15 @@ int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* record){
             else
                 pfx_table->ipv6 = NULL;
         }
+    }
+    pthread_rwlock_unlock(&pfx_table->lock);
+
+    if(pfx_table->update_fp_len > 0){
+        pfxv_state val_state = BGP_PFXV_STATE_NOT_FOUND;
+        if(pfx_validate_origin(pfx_table, record->asn, &(record->prefix), record->min_len, &val_state) == PFX_ERROR){
+            return PFX_ERROR;
+        }
+        pfx_notify_clients(pfx_table, record, val_state);
     }
 
     return PFX_SUCCESS;
@@ -254,10 +276,12 @@ int pfx_get_state(const lpfst_node* node, const uint32_t asn, const uint8_t mask
     return PFX_SUCCESS;
 }
 
-int pfx_validate_origin(const struct pfx_table* pfx_table, const uint32_t asn, const ip_addr *prefix, const uint8_t mask_len, pfxv_state* result){
+int pfx_validate_origin(struct pfx_table* pfx_table, const uint32_t asn, const ip_addr *prefix, const uint8_t mask_len, pfxv_state* result){
+    pthread_rwlock_rdlock(&(pfx_table->lock));
     lpfst_node* root = pfx_get_root(pfx_table, prefix->ver);
     if(root == NULL){
         *result = BGP_PFXV_STATE_NOT_FOUND;
+        pthread_rwlock_unlock(&pfx_table->lock);
         return PFX_SUCCESS;
     }
 
@@ -266,7 +290,10 @@ int pfx_validate_origin(const struct pfx_table* pfx_table, const uint32_t asn, c
 
     if(node == NULL){
         *result = BGP_PFXV_STATE_NOT_FOUND;
+        pthread_rwlock_unlock(&pfx_table->lock);
         return PFX_SUCCESS;
     }
-    return pfx_get_state(node, asn, mask_len, result);
+    const int rtval = pfx_get_state(node, asn, mask_len, result);
+    pthread_rwlock_unlock(&pfx_table->lock);
+    return rtval;
 }

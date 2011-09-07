@@ -147,7 +147,7 @@ void pfx_table_remove_from_origin(struct pfx_table* pfx_table, const uintptr_t s
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR If an error occured.
  */
-int pfx_validate_origin(const struct pfx_table* pfx_table, const uint32_t asn, const ip_addr* prefix, const uint8_t mask_len, pfxv_state* result);
+int pfx_validate_origin(struct pfx_table* pfx_table, const uint32_t asn, const ip_addr* prefix, const uint8_t mask_len, pfxv_state* result);
 
 #endif
 /* @} */

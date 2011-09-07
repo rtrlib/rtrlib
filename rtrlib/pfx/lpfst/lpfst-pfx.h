@@ -39,6 +39,7 @@
 
 #ifndef RTR_LPFST_PFX
 #define RTR_LPFST_PFX
+#include <pthread.h>
 #include "rtrlib/pfx/pfx.h"
 #include "rtrlib/pfx/lpfst/lpfst.h"
 
@@ -47,6 +48,7 @@ typedef struct pfx_table{
     lpfst_node* ipv6;
     rtr_update_fp* update_fp;
     unsigned int update_fp_len;
+    pthread_rwlock_t lock;
 } pfx_table;
 
 #endif

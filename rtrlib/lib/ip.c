@@ -23,7 +23,7 @@
 #include "rtrlib/lib/ip.h"
 #include <stdbool.h>
 
-inline bool ip_addr_is_zero(const ip_addr prefix){
+bool ip_addr_is_zero(const ip_addr prefix){
     if(prefix.ver ==  IPV6){
         if(prefix.u.addr6.addr[0] == 0 && prefix.u.addr6.addr[1] == 0){
             return true;
@@ -34,7 +34,8 @@ inline bool ip_addr_is_zero(const ip_addr prefix){
 
     return false;
 }
-inline ip_addr ip_addr_get_bits(const ip_addr* val, const uint8_t from, const uint8_t to){
+
+ip_addr ip_addr_get_bits(const ip_addr* val, const uint8_t from, const uint8_t to){
     ip_addr result;
     if(val->ver == IPV6){
         result.ver = IPV6;
@@ -47,7 +48,7 @@ inline ip_addr ip_addr_get_bits(const ip_addr* val, const uint8_t from, const ui
     return result;
 }
 
-extern bool ip_addr_equal(const ip_addr a, const ip_addr b ){
+bool ip_addr_equal(const ip_addr a, const ip_addr b ){
     if(a.ver != b.ver)
         return false;
     if(a.ver == IPV6){
@@ -58,6 +59,5 @@ extern bool ip_addr_equal(const ip_addr a, const ip_addr b ){
         if(a.u.addr4.addr == b.u.addr4.addr)
             return true;
     }
-
     return false;
 }

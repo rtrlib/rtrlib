@@ -23,9 +23,6 @@
 #include <stdlib.h>
 #include "rtrlib/pfx/lpfst/lpfst.h"
 
-
-
-
 void lpfst_insert(lpfst_node* root_node, lpfst_node* new_node, const unsigned int level){
     if(new_node->len > root_node->len)
     {
@@ -48,7 +45,6 @@ void lpfst_insert(lpfst_node* root_node, lpfst_node* new_node, const unsigned in
         }
         else
             lpfst_insert(root_node->lchild, new_node, level+1);
-        return;
     }
     else{
         if(root_node->rchild == NULL){
@@ -57,7 +53,6 @@ void lpfst_insert(lpfst_node* root_node, lpfst_node* new_node, const unsigned in
         }
         else
             lpfst_insert(root_node->rchild, new_node, level+1);
-        return;
     }
 }
 
