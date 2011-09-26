@@ -203,35 +203,34 @@ error:
     //send error msg to server, including unmodified pdu header(pdu variable instead header)
     if(error == -1){
         rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
-        dbg("Transport error during recv");
         return -1;
     }
     else if(error == TR_WOULDBLOCK){
-        dbg("receive timeout expired");
+        RTR_DBG1("receive timeout expired");
         return TR_WOULDBLOCK;
     }
     else if(error == TR_INTR){
-        dbg("receive call interrupted");
+        RTR_DBG1("receive call interrupted");
         return TR_INTR;
     }
     else if(error == 8){
-        dbg("corrupt PDU received");
+        RTR_DBG1("corrupt PDU received");
         char* txt = "corrupt data received, length value in PDU is too small";
         rtr_send_error_pdu(rtr_socket, pdu, sizeof(pdu_header), CORRUPT_DATA, txt, sizeof(txt));
     }
     else if(error == 4){
-        dbg("PDU too big");
+        RTR_DBG1("PDU too big");
         char txt[42];
         snprintf(txt, sizeof(txt),"PDU too big, max. PDU size is: %u bytes", RTR_MAX_PDU_LEN);
-        dbg("%s", txt);
+        RTR_DBG("%s", txt);
         rtr_send_error_pdu(rtr_socket, pdu, sizeof(pdu_header), CORRUPT_DATA, txt, sizeof(txt));
     }
     else if(error == 2){
-            dbg("Unsupported PDU type received");
+            RTR_DBG1("Unsupported PDU type received");
             rtr_send_error_pdu(rtr_socket, pdu, header.len, UNSUPPORTED_PDU_TYPE, NULL, 0);
     }
     else if(error == 16){
-            dbg("PDU with unsupported Protocol version received");
+            RTR_DBG1("PDU with unsupported Protocol version received");
             rtr_send_error_pdu(rtr_socket, pdu, header.len, UNSUPPORTED_PROTOCOL_VER, NULL, 0);
     }
 
@@ -241,7 +240,7 @@ error:
 
 int rtr_set_last_update(rtr_socket* rtr_socket){
     if(get_monotonic_time(&(rtr_socket->last_update)) == -1){
-        dbg("error setting polling_Period");
+        RTR_DBG1("get_monotonic_time(..) failed ");
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
         return RTR_ERROR;
     }
@@ -323,30 +322,28 @@ int rtr_sync(rtr_socket* rtr_socket){
             pdu_eod* eod_pdu = (pdu_eod*) pdu;
 
             if(eod_pdu->nonce != rtr_socket->nonce){
-                dbg("Wrong Nonce in EOD PDU");
+                RTR_DBG1("Wrong Nonce in EOD PDU");
                 char* txt = "Wrong NONCE in EOD PDU"; //TODO: Append rtr_socket->nonce to string
 
                 rtr_send_error_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, CORRUPT_DATA, txt, sizeof(txt));
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
                 return RTR_ERROR;
             }
-            dbg("EOD SN: %u", eod_pdu->sn);
+            RTR_DBG("EOD SN: %u", eod_pdu->sn);
             rtr_socket->serial_number = eod_pdu->sn;
-
-
         }
         else if(type == ERROR){
             rtr_handle_error_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN); 
             return RTR_ERROR;
         }
         else{
-            dbg("Received unexpected PDU");
+            RTR_DBG1("Received unexpected PDU");
             char* txt = "unexpected PDU received during data sync";
             rtr_send_error_pdu(rtr_socket, pdu, sizeof(pdu_header), CORRUPT_DATA, txt, sizeof(txt));
             return RTR_ERROR;
         }
     } while(type != EOD);
-    dbg("Sync successfull, Nonce: %u, SN: %u", rtr_socket->nonce, rtr_socket->serial_number);
+    RTR_DBG("Sync successfull, Nonce: %u, SN: %u", rtr_socket->nonce, rtr_socket->serial_number);
     return RTR_SUCCESS;
 }
 
@@ -391,26 +388,26 @@ int rtr_update_pfx_table(rtr_socket* rtr_socket, const void* pdu){
     }
     else{
         const char* txt = "Prefix PDU with invalid flags value received";
-        dbg("%s", txt);
+        RTR_DBG("%s", txt);
         rtr_send_error_pdu(rtr_socket, pdu, pdu_size, CORRUPT_DATA, txt, sizeof(txt));
         return RTR_ERROR;
     }
 
     if(rtval == PFX_DUPLICATE_RECORD){
-        dbg("Duplicate Announcement received");
+        RTR_DBG1("Duplicate Announcement received");
         rtr_send_error_pdu(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT , NULL, 0);
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
         return RTR_ERROR;
     }
     else if(rtval == PFX_RECORD_NOT_FOUND){
-        dbg("Withdrawal of unknown record");
+        RTR_DBG1("Withdrawal of unknown record");
         rtr_send_error_pdu(rtr_socket, pdu, pdu_size, WITHDRAWAL_OF_UNKNOWN_RECORD, NULL, 0);
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
         return RTR_ERROR;
     }
     else if(rtval == PFX_ERROR){
         const char* txt = "Error during PFX add or remove operation";
-        dbg("%s", txt);
+        RTR_DBG("%s", txt);
         rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
         return RTR_ERROR;
@@ -429,23 +426,21 @@ int rtr_wait_for_sync(rtr_socket* rtr_socket){
     if(wait < 0)
         wait = 0;
 
-    dbg("waiting %jd sec. till next sync", (intmax_t) wait);
+    RTR_DBG("waiting %jd sec. till next sync", (intmax_t) wait);
     const int rtval = rtr_receive_pdu(rtr_socket, pdu, sizeof(pdu), wait);
     if(rtval >= 0){
         pdu_type type = rtr_get_pdu_type(pdu);
         if(type == SERIAL_NOTIFY){
-            dbg("Serial Notify received");
+            RTR_DBG1("Serial Notify received");
                 return RTR_SUCCESS;
         }
     }
     else if(rtval == TR_WOULDBLOCK){
-        dbg("Polling period expired");
+        RTR_DBG1("Polling period expired");
         return RTR_SUCCESS;
     }
     return RTR_ERROR;
 }
-
-
 
 int rtr_send_error_pdu(const rtr_socket* rtr_socket, const void* erroneous_pdu, const uint32_t pdu_len, const pdu_error_type error, const char* text, const uint32_t text_len){
     //dont send errors for erroneous error PDUs
@@ -482,45 +477,45 @@ int rtr_send_pdu(const rtr_socket* rtr_socket, const void* pdu, const unsigned l
     if(rtval > 0)
         return RTR_SUCCESS;
     if(rtval == TR_WOULDBLOCK){
-        dbg("send would block");
+        RTR_DBG1("send would block");
         return RTR_ERROR;
     }
 
-    dbg("Error sending PDU");
+    RTR_DBG1("Error sending PDU");
     return RTR_ERROR;
 }
 
 int rtr_handle_error_pdu(rtr_socket* rtr_socket, const void* buf, const size_t pdu_len){
-    dbg("Error PDU received");  //TODO: append server ip & port
+    RTR_DBG1("Error PDU received");  //TODO: append server ip & port
     const pdu_error* pdu = buf;
 
     switch(pdu->error_code){
         case CORRUPT_DATA:
-            dbg("Corrupt data received");
+            RTR_DBG1("Corrupt data received");
             rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
             break;
         case INTERNAL_ERROR:
-            dbg("Internal error on server-side");
+            RTR_DBG1("Internal error on server-side");
             rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
             break;
         case NO_DATA_AVAIL:
-            dbg("No data available");
+            RTR_DBG1("No data available");
             rtr_change_socket_state(rtr_socket, RTR_ERROR_NO_DATA_AVAIL);
             break;
         case INVALID_REQUEST:
-            dbg("Invalid request from client");
+            RTR_DBG1("Invalid request from client");
             rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
             break;
         case UNSUPPORTED_PROTOCOL_VER:
-            dbg("Client uses unsupported protocol version");
+            RTR_DBG1("Client uses unsupported protocol version");
             rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
             break;
         case UNSUPPORTED_PDU_TYPE:
-            dbg("Client set unsupported PDU type");
+            RTR_DBG1("Client set unsupported PDU type");
             rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
             break;
         default:
-            dbg("error unknown, server sent unsupported error code %u", pdu->error_code); 
+            RTR_DBG("error unknown, server sent unsupported error code %u", pdu->error_code);
             rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
             break;
     }
@@ -528,13 +523,13 @@ int rtr_handle_error_pdu(rtr_socket* rtr_socket, const void* buf, const size_t p
     const uint32_t len_err_txt = ntohl(*((uint32_t*) ((pdu->rest) + pdu->len_enc_pdu)));
     if(len_err_txt > 0){
         if((sizeof(pdu->ver) + sizeof(pdu->type) + sizeof(pdu->error_code) + sizeof(pdu->len) + sizeof(pdu->len_enc_pdu) + pdu->len_enc_pdu + 4 + len_err_txt) != pdu->len)
-            dbg("error: Length of error text contains an incorrect value");
+            RTR_DBG1("error: Length of error text contains an incorrect value");
         else{
             //assure that the error text contains an terminating \0 char
             char txt[len_err_txt + 1];
             char* pdu_txt = (char*) pdu->rest + pdu->len_enc_pdu + 4;
             snprintf(txt, len_err_txt, "%s", pdu_txt);
-            dbg("Error PDU included the following error msg: \'%s\'", pdu_txt);
+            RTR_DBG("Error PDU included the following error msg: \'%s\'", pdu_txt);
 
         }
     }
@@ -550,7 +545,7 @@ int rtr_send_serial_query(rtr_socket* rtr_socket){
     pdu_sq.len = sizeof(pdu_sq);
     pdu_sq.sn = rtr_socket->serial_number;
 
-    dbg("sending serial query, sn: %u", rtr_socket->serial_number);
+    RTR_DBG("sending serial query, sn: %u", rtr_socket->serial_number);
     if(rtr_send_pdu(rtr_socket, &pdu_sq, sizeof(pdu_sq)) != RTR_SUCCESS){
         rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
         return RTR_ERROR;

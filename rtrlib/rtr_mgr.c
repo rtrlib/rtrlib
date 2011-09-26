@@ -5,7 +5,8 @@
 #include <stdio.h>
 #include "rtrlib/lib/log.h"
 
-#define MGR_DBG(fmt, args...) dbg("RTR_MGR: " fmt, ## args)
+#define MGR_DBG(fmt, ...) dbg("RTR_MGR: " fmt, ## __VA_ARGS__)
+#define MGR_DBG1(a) dbg("RTR_MGR: " a)
 
 static int find_config(rtr_mgr_config config[], unsigned int config_len, const rtr_socket* sock);
 static int start_sockets(rtr_mgr_config* config);
@@ -13,11 +14,13 @@ static int start_sockets(rtr_mgr_config* config);
 int start_sockets(rtr_mgr_config* config){
     for(unsigned int i = 0; i < config->sockets_len; i++){
         if(rtr_start(config->sockets[i]) != 0){
-            MGR_DBG("rtr_mgr: Error starting rtr_socket pthread");
+            MGR_DBG1("rtr_mgr: Error starting rtr_socket pthread");
             return -1;
         }
     }
     config->status = CONNECTING;
+    MGR_DBG("Group(%u) status changed to: CONNECTING", config->preference);
+    return 0;
 }
 
 int find_config(rtr_mgr_config config[], unsigned int config_len, const rtr_socket* sock){
@@ -27,7 +30,7 @@ int find_config(rtr_mgr_config config[], unsigned int config_len, const rtr_sock
                 return i;
         }
     }
-    MGR_DBG("rtr_mgr_cb: Error couldn't find a wanted rtr_socket in rtr_mgr_config");
+    MGR_DBG1("Error couldn't find a wanted rtr_socket in rtr_mgr_config");
     return -1;
 }
 
@@ -60,8 +63,8 @@ void rtr_mgr_cb(const rtr_socket* sock, const rtr_socket_state state, rtr_mgr_co
                 }
             }
             if(connected){
-                MGR_DBG("Group status changed to: ESTABLISHED");
                 config[ind].status = ESTABLISHED;
+                MGR_DBG("Group(%u) status changed to: ESTABLISHED", config[ind].preference);
                 //TODO: Gruppe finden, welche State = Established hat + höchste priorität hat
                 //alle anderen socket gruppen beenden
                 //
@@ -84,6 +87,7 @@ void rtr_mgr_cb(const rtr_socket* sock, const rtr_socket_state state, rtr_mgr_co
             }
             if(all_error){
                 config[ind].status = ESTABLISHED;
+                MGR_DBG("Group(%u) status changed to: ESTABLISHED", config[ind].preference);
                 for(unsigned int i = 0; i < config_len; i++){
                     if(i != ind){
                         for(unsigned int j = 0; j < config[i].sockets_len;j++){
@@ -98,6 +102,7 @@ void rtr_mgr_cb(const rtr_socket* sock, const rtr_socket_state state, rtr_mgr_co
     else if(state == RTR_ERROR_FATAL || state == RTR_ERROR_TRANSPORT || state == RTR_ERROR_NO_DATA_AVAIL){
         //if another group exist which has status CLOSED, start connecting to the group
         config[ind].status = ERROR;
+        MGR_DBG("Group(%u) status changed to: ERROR", config[ind].preference);
 
         //find next group with higher preference value
         unsigned int next_config = ind + 1;
