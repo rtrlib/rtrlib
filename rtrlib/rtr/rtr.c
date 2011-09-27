@@ -86,6 +86,8 @@ void rtr_fsm_start(rtr_socket* rtr_socket){
                     pfx_table_remove_from_origin(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
                     RTR_DBG("Removed old pfx_record from pfx_table");
                     rtr_socket->nonce = -1;
+                    rtr_socket->serial_number = 0;
+                    rtr_socket->last_update = -0;
                 }
             }
 
@@ -108,6 +110,13 @@ void rtr_fsm_start(rtr_socket* rtr_socket){
 
         else if(rtr_socket->state == RTR_RESET){
             RTR_DBG("%s", "State: RTR_RESET");
+                if(rtval == -1 || (rtr_socket->last_update + rtr_socket->cache_timeout) > cur_time){
+                    pfx_table_remove_from_origin(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
+                    RTR_DBG("Removed old pfx_record from pfx_table");
+                    rtr_socket->nonce = -1;
+                    rtr_socket->serial_number = 0;
+                    rtr_socket->last_update = -0;
+                }
             if (rtr_send_reset_query(rtr_socket) == 0){
                 RTR_DBG1("rtr_start: reset pdu sent");
                 rtr_change_socket_state(rtr_socket, RTR_SYNC); //send reset query after connection established
@@ -133,34 +142,33 @@ void rtr_fsm_start(rtr_socket* rtr_socket){
             rtr_socket->nonce = -1;
             RTR_DBG1("State: RTR_ERROR_NO_DATA_AVAIL");
             rtr_socket->serial_number = 0;
-            pfx_table_remove_from_origin(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
-            sleep(ERR_TIMEOUT);
             rtr_change_socket_state(rtr_socket, RTR_RESET);
+            sleep(ERR_TIMEOUT);
         }
 
         else if(rtr_socket->state == RTR_ERROR_NO_INCR_UPDATE_AVAIL){
             rtr_socket->nonce = -1;
             RTR_DBG1("State: RTR_ERROR_NO_INCR_UPDATE_AVAIL");
             rtr_socket->serial_number = 0;
-            pfx_table_remove_from_origin(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
             rtr_change_socket_state(rtr_socket, RTR_RESET);
+            sleep(ERR_TIMEOUT);
         }
 
         else if(rtr_socket->state == RTR_ERROR_TRANSPORT){
             RTR_DBG1("State: RTR_ERROR_TRANSPORT");
             tr_close(rtr_socket->tr_socket);
-            sleep(ERR_TIMEOUT);
             rtr_change_socket_state(rtr_socket, RTR_CLOSED);
+            sleep(ERR_TIMEOUT);
         }
 
         else if(rtr_socket->state == RTR_ERROR_FATAL){
             RTR_DBG1("State: RTR_ERROR_FATAL");
             tr_close(rtr_socket->tr_socket);
-            rtr_socket->nonce = -1;
-            rtr_socket->serial_number = 0;
-            sleep(ERR_TIMEOUT);
+            //reset nonce & SN on fatal error??
+            //rtr_socket->nonce = -1;
+            //rtr_socket->serial_number = 0;
             rtr_change_socket_state(rtr_socket, RTR_CLOSED);
-            return;
+            sleep(ERR_TIMEOUT);
         }
 
         else if(rtr_socket->state == RTR_SHUTDOWN){
@@ -168,6 +176,7 @@ void rtr_fsm_start(rtr_socket* rtr_socket){
             tr_close(rtr_socket->tr_socket);
             rtr_socket->nonce = -1;
             rtr_socket->serial_number = 0;
+            rtr_socket->last_update = 0;
             pfx_table_remove_from_origin(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
             pthread_exit(NULL);
         }

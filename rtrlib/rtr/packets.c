@@ -291,6 +291,10 @@ int rtr_sync(rtr_socket* rtr_socket){
         cr_nonce = cr_pdu->reserved;
         //set connection nonce
         if(rtr_socket->nonce == -1){
+            if(rtr_socket->last_update != 0){
+                //if this isnt the first sync, but we have a new session, delete old records in the pfx_table
+                pfx_table_remove_from_origin(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
+            }
             rtr_socket->nonce = cr_pdu->reserved;
         }
         else{
