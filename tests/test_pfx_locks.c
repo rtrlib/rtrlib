@@ -104,11 +104,11 @@ void rec_validate(pfx_table* pfxt){
         rec.max_len = 32;
         rec.prefix.ver = IPV4;
         rec.prefix.u.addr4.addr = htonl(i);
-        pfx_validate_origin(pfxt, (tid % 2), &(rec.prefix), rec.min_len, &res);
+        pfx_table_validate(pfxt, (tid % 2), &(rec.prefix), rec.min_len, &res);
         //printf("%i: Record validated,status: ", tid);
         //print_state(res);
 
-        pfx_validate_origin(pfxt, (tid % 2) + 1, &(rec.prefix), rec.min_len, &res);
+        pfx_table_validate(pfxt, (tid % 2) + 1, &(rec.prefix), rec.min_len, &res);
         //printf("%i: Record validated,status: ", tid);
         //print_state(res);
 
@@ -118,7 +118,7 @@ void rec_validate(pfx_table* pfxt){
         rec.prefix.u.addr6.addr[1] = min_i + 0xFFFFFFFF;
         rec.prefix.u.addr6.addr[0] = htonl(i) + 0xFFFFFFFF;
 
-        pfx_validate_origin(pfxt, (tid % 2) + 1, &(rec.prefix), rec.min_len, &res);
+        pfx_table_validate(pfxt, (tid % 2) + 1, &(rec.prefix), rec.min_len, &res);
         //printf("%i: Record validated,status: ", tid);
         //print_state(res);
     }

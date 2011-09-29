@@ -148,7 +148,7 @@ int pfx_table_src_remove(struct pfx_table* pfx_table, const uintptr_t socket_id)
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR If an error occured.
  */
-int pfx_validate_origin(struct pfx_table* pfx_table, const uint32_t asn, const ip_addr* prefix, const uint8_t mask_len, pfxv_state* result);
+int pfx_table_validate(struct pfx_table* pfx_table, const uint32_t asn, const ip_addr* prefix, const uint8_t mask_len, pfxv_state* result);
 
 #endif
 /* @} */

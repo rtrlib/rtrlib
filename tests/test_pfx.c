@@ -115,9 +115,9 @@ void mass_test(){
         rec.max_len = 32;
         rec.prefix.ver = IPV4;
         rec.prefix.u.addr4.addr = htonl(i);
-        assert(pfx_validate_origin(&pfxt, i, &(rec.prefix), rec.min_len, &res) == PFX_SUCCESS);
+        assert(pfx_table_validate(&pfxt, i, &(rec.prefix), rec.min_len, &res) == PFX_SUCCESS);
         assert(res == BGP_PFXV_STATE_VALID);
-        assert(pfx_validate_origin(&pfxt, i + 1, &(rec.prefix), rec.min_len, &res) == PFX_SUCCESS);
+        assert(pfx_table_validate(&pfxt, i + 1, &(rec.prefix), rec.min_len, &res) == PFX_SUCCESS);
         assert(res == BGP_PFXV_STATE_VALID);
 
 
@@ -127,7 +127,7 @@ void mass_test(){
         rec.prefix.u.addr6.addr[1] = min_i + 0xFFFFFFFF;
         rec.prefix.u.addr6.addr[0] = htonl(i) + 0xFFFFFFFF;
 
-        assert(pfx_validate_origin(&pfxt, i + 1, &(rec.prefix), rec.min_len, &res) == PFX_SUCCESS);
+        assert(pfx_table_validate(&pfxt, i + 1, &(rec.prefix), rec.min_len, &res) == PFX_SUCCESS);
         assert(res == BGP_PFXV_STATE_VALID);
     }
 
@@ -169,23 +169,23 @@ int main(){
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
     pfxv_state res;
-    assert(pfx_validate_origin(&pfxt, 123, &(pfx.prefix), 16, &res) == PFX_SUCCESS);
+    assert(pfx_table_validate(&pfxt, 123, &(pfx.prefix), 16, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_VALID);
-    assert(pfx_validate_origin(&pfxt, 124, &(pfx.prefix), 16, &res) == PFX_SUCCESS);
+    assert(pfx_table_validate(&pfxt, 124, &(pfx.prefix), 16, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_INVALID);
 
-    assert(pfx_validate_origin(&pfxt, 123, &(pfx.prefix), 24, &res) == PFX_SUCCESS);
+    assert(pfx_table_validate(&pfxt, 123, &(pfx.prefix), 24, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_VALID);
 
     put_ipv4(&(pfx.prefix), "10.10.10.0");
-    assert(pfx_validate_origin(&pfxt, 123, &(pfx.prefix), 20, &res) == PFX_SUCCESS);
+    assert(pfx_table_validate(&pfxt, 123, &(pfx.prefix), 20, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_VALID);
 
-    assert(pfx_validate_origin(&pfxt, 123, &(pfx.prefix), 25, &res) == PFX_SUCCESS);
+    assert(pfx_table_validate(&pfxt, 123, &(pfx.prefix), 25, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_INVALID);
 
     put_ipv4(&(pfx.prefix), "10.11.10.0");
-    assert(pfx_validate_origin(&pfxt, 123, &(pfx.prefix), 16, &res) == PFX_SUCCESS);
+    assert(pfx_table_validate(&pfxt, 123, &(pfx.prefix), 16, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_NOT_FOUND);
 
 
@@ -196,11 +196,11 @@ int main(){
     pfx.max_len = 48;
     pfx.asn = 124;
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
-    assert(pfx_validate_origin(&pfxt, 124, &(pfx.prefix), 48, &res) == PFX_SUCCESS);
+    assert(pfx_table_validate(&pfxt, 124, &(pfx.prefix), 48, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_VALID);
 
     put_ipv6(&(pfx.prefix), "2a01:4f8:131:15::");
-    assert(pfx_validate_origin(&pfxt, 124, &(pfx.prefix), 56, &res) == PFX_SUCCESS);
+    assert(pfx_table_validate(&pfxt, 124, &(pfx.prefix), 56, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_INVALID);
 
     pfx_table_free(&pfxt);
