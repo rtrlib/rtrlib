@@ -158,6 +158,7 @@ int rtr_receive_pdu(rtr_socket* rtr_socket, void* pdu, const size_t pdu_len, con
     else 
         error = 0;
 
+    //header in hostbyte order, retain original received pdu, in case we need to detach it to an error pdu
     pdu_header header;
     memcpy(&header, pdu, sizeof(pdu_header));
     rtr_pdu_header_to_host_byte_order(&header);
@@ -193,9 +194,8 @@ int rtr_receive_pdu(rtr_socket* rtr_socket, void* pdu, const size_t pdu_len, con
             error = 0;
         }
     }
-    rtr_pdu_header_to_host_byte_order(pdu);
-        rtr_pdu_footer_to_host_byte_order(pdu);
-
+    memcpy(pdu, &header, sizeof(pdu_header)); //copy header in host_byte_order to pdu
+    rtr_pdu_footer_to_host_byte_order(pdu);
 
     return RTR_SUCCESS;
 
@@ -251,8 +251,6 @@ int rtr_set_last_update(rtr_socket* rtr_socket){
 int rtr_sync(rtr_socket* rtr_socket){
     char pdu[RTR_MAX_PDU_LEN]; 
 
-    if (rtr_set_last_update(rtr_socket) == RTR_ERROR)
-        return RTR_ERROR;
 
     int rtval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
     if(rtval == TR_WOULDBLOCK){
@@ -348,6 +346,8 @@ int rtr_sync(rtr_socket* rtr_socket){
             return RTR_ERROR;
         }
     } while(type != EOD);
+    if (rtr_set_last_update(rtr_socket) == RTR_ERROR)
+        return RTR_ERROR;
     RTR_DBG("Sync successfull, Nonce: %u, SN: %u", rtr_socket->nonce, rtr_socket->serial_number);
     return RTR_SUCCESS;
 }
