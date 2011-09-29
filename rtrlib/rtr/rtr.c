@@ -29,6 +29,7 @@
 #include "rtrlib/rtr/rtr.h"
 #include "rtrlib/lib/utils.h"
 
+static void rtr_purge_outdated_records(rtr_socket* rtr_socket);
 static void rtr_fsm_start(rtr_socket* rtr_socket);
 static void sighandler(int b){
     return;
@@ -73,27 +74,32 @@ int rtr_start(rtr_socket* rtr_socket){
     return RTR_ERROR;
 }
 
+
+void rtr_purge_outdated_records(rtr_socket* rtr_socket){
+    time_t cur_time;
+    int rtval = get_monotonic_time(&cur_time);
+    if(rtval == -1 || (rtr_socket->last_update + rtr_socket->cache_timeout) > cur_time){
+        if(rtval == -1)
+            RTR_DBG1("get_monotic_time(..) failed");
+        pfx_table_remove_from_origin(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
+        RTR_DBG1("Removed outdated records from pfx_table");
+        rtr_socket->request_nonce = true;
+        rtr_socket->serial_number = 0;
+        rtr_socket->last_update = 0;
+    }
+}
+
 void rtr_fsm_start(rtr_socket* rtr_socket){
     install_sig_handler();
     while(1){
         if(rtr_socket->state == RTR_CLOSED){
-            RTR_DBG("%s", "State: RTR_CLOSED");
-            if(rtr_socket->nonce != -1){
-                //old pfx_record could exists in the pfx_table, check if they are too old and must be removed
-                time_t cur_time;
-                int rtval = get_monotonic_time(&cur_time);
-                if(rtval == -1 || (rtr_socket->last_update + rtr_socket->cache_timeout) > cur_time){
-                    pfx_table_remove_from_origin(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
-                    RTR_DBG("Removed old pfx_record from pfx_table");
-                    rtr_socket->nonce = -1;
-                    rtr_socket->serial_number = 0;
-                    rtr_socket->last_update = -0;
-                }
-            }
+            RTR_DBG1("State: RTR_CLOSED");
+            //old pfx_record could exists in the pfx_table, check if they are too old and must be removed
+            rtr_purge_outdated_records(rtr_socket);
 
             RTR_DBG1("rtr_start: open transport connection");
             if(tr_open(rtr_socket->tr_socket) == TR_ERROR){
-                rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+                rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
             }
             else
                 if(rtr_socket->request_nonce)
@@ -109,14 +115,7 @@ void rtr_fsm_start(rtr_socket* rtr_socket){
         }
 
         else if(rtr_socket->state == RTR_RESET){
-            RTR_DBG("%s", "State: RTR_RESET");
-                if(rtval == -1 || (rtr_socket->last_update + rtr_socket->cache_timeout) > cur_time){
-                    pfx_table_remove_from_origin(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
-                    RTR_DBG("Removed old pfx_record from pfx_table");
-                    rtr_socket->nonce = -1;
-                    rtr_socket->serial_number = 0;
-                    rtr_socket->last_update = -0;
-                }
+            RTR_DBG1("State: RTR_RESET");
             if (rtr_send_reset_query(rtr_socket) == 0){
                 RTR_DBG1("rtr_start: reset pdu sent");
                 rtr_change_socket_state(rtr_socket, RTR_SYNC); //send reset query after connection established
@@ -144,6 +143,7 @@ void rtr_fsm_start(rtr_socket* rtr_socket){
             rtr_socket->serial_number = 0;
             rtr_change_socket_state(rtr_socket, RTR_RESET);
             sleep(ERR_TIMEOUT);
+            rtr_purge_outdated_records(rtr_socket);
         }
 
         else if(rtr_socket->state == RTR_ERROR_NO_INCR_UPDATE_AVAIL){
@@ -152,6 +152,7 @@ void rtr_fsm_start(rtr_socket* rtr_socket){
             rtr_socket->serial_number = 0;
             rtr_change_socket_state(rtr_socket, RTR_RESET);
             sleep(ERR_TIMEOUT);
+            rtr_purge_outdated_records(rtr_socket);
         }
 
         else if(rtr_socket->state == RTR_ERROR_TRANSPORT){
