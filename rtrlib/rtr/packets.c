@@ -291,7 +291,7 @@ int rtr_sync(rtr_socket* rtr_socket){
         if(rtr_socket->request_nonce){
             if(rtr_socket->last_update != 0){
                 //if this isnt the first sync, but we already received records, delete old records in the pfx_table
-                pfx_table_remove_from_origin(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
+                pfx_table_src_remove(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
                 rtr_socket->last_update = 0;
             }
             rtr_socket->nonce = cr_pdu->reserved;

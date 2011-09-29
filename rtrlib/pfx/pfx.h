@@ -130,12 +130,13 @@ int pfx_table_add(struct pfx_table* pfx_table, const pfx_record* pfx_record);
 int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* pfx_record);
 
 /**
- * @brief Remove all entries from the source rtr_socket_ind in pfx_table 
+ * @brief Remove all entries from the source socket_id in pfx_table
  * @param[in] pfx_table pfx_table to use.
  * @param[in] socket_id ID of the rtr_socket
+ * @return PFX_SUCCESS
+ * @return PFX_ERROR
  */
-void pfx_table_remove_from_origin(struct pfx_table* pfx_table, const uintptr_t socket_id);
-
+int pfx_table_src_remove(struct pfx_table* pfx_table, const uintptr_t socket_id);
 
 /**
  * @brief Validate the origin of a BGP-Route

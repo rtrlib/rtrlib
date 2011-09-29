@@ -40,7 +40,7 @@ void print_state(const pfxv_state s){
         printf("INVALID\n");
 }
 
-void mass_test(){
+void remove_origin_test(){
     pfx_table pfxt;
     pfx_table_init(&pfxt, NULL, 0);
 
@@ -49,15 +49,48 @@ void mass_test(){
     rec.max_len = 32;
     rec.prefix.ver = IPV4;
     rec.prefix.u.addr4.addr = 0;
-    pfxv_state res;
 
 
-    uint32_t min_i = 0xFFFF0000;
+    uint32_t min_i = 0xFFFFF000;
     uint32_t max_i = 0xFFFFFFF0;
+
+    printf("Inserting %u records\n", 2*(max_i - min_i));
+    for(uint32_t i = max_i; i >= min_i; i--){
+        rec.socket_id = 123;
+        rec.asn = i;
+        rec.prefix.u.addr4.addr = htonl(i);
+        assert(pfx_table_add(&pfxt, &rec) == PFX_SUCCESS);
+    }
+
+    for(uint32_t i = max_i; i >= min_i; i--){
+        rec.asn = 15;
+        rec.socket_id = 99;
+    }
+    printf("Removing all (%u) records from socket_id 99\n", (max_i - min_i));
+    pfx_table_src_remove(&pfxt, 99);
+
+    unsigned int len = 0;
+    lpfst_node** array = NULL;
+    assert(lpfst_get_children(pfxt.ipv4, &array, &len) != -1);
+    free(array);
+    printf("pfx_table contains %u records\n", len);
+    assert(len == (max_i - min_i));
+    printf("remove_origin_test successfull\n");
+
+    pfx_table_free(&pfxt);
+}
+
+void mass_test(){
+    pfx_table pfxt;
+    pfx_table_init(&pfxt, NULL, 0);
+
+    pfx_record rec;
+    pfxv_state res;
+    const uint32_t min_i = 0xFFFF0000;
+    const uint32_t max_i = 0xFFFFFFF0;
 
     printf("Inserting %u records\n", (max_i - min_i) * 3);
     for(uint32_t i = max_i; i >= min_i; i--){
-
         rec.min_len = 32;
         rec.max_len = 32;
         rec.socket_id = i;
@@ -171,5 +204,6 @@ int main(){
     assert(res == BGP_PFXV_STATE_INVALID);
 
     pfx_table_free(&pfxt);
+    remove_origin_test();
     mass_test();
 }

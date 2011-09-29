@@ -28,7 +28,7 @@
 typedef struct data_elem_t{
     uint32_t asn;
     uint8_t max_len;
-    unsigned int socket_id;
+    uintptr_t socket_id;
 } data_elem;
 
 typedef struct{
@@ -45,6 +45,7 @@ static data_elem* pfx_find_elem(const node_data* data, const pfx_record* record,
 static bool pfx_elem_matches(node_data* entry, const uint32_t asn, const uint32_t max_len); 
 static void pfx_notify_clients(pfx_table* pfx_table, const pfx_record* record, const pfxv_state state);
 static int pfx_get_state(const lpfst_node* node, const uint32_t asn, const uint8_t mask_len, pfxv_state* result);
+static int pfx_table_remove_id(lpfst_node** root, lpfst_node* node, const uintptr_t socket_id);
 
 
 void pfx_notify_clients(pfx_table* pfx_table, const pfx_record* record, const pfxv_state state){
@@ -302,6 +303,45 @@ int pfx_validate_origin(struct pfx_table* pfx_table, const uint32_t asn, const i
     return rtval;
 }
 
-void pfx_table_remove_from_origin(struct pfx_table* pfx_table, const uintptr_t socket_id){
-    return;
+int pfx_table_src_remove(struct pfx_table* pfx_table, const uintptr_t socket_id){
+    for(unsigned int i = 0; i< 2; i++){
+        lpfst_node** root = (i == 0 ? &(pfx_table->ipv4) : &(pfx_table->ipv6));
+        if(*root != NULL){
+            pthread_rwlock_rdlock(&(pfx_table->lock));
+            int rtval = pfx_table_remove_id(root, *root, socket_id);
+            pthread_rwlock_unlock(&pfx_table->lock);
+            if(rtval == PFX_ERROR)
+                return PFX_ERROR;
+        }
+    }
+    return PFX_SUCCESS;
+}
+
+int pfx_table_remove_id(lpfst_node** root, lpfst_node* node, const uintptr_t socket_id){
+    node_data* data = node->data;
+    for(unsigned int i = 0; i < data->len; i++){
+        while(data->len > 0 && data->ary[i].socket_id == socket_id){
+            if(pfx_table_del_elem(data, i) == PFX_ERROR){
+                return PFX_ERROR;
+            }
+        }
+    }
+    if(data->len == 0){
+        free(((node_data*) node->data));
+        lpfst_node* rm_node = lpfst_remove(node, &(node->prefix), 0);
+        free(rm_node);
+        if(rm_node == *root){
+            *root = NULL;
+            return PFX_SUCCESS;
+        }
+    }
+    else{
+        if(node->lchild != NULL){
+            if(pfx_table_remove_id(root, node->lchild, socket_id) == PFX_ERROR)
+                return PFX_ERROR;
+        }
+        if(node->rchild != NULL)
+            return pfx_table_remove_id(root, node->rchild, socket_id);
+    }
+    return PFX_SUCCESS;
 }
