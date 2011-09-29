@@ -47,7 +47,6 @@ typedef enum rtr_group_status{
     CONNECTING,
     ESTABLISHED,
     ERROR,
-    SHUTDOWN
 } rtr_group_status;
 
 
@@ -82,7 +81,7 @@ void rtr_mgr_free(rtr_mgr_config config[], const unsigned int config_len);
  * @return 0  On success 
  * @return -1 On error 
  */
-int rtr_mgr_start(rtr_mgr_config config[], const unsigned int config_len);
+int rtr_mgr_start(rtr_mgr_config config[]);
 
 /**
  * @brief Terminates all rtr_socket connections in the pool and removes all entries from the pfx_tables.
