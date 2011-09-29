@@ -118,8 +118,8 @@ void mass_test(){
         rec.prefix.u.addr6.addr[0] = htonl(i) + 0xFFFFFFFF;
         assert(pfx_table_remove(&pfxt, &rec) == PFX_SUCCESS);
     }
+    pfx_table_free(&pfxt);
     printf("Done\n");
-
 }
 
 int main(){
@@ -170,5 +170,6 @@ int main(){
     assert(pfx_validate_origin(&pfxt, 124, &(pfx.prefix), 56, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_INVALID);
 
+    pfx_table_free(&pfxt);
     mass_test();
 }

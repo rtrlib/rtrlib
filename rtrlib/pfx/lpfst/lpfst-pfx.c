@@ -35,7 +35,7 @@ typedef struct{
     data_elem* ary;
 } node_data;
 
-static void pfx_delete_tree(lpfst_node** root);
+static void pfx_delete_tree(lpfst_node* root);
 static lpfst_node* pfx_get_root(const struct pfx_table* pfx_table, const ip_version ver);
 static int pfx_remove_elem(node_data* data, const size_t index);
 static int pfx_create_node(lpfst_node** node, const pfx_record* record);
@@ -60,30 +60,33 @@ void pfx_table_init(struct pfx_table* pfx_table, rtr_update_fp update_fp[], unsi
     pfx_table->ipv6 = NULL;
     pfx_table->update_fp = update_fp;
     pfx_table->update_fp_len = update_fp_len;
-    //pfx_table->lock = PTHREAD_RWLOCK_INITIALIZER;
     pthread_rwlock_init(&(pfx_table->lock), NULL);
 }
 
-void pfx_table_destroy(struct pfx_table* pfx_table){
+void pfx_table_free(struct pfx_table* pfx_table){
     pthread_rwlock_wrlock(&(pfx_table->lock));
-    if(pfx_table->ipv4 != NULL)
-        pfx_delete_tree(&pfx_table->ipv4);
-    if(pfx_table->ipv6 != NULL)
-        pfx_delete_tree(&pfx_table->ipv6);
+    if(pfx_table->ipv4 != NULL){
+        pfx_delete_tree(pfx_table->ipv4);
+        pfx_table->ipv4 = NULL;
+    }
+    if(pfx_table->ipv6 != NULL){
+        pfx_delete_tree(pfx_table->ipv6);
+        pfx_table->ipv6 = NULL;
+    }
     pthread_rwlock_unlock(&(pfx_table->lock));
 
     pthread_rwlock_destroy(&(pfx_table->lock));
 }
 
-void pfx_delete_tree(lpfst_node** root){
-    while(root != NULL){
-        node_data* dt = (node_data*) ((*root)->data);
-        for(int i = 0; i < dt->len; i++)
-            free((data_elem*) &(dt[i]));
-        free(dt);
-        lpfst_remove(*root, &((*root)->prefix), 0);
+void pfx_delete_tree(lpfst_node* root){
+    lpfst_node* rm_node;
+    do{
+        node_data* data = (node_data*) (root->data);
+        free(data);
+        rm_node = (lpfst_remove(root, &(root->prefix), 0));
+        free(rm_node);
     }
-    root = NULL;
+    while(rm_node != root);
 }
 
 int pfx_append_elem(node_data* data, const pfx_record* record){
@@ -222,7 +225,6 @@ int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* record){
 
     if(ndata->len == 0){
         node = lpfst_remove(node, &(record->prefix), lvl);
-        free(node);
 
         if(node == root){
             if(record->prefix.ver == IPV4)
@@ -230,6 +232,7 @@ int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* record){
             else
                 pfx_table->ipv6 = NULL;
         }
+        free(node);
     }
     pthread_rwlock_unlock(&pfx_table->lock);
 
