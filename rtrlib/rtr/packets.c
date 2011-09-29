@@ -467,7 +467,7 @@ int rtr_send_error_pdu(const rtr_socket* rtr_socket, const void* erroneous_pdu, 
         memcpy(msg+12,erroneous_pdu, pdu_len);
     *(msg+12+pdu_len) = htonl(text_len);
     if(text_len > 0)
-        *(msg +16+pdu_len) = text_len;
+        memcpy(msg+16+pdu_len, text, text_len);
 
     return rtr_send_pdu(rtr_socket, msg, msg_size);
 }
