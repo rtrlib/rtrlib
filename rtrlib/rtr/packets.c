@@ -290,12 +290,14 @@ int rtr_sync(rtr_socket* rtr_socket){
         pdu_header* cr_pdu = (pdu_header*) pdu;
         cr_nonce = cr_pdu->reserved;
         //set connection nonce
-        if(rtr_socket->nonce == -1){
+        if(rtr_socket->request_nonce){
             if(rtr_socket->last_update != 0){
-                //if this isnt the first sync, but we have a new session, delete old records in the pfx_table
+                //if this isnt the first sync, but we already received records, delete old records in the pfx_table
                 pfx_table_remove_from_origin(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
+                rtr_socket->last_update = 0;
             }
             rtr_socket->nonce = cr_pdu->reserved;
+            rtr_socket->request_nonce = false;
         }
         else{
             if(rtr_socket->nonce != cr_pdu->reserved){
@@ -305,7 +307,6 @@ int rtr_sync(rtr_socket* rtr_socket){
                 return RTR_ERROR;
             }
         }
-
     }
 
     //receive IPV4/IPV6 PDUs till EOD
@@ -416,7 +417,6 @@ int rtr_update_pfx_table(rtr_socket* rtr_socket, const void* pdu){
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
         return RTR_ERROR;
     }
-
 
     return RTR_SUCCESS;
 }

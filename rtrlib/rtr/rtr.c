@@ -53,7 +53,7 @@ void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table
     rtr_socket->polling_period = (polling_period > (3600 - RTR_RECV_TIMEOUT) ? (3600 - RTR_RECV_TIMEOUT) : polling_period);
     rtr_socket->cache_timeout = (cache_timeout == 0 ? (rtr_socket->polling_period / 2) : cache_timeout);
     rtr_socket->state = RTR_CLOSED;
-    rtr_socket->nonce = -1;
+    rtr_socket->request_nonce = true;
     rtr_socket->serial_number = 0;
     rtr_socket->last_update = 0;
     rtr_socket->pfx_table = pfx_table;
@@ -96,7 +96,7 @@ void rtr_fsm_start(rtr_socket* rtr_socket){
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
             }
             else
-                if(rtr_socket->nonce == -1)
+                if(rtr_socket->request_nonce)
                     //change to state RESET, if socket dont has a nonce
                     rtr_change_socket_state(rtr_socket, RTR_RESET);
                 else{
@@ -139,16 +139,16 @@ void rtr_fsm_start(rtr_socket* rtr_socket){
         }
 
         else if(rtr_socket->state == RTR_ERROR_NO_DATA_AVAIL){
-            rtr_socket->nonce = -1;
             RTR_DBG1("State: RTR_ERROR_NO_DATA_AVAIL");
+            rtr_socket->request_nonce = true;
             rtr_socket->serial_number = 0;
             rtr_change_socket_state(rtr_socket, RTR_RESET);
             sleep(ERR_TIMEOUT);
         }
 
         else if(rtr_socket->state == RTR_ERROR_NO_INCR_UPDATE_AVAIL){
-            rtr_socket->nonce = -1;
             RTR_DBG1("State: RTR_ERROR_NO_INCR_UPDATE_AVAIL");
+            rtr_socket->request_nonce = false;
             rtr_socket->serial_number = 0;
             rtr_change_socket_state(rtr_socket, RTR_RESET);
             sleep(ERR_TIMEOUT);
@@ -174,7 +174,7 @@ void rtr_fsm_start(rtr_socket* rtr_socket){
         else if(rtr_socket->state == RTR_SHUTDOWN){
             RTR_DBG1("State: RTR_SHUTDOWN");
             tr_close(rtr_socket->tr_socket);
-            rtr_socket->nonce = -1;
+            rtr_socket->request_nonce = true;
             rtr_socket->serial_number = 0;
             rtr_socket->last_update = 0;
             pfx_table_remove_from_origin(rtr_socket->pfx_table, (uintptr_t) rtr_socket);

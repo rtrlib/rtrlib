@@ -80,6 +80,7 @@ typedef void (*rtr_connection_state_fp)(const struct rtr_socket* rtr_socket, con
  * The default value is twice the polling_period.
  * @param state Current state of the socket.
  * @param nonce Nonce of the RTR session.
+ * @param request_nonce True, if the rtr_client have to request a new none from the server.
  * @param serial_number Last serial number of the obtained validation records.
  * @param pfx_table pfx_table that stores the validation records obtained from the connected rtr server.
  */
@@ -90,6 +91,7 @@ typedef struct rtr_socket{
     unsigned int cache_timeout;
     rtr_socket_state state;
     uint32_t nonce;
+    bool request_nonce;
     uint32_t serial_number;
     struct pfx_table* pfx_table;
     pthread_t thread_id;
