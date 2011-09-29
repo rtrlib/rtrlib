@@ -27,10 +27,10 @@
 #include "rtrlib/lib/ipv4.h"
 #include "rtrlib/rtr/rtr.h"
 
-const static uint8_t RTR_PROTOCOL_VERSION = 0;
-const static unsigned int RTR_MAX_PDU_LEN = 1648; //error pdu: header(8) + len(4) + ipv6_pdu(32) + len(4) + 200*8 (200char text)
-const static unsigned int RTR_RECV_TIMEOUT = 60;
-const static unsigned int RTR_SEND_TIMEOUT = 60;
+static const uint8_t RTR_PROTOCOL_VERSION = 0;
+static const unsigned int RTR_MAX_PDU_LEN = 1648; //error pdu: header(8) + len(4) + ipv6_pdu(32) + len(4) + 200*8 (200char text)
+static const unsigned int RTR_RECV_TIMEOUT = 60;
+static const unsigned int RTR_SEND_TIMEOUT = 60;
 
 typedef enum pdu_error_type{
     CORRUPT_DATA = 0,
@@ -131,7 +131,7 @@ typedef struct pdu_error{
    |                                           |
    `-------------------------------------------'
  */
-const static pdu_header pdu_reset_query =
+static const pdu_header pdu_reset_query =
 {
     0, //sollte RTR_PROTOCOL_VERSION sein, aber gcc mag dat net:(
     2,

@@ -240,6 +240,6 @@ int tr_ssh_recv(const void* tr_ssh_sock, void* buf, const size_t buf_len, const 
 }
 */
 
-int tr_ssh_send(const void* tr_ssh_sock, const void* pdu, const size_t len, const time_t timeout){
+int tr_ssh_send(const void* tr_ssh_sock, const void* pdu, const size_t len, const time_t timeout __attribute__((unused))){
     return channel_write(((tr_ssh_socket*) tr_ssh_sock)->channel, pdu, len);
 }

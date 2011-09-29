@@ -125,7 +125,7 @@ lpfst_node* lpfst_remove(lpfst_node* root_node, const ip_addr* prefix, const uns
         return lpfst_remove(root_node->rchild, prefix, level+1);
 }
 
-int lpfst_get_children(const lpfst_node* root_node, lpfst_node*** array, size_t* len){
+int lpfst_get_children(const lpfst_node* root_node, lpfst_node*** array, unsigned int* len){
     if(root_node->lchild != NULL){
         *len += 1;
         *array = realloc(*array, (*len) * sizeof(lpfst_node*));

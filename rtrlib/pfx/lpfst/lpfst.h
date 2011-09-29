@@ -43,5 +43,5 @@ lpfst_node* lpfst_lookup_exact(const lpfst_node* root_node, const ip_addr* prefi
 lpfst_node* lpfst_remove(lpfst_node* root_node, const ip_addr* prefix, const unsigned int level);
 
 int lpfst_is_leaf(const lpfst_node* node);
-int lpfst_get_children(const lpfst_node* root_node, lpfst_node*** array, size_t* len);
+int lpfst_get_children(const lpfst_node* root_node, lpfst_node*** array, unsigned int* len);
 #endif

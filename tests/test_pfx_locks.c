@@ -166,7 +166,7 @@ int main(){
     pfx_table_init(&pfxt, NULL, 0);
     pthread_t threads[max_threads];
     srand(time(NULL));
-    for(int i=0;i<max_threads;i++){
+    for(unsigned int i=0;i<max_threads;i++){
         int r = rand() / (RAND_MAX / 3);
         if(r == 0)
             pthread_create(&(threads[i]), NULL, (void * (*)(void *)) rec_insert, &pfxt);
@@ -178,7 +178,7 @@ int main(){
         usleep(200);
 
     }
-    for(int i=0;i<max_threads;i++){
+    for(unsigned int i=0;i<max_threads;i++){
         pthread_join(threads[i], NULL);
         printf("Thread %i returned\n", i);
     }

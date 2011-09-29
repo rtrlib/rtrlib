@@ -155,9 +155,9 @@ void rtr_mgr_init(rtr_mgr_config config[], const unsigned int config_len){
     //sort array in asc preference order
     qsort(config, config_len, sizeof(rtr_mgr_config), &config_cmp);
 
-    for(unsigned int i = 0; i < config_len; i ++){
+    for(unsigned int i = 0; i < config_len; i++){
         config[i].status = CLOSED;
-        for(unsigned int j = 0; j < config[i].sockets_len; j ++){
+        for(unsigned int j = 0; j < config[i].sockets_len; j++){
             config[i].sockets[j]->connection_state_fp = &rtr_mgr_cb;
             config[i].sockets[j]->mgr_config = config;
             config[i].sockets[j]->mgr_config_len = config_len;

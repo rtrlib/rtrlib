@@ -46,7 +46,7 @@ inline int tr_recv(const tr_socket* socket, void* buf, const size_t len, const t
 }
 
 int tr_send_all(const tr_socket* socket, const void* pdu, const size_t len, const time_t timeout){
-    int total_send = 0;
+    unsigned int total_send = 0;
     int rtval = 0;
     time_t end_time;
     get_monotonic_time(&end_time);

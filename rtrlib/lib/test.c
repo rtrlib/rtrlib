@@ -74,7 +74,7 @@ bool cmp_ipv6(ip_addr* res, char* cmp){
     return false;
 }
 void print_bytes(void* buf, size_t len){
-    for(int i = 0;i < len; i++){
+    for(unsigned int i = 0;i < len; i++){
         if(len != 0)
             printf(":");
         printf("%02x", *((uint8_t*) ((char*) buf + i)));

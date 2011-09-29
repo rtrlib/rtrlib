@@ -29,13 +29,16 @@
 #include "rtrlib/rtr/rtr.h"
 #include "rtrlib/lib/utils.h"
 
+const unsigned int ERR_TIMEOUT = 20;
+
 static void rtr_purge_outdated_records(rtr_socket* rtr_socket);
 static void rtr_fsm_start(rtr_socket* rtr_socket);
-static void sighandler(int b){
+static void sighandler(int b);
+static int install_sig_handler();
+
+void sighandler(int b __attribute__((unused)) ){
     return;
 }
-
-const unsigned int ERR_TIMEOUT = 20;
 
 int install_sig_handler(){
     struct sigaction sa;
@@ -67,7 +70,7 @@ void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table
 int rtr_start(rtr_socket* rtr_socket){
     pthread_attr_t attr;
     pthread_attr_init(&attr);
-    int rtval = pthread_create(&(rtr_socket->thread_id), &attr, (void * (*)(void *)) &rtr_fsm_start, rtr_socket);
+    int rtval = pthread_create(&(rtr_socket->thread_id), &attr, (void* (*)(void*)) &rtr_fsm_start, rtr_socket);
     pthread_attr_destroy(&attr);
     if(rtval == 0)
         return RTR_SUCCESS;

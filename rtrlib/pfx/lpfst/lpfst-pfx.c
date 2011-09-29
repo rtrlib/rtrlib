@@ -32,7 +32,7 @@ typedef struct data_elem_t{
 } data_elem;
 
 typedef struct{
-    size_t len;
+    unsigned int len;
     data_elem* ary;
 } node_data;
 
@@ -50,7 +50,7 @@ static int pfx_table_remove_id(lpfst_node** root, lpfst_node* node, const uintpt
 
 void pfx_table_notify_clients(pfx_table* pfx_table, const pfx_record* record, const pfxv_state state){
     if(pfx_table->update_fp != NULL)
-        for(int i=0;i<pfx_table->update_fp_len;i++)
+        for(unsigned int i=0;i<pfx_table->update_fp_len;i++)
         {
             pfx_table->update_fp[i](pfx_table, *record, state);
             //TODO: execute callback in a thread?
@@ -121,8 +121,8 @@ int pfx_table_create_node(lpfst_node** node, const pfx_record* record){
     return pfx_table_append_elem(((node_data*) (*node)->data), record);
 }
 
-    for(int i = 0; i < data->len; i++){
 data_elem* pfx_table_find_elem(const node_data* data, const pfx_record* record, unsigned int* index){
+    for(unsigned int i = 0; i < data->len; i++){
         if(data->ary[i].asn == record->asn && data->ary[i].max_len == record->max_len && data->ary[i].socket_id == record->socket_id){
             if(index != NULL)
                 *index = i;
@@ -140,16 +140,14 @@ inline lpfst_node* pfx_table_get_root(const struct pfx_table* pfx_table, const i
 int pfx_table_del_elem(node_data* data, const unsigned int index){
     //if index is not the last elem in the list, move all other elems backwards in the array
     if(index != data->len - 1){
-        for(int i = index; i < data->len -1; i++){
+        for(unsigned int i = index; i < data->len -1; i++){
             data->ary[i] = data->ary[i+1];
         }
     }
     data->len--;
     data->ary = realloc(data->ary, sizeof(data_elem) * data->len);
-    if(data->len != 0){
-        if(data->ary == NULL)
-            return PFX_ERROR;
-    }
+    if(data->len != 0 && data->ary == NULL)
+        return PFX_ERROR;
 
     return PFX_SUCCESS;
 }
@@ -245,21 +243,12 @@ int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* record){
         }
         pfx_table_notify_clients(pfx_table, record, val_state);
     }
-    pthread_rwlock_unlock(&pfx_table->lock);
-
-    if(pfx_table->update_fp_len > 0){
-        pfxv_state val_state = BGP_PFXV_STATE_NOT_FOUND;
-        if(pfx_table_validate(pfx_table, record->asn, &(record->prefix), record->min_len, &val_state) == PFX_ERROR){
-            return PFX_ERROR;
-        }
-        pfx_table_notify_clients(pfx_table, record, val_state);
-    }
 
     return PFX_SUCCESS;
 }
 
-    for(int i = 0; i < data->len; i++){
 bool pfx_table_elem_matches(node_data* data, const uint32_t asn, const uint32_t max_len){
+    for(unsigned int i = 0; i < data->len; i++){
         if(data->ary[i].asn == asn && max_len <= data->ary[i].max_len)
             return true;
     }
@@ -273,12 +262,12 @@ int pfx_table_get_state(const lpfst_node* node, const uint32_t asn, const uint8_
     }
 
     //check children
-    size_t len = 0;
+    unsigned int len = 0;
     lpfst_node** array = NULL;
     if(lpfst_get_children(node, &array, &len) == -1)
         return PFX_ERROR;
 
-    for(int i = 0; i < len; i++){
+    for(unsigned int i = 0; i < len; i++){
         if(pfx_table_elem_matches(array[i]->data, asn, mask_len)){
             *result =  BGP_PFXV_STATE_VALID;
             free(array);
