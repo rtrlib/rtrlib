@@ -34,7 +34,7 @@ static int rtr_send_error_pdu(const rtr_socket* rtr_socket, const void* erroneou
 static void rtr_pdu_header_to_host_byte_order(void* pdu);
 static void rtr_pdu_footer_to_host_byte_order(void* pdu);
 static pdu_type rtr_get_pdu_type(const void* pdu);
-static int rtr_handle_error_pdu(rtr_socket* rtr_socket, const void* buf, const size_t pdu_len);
+static int rtr_handle_error_pdu(rtr_socket* rtr_socket, const void* buf);
 
 /*
  * sends an rtr error message to the server if an error occurred
@@ -276,7 +276,7 @@ int rtr_sync(rtr_socket* rtr_socket){
     type = rtr_get_pdu_type(pdu);
 
     if(type == ERROR){
-        rtr_handle_error_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN);
+        rtr_handle_error_pdu(rtr_socket, pdu);
         return RTR_ERROR;
     }
     else if(type == CACHE_RESET){
@@ -337,7 +337,7 @@ int rtr_sync(rtr_socket* rtr_socket){
             rtr_socket->serial_number = eod_pdu->sn;
         }
         else if(type == ERROR){
-            rtr_handle_error_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN); 
+            rtr_handle_error_pdu(rtr_socket, pdu);
             return RTR_ERROR;
         }
         else{
@@ -489,7 +489,7 @@ int rtr_send_pdu(const rtr_socket* rtr_socket, const void* pdu, const unsigned l
     return RTR_ERROR;
 }
 
-int rtr_handle_error_pdu(rtr_socket* rtr_socket, const void* buf, const size_t pdu_len){
+int rtr_handle_error_pdu(rtr_socket* rtr_socket, const void* buf){
     RTR_DBG1("Error PDU received");  //TODO: append server ip & port
     const pdu_error* pdu = buf;
 
