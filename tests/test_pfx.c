@@ -40,42 +40,60 @@ void print_state(const pfxv_state s){
         printf("INVALID\n");
 }
 
-void remove_origin_test(){
+void remove_src_test(){
     pfx_table pfxt;
     pfx_table_init(&pfxt, NULL, 0);
 
-    pfx_record rec;
-    rec.min_len = 32;
-    rec.max_len = 32;
-    rec.prefix.ver = IPV4;
-    rec.prefix.u.addr4.addr = 0;
+    pfx_record pfx;
+    pfx.min_len = 32;
+    pfx.max_len = 32;
 
+    pfx.asn = 80;
+    pfx.socket_id = 1;
+    put_ipv4(&(pfx.prefix), "10.11.10.0");
+    assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
-    uint32_t min_i = 0xFFFFF000;
-    uint32_t max_i = 0xFFFFFFF0;
+    pfx.asn = 90;
+    pfx.socket_id = 2;
+    put_ipv4(&(pfx.prefix), "10.11.10.0");
+    assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
-    printf("Inserting %u records\n", 2*(max_i - min_i));
-    for(uint32_t i = max_i; i >= min_i; i--){
-        rec.socket_id = 123;
-        rec.asn = i;
-        rec.prefix.u.addr4.addr = htonl(i);
-        assert(pfx_table_add(&pfxt, &rec) == PFX_SUCCESS);
-    }
+    pfx.socket_id = 2;
+    pfx.min_len = 24;
+    put_ipv4(&(pfx.prefix), "192.168.0.0");
+    assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
-    for(uint32_t i = max_i; i >= min_i; i--){
-        rec.asn = 15;
-        rec.socket_id = 99;
-    }
-    printf("Removing all (%u) records from socket_id 99\n", (max_i - min_i));
-    pfx_table_src_remove(&pfxt, 99);
+    pfx.socket_id = 1;
+    pfx.min_len = 8;
+    put_ipv4(&(pfx.prefix), "10.0.0.0");
+    assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
     unsigned int len = 0;
     lpfst_node** array = NULL;
     assert(lpfst_get_children(pfxt.ipv4, &array, &len) != -1);
     free(array);
-    printf("pfx_table contains %u records\n", len);
-    assert(len == (max_i - min_i));
-    printf("remove_origin_test successfull\n");
+    array = NULL;
+    assert((len + 1) == 3);
+
+    pfx_table_src_remove(&pfxt, 1);
+    len=0;
+    assert(lpfst_get_children(pfxt.ipv4, &array, &len) != -1);
+
+    free(array);
+    assert((len + 1) == 2);
+
+    pfxv_state res;
+    assert(pfx_table_validate(&pfxt, 90, &(pfx.prefix), 8, &res) == PFX_SUCCESS);
+    assert(res == BGP_PFXV_STATE_NOT_FOUND);
+    put_ipv4(&(pfx.prefix), "10.11.10.0");
+
+    assert(pfx_table_validate(&pfxt, 90, &(pfx.prefix), 32, &res) == PFX_SUCCESS);
+    assert(res == BGP_PFXV_STATE_VALID);
+    assert(pfx_table_validate(&pfxt, 80, &(pfx.prefix), 32, &res) == PFX_SUCCESS);
+    print_state(res);
+    assert(res == BGP_PFXV_STATE_INVALID);
+
+    printf("remove_src_test successfull\n");
 
     pfx_table_free(&pfxt);
 }
@@ -204,6 +222,6 @@ int main(){
     assert(res == BGP_PFXV_STATE_INVALID);
 
     pfx_table_free(&pfxt);
-    remove_origin_test();
+    remove_src_test();
     mass_test();
 }
