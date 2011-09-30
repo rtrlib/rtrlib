@@ -3,7 +3,12 @@ project(rtrlib)
 cmake_minimum_required(VERSION 2.6)
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
-set(CMAKE_C_FLAGS "-std=gnu99")
+
+if(CMAKE_BUILD_TYPE STREQUAL Debug)
+    set(CMAKE_C_FLAGS "-std=gnu99 -W -Wall -pedantic")
+else()
+    set(CMAKE_C_FLAGS "-std=gnu99")
+endif(CMAKE_BUILD_TYPE STREQUAL Debug)
 
 include_directories(.)
 find_package (Threads REQUIRED)
