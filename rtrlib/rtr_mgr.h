@@ -65,7 +65,7 @@ typedef struct rtr_mgr_config{
  * @param[in] rtr_mgr_socket Pointer to a rtr_mgr_socket that will be initialized
  *
  */
-void rtr_mgr_init(rtr_mgr_config config[], const unsigned int config_len);
+int rtr_mgr_init(rtr_mgr_config config[], const unsigned int config_len);
 
 
 /**

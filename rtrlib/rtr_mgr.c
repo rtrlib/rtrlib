@@ -151,11 +151,20 @@ int config_cmp(const void* a, const void* b){
     return 0;
 }
 
-void rtr_mgr_init(rtr_mgr_config config[], const unsigned int config_len){
+int rtr_mgr_init(rtr_mgr_config config[], const unsigned int config_len){
     //sort array in asc preference order
     qsort(config, config_len, sizeof(rtr_mgr_config), &config_cmp);
 
     for(unsigned int i = 0; i < config_len; i++){
+        if(config[i].sockets_len == 0){
+            MGR_DBG1("Error Socket group contains an empty sockets array");
+            return -1;
+        }
+        if(i > 0  && config[i-1].preference == config[i].preference){
+            MGR_DBG1("Error Socket group contains 2 members with the same preference value");
+            return -1;
+        }
+
         config[i].status = CLOSED;
         for(unsigned int j = 0; j < config[i].sockets_len; j++){
             config[i].sockets[j]->connection_state_fp = &rtr_mgr_cb;
@@ -163,6 +172,7 @@ void rtr_mgr_init(rtr_mgr_config config[], const unsigned int config_len){
             config[i].sockets[j]->mgr_config_len = config_len;
         }
     }
+    return 0;
 }
 
 int rtr_mgr_start(rtr_mgr_config config[]){
