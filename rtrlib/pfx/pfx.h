@@ -68,7 +68,6 @@ typedef enum pfxv_state{
 } pfxv_state;
 
 
-
 /**
  * @brief pfx_record.
  * @param asn Origin AS number.
@@ -86,19 +85,18 @@ typedef struct pfx_record{
 } pfx_record;
 
 /**
- * @brief A function pointer that is called if an record was updated.
+ * @brief A function pointer that is called if an record was added or removed to the pfx_table.
  * @param pfx_table which was updated.
  * @param record pfx_record that was modified.
- * @param state validation of the record.
- * pfx_table if a valid record from another rtr_server still exists.
+ * @param added True if the record was added, false if the record was removed
  * servers 
  */
-typedef void (*rtr_update_fp)(struct pfx_table* pfx_table, const pfx_record record, const pfxv_state state);
+typedef void (*rtr_update_fp)(struct pfx_table* pfx_table, const pfx_record record, const bool added);
 
 /**
  * @brief Initialize the pfx_table struct.
  * @param[in] pfx_table pfx_table that will be initialized.
- * @param[in] update_fp Array of function pointers that will be called if a record was updated.
+ * @param[in] update_fp Array of function pointers that will be called if a record was added or removed.
  * @param[in] update_fp_len Number of elements in the update_fp array.
  */
 void pfx_table_init(struct pfx_table* pfx_table, rtr_update_fp update_fp[], const unsigned int update_fp_len );

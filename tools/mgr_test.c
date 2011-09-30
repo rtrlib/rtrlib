@@ -29,7 +29,7 @@ int main(){
 
     tr_ssh_init(&ssh_config, &tr_ssh);
     rtr_socket rtr_ssh;
-    rtr_init(&rtr_ssh, tr_ssh, &pfxt, 10, 480);
+    rtr_init(&rtr_ssh, tr_ssh, &pfxt, 240, 480);
 
 
     rtr_mgr_config conf[2];

@@ -140,7 +140,6 @@ void rtr_mgr_cb(const rtr_socket* sock, const rtr_socket_state state, rtr_mgr_co
     return;
 }
 
-
 int config_cmp(const void* a, const void* b){
     const rtr_mgr_config* ar = a;
     const rtr_mgr_config* br = b;

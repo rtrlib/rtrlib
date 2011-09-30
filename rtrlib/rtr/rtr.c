@@ -77,7 +77,6 @@ int rtr_start(rtr_socket* rtr_socket){
     return RTR_ERROR;
 }
 
-
 void rtr_purge_outdated_records(rtr_socket* rtr_socket){
     time_t cur_time;
     int rtval = get_monotonic_time(&cur_time);
