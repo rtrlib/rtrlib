@@ -168,3 +168,15 @@ void rtr_mgr_init(rtr_mgr_config config[], const unsigned int config_len){
 int rtr_mgr_start(rtr_mgr_config config[]){
     return start_sockets(&(config[0]));
 }
+bool rtr_mgr_group_in_sync(rtr_mgr_config config[], const unsigned int config_len){
+    for(unsigned int i = 0; i < config_len; i++){
+        bool all_sync = true;
+        for(unsigned int j = 0; all_sync && (j < config[i].sockets_len); j++){
+            if(config[i].sockets[j]->last_update != 0)
+                all_sync = false;
+        }
+        if(all_sync)
+            return true;
+    }
+    return false;
+}

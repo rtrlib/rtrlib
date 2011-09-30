@@ -91,5 +91,13 @@ int rtr_mgr_start(rtr_mgr_config config[]);
  */
 void rtr_mgr_stop(rtr_mgr_config config[], const unsigned int config_len);
 
+/**
+ * @brief Terminates all rtr_socket connections in the pool and removes all entries from the pfx_tables.
+ * @param[in] socket The rtr_mgr_socket.
+ * @return true If the used pfx_table holds non-outdated pfx_records from at least one socket group.
+ * @return false If the pfx_table doesn't hold non-outdated pfx_records from at least one socket group.
+ */
+bool rtr_mgr_group_in_sync(rtr_mgr_config config[], const unsigned int config_len);
+
 #endif
 /* @} */
