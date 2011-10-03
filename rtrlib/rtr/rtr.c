@@ -78,6 +78,8 @@ int rtr_start(rtr_socket* rtr_socket){
 }
 
 void rtr_purge_outdated_records(rtr_socket* rtr_socket){
+    if(rtr_socket->last_update == 0)
+        return;
     time_t cur_time;
     int rtval = get_monotonic_time(&cur_time);
     if(rtval == -1 || (rtr_socket->last_update + rtr_socket->cache_timeout) > cur_time){
@@ -150,7 +152,7 @@ void rtr_fsm_start(rtr_socket* rtr_socket){
 
         else if(rtr_socket->state == RTR_ERROR_NO_INCR_UPDATE_AVAIL){
             RTR_DBG1("State: RTR_ERROR_NO_INCR_UPDATE_AVAIL");
-            rtr_socket->request_nonce = false;
+            rtr_socket->request_nonce = true;
             rtr_socket->serial_number = 0;
             rtr_change_socket_state(rtr_socket, RTR_RESET);
             sleep(ERR_TIMEOUT);
@@ -167,9 +169,6 @@ void rtr_fsm_start(rtr_socket* rtr_socket){
         else if(rtr_socket->state == RTR_ERROR_FATAL){
             RTR_DBG1("State: RTR_ERROR_FATAL");
             tr_close(rtr_socket->tr_socket);
-            //reset nonce & SN on fatal error??
-            //rtr_socket->nonce = -1;
-            //rtr_socket->serial_number = 0;
             rtr_change_socket_state(rtr_socket, RTR_CLOSED);
             sleep(ERR_TIMEOUT);
         }
