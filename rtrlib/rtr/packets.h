@@ -113,8 +113,6 @@ typedef struct pdu_error{
     uint16_t error_code;
     uint32_t len;
     uint32_t len_enc_pdu;
-    //void pdu*; //todo
-    //uint32_t len_txt;
     char rest[];
 } pdu_error;
 
