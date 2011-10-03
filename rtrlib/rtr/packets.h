@@ -146,7 +146,6 @@ enum rtr_rtvals{
 
 
 void rtr_change_socket_state(rtr_socket* rtr_socket, const rtr_socket_state new_state);
-int rtr_send_pdu(const rtr_socket* rtr_socket, const void* pdu, const unsigned len);
 int rtr_sync(rtr_socket* rtr_socket);
 int rtr_wait_for_sync(rtr_socket* rtr_socket);
 int rtr_send_serial_query(rtr_socket* rtr_socket);
