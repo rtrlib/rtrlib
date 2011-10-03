@@ -35,12 +35,7 @@ static void rtr_pdu_header_to_host_byte_order(void* pdu);
 static void rtr_pdu_footer_to_host_byte_order(void* pdu);
 static pdu_type rtr_get_pdu_type(const void* pdu);
 static int rtr_handle_error_pdu(rtr_socket* rtr_socket, const void* buf);
-
-/*
- * sends an rtr error message to the server if an error occurred
- * @returns RTR_SUCCESS
- * @returns RTR_ERROR
- */
+static int rtr_send_pdu(const rtr_socket* rtr_socket, const void* pdu, const unsigned len);
 static int rtr_update_pfx_table(rtr_socket* rtr_socket, const void* pdu);
 static int rtr_set_last_update(rtr_socket* rtr_socket);
 
@@ -125,9 +120,7 @@ void rtr_pdu_to_network_byte_order(void* pdu){
         default:
             break;
     }
-
 }
-
 
 /*
  * if RTR_ERROR was returned a error pdu was sent, and the socket state changed
@@ -151,6 +144,8 @@ int rtr_receive_pdu(rtr_socket* rtr_socket, void* pdu, const size_t pdu_len, con
 
     assert(pdu_len >= RTR_MAX_PDU_LEN);
     //receive packet header
+    if(rtr_socket->state == RTR_SHUTDOWN)
+        return RTR_ERROR;
     error = tr_recv_all(rtr_socket->tr_socket, pdu, sizeof(pdu_header), timeout);
     if(error < 0){
         goto error;
@@ -186,6 +181,8 @@ int rtr_receive_pdu(rtr_socket* rtr_socket, void* pdu, const size_t pdu_len, con
 
     const unsigned int remaining_len = header.len - sizeof(pdu_header);
     if(remaining_len > 0){
+        if(rtr_socket->state == RTR_SHUTDOWN)
+            return RTR_ERROR;
         error = tr_recv_all(rtr_socket->tr_socket, (((char*) pdu) + sizeof(pdu_header)), remaining_len, RTR_RECV_TIMEOUT);
         if(error < 0){
             goto error;
@@ -247,10 +244,8 @@ int rtr_set_last_update(rtr_socket* rtr_socket){
     return RTR_SUCCESS;
 }
 
-
 int rtr_sync(rtr_socket* rtr_socket){
-    char pdu[RTR_MAX_PDU_LEN]; 
-
+    char pdu[RTR_MAX_PDU_LEN];
 
     int rtval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
     if(rtval == TR_WOULDBLOCK){
@@ -476,6 +471,8 @@ int rtr_send_pdu(const rtr_socket* rtr_socket, const void* pdu, const unsigned l
     char pdu_converted[len];
     memcpy(pdu_converted, pdu, len);
     rtr_pdu_to_network_byte_order(pdu_converted);
+    if(rtr_socket->state == RTR_SHUTDOWN)
+        return RTR_ERROR;
     const int rtval = tr_send_all(rtr_socket->tr_socket, pdu_converted, len, RTR_SEND_TIMEOUT);
 
     if(rtval > 0)
@@ -534,7 +531,6 @@ int rtr_handle_error_pdu(rtr_socket* rtr_socket, const void* buf){
             char* pdu_txt = (char*) pdu->rest + pdu->len_enc_pdu + 4;
             snprintf(txt, len_err_txt, "%s", pdu_txt);
             RTR_DBG("Error PDU included the following error msg: \'%s\'", pdu_txt);
-
         }
     }
 
