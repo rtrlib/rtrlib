@@ -3,6 +3,7 @@
 #include "rtrlib/rtrlib.h"
 #include <rtrlib/rtr_mgr.h>
 
+
 int main(){
     pfx_table pfxt;
     pfx_table_init(&pfxt, NULL, 0);
@@ -33,7 +34,7 @@ int main(){
 
 
     rtr_mgr_config conf[2];
-    for(int i=0;i<2;i++){
+    for(int i=0; i<2; i++){
         conf[i].sockets = malloc(1 * sizeof(rtr_socket*));
         if(i==0){
             conf[i].preference = 2;

@@ -60,7 +60,7 @@ static void ipaddr_to_string(const ip_addr* addr, char* result, const size_t len
     }
 }
 
-static void state_cb(const rtr_socket* sock, const rtr_socket_state state, void* data){
+static void state_cb(const rtr_socket* sock  __attribute__((unused)), const rtr_socket_state state, struct rtr_mgr_config* mgr_config  __attribute__((unused)), unsigned int mgr_config_len  __attribute__((unused))){
     printf("Socket State: ");
     switch(state)
     {
@@ -94,16 +94,13 @@ static void state_cb(const rtr_socket* sock, const rtr_socket_state state, void*
     }
 }
 
-static void update_cb(struct pfx_table* p, const pfx_record rec, const pfxv_state state){
+static void update_cb(struct pfx_table* p  __attribute__((unused)), const pfx_record rec, const bool added){
     char ip[INET6_ADDRSTRLEN];
+    if(added)
+        printf("Record added:\n");
+    else
+        printf("Record removed:\n");
     ipaddr_to_string(&(rec.prefix), ip, INET6_ADDRSTRLEN);
-    printf("state: ");
-    if(state == BGP_PFXV_STATE_VALID)
-        printf("BGP_PFXV_STATE_VALID\n");
-    else if(state == BGP_PFXV_STATE_NOT_FOUND)
-        printf("BGP_PFXV_STATE_NOT_FOUND\n");
-    else if(state == BGP_PFXV_STATE_INVALID)
-        printf("BGP_PFXV_STATE_INVALID\n");
     printf("prefix: %s\n", ip);
     printf("asn: %u\n", rec.asn);
     printf("min_len: %u\n", rec.min_len);
@@ -186,22 +183,11 @@ int main(int argc, char** argv){
     pfx_table_init(&pfxt, update_fps, 1);
 
     struct rtr_socket rtr;
+    rtr_init(&rtr, tr_sock, &pfxt, 240, 480);
+    rtr.connection_state_fp = &state_cb;
 
-    rtr_connection_state_fp con_state_fps[1];
-    update_fps[0] = &update_cb;
-    con_state_fps[0] = &state_cb;
-    rtr_init(&rtr, tr_sock, &pfxt, 240, 480, con_state_fps, 1, NULL);
-
-    pthread_t thrd;
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    if(pthread_create(&thrd, &attr, (void * (*)(void *)) &rtr_start, &rtr) != 0){
-        printf("pthread error\n");
-        exit(EXIT_FAILURE);
-    }
-
-    pthread_attr_destroy(&attr);
-    pthread_join(thrd, NULL);
+    rtr_start(&rtr);
+    pthread_join(rtr.thread_id, NULL);
 
     return(EXIT_SUCCESS);
 }
