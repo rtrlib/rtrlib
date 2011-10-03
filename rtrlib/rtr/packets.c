@@ -158,7 +158,6 @@ int rtr_receive_pdu(rtr_socket* rtr_socket, void* pdu, const size_t pdu_len, con
     memcpy(&header, pdu, sizeof(pdu_header));
     rtr_pdu_header_to_host_byte_order(&header);
 
-
     if(header.ver != RTR_PROTOCOL_VERSION){
         error =16;
         goto error;
@@ -377,14 +376,11 @@ int rtr_update_pfx_table(rtr_socket* rtr_socket, const void* pdu){
     }
 
     int rtval;
-    bool removed;
     if(((pdu_ipv4*) pdu)->flags == 1){
         rtval = pfx_table_add(rtr_socket->pfx_table, &pfxr);
-        removed = false;
     }
     else if(((pdu_ipv4*) pdu)->flags == 0){
         rtval = pfx_table_remove(rtr_socket->pfx_table, &pfxr);
-        removed = true;
     }
     else{
         const char* txt = "Prefix PDU with invalid flags value received";
