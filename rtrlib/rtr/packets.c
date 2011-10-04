@@ -525,8 +525,8 @@ int rtr_handle_error_pdu(rtr_socket* rtr_socket, const void* buf){
             //assure that the error text contains an terminating \0 char
             char txt[len_err_txt + 1];
             char* pdu_txt = (char*) pdu->rest + pdu->len_enc_pdu + 4;
-            snprintf(txt, len_err_txt, "%s", pdu_txt);
-            RTR_DBG("Error PDU included the following error msg: \'%s\'", pdu_txt);
+            snprintf(txt, len_err_txt + 1, "%s", pdu_txt);
+            RTR_DBG("Error PDU included the following error msg: \'%s\'", txt);
         }
     }
 
