@@ -137,25 +137,22 @@ error:
 void tr_ssh_close(void* tr_ssh_sock){
     tr_ssh_socket* socket = tr_ssh_sock;
 
-    if(socket->channel != NULL)
+    if(socket->channel != NULL){
         channel_close(socket->channel);
-    if(socket->session != NULL)
+        channel_free(socket->channel);
+        socket->channel = NULL;
+    }
+    if(socket->session != NULL){
         ssh_disconnect(socket->session);
+        ssh_free(socket->session);
+        socket->session = NULL;
+   }
 }
 
 void tr_ssh_free(tr_socket* tr_sock){
     tr_ssh_socket* tr_ssh_sock = tr_sock->socket;
-    tr_ssh_close(tr_ssh_sock);
 
-    if(tr_ssh_sock->channel != NULL){
-        channel_free(tr_ssh_sock->channel);
-        tr_ssh_sock->channel = NULL;
-    }
-    if(tr_ssh_sock->session != NULL){
-        ssh_free(tr_ssh_sock->session);
-        tr_ssh_sock->session = NULL;
-    }
-
+    tr_ssh_close(tr_sock);
     free(tr_ssh_sock);
     tr_sock->socket = NULL;
 }
@@ -163,7 +160,6 @@ void tr_ssh_free(tr_socket* tr_sock){
 /*
 int tr_ssh_recv(const void* tr_ssh_sock, void* buf, unsigned int buf_len, const unsigned int timeout){
     if(timeout > 0){
-        printf("YOOOOOOOOOO %u\n", timeout);
         struct timeval timev;
         //timev.tv_sec = timeout;
         timev.tv_sec = 0;
