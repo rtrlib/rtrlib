@@ -257,6 +257,7 @@ int rtr_sync(rtr_socket* rtr_socket){
 
     //ignore serial_notify PDUs, we already sent a serial_query, must be old messages
     while(type == SERIAL_NOTIFY){
+        RTR_DBG1("Ignoring Serial Notify");
         rtval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
         if(rtval == TR_WOULDBLOCK){
             rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
@@ -332,7 +333,7 @@ int rtr_sync(rtr_socket* rtr_socket){
             return RTR_ERROR;
         }
         else if(type == SERIAL_NOTIFY){
-            RTR_DBG1("Ignoring Serial Notify that was received during sync");
+            RTR_DBG1("Ignoring Serial Notify");
         }
         else{
             RTR_DBG("Received unexpected PDU (Type: %u)", ((pdu_header*) pdu)->type);

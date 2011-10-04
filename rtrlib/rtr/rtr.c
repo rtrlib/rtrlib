@@ -106,9 +106,10 @@ void rtr_fsm_start(rtr_socket* rtr_socket){
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
             }
             else
-                if(rtr_socket->request_nonce)
+                if(rtr_socket->request_nonce){
                     //change to state RESET, if socket dont has a nonce
                     rtr_change_socket_state(rtr_socket, RTR_RESET);
+                }
                 else{
                     //if we already have a nonce, send a serial query and start to sync
                     if(rtr_send_serial_query(rtr_socket) == RTR_SUCCESS)
