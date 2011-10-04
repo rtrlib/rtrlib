@@ -289,7 +289,6 @@ int rtr_sync(rtr_socket* rtr_socket){
                 rtr_socket->last_update = 0;
             }
             rtr_socket->nonce = cr_pdu->reserved;
-            rtr_socket->request_nonce = false;
         }
         else{
             if(rtr_socket->nonce != cr_pdu->reserved){
@@ -340,6 +339,7 @@ int rtr_sync(rtr_socket* rtr_socket){
             return RTR_ERROR;
         }
     } while(type != EOD);
+    rtr_socket->request_nonce = false;
     if (rtr_set_last_update(rtr_socket) == RTR_ERROR)
         return RTR_ERROR;
     RTR_DBG("Sync successfull, Nonce: %u, SN: %u", rtr_socket->nonce, rtr_socket->serial_number);
