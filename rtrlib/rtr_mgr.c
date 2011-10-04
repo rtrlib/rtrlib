@@ -8,11 +8,11 @@
 #define MGR_DBG(fmt, ...) dbg("RTR_MGR: " fmt, ## __VA_ARGS__)
 #define MGR_DBG1(a) dbg("RTR_MGR: " a)
 
-static int find_config(rtr_mgr_config config[], unsigned int config_len, const rtr_socket* sock, unsigned int* ind);
-static int start_sockets(rtr_mgr_config* config);
-static int config_cmp(const void* a, const void* b);
+static int rtr_mgr_find_config(rtr_mgr_config config[], unsigned int config_len, const rtr_socket* sock, unsigned int* ind);
+static int rtr_mgr_start_sockets(rtr_mgr_config* config);
+static int rtr_mgr_config_cmp(const void* a, const void* b);
 
-int start_sockets(rtr_mgr_config* config){
+int rtr_mgr_start_sockets(rtr_mgr_config* config){
     for(unsigned int i = 0; i < config->sockets_len; i++){
         if(rtr_start(config->sockets[i]) != 0){
             MGR_DBG1("rtr_mgr: Error starting rtr_socket pthread");
@@ -24,7 +24,7 @@ int start_sockets(rtr_mgr_config* config){
     return 0;
 }
 
-int find_config(rtr_mgr_config config[], unsigned int config_len, const rtr_socket* sock, unsigned int* ind){
+int rtr_mgr_find_config(rtr_mgr_config config[], unsigned int config_len, const rtr_socket* sock, unsigned int* ind){
     for(unsigned int i = 0; i < config_len; i++){
         for(unsigned int j = 0; j < config[i].sockets_len; j++){
             if(config[i].sockets[j] == sock){
@@ -48,10 +48,10 @@ void rtr_mgr_cb(const rtr_socket* sock, const rtr_socket_state state, rtr_mgr_co
 
     //find the index in the rtr_mgr_config struct, for which this function was called
     unsigned int ind = 0;
-    if(find_config(config, config_len, sock, &ind) == -1)
+    if(rtr_mgr_find_config(config, config_len, sock, &ind) == -1)
         return;
     if(state == RTR_ESTABLISHED || state == RTR_RESET || state == RTR_SYNC){
-    //socket established successfull a connection to the rtr_server
+        //socket established successfull a connection to the rtr_server
         if(config[ind].status == CONNECTING){
             //if previous state was CONNECTING, check if all other sockets in the group also have a established connection,
             //if yes change group state to ESTABLISHED
@@ -121,7 +121,7 @@ void rtr_mgr_cb(const rtr_socket* sock, const rtr_socket_state state, rtr_mgr_co
             }
         }
         if(next_config != (int) ind && config[next_config].status == CLOSED){
-            start_sockets(&(config[next_config]));
+            rtr_mgr_start_sockets(&(config[next_config]));
         }
         else
             MGR_DBG1("No other inactive groups found");
@@ -135,12 +135,12 @@ void rtr_mgr_cb(const rtr_socket* sock, const rtr_socket_state state, rtr_mgr_co
             next_config--;
         }
         if(next_config >= 0)
-            start_sockets(&(config[next_config]));
+            rtr_mgr_start_sockets(&(config[next_config]));
     }
     return;
 }
 
-int config_cmp(const void* a, const void* b){
+int rtr_mgr_config_cmp(const void* a, const void* b){
     const rtr_mgr_config* ar = a;
     const rtr_mgr_config* br = b;
     if(ar->preference > br->preference)
@@ -152,7 +152,7 @@ int config_cmp(const void* a, const void* b){
 
 int rtr_mgr_init(rtr_mgr_config config[], const unsigned int config_len){
     //sort array in asc preference order
-    qsort(config, config_len, sizeof(rtr_mgr_config), &config_cmp);
+    qsort(config, config_len, sizeof(rtr_mgr_config), &rtr_mgr_config_cmp);
 
     for(unsigned int i = 0; i < config_len; i++){
         if(config[i].sockets_len == 0){
@@ -175,7 +175,7 @@ int rtr_mgr_init(rtr_mgr_config config[], const unsigned int config_len){
 }
 
 int rtr_mgr_start(rtr_mgr_config config[]){
-    return start_sockets(&(config[0]));
+    return rtr_mgr_start_sockets(&(config[0]));
 }
 bool rtr_mgr_group_in_sync(rtr_mgr_config config[], const unsigned int config_len){
     for(unsigned int i = 0; i < config_len; i++){
