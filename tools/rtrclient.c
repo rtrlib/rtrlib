@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
+#include "rtrlib/lib/utils.h"
 #include "rtrlib/rtrlib.h"
 
 
@@ -43,22 +44,6 @@ static void print_usage(char** argv){
 
 }
 
-static void ipaddr_to_string(const ip_addr* addr, char* result, const size_t len){
-    if(addr->ver == IPV4){
-        struct in_addr ina;
-        ina.s_addr = addr->u.addr4.addr;
-        if(inet_ntop(AF_INET, &ina, result, len) == NULL){
-            printf("inet_ntop error\n");
-            exit(EXIT_FAILURE);
-        }
-    }
-    else if(addr->ver == IPV6){
-        if(inet_ntop(AF_INET6, (struct in6_addr*) &(addr->u.addr6), result, len) == NULL){
-            printf("inet_ntop error\n");
-            exit(EXIT_FAILURE);
-        }
-    }
-}
 
 static void state_cb(const rtr_socket* sock  __attribute__((unused)), const rtr_socket_state state, struct rtr_mgr_config* mgr_config  __attribute__((unused)), unsigned int mgr_config_len  __attribute__((unused))){
     printf("Socket State: ");

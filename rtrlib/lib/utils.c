@@ -20,8 +20,9 @@
  * Website: http://rpki.realmv6.org/
  */
 
-#include "rtrlib/lib/utils.h"
+#include <arpa/inet.h>
 #include <time.h>
+#include "rtrlib/lib/utils.h"
 
 int get_monotonic_time(time_t* seconds){
     struct timespec time;
@@ -30,5 +31,19 @@ int get_monotonic_time(time_t* seconds){
     *seconds = time.tv_sec;
     if((time.tv_nsec *  1000000000) >=5)
         *seconds +=1;
+    return 0;
+}
+
+int ipaddr_to_string(const ip_addr* addr, char* result, const size_t len){
+    if(addr->ver == IPV4){
+        struct in_addr ina;
+        ina.s_addr = addr->u.addr4.addr;
+        if(inet_ntop(AF_INET, &ina, result, len) == NULL)
+            return -1;
+    }
+    else if(addr->ver == IPV6){
+        if(inet_ntop(AF_INET6, (struct in6_addr*) &(addr->u.addr6), result, len) == NULL)
+            return -1;
+    }
     return 0;
 }

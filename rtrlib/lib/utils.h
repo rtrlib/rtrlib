@@ -23,7 +23,9 @@
 #ifndef RTR_UTILS_H
 #define RTR_UTILS_H
 #include <time.h>
+#include "rtrlib/lib/ip.h"
 
 int get_monotonic_time(time_t* seconds);
+int ipaddr_to_string(const ip_addr* addr, char* result, const size_t len);
 
 #endif
