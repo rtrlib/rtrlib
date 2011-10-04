@@ -255,8 +255,8 @@ int rtr_sync(rtr_socket* rtr_socket){
         return RTR_ERROR;
     pdu_type type = rtr_get_pdu_type(pdu);
 
-    //ignore serial_notify, we already sent a serial_query, must be an old message
-    if(type == SERIAL_NOTIFY){
+    //ignore serial_notify PDUs, we already sent a serial_query, must be old messages
+    while(type == SERIAL_NOTIFY){
         rtval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
         if(rtval == TR_WOULDBLOCK){
             rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
@@ -264,21 +264,22 @@ int rtr_sync(rtr_socket* rtr_socket){
         }
         else if(rtval < 0)
             return RTR_ERROR;
-    }
     type = rtr_get_pdu_type(pdu);
+    }
 
     if(type == ERROR){
         rtr_handle_error_pdu(rtr_socket, pdu);
         return RTR_ERROR;
     }
     else if(type == CACHE_RESET){
+        RTR_DBG1("Cache Reset PDU received");
         rtr_change_socket_state(rtr_socket, RTR_ERROR_NO_INCR_UPDATE_AVAIL);
         return RTR_ERROR;
     }
 
-
     uint16_t cr_nonce;
     if(type == CACHE_RESPONSE){
+        RTR_DBG1("Cache Response PDU received");
         pdu_header* cr_pdu = (pdu_header*) pdu;
         cr_nonce = cr_pdu->reserved;
         //set connection nonce
@@ -292,7 +293,7 @@ int rtr_sync(rtr_socket* rtr_socket){
         }
         else{
             if(rtr_socket->nonce != cr_pdu->reserved){
-                char* txt = "Wrong NONCE in cache_response"; //TODO: Append rtr_socket->nonce to string
+                char* txt = "Wrong NONCE in CACHE RESPONSE PDU"; //TODO: Append rtr_socket->nonce to string
                 rtr_send_error_pdu(rtr_socket, NULL, 0, CORRUPT_DATA, txt, sizeof(txt));
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
                 return RTR_ERROR;
@@ -318,22 +319,23 @@ int rtr_sync(rtr_socket* rtr_socket){
             pdu_eod* eod_pdu = (pdu_eod*) pdu;
 
             if(eod_pdu->nonce != rtr_socket->nonce){
-                RTR_DBG1("Wrong Nonce in EOD PDU");
-                char* txt = "Wrong NONCE in EOD PDU"; //TODO: Append rtr_socket->nonce to string
-
-                rtr_send_error_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, CORRUPT_DATA, txt, sizeof(txt));
+                char txt[67];
+                snprintf(txt, sizeof(txt),"Expected Nonce: %u, received Nonce. %u in EOD PDU", rtr_socket->nonce, eod_pdu->nonce);
+                rtr_send_error_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, CORRUPT_DATA, txt, strlen(txt) + 1);
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
                 return RTR_ERROR;
             }
-            RTR_DBG("EOD SN: %u", eod_pdu->sn);
             rtr_socket->serial_number = eod_pdu->sn;
         }
         else if(type == ERROR){
             rtr_handle_error_pdu(rtr_socket, pdu);
             return RTR_ERROR;
         }
+        else if(type == SERIAL_NOTIFY){
+            RTR_DBG1("Ignoring Serial Notify that was received during sync");
+        }
         else{
-            RTR_DBG1("Received unexpected PDU");
+            RTR_DBG("Received unexpected PDU (Type: %u)", ((pdu_header*) pdu)->type);
             char* txt = "unexpected PDU received during data sync";
             rtr_send_error_pdu(rtr_socket, pdu, sizeof(pdu_header), CORRUPT_DATA, txt, sizeof(txt));
             return RTR_ERROR;
@@ -543,7 +545,7 @@ int rtr_send_serial_query(rtr_socket* rtr_socket){
     pdu_sq.len = sizeof(pdu_sq);
     pdu_sq.sn = rtr_socket->serial_number;
 
-    RTR_DBG("sending serial query, sn: %u", rtr_socket->serial_number);
+    RTR_DBG("sending serial query, SN: %u", rtr_socket->serial_number);
     if(rtr_send_pdu(rtr_socket, &pdu_sq, sizeof(pdu_sq)) != RTR_SUCCESS){
         rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
         return RTR_ERROR;
