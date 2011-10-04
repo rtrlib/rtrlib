@@ -39,7 +39,6 @@
 
 #ifndef RTR_LPFST_PFX
 #define RTR_LPFST_PFX
-#include <pthread.h>
 #include "rtrlib/pfx/pfx.h"
 #include "rtrlib/pfx/lpfst/lpfst.h"
 
