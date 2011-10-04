@@ -20,17 +20,32 @@
  * Website: http://rpki.realmv6.org/
  */
 
-#include "rtrlib/lib/log.h"
-#include <stdio.h>
-#include <stdarg.h>
 #include <arpa/inet.h>
+#include <stdarg.h>
 #include <stdio.h>
+#include <stdio.h>
+#include <sys/time.h>
+#include <time.h>
+#include "rtrlib/lib/log.h"
 
 void dbg(const char* frmt, ...) {
 #ifndef NDEBUG
     va_list argptr;
     va_start(argptr, frmt);
-    printf("(%jd): ", (intmax_t) time(0));
+    struct timeval tv;
+    struct timezone tz;
+
+    bool fail = true;
+    if(gettimeofday(&tv, &tz) == 0){
+        struct tm *tm = localtime(&tv.tv_sec);
+        if(tm != NULL){
+            printf("(%04d/%02d/%02d %02d:%02d:%02d:%ld): ", tm->tm_year + 1900, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, tv.tv_usec);
+            fail = false;
+        }
+    }
+    if(fail)
+        printf("(%jd): ", (intmax_t) time(0));
+
     vprintf(frmt, argptr);
     printf("\n");
 #endif
