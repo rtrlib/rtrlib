@@ -28,6 +28,8 @@
 #include <string.h>
 #include <stdbool.h>
 #include <arpa/inet.h>
+#include <pthread.h>
+#include <time.h>
 #include "rtrlib/lib/ip.h"
 #include "rtrlib/pfx/lpfst/lpfst-pfx.h"
 #include "rtrlib/lib/test.h"
@@ -161,7 +163,7 @@ void rec_remove(pfx_table* pfxt){
 }
 
 int main(){
-    unsigned int max_threads = 10;
+    unsigned int max_threads = 15;
     pfx_table pfxt;
     pfx_table_init(&pfxt, NULL, 0);
     pthread_t threads[max_threads];
