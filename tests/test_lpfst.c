@@ -207,16 +207,17 @@ void lpfst_test(){
 
     lvl = 0;
     put_ipv4(&(addr), "132.0.0.0"); 
-    result = lpfst_lookup_exact(&n1, &addr, 16, &lvl);
-    assert(result == NULL);
+    bool found;
+    result = lpfst_lookup_exact(&n1, &addr, 16, &lvl, &found);
+    assert(!found);
 
     lvl = 0;
     put_ipv4(&(addr), "132.200.3.0"); 
-    result = lpfst_lookup_exact(&n1, &addr, 24, &lvl);
+    result = lpfst_lookup_exact(&n1, &addr, 24, &lvl, &found);
     assert(cmp_ipv4(&(result->prefix), "132.200.3.0"));
 
     result = lpfst_remove(&n1, &addr, 0);
-    assert(result != NULL);
+    assert(found);
     assert(cmp_ipv4(&(n1.prefix), "101.200.0.0"));
     assert(cmp_ipv4(&(n1.lchild->prefix), "132.200.0.0"));
     assert(cmp_ipv4(&(n1.lchild->lchild->prefix), "100.200.0.0"));

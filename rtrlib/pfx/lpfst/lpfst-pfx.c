@@ -158,8 +158,9 @@ int pfx_table_add(struct pfx_table* pfx_table, const pfx_record* record){
     lpfst_node* root = pfx_table_get_root(pfx_table, record->prefix.ver);
     unsigned int lvl = 0;
     if(root != NULL){
-        lpfst_node* node = lpfst_lookup_exact(root, &(record->prefix), record->min_len, &lvl);
-        if(node != NULL){ //node with prefix exists
+        bool found;
+        lpfst_node* node = lpfst_lookup_exact(root, &(record->prefix), record->min_len, &lvl, &found);
+        if(found){ //node with prefix exists
             if(pfx_table_find_elem(node->data, record, NULL) != NULL){
                 pthread_rwlock_unlock(&pfx_table->lock);
                 return PFX_DUPLICATE_RECORD; 
@@ -170,31 +171,34 @@ int pfx_table_add(struct pfx_table* pfx_table, const pfx_record* record){
             pfx_table_notify_clients(pfx_table, record, true);
             return rtval;
         }
-
+        else{
+            //no node with same prefix and prefix_len found
+            lpfst_node* new_node = NULL;
+            if(pfx_table_create_node(&new_node, record) == PFX_ERROR){
+                pthread_rwlock_unlock(&pfx_table->lock);
+                return PFX_ERROR;
+            }
+            lpfst_insert(node, new_node, lvl);
+            pthread_rwlock_unlock(&pfx_table->lock);
+            pfx_table_notify_clients(pfx_table, record, true);
+            return PFX_SUCCESS;
+        }
+    }
+    else{
+        //tree is empty, record will be the root_node
         lpfst_node* new_node = NULL;
         if(pfx_table_create_node(&new_node, record) == PFX_ERROR){
             pthread_rwlock_unlock(&pfx_table->lock);
             return PFX_ERROR;
         }
-        lvl = 0;
-        lpfst_insert(root, new_node, lvl);
+        if(record->prefix.ver == IPV4)
+            pfx_table->ipv4 = new_node;
+        else
+            pfx_table->ipv6 = new_node;
+
         pthread_rwlock_unlock(&pfx_table->lock);
         pfx_table_notify_clients(pfx_table, record, true);
-        return PFX_SUCCESS;
     }
-    //tree is empty, record will be the root_node
-    lpfst_node* new_node = NULL;
-    if(pfx_table_create_node(&new_node, record) == PFX_ERROR){
-        pthread_rwlock_unlock(&pfx_table->lock);
-        return PFX_ERROR;
-    }
-    if(record->prefix.ver == IPV4)
-        pfx_table->ipv4 = new_node;
-    else
-        pfx_table->ipv6 = new_node;
-
-    pthread_rwlock_unlock(&pfx_table->lock);
-    pfx_table_notify_clients(pfx_table, record, true);
     return PFX_SUCCESS;
 }
 
@@ -203,8 +207,9 @@ int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* record){
     lpfst_node* root = pfx_table_get_root(pfx_table, record->prefix.ver);
 
     unsigned int lvl = 0; //tree depth were node was found
-    lpfst_node* node = lpfst_lookup_exact(root, &(record->prefix), record->min_len, &lvl);
-    if(node == NULL){
+    bool found;
+    lpfst_node* node = lpfst_lookup_exact(root, &(record->prefix), record->min_len, &lvl, &found);
+    if(!found){
         pthread_rwlock_unlock(&pfx_table->lock);
         return PFX_RECORD_NOT_FOUND;
     }
@@ -321,7 +326,7 @@ int pfx_table_remove_id(pfx_table* pfx_table, lpfst_node** root, lpfst_node* nod
                 if(pfx_table_del_elem(data, i) == PFX_ERROR){
                     return PFX_ERROR;
                 }
-				pfx_table_notify_clients(pfx_table, &record, false);
+                pfx_table_notify_clients(pfx_table, &record, false);
             }
         }
         if(data->len == 0){

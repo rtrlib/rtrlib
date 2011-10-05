@@ -39,7 +39,7 @@ typedef struct lpfst_node_t {
  */
 void lpfst_insert(lpfst_node* root, lpfst_node* new_node, const unsigned int level);
 lpfst_node* lpfst_lookup(const lpfst_node* root_node, const ip_addr* prefix, const uint8_t mask_len,  unsigned int* level);
-lpfst_node* lpfst_lookup_exact(const lpfst_node* root_node, const ip_addr* prefix, const uint8_t mask_len, unsigned int* level);
+lpfst_node* lpfst_lookup_exact(lpfst_node* root_node, const ip_addr* prefix, const uint8_t mask_len, unsigned int* level, bool* found);
 lpfst_node* lpfst_remove(lpfst_node* root_node, const ip_addr* prefix, const unsigned int level);
 
 int lpfst_is_leaf(const lpfst_node* node);

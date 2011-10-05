@@ -75,16 +75,31 @@ lpfst_node* lpfst_lookup(const lpfst_node* root_node, const ip_addr* prefix, con
 }
 
 //return node with node->prefix == prefix(exact match)
-lpfst_node* lpfst_lookup_exact(const lpfst_node* root_node, const ip_addr* prefix, const uint8_t mask_len, unsigned int* level){
+lpfst_node* lpfst_lookup_exact(lpfst_node* root_node, const ip_addr* prefix, const uint8_t mask_len, unsigned int* level, bool* found){
+    *found = false;
     while(root_node != NULL)
     {
-        if(root_node->len == mask_len && ip_addr_equal(root_node->prefix, *prefix))
+        if(root_node->len == mask_len && ip_addr_equal(root_node->prefix, *prefix)){
+            *found = true;
             return (lpfst_node*) root_node;
+        }
 
-        if(ip_addr_is_zero(ip_addr_get_bits(prefix, *level, *level)))
-            root_node = root_node->lchild;
-        else
-            root_node = root_node->rchild;
+        if(ip_addr_is_zero(ip_addr_get_bits(prefix, *level, *level))){
+            if(root_node->lchild == NULL){
+                return root_node;
+            }
+            else{
+                root_node = root_node->lchild;
+            }
+        }
+        else{
+            if(root_node->rchild == NULL){
+                return root_node;
+            }
+            else{
+                root_node = root_node->rchild;
+            }
+        }
 
         (*level)++;
     }
