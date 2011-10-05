@@ -42,57 +42,47 @@
 #include "rtrlib/pfx/pfx.h"
 #include "rtrlib/rtr/rtr.h"
 
+typedef enum rtr_group_status{
+    CLOSED,
+    CONNECTING,
+    ESTABLISHED,
+    ERROR,
+    SHUTDOWN
+} rtr_group_status;
 
-/**
- * @brief A linked list that holds a set of rtr_sockets and their preference values.
- * @param pref A rtr_socket with a lower preference value has a higher priority.
- * @param next Pointer to another rtr_server_pool struct or NULL.
- */
-typedef struct rtr_server_pool{
-    rtr_socket* rtr_socket;
-    unsigned int pref;
-    struct rtr_server_pool* next;
-} rtr_server_pool;
 
-/**
- * @brief A rtr_mgr_socket, holds data associated with this pool.
- * @param pfx_table Pointer to a pfx_table that holds the validation records for all rtr_socket in this pool.
- * @param config Configuration of this manager socket.
- */
-typedef struct rtr_mgr_socket{
-    struct pfx_table* pfx_table;
-    rtr_server_pool* config;
-} rtr_mgr_socket;
+typedef struct rtr_mgr_config{
+    rtr_socket** sockets;
+    unsigned int sockets_len;
+    uint8_t preference;
+    rtr_group_status status;
+} rtr_mgr_config;
+
 
 /**
  * @brief Initialize all rtr_sockets in config with the supplied values.
- * @param[in] config Includes rtr_sockets that will be initialized.
- * @param[in] polling_period If not -1 the polling_period member of the rtr_sockets will be set to this value. See @ref rtr_socket
- * @param[in] cache_timeout If not -1 the polling_period member of the rtr_sockets will be set to this value. See @ref rtr_socket
- * @param[in] update_fp If not NULL the update_fp member of the rtr_sockets will be set to this value. See @ref rtr_socket
- * @param[in] update_fp_len If update_fp is not NULL the update_fp_len member of the rtr_sockets will be set to this value. See @ref rtr_socket
- * @param[in] connection_state_fp If not NULL the connection_state_fp member of the rtr_sockets will be set to this value. See @ref rtr_socket
- * @param[in] connection_state_fp_len If connection_state_fp is not NULL the update_fp_len member of the rtr_sockets will be set to this value. See @ref rtr_socket
+ * @param[in] config The preference must be unique in the rtr_mgr_config array, a reference to the same rtr_socket
+ * in two different rtr_socket** arrays will produce unpredictable behaviour.
+ * @param[in] rtr_mgr_socket Pointer to a rtr_mgr_socket that will be initialized
+ *
  */
-void rtr_mgr_init(rtr_server_pool* config, const 
-        int polling_period, const int cache_timeout, rtr_update_fp* update_fp, const unsigned int
-        update_fp_len, rtr_connection_state_fp* connection_state_fp, const unsigned int connection_state_fp_len);
+void rtr_mgr_init(rtr_mgr_config config[], const unsigned int config_len);
+
 
 /**
  * @brief Free all ressources that are associated with the rtr_mgr_socket.
  * @param[in] socket rtr_mgr_socket.
  */
-void rtr_mgr_free(rtr_mgr_socket* socket);
+void rtr_mgr_free(rtr_mgr_config config[], const unsigned int config_len);
 
 /**
  * @brief Initiates the rtr_connection_pool socket, establishes the connection with the set of rtr_sockets with the lowest preference value and treats error like
  * described in the rpki-rtr draft.
- * @param[out] socket Pointer to an allocated rtr_mgr_socket that will be initialized.
- * @param[in] config Configuration of the connection pool.
+ * @param[in] socket Pointer to an allocated rtr_mgr_socket that will be initialized.
  * @return 0  On success 
  * @return -1 On error 
  */
-int rtr_mgr_start(rtr_mgr_socket* socket, rtr_server_pool* config);
+int rtr_mgr_start(rtr_mgr_config config[], const unsigned int config_len);
 
 /**
  * @brief Terminates all rtr_socket connections in the pool and removes all entries from the pfx_tables.
@@ -100,19 +90,7 @@ int rtr_mgr_start(rtr_mgr_socket* socket, rtr_server_pool* config);
  * @return 0  On success 
  * @return -1 On error 
  */
-void rtr_mgr_stop(rtr_mgr_socket* socket);
-
-/**
- * @brief Validate the origin of a BGP route.
- * @param[in] socket rtr_mgr_socket
- * @param[in] asn Autonomous system number.
- * @param[in] prefix Pointer to an IP-Prefix.
- * @param[in] mask_len IP-Prefix length.
- * @param[out] result Result of the validation.
- * @return 0 On success.
- * @return -1 On error.
- */
-int rtr_mgr_validate(const rtr_mgr_socket* socket, const uint32_t asn, const ip_addr* prefix, const uint8_t mask_len, pfxv_state* result);
+void rtr_mgr_stop(rtr_mgr_config config[], const unsigned int config_len);
 
 #endif
 /* @} */

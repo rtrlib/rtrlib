@@ -62,16 +62,15 @@ typedef enum rtr_socket_state{
 } rtr_socket_state;
 
 struct rtr_socket;
-
-
+struct rtr_mgr_config;
 
 /**
  * @brief A function pointer that is called if the state of the rtr socket has changed.
  */
-typedef void (*rtr_connection_state_fp)(const struct rtr_socket* rtr_socket, const rtr_socket_state state);
+typedef void (*rtr_connection_state_fp)(const struct rtr_socket* rtr_socket, const rtr_socket_state state, struct rtr_mgr_config* mgr_config, unsigned int mgr_config_len);
 
 /**
- * @brief An RTR socket.
+ * @brief A RTR socket.
  * @param tr_socket Pointer to an initialized tr_socket that will be used to communicate with the RTR server.
  * @param polling_period Interval in seconds between update queries to the server. Must be <= 3600
  * @param last_update Timestamp of the last validation record update
@@ -81,8 +80,6 @@ typedef void (*rtr_connection_state_fp)(const struct rtr_socket* rtr_socket, con
  * @param nonce Nonce of the RTR session.
  * @param serial_number Last serial number of the obtained validation records.
  * @param pfx_table pfx_table that stores the validation records obtained from the connected rtr server.
- * @param connection_state_fp Array of function pointers that will be called if the state of the RTR socket changed.
- * @param connection_state_fp_len Number of elements in the connection_state_fp array.
  */
 typedef struct rtr_socket{
     tr_socket* tr_socket;
@@ -93,9 +90,10 @@ typedef struct rtr_socket{
     uint32_t nonce;
     uint32_t serial_number;
     struct pfx_table* pfx_table;
-    rtr_connection_state_fp* connection_state_fp;
-    unsigned int connection_state_fp_len;
     pthread_t thread_id;
+    rtr_connection_state_fp connection_state_fp;
+    struct rtr_mgr_config* mgr_config;
+    unsigned int mgr_config_len;
 } rtr_socket;
 
 
@@ -109,8 +107,7 @@ typedef struct rtr_socket{
  * @param[in] connection_state_fp
  * @param[in] connection_state_fp_len
  */
-void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table, const unsigned int polling_period, const unsigned int cache_timeout, rtr_connection_state_fp connection_state_fp[], const unsigned int connection_state_fp_len);
-
+void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table, const unsigned int polling_period, const unsigned int cache_timeout);
 
 /**
  * @brief Starts the RTR protocol state machine in a pthread. Connection to the rtr_server will be established and the

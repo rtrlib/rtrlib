@@ -20,18 +20,17 @@
  * Website: http://rpki.realmv6.org/
  */
 
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <string.h>
-#include <unistd.h>
 #include <errno.h>
-#include <assert.h>
-#include "rtrlib/transport/tcp/tcp_transport.h"
+#include <netdb.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include "rtrlib/lib/log.h"
+#include "rtrlib/transport/tcp/tcp_transport.h"
 
-#define TCP_DBG(msg) DBG("TCP_TRANSPORT", msg)
+#define TCP_DBG(msg) dbg("TCP_TRANSPORT", msg)
 
 typedef struct tr_tcp_socket{
     int socket;

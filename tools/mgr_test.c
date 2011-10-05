@@ -1,0 +1,41 @@
+#include <stdlib.h>
+#include "rtrlib/rtrlib.h"
+#include <rtrlib/rtr_mgr.h>
+
+int main(){
+    pfx_table pfxt;
+    pfx_table_init(&pfxt, NULL, 0);
+
+    tr_socket* tr_tcp;
+    tr_socket* tr_tcp1;
+    tr_tcp_config tcp_config = {
+        "141.22.26.232",          //IP
+        "42420"                      //Port
+    };
+    tr_tcp_init(&tcp_config, &tr_tcp);
+    rtr_socket rtr_tcp;
+    rtr_init(&rtr_tcp, tr_tcp, &pfxt, 240, 480);
+    tr_tcp_init(&tcp_config, &tr_tcp1);
+    rtr_socket rtr_tcp1;
+    rtr_init(&rtr_tcp1, tr_tcp, &pfxt, 240, 480);
+
+
+    rtr_mgr_config conf[2];
+    for(int i=0;i<2;i++){
+        conf[i].sockets = malloc(1 * sizeof(rtr_socket*));
+        if(i==0){
+            conf[i].preference = 2;
+            conf[i].sockets[0] = &rtr_tcp;
+        }
+        else if(i ==1){
+            conf[i].preference = 3;
+            conf[i].sockets[0] = &rtr_tcp1;
+        }
+        conf[i].sockets_len = 1;
+    }
+
+    rtr_mgr_init(conf, 2);
+    rtr_mgr_start(conf, 2);
+    printf("started\n");
+    sleep(500000);
+}

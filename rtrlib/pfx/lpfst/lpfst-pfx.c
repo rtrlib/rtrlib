@@ -301,3 +301,7 @@ int pfx_validate_origin(struct pfx_table* pfx_table, const uint32_t asn, const i
     pthread_rwlock_unlock(&pfx_table->lock);
     return rtval;
 }
+
+void pfx_table_remove_from_origin(struct pfx_table* pfx_table, const uintptr_t socket_id){
+    return;
+}

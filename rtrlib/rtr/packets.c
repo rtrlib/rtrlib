@@ -52,12 +52,11 @@ void rtr_change_socket_state(rtr_socket* rtr_socket, const rtr_socket_state new_
     //RTR_SHUTDOWN state is final, rtr_socket will be shutdowned can't be switched to any other state
     if(rtr_socket->state == RTR_SHUTDOWN)
         return;
-    if(rtr_socket->connection_state_fp != NULL){
-        for(int i=0;i<rtr_socket->connection_state_fp_len;i++)
-            //TODO: execute callback in a thread?
-            rtr_socket->connection_state_fp[i](rtr_socket, new_state);
-    }
+
+    //TODO: execute callback in a thread?
     rtr_socket->state = new_state;
+    if(rtr_socket->connection_state_fp != NULL)
+        rtr_socket->connection_state_fp(rtr_socket, new_state, rtr_socket->mgr_config, rtr_socket->mgr_config_len);
 }
 
 void rtr_pdu_header_to_host_byte_order(void* pdu){

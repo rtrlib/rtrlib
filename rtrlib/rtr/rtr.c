@@ -44,7 +44,7 @@ int install_sig_handler(){
     return sigaction(SIGUSR1, &sa, NULL);
 }
 
-void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table, const unsigned int polling_period, const unsigned int cache_timeout, rtr_connection_state_fp connection_state_fp[], const unsigned int connection_state_fp_len){
+void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table, const unsigned int polling_period, const unsigned int cache_timeout){
     rtr_socket->tr_socket = tr;
     assert(polling_period <= 3600);
     rtr_socket->polling_period = (polling_period > (3600 - RTR_RECV_TIMEOUT) ? (polling_period - RTR_RECV_TIMEOUT) : polling_period);
@@ -111,13 +111,17 @@ void rtr_fsm_start(rtr_socket* rtr_socket){
             dbg("%s", "State: RTR_ERROR_NO_DATA_AVAIL");
             //retry every 30sec to fetch data
             sleep(30);
+            rtr_socket->nonce = -1;
+            rtr_socket->serial_number = 0;
+            pfx_table_remove_from_origin(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
             rtr_change_socket_state(rtr_socket, RTR_RESET); 
         }
 
         else if(rtr_socket->state == RTR_ERROR_NO_INCR_UPDATE_AVAIL){
             dbg("%s", "State: RTR_ERROR_NO_INCR_UPDATE_AVAIL");
             rtr_socket->nonce = -1;
-            return;
+            pfx_table_remove_from_origin(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
+            rtr_change_socket_state(rtr_socket, RTR_RESET);
             //TODO: verbindung nicht schliessen sondern beim nächsten versucht weiter benutzen?
         }
 
@@ -126,16 +130,15 @@ void rtr_fsm_start(rtr_socket* rtr_socket){
             //nonce wont be resetted and reused for next reconnection, nonce nur behalten wenn das letzte reset query
             //kürzer als 60min her war
             tr_close(rtr_socket->tr_socket);
-            tr_free(rtr_socket->tr_socket);
             return;
             //TODO
         }
-        
+
         else if(rtr_socket->state == RTR_ERROR_FATAL){
             dbg("%s", "State: RTR_ERROR_FATAL");
             tr_close(rtr_socket->tr_socket);
-            tr_free(rtr_socket->tr_socket);
             rtr_socket->nonce = -1;
+            rtr_socket->serial_number = 0;
             //TODO: pfx_table daten löschen
             return;
         }

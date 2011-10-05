@@ -139,7 +139,6 @@ void tr_ssh_close(void* tr_ssh_sock){
         channel_close(socket->channel);
     if(socket->session != NULL)
         ssh_disconnect(socket->session);
-    
 }
 
 void tr_ssh_free(tr_socket* tr_sock){
@@ -188,8 +187,8 @@ int tr_ssh_recv_async(const tr_ssh_socket* tr_ssh_sock, void* buf, const size_t 
     else if(rtval == SSH_ERROR)
         return TR_ERROR;
     return rtval;
-
 }
+
 int tr_ssh_recv(const void* tr_ssh_sock, void* buf, const size_t buf_len, const time_t timeout){
     if(timeout == 0)
             return tr_ssh_recv_async(tr_ssh_sock, buf, buf_len);

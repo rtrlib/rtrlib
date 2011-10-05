@@ -29,7 +29,7 @@
 #include "rtrlib/rtrlib.h"
 
 
-void print_usage(char** argv){
+static void print_usage(char** argv){
     printf("Usage:\n");
     printf(" %s tcp <host> <port>\n", argv[0]);
 #ifdef RTRLIB_HAVE_LIBSSH
@@ -43,7 +43,7 @@ void print_usage(char** argv){
 
 }
 
-void ipaddr_to_string(const ip_addr* addr, char* result, const size_t len){
+static void ipaddr_to_string(const ip_addr* addr, char* result, const size_t len){
     if(addr->ver == IPV4){
         struct in_addr ina;
         ina.s_addr = addr->u.addr4.addr;
@@ -60,7 +60,7 @@ void ipaddr_to_string(const ip_addr* addr, char* result, const size_t len){
     }
 }
 
-void state_cb(const rtr_socket* sock, const rtr_socket_state state){
+static void state_cb(const rtr_socket* sock, const rtr_socket_state state, void* data){
     printf("Socket State: ");
     switch(state)
     {
@@ -94,7 +94,7 @@ void state_cb(const rtr_socket* sock, const rtr_socket_state state){
     }
 }
 
-void update_cb(struct pfx_table* p, const pfx_record rec, const pfxv_state state){
+static void update_cb(struct pfx_table* p, const pfx_record rec, const pfxv_state state){
     char ip[INET6_ADDRSTRLEN];
     ipaddr_to_string(&(rec.prefix), ip, INET6_ADDRSTRLEN);
     printf("state: ");
@@ -190,7 +190,7 @@ int main(int argc, char** argv){
     rtr_connection_state_fp con_state_fps[1];
     update_fps[0] = &update_cb;
     con_state_fps[0] = &state_cb;
-    rtr_init(&rtr, tr_sock, &pfxt, 240, 480, con_state_fps, 1);
+    rtr_init(&rtr, tr_sock, &pfxt, 240, 480, con_state_fps, 1, NULL);
 
     pthread_t thrd;
     pthread_attr_t attr;
