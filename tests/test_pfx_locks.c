@@ -21,7 +21,6 @@
  */
 
 #include <stdlib.h>
-#include <syscall.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -59,7 +58,7 @@ uint32_t min_i = 0xFF000000;
 uint32_t max_i = 0xFFFFFFF0;
 
 void rec_insert(pfx_table* pfxt){
-    const int tid = syscall(SYS_gettid);
+    const int tid = getpid();
     pfx_record rec;
     rec.min_len = 32;
     rec.max_len = 32;
@@ -92,7 +91,7 @@ void rec_insert(pfx_table* pfxt){
     }
 }
 void rec_validate(pfx_table* pfxt){
-    const int tid = syscall(SYS_gettid);
+    const int tid = getpid();
     pfx_record rec;
     rec.min_len = 32;
     rec.max_len = 32;
@@ -126,7 +125,7 @@ void rec_validate(pfx_table* pfxt){
     }
 }
 void rec_remove(pfx_table* pfxt){
-    const int tid = syscall(SYS_gettid);
+    const int tid = getpid();
     int rtval;
     pfx_record rec;
     rec.min_len = 32;
