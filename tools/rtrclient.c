@@ -46,6 +46,7 @@ static void print_usage(char** argv){
 
 
 static void state_cb(const rtr_socket* sock  __attribute__((unused)), const rtr_socket_state state, struct rtr_mgr_config* mgr_config  __attribute__((unused)), unsigned int mgr_config_len  __attribute__((unused))){
+#ifdef NDEBUG
     printf("Socket State: ");
     switch(state)
     {
@@ -77,6 +78,7 @@ static void state_cb(const rtr_socket* sock  __attribute__((unused)), const rtr_
             printf("RTR_SHUTDOWN\n");
             break;
     }
+#endif
 }
 
 static void update_cb(struct pfx_table* p  __attribute__((unused)), const pfx_record rec, const bool added){
