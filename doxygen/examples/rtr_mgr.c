@@ -5,7 +5,7 @@ int main(){
     //create a SSH transport socket
     tr_socket* tr_ssh;
     tr_ssh_config config = {
-        "123.321.123.321",          //IP
+        "123.231.123.221",          //IP
         22,                         //Port
         "rpki_user",
         "/etc/rpki-rtr/hostkey",    //Server hostkey
