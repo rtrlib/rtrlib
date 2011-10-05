@@ -28,6 +28,7 @@
 #include "rtrlib/rtr/packets.h"
 #include "rtrlib/lib/log.h"
 
+static void rtr_fsm_start(rtr_socket* rtr_socket);
 static void sighandler(int b){
     return;
 }
@@ -52,12 +53,25 @@ void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table
     rtr_socket->state = RTR_CLOSED;
     rtr_socket->nonce = -1;
     rtr_socket->serial_number = 0;
+    rtr_socket->last_update = 0;
     rtr_socket->pfx_table = pfx_table;
-    rtr_socket->connection_state_fp = connection_state_fp;
-    rtr_socket->connection_state_fp_len = connection_state_fp_len;
+    rtr_socket->connection_state_fp = NULL;
+    rtr_socket->thread_id = 0;
+    rtr_socket->mgr_config = NULL;
+    rtr_socket->mgr_config_len = 0;
 }
 
-void rtr_start(rtr_socket* rtr_socket){
+int rtr_start(rtr_socket* rtr_socket){
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    int rtval = pthread_create(&(rtr_socket->thread_id), &attr, (void * (*)(void *)) &rtr_fsm_start, rtr_socket);
+    pthread_attr_destroy(&attr);
+    if(rtval == 0)
+        return RTR_SUCCESS;
+    return RTR_ERROR;
+}
+
+void rtr_fsm_start(rtr_socket* rtr_socket){
     install_sig_handler();
     while(1){
         if(rtr_socket->state == RTR_CLOSED){
@@ -129,18 +143,17 @@ void rtr_start(rtr_socket* rtr_socket){
         else if(rtr_socket->state == RTR_SHUTDOWN){
             dbg("%s", "State: RTR_SHUTDOWN");
             tr_close(rtr_socket->tr_socket);
-            tr_free(rtr_socket->tr_socket);
             rtr_socket->nonce = -1;
+            rtr_socket->serial_number = 0;
             //TODO: pfx_table daten löschen
             //void pfx_table_remove_from_origin(struct pfx_table* pfx_table, unsigned int rtr_socket_id);
             pthread_exit(NULL);
         }
-
     }
 }
 
-void rtr_stop(rtr_socket* rtr_socket, const pthread_t thread_id){
+void rtr_stop(rtr_socket* rtr_socket){
     rtr_change_socket_state(rtr_socket, RTR_SHUTDOWN);
-    if(thread_id != 0)
-        pthread_kill(thread_id, SIGUSR1);
+    if(rtr_socket->thread_id != 0)
+        pthread_kill(rtr_socket->thread_id, SIGUSR1);
 }

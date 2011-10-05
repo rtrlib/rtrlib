@@ -95,6 +95,7 @@ typedef struct rtr_socket{
     struct pfx_table* pfx_table;
     rtr_connection_state_fp* connection_state_fp;
     unsigned int connection_state_fp_len;
+    pthread_t thread_id;
 } rtr_socket;
 
 
@@ -112,20 +113,18 @@ void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table
 
 
 /**
- * @brief Start the RTR connection. Transport connection will be established and a RTR session started.
+ * @brief Starts the RTR protocol state machine in a pthread. Connection to the rtr_server will be established and the
+ * pfx_records will be synced.
  * @param[in] rtr_socket rtr_socket that will be used.
- * @return RTR_ERROR If transport connection could'nt be established
+ * @return RTR_ERROR
  */
-void rtr_start(rtr_socket* rtr_socket);
-
+int rtr_start(rtr_socket* rtr_socket);
 
 /**
  * @brief Stop the RTR connection and terminate the transport connection
  * @param[in] rtr_socket rtr_socket that will be used.
- * @param[in] thread_id ID of the thread in which rtr_start was executed.
  */
-void rtr_stop(rtr_socket* rtr_socket, const pthread_t thread_id);
-
+void rtr_stop(rtr_socket* rtr_socket);
 
 /**
  * @brief Free all memory that was allocated by the rtr_socket.

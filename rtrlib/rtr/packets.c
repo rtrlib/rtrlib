@@ -543,7 +543,6 @@ int rtr_handle_error_pdu(rtr_socket* rtr_socket, const void* buf, const size_t p
     return RTR_SUCCESS;
 }
 
-
 int rtr_send_serial_query(rtr_socket* rtr_socket){
     pdu_serial_query pdu_sq;
     pdu_sq.ver = RTR_PROTOCOL_VERSION;
