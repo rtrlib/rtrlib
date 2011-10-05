@@ -43,16 +43,18 @@ void lpfst_insert(lpfst_node* root_node, lpfst_node* new_node, const unsigned in
             root_node->lchild = new_node;
             new_node->parent = root_node;
         }
-        else
+        else{
             lpfst_insert(root_node->lchild, new_node, level+1);
+        }
     }
     else{
         if(root_node->rchild == NULL){
             root_node->rchild = new_node;
             new_node->parent = root_node;
         }
-        else
+        else{
             lpfst_insert(root_node->rchild, new_node, level+1);
+        }
     }
 }
 
@@ -79,6 +81,9 @@ lpfst_node* lpfst_lookup_exact(lpfst_node* root_node, const ip_addr* prefix, con
     *found = false;
     while(root_node != NULL)
     {
+        if(*level > 0 && root_node->len < mask_len){
+            return root_node->parent;
+        }
         if(root_node->len == mask_len && ip_addr_equal(root_node->prefix, *prefix)){
             *found = true;
             return (lpfst_node*) root_node;
