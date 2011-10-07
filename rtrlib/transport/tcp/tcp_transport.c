@@ -30,8 +30,9 @@
 #include "rtrlib/lib/log.h"
 #include "rtrlib/transport/tcp/tcp_transport.h"
 
-#define TCP_DBG(fmt, ...) dbg("TCP Transport: " fmt, ## __VA_ARGS__)
-#define TCP_DBG1(a) dbg("TCP Transport:: " a)
+#define TCP_DBG(fmt, sock, ...) dbg("TCP Transport(%s:%s): " fmt, sock->config->host, sock->config->port, ## __VA_ARGS__)
+#define TCP_DBG1(a, sock) dbg("TCP Transport(%s:%s): " a,sock->config->host, sock->config->port)
+
 
 typedef struct tr_tcp_socket{
     int socket;
@@ -78,14 +79,15 @@ int tr_tcp_open(void* tr_socket){
         goto end;
 
     if ((tcp_socket->socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) == -1){
-        TCP_DBG("creating socket failed, %s", strerror(errno));
+        TCP_DBG("creating socket failed, %s", tcp_socket, strerror(errno));
         goto end;
     }
 
     if (connect(tcp_socket->socket, res->ai_addr, res->ai_addrlen) == -1){
-        TCP_DBG("connect failed, %s", strerror(errno));
+        TCP_DBG("connect failed, %s", tcp_socket, strerror(errno));
         goto end;
     }
+    TCP_DBG1("Connection established", tcp_socket);
     rtval = TR_SUCCESS;
 
 end:
@@ -116,7 +118,7 @@ int tr_tcp_recv(const void* tr_tcp_sock, void* pdu, const size_t len, const time
     else{
         struct timeval t = { timeout, 0 };
         if(setsockopt(tcp_socket->socket, SOL_SOCKET, SO_RCVTIMEO, &t, sizeof(t)) == -1){
-            TCP_DBG("setting SO_RCVTIMEO failed, %s", strerror(errno));
+            TCP_DBG("setting SO_RCVTIMEO failed, %s", tcp_socket, strerror(errno));
             return TR_ERROR;
         }
         rtval = recv(tcp_socket->socket, pdu, len, 0);
@@ -127,7 +129,7 @@ int tr_tcp_recv(const void* tr_tcp_sock, void* pdu, const size_t len, const time
             return TR_WOULDBLOCK;
         if(errno == EINTR)
             return TR_INTR;
-        TCP_DBG("recv(..) error: %s", strerror(errno));
+        TCP_DBG("recv(..) error: %s", tcp_socket, strerror(errno));
         return TR_ERROR;
     }
     if(rtval == 0)
@@ -143,7 +145,7 @@ int tr_tcp_send(const void* tr_tcp_sock, const void* pdu, const size_t len, cons
     else{
         struct timeval t = { timeout, 0 };
         if(setsockopt(tcp_socket->socket, SOL_SOCKET, SO_SNDTIMEO, &t, sizeof(t)) == -1){
-            TCP_DBG("setting SO_SNDTIMEO failed, %s", strerror(errno));
+            TCP_DBG("setting SO_SNDTIMEO failed, %s", tcp_socket, strerror(errno));
             return TR_ERROR;
         }
         rtval = send(tcp_socket->socket, pdu, len, 0);
@@ -154,7 +156,7 @@ int tr_tcp_send(const void* tr_tcp_sock, const void* pdu, const size_t len, cons
             return TR_WOULDBLOCK;
         if(errno == EINTR)
             return TR_INTR;
-        TCP_DBG("send(..) error: %s", strerror(errno));
+        TCP_DBG("send(..) error: %s", tcp_socket, strerror(errno));
         return TR_ERROR;
     }
     if(rtval == 0)

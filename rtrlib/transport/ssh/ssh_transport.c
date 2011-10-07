@@ -29,8 +29,8 @@
 #include "../../lib/utils.h"
 
 
-#define SSH_DBG(fmt, ...) dbg("SSH Transport: " fmt, ## __VA_ARGS__)
-#define SSH_DBG1(a) dbg("SSH Transport: " a)
+#define SSH_DBG(fmt, sock, ...) dbg("SSH Transport(%s@%s:%u): " fmt, sock->config->username, sock->config->host, sock->config->port, ## __VA_ARGS__)
+#define SSH_DBG1(a, sock) dbg("SSH Transport(%s@%s:%u): " a, sock->config->username, sock->config->host, sock->config->port)
 
 typedef struct tr_ssh_socket{
     ssh_session session;
@@ -74,7 +74,7 @@ int tr_ssh_open(void* socket){
     assert(ssh_socket->session == NULL);
 
     if((ssh_socket->session = ssh_new()) == NULL){
-        SSH_DBG1("tr_ssh_init: can't create ssh_session");
+        SSH_DBG1("tr_ssh_init: can't create ssh_session", ssh_socket);
         goto error;
     }
 
@@ -85,25 +85,25 @@ int tr_ssh_open(void* socket){
     ssh_options_set(ssh_socket->session, SSH_OPTIONS_KNOWNHOSTS, (config->server_hostkey_path));
 
     if(ssh_connect(ssh_socket->session) == SSH_ERROR){
-        SSH_DBG1("tr_ssh_init: opening SSH connection failed");
+        SSH_DBG1("tr_ssh_init: opening SSH connection failed", ssh_socket);
         goto error;
     }
 
     //check server identity
     if((config->server_hostkey_path != NULL) && (ssh_is_server_known(ssh_socket->session) != SSH_SERVER_KNOWN_OK)){
-        SSH_DBG1("tr_ssh_init: Wrong hostkey");
+        SSH_DBG1("tr_ssh_init: Wrong hostkey", ssh_socket);
         goto error;
     }
 
     //authenticate
     ssh_string pubkey = publickey_from_file(ssh_socket->session, config->client_pubkey_path, NULL);
     if(pubkey == NULL){
-        SSH_DBG1("tr_ssh_init: Loading public key failed");
+        SSH_DBG1("tr_ssh_init: Loading public key failed", ssh_socket);
         goto error;
     }
     ssh_private_key privkey = privatekey_from_file(ssh_socket->session, config->client_privkey_path, 0, NULL);
     if(privkey == NULL){
-        SSH_DBG1("tr_ssh_init: Loading private key failed");
+        SSH_DBG1("tr_ssh_init: Loading private key failed", ssh_socket);
         string_free(pubkey);
         goto error;
     }
@@ -111,7 +111,7 @@ int tr_ssh_open(void* socket){
     string_free(pubkey);
     privatekey_free(privkey);
     if(rtval != SSH_AUTH_SUCCESS){
-        SSH_DBG1("tr_ssh_init: Authentication failed");
+        SSH_DBG1("tr_ssh_init: Authentication failed", ssh_socket);
         goto error;
     }
 
@@ -122,9 +122,10 @@ int tr_ssh_open(void* socket){
          goto error;
 
     if(channel_request_subsystem(ssh_socket->channel, "rpki-rtr") == SSH_ERROR){
-        SSH_DBG1("tr_ssh_init: Error requesting subsystem rpki-rtr");
+        SSH_DBG1("tr_ssh_init: Error requesting subsystem rpki-rtr", ssh_socket);
         goto error;
     }
+    SSH_DBG("SSH connection to: %s:%u established", ssh_socket, config->host, config->port);
 
     return 0;
 
@@ -183,7 +184,7 @@ int tr_ssh_recv_async(const tr_ssh_socket* tr_ssh_sock, void* buf, const size_t 
     if(rtval == 0)
         return TR_WOULDBLOCK;
     else if(rtval == SSH_ERROR){
-        SSH_DBG1("recv(..) error");
+        SSH_DBG1("recv(..) error", tr_ssh_sock);
         return TR_ERROR;
     }
     return rtval;
@@ -202,7 +203,7 @@ int tr_ssh_recv(const void* tr_ssh_sock, void* buf, const size_t buf_len, const 
         if(rtval > 0)
             return tr_ssh_recv_async(tr_ssh_sock, buf, buf_len);
         else if(rtval == SSH_ERROR){
-            SSH_DBG1("channel_poll(..) error");
+            //SSH_DBG("channel_poll(..) error (%s:%u)", config->host, config->port);
             return TR_ERROR;
         }
 
