@@ -125,7 +125,7 @@ int tr_ssh_open(void* socket){
         SSH_DBG1("tr_ssh_init: Error requesting subsystem rpki-rtr", ssh_socket);
         goto error;
     }
-    SSH_DBG("SSH connection to: %s:%u established", ssh_socket, config->host, config->port);
+    SSH_DBG1("Connection established", ssh_socket);
 
     return 0;
 
