@@ -21,6 +21,7 @@
  */
 
 #include "rtrlib/pfx/lpfst/lpfst-pfx.h"
+#include <assert.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -302,20 +303,23 @@ int pfx_table_validate(struct pfx_table* pfx_table, const uint32_t asn, const ip
 }
 
 int pfx_table_src_remove(struct pfx_table* pfx_table, const uintptr_t socket_id){
-    for(unsigned int i = 0; i< 2; i++){
+    for(unsigned int i = 0; i < 2; i++){
         lpfst_node** root = (i == 0 ? &(pfx_table->ipv4) : &(pfx_table->ipv6));
+        pthread_rwlock_wrlock(&(pfx_table->lock));
         if(*root != NULL){
-            pthread_rwlock_rdlock(&(pfx_table->lock));
             int rtval = pfx_table_remove_id(pfx_table, root, *root, socket_id, 0);
-            pthread_rwlock_unlock(&pfx_table->lock);
             if(rtval == PFX_ERROR)
                 return PFX_ERROR;
         }
+        pthread_rwlock_unlock(&pfx_table->lock);
     }
     return PFX_SUCCESS;
 }
 
 int pfx_table_remove_id(pfx_table* pfx_table, lpfst_node** root, lpfst_node* node, const uintptr_t socket_id, const unsigned int level){
+    assert(node != NULL);
+    assert(root != NULL);
+    assert(*root != NULL);
     bool check_node = true;
 
     while(check_node){ //data from removed node are replaced from data from child nodes (if children exists), same node must be checked again if it was replaced with previous child node data
