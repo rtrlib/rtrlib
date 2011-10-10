@@ -148,6 +148,7 @@ void tr_ssh_close(void* tr_ssh_sock){
         ssh_free(socket->session);
         socket->session = NULL;
    }
+    SSH_DBG1("Socket closed", socket);
 }
 
 void tr_ssh_free(tr_socket* tr_sock){
@@ -181,8 +182,15 @@ int tr_ssh_recv(const void* tr_ssh_sock, void* buf, unsigned int buf_len, const 
 */
 int tr_ssh_recv_async(const tr_ssh_socket* tr_ssh_sock, void* buf, const size_t buf_len){
     const int rtval = channel_read_nonblocking(tr_ssh_sock->channel, buf, buf_len, false);
-    if(rtval == 0)
-        return TR_WOULDBLOCK;
+    if(rtval == 0){
+        if(channel_is_eof(tr_ssh_sock->channel) != 0){
+            SSH_DBG1("remote has sent EOF", tr_ssh_sock);
+            return TR_ERROR;
+        }
+        else{
+            return TR_WOULDBLOCK;
+        }
+    }
     else if(rtval == SSH_ERROR){
         SSH_DBG1("recv(..) error", tr_ssh_sock);
         return TR_ERROR;
@@ -203,7 +211,6 @@ int tr_ssh_recv(const void* tr_ssh_sock, void* buf, const size_t buf_len, const 
         if(rtval > 0)
             return tr_ssh_recv_async(tr_ssh_sock, buf, buf_len);
         else if(rtval == SSH_ERROR){
-            //SSH_DBG("channel_poll(..) error (%s:%u)", config->host, config->port);
             return TR_ERROR;
         }
 
