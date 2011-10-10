@@ -29,6 +29,110 @@
 #include "rtrlib/lib/utils.h"
 #include "rtrlib/lib/log.h"
 
+typedef enum pdu_error_type{
+    CORRUPT_DATA = 0,
+    INTERNAL_ERROR = 1,
+    NO_DATA_AVAIL = 2,
+    INVALID_REQUEST = 3,
+    UNSUPPORTED_PROTOCOL_VER = 4,
+    UNSUPPORTED_PDU_TYPE = 5,
+    WITHDRAWAL_OF_UNKNOWN_RECORD = 6,
+    DUPLICATE_ANNOUNCEMENT = 7
+} pdu_error_type;
+
+typedef enum pdu_type{
+    SERIAL_NOTIFY = 0,
+    SERIAL_QUERY = 1,
+    RESET_QUERY = 2,
+    CACHE_RESPONSE = 3,
+    IPV4_PREFIX = 4,
+    IPV6_PREFIX = 6,
+    EOD = 7,
+    CACHE_RESET = 8,
+    ERROR = 10
+} pdu_type;
+
+typedef struct pdu_header{
+    uint8_t ver;
+    uint8_t type;
+    uint16_t reserved;
+    uint32_t len;
+} pdu_header;
+
+typedef struct pdu_serial_notify{
+    uint8_t ver;
+    uint8_t type;
+    uint16_t nonce;
+    uint32_t len;
+    uint32_t sn;
+} pdu_serial_notify;
+
+typedef struct pdu_serial_query{
+    uint8_t ver;
+    uint8_t type;
+    uint16_t nonce;
+    uint32_t len;
+    uint32_t sn;
+} pdu_serial_query;
+
+typedef struct pdu_serial_query pdu_eod;
+
+typedef struct pdu_ipv4{
+    uint8_t ver;
+    uint8_t type;
+    uint16_t reserved;
+    uint32_t len;
+    uint8_t flags;
+    uint8_t prefix_len;
+    uint8_t max_prefix_len;
+    uint8_t zero;
+    uint32_t prefix;
+    uint32_t asn;
+} pdu_ipv4;
+
+typedef struct pdu_ipv6{
+    uint8_t ver;
+    uint8_t type;
+    uint16_t reserved;
+    uint32_t len;
+    uint8_t flags;
+    uint8_t prefix_len;
+    uint8_t max_prefix_len;
+    uint8_t zero;
+    uint8_t prefix[16];
+    uint32_t asn;
+} pdu_ipv6;
+
+typedef struct pdu_error{
+    uint8_t ver;
+    uint8_t type;
+    uint16_t error_code;
+    uint32_t len;
+    uint32_t len_enc_pdu;
+    char rest[];
+} pdu_error;
+
+/*
+   0          8          16         24        31
+   .-------------------------------------------.
+   | Protocol |   PDU    |                     |
+   | Version  |   Type   |    reserved = zero  |
+   |    0     |    2     |                     |
+   +-------------------------------------------+
+   |                                           |
+   |                 Length=8                  |
+   |                                           |
+   `-------------------------------------------'
+ */
+static const pdu_header pdu_reset_query =
+{
+    0, //sollte RTR_PROTOCOL_VERSION sein, aber gcc mag dat net:(
+    2,
+    0,
+    8
+};
+
+
 static int rtr_receive_pdu(rtr_socket* rtr_socket, void* pdu, const size_t pdu_len, const time_t timeout);
 static int rtr_send_error_pdu(const rtr_socket* rtr_socket, const void* erroneous_pdu, const uint32_t pdu_len, const pdu_error_type error, const char* text, const uint32_t text_len);
 static void rtr_pdu_header_to_host_byte_order(void* pdu);

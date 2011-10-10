@@ -39,6 +39,11 @@
 #define RTR_DBG(fmt, ...) dbg("RTR Socket: " fmt, ## __VA_ARGS__)
 #define RTR_DBG1(a) dbg("RTR Socket: " a)
 
+enum rtr_rtvals{
+    RTR_SUCCESS = 0,
+    RTR_ERROR = -1
+};
+
 /**
  * @brief States of the RTR socket.
  */
