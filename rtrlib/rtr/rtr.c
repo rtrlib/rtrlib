@@ -56,7 +56,7 @@ void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table
     assert(polling_period <= 3600);
     rtr_socket->polling_period = (polling_period > (3600 - RTR_RECV_TIMEOUT) ? (3600 - RTR_RECV_TIMEOUT) : polling_period);
     rtr_socket->cache_timeout = (cache_timeout == 0 ? (rtr_socket->polling_period / 2) : cache_timeout);
-    rtr_socket->state = RTR_CLOSED;
+    rtr_socket->state = RTR_CONNECTING;
     rtr_socket->request_nonce = true;
     rtr_socket->serial_number = 0;
     rtr_socket->last_update = 0;
@@ -96,8 +96,8 @@ void rtr_purge_outdated_records(rtr_socket* rtr_socket){
 void rtr_fsm_start(rtr_socket* rtr_socket){
     install_sig_handler();
     while(1){
-        if(rtr_socket->state == RTR_CLOSED){
-            RTR_DBG1("State: RTR_CLOSED");
+        if(rtr_socket->state == RTR_CONNECTING){
+            RTR_DBG1("State: RTR_CONNECTING");
             //old pfx_record could exists in the pfx_table, check if they are too old and must be removed
             rtr_purge_outdated_records(rtr_socket);
 
@@ -163,14 +163,14 @@ void rtr_fsm_start(rtr_socket* rtr_socket){
         else if(rtr_socket->state == RTR_ERROR_TRANSPORT){
             RTR_DBG1("State: RTR_ERROR_TRANSPORT");
             tr_close(rtr_socket->tr_socket);
-            rtr_change_socket_state(rtr_socket, RTR_CLOSED);
+            rtr_change_socket_state(rtr_socket, RTR_CONNECTING);
             sleep(ERR_TIMEOUT);
         }
 
         else if(rtr_socket->state == RTR_ERROR_FATAL){
             RTR_DBG1("State: RTR_ERROR_FATAL");
             tr_close(rtr_socket->tr_socket);
-            rtr_change_socket_state(rtr_socket, RTR_CLOSED);
+            rtr_change_socket_state(rtr_socket, RTR_CONNECTING);
             sleep(ERR_TIMEOUT);
         }
 

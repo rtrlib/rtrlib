@@ -9,15 +9,19 @@ int main(){
     pfx_table_init(&pfxt, NULL, 0);
 
     tr_socket* tr_tcp;
+    tr_socket* tr_tcp1;
     tr_socket* tr_ssh;
     tr_tcp_config tcp_config = {
-        "141.22.26.232",          //IP
-        "42420"                      //Port
+        "localhost",          //IP
+        "8282"                      //Port
     };
 
     tr_tcp_init(&tcp_config, &tr_tcp);
+    tr_tcp_init(&tcp_config, &tr_tcp1);
     rtr_socket rtr_tcp;
-    rtr_init(&rtr_tcp, tr_tcp, &pfxt, 240, 480);
+    rtr_init(&rtr_tcp, tr_tcp, &pfxt, 240, 520);
+    rtr_socket rtr_tcp1;
+    rtr_init(&rtr_tcp1, tr_tcp1, &pfxt, 240, 520);
 
     tr_ssh_config ssh_config = {
         "141.22.26.232",
@@ -30,22 +34,19 @@ int main(){
 
     tr_ssh_init(&ssh_config, &tr_ssh);
     rtr_socket rtr_ssh;
-    rtr_init(&rtr_ssh, tr_ssh, &pfxt, 240, 480);
+    rtr_init(&rtr_ssh, tr_ssh, &pfxt, 240, 520);
 
 
     rtr_mgr_config conf[2];
-    for(int i=0; i<2; i++){
-        conf[i].sockets = malloc(1 * sizeof(rtr_socket*));
-        if(i==0){
-            conf[i].preference = 2;
-            conf[i].sockets[0] = &rtr_ssh;
-        }
-        else if(i ==1){
-            conf[i].preference = 3;
-            conf[i].sockets[0] = &rtr_tcp;
-        }
-        conf[i].sockets_len = 1;
-    }
+    conf[0].sockets_len = 2;
+    conf[0].sockets = malloc(2 * sizeof(rtr_socket*));
+    conf[0].sockets[0] = &rtr_ssh;
+    conf[0].sockets[1] = &rtr_tcp;
+    conf[0].preference = 2;
+    conf[1].sockets = malloc(1 * sizeof(rtr_socket*));
+    conf[1].sockets_len = 1;
+    conf[1].sockets[0] = &rtr_tcp1;
+    conf[1].preference = 3;
 
     rtr_mgr_init(conf, 2);
     rtr_mgr_start(conf);

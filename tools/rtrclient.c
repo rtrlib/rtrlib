@@ -44,14 +44,13 @@ static void print_usage(char** argv){
 
 }
 
-
 static void state_cb(const rtr_socket* sock  __attribute__((unused)), const rtr_socket_state state, struct rtr_mgr_config* mgr_config  __attribute__((unused)), unsigned int mgr_config_len  __attribute__((unused))){
 #ifdef NDEBUG
     printf("Socket State: ");
     switch(state)
     {
-        case RTR_CLOSED:
-            printf("RTR_CLOSED\n");
+        case RTR_CONNECTING:
+            printf("RTR_CONNECTING\n");
             break;
         case RTR_ESTABLISHED:
             printf("RTR_ESTABLISHED\n");

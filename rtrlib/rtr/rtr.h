@@ -48,9 +48,9 @@ enum rtr_rtvals{
  * @brief States of the RTR socket.
  */
 typedef enum rtr_socket_state{
-/** Socket is closed. */
-    RTR_CLOSED,
-/** Socket connection is established. */
+/** Socket is establishing the transport connection. */
+    RTR_CONNECTING,
+/** Connection is established, socket is waiting for a Serial Notify or expiration of the polling_period timer */
     RTR_ESTABLISHED,
 /** Resetting RTR connection. */
     RTR_RESET,
