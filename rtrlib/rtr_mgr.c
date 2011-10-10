@@ -107,22 +107,27 @@ void rtr_mgr_cb(const rtr_socket* sock, const rtr_socket_state state, rtr_mgr_co
         config[ind].status = ERROR;
         MGR_DBG("Group(%u) status changed to: ERROR", config[ind].preference);
 
-        //find next group with higher preference value
         int next_config = ind + 1;
-        while(next_config < (int) config_len && config[next_config].status != CLOSED){
-            next_config++;
-        }
-
-        //if no unconnected group with higher pref. value exist, find group with lower pref value
-        if(next_config >= (int) config_len){
-            next_config = ind - 1;
-            while(next_config >= 0 && config[next_config].status != CLOSED){
-                next_config--;
+        bool found = false;
+        //find next group with higher preference value
+        for(unsigned int i = ind + 1; (i < config_len) && (!found); i++){
+            if(config[i].status == CLOSED){
+                found = true;
+                next_config = i;
             }
         }
-        if(next_config != (int) ind && config[next_config].status == CLOSED){
-            rtr_mgr_start_sockets(&(config[next_config]));
+        if(!found){
+            //find group with lower preference value
+            for(int i = ind -1; (i > -1) && (!found); i--){
+                if(config[i].status == CLOSED){
+                    found = true;
+                    next_config = i;
+                }
+            }
         }
+
+        if(found)
+            rtr_mgr_start_sockets(&(config[next_config]));
         else
             MGR_DBG1("No other inactive groups found");
     }
