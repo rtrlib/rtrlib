@@ -1,3 +1,5 @@
+set(CMAKE_BUILD_TYPE Debug)
+
 add_library(rtrlib-test ${CMAKE_SOURCE_DIR}/rtrlib/lib/test.c)
 
 add_executable(test_pfx test_pfx.c)
