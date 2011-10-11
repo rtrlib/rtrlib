@@ -19,7 +19,7 @@ int rtr_mgr_start_sockets(rtr_mgr_config* config){
             return -1;
         }
     }
-    config->status = CONNECTING;
+    config->status = RTR_MGR_CONNECTING;
     MGR_DBG("Group(%u) status changed to: CONNECTING", config->preference);
     return 0;
 }
@@ -52,7 +52,7 @@ void rtr_mgr_cb(const rtr_socket* sock, const rtr_socket_state state, rtr_mgr_co
         return;
     if(state == RTR_ESTABLISHED || state == RTR_RESET || state == RTR_SYNC){
         //socket established successfull a connection to the rtr_server
-        if(config[ind].status == CONNECTING){
+        if(config[ind].status == RTR_MGR_CONNECTING){
             //if previous state was CONNECTING, check if all other sockets in the group also have a established connection,
             //if yes change group state to ESTABLISHED
             bool connected = true;
@@ -64,38 +64,38 @@ void rtr_mgr_cb(const rtr_socket* sock, const rtr_socket_state state, rtr_mgr_co
                 }
             }
             if(connected){
-                config[ind].status = ESTABLISHED;
+                config[ind].status = RTR_MGR_ESTABLISHED;
                 MGR_DBG("Group(%u) status changed to: ESTABLISHED", config[ind].preference);
                 //TODO: Gruppe finden, welche State = Established hat + höchste priorität hat
                 //alle anderen socket gruppen beenden
                 //
                 for(unsigned int i = 0; i < config_len; i++){
-                    if(config[i].status != CLOSED && i != ind){
+                    if(config[i].status != RTR_MGR_CLOSED && i != ind){
                         for(unsigned int j = 0; j < config[i].sockets_len;j++){
                             rtr_stop(config[i].sockets[j]);
                         }
-                        config[i].status = CLOSED;
+                        config[i].status = RTR_MGR_CLOSED;
                         MGR_DBG("Group(%u) status changed to: CLOSED", config[i].preference);
                     }
                 }
             }
         }
-        if(config[ind].status == ERROR){
+        if(config[ind].status == RTR_MGR_ERROR){
             //if previous state was ERROR, only change state to ESTABLISHED if all other socket groups are also in error or SHUTDOWN state
             bool all_error = true;
             for(unsigned int i = 0; (i < config_len) && (all_error); i++){
-                if(config[i].status != ERROR && config[i].status != CLOSED)
+                if(config[i].status != RTR_MGR_ERROR && config[i].status != RTR_MGR_CLOSED)
                     all_error = false;
             }
             if(all_error){
-                config[ind].status = ESTABLISHED;
+                config[ind].status = RTR_MGR_ESTABLISHED;
                 MGR_DBG("Group(%u) status changed to: ESTABLISHED", config[ind].preference);
                 for(unsigned int i = 0; i < config_len; i++){
-                    if(i != ind && config[i].status != CLOSED){
+                    if(i != ind && config[i].status != RTR_MGR_CLOSED){
                         for(unsigned int j = 0; j < config[i].sockets_len;j++){
                             rtr_stop(config[i].sockets[j]);
                         }
-                        config[i].status = CLOSED;
+                        config[i].status = RTR_MGR_CLOSED;
                         MGR_DBG("Group(%u) status changed to: CLOSED", config[i].preference);
                     }
                 }
@@ -104,14 +104,14 @@ void rtr_mgr_cb(const rtr_socket* sock, const rtr_socket_state state, rtr_mgr_co
     }
     else if(state == RTR_ERROR_FATAL || state == RTR_ERROR_TRANSPORT || state == RTR_ERROR_NO_DATA_AVAIL){
         //if another group exist which has status CLOSED, start connecting to the group
-        config[ind].status = ERROR;
+        config[ind].status = RTR_MGR_ERROR;
         MGR_DBG("Group(%u) status changed to: ERROR", config[ind].preference);
 
         int next_config = ind + 1;
         bool found = false;
         //find next group with higher preference value
         for(unsigned int i = ind + 1; (i < config_len) && (!found); i++){
-            if(config[i].status == CLOSED){
+            if(config[i].status == RTR_MGR_CLOSED){
                 found = true;
                 next_config = i;
             }
@@ -119,7 +119,7 @@ void rtr_mgr_cb(const rtr_socket* sock, const rtr_socket_state state, rtr_mgr_co
         if(!found){
             //find group with lower preference value
             for(int i = ind -1; (i > -1) && (!found); i--){
-                if(config[i].status == CLOSED){
+                if(config[i].status == RTR_MGR_CLOSED){
                     found = true;
                     next_config = i;
                 }
@@ -132,11 +132,11 @@ void rtr_mgr_cb(const rtr_socket* sock, const rtr_socket_state state, rtr_mgr_co
             MGR_DBG1("No other inactive groups found");
     }
     else if(state == RTR_ERROR_NO_INCR_UPDATE_AVAIL){
-        config[ind].status = ERROR;
+        config[ind].status = RTR_MGR_ERROR;
         //find a group with a lower preference value, if no exists, do nothing,
         //if it is the only active group it will be get status ESTABLISHED after the connection was restablished
         int next_config = ind - 1;
-        while(next_config >= 0 && config[next_config].status != CLOSED){
+        while(next_config >= 0 && config[next_config].status != RTR_MGR_CLOSED){
             next_config--;
         }
         if(next_config >= 0)
@@ -169,7 +169,7 @@ int rtr_mgr_init(rtr_mgr_config config[], const unsigned int config_len){
             return -1;
         }
 
-        config[i].status = CLOSED;
+        config[i].status = RTR_MGR_CLOSED;
         for(unsigned int j = 0; j < config[i].sockets_len; j++){
             config[i].sockets[j]->connection_state_fp = &rtr_mgr_cb;
             config[i].sockets[j]->mgr_config = config;

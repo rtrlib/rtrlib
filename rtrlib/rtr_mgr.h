@@ -43,20 +43,18 @@
 #include "rtrlib/rtr/rtr.h"
 
 typedef enum rtr_group_status{
-    CLOSED,
-    CONNECTING,
-    ESTABLISHED,
-    ERROR,
-} rtr_group_status;
-
+    RTR_MGR_CLOSED,
+    RTR_MGR_CONNECTING,
+    RTR_MGR_ESTABLISHED,
+    RTR_MGR_ERROR,
+} rtr_mgr_status;
 
 typedef struct rtr_mgr_config{
     rtr_socket** sockets;
     unsigned int sockets_len;
     uint8_t preference;
-    rtr_group_status status;
+    rtr_mgr_status status;
 } rtr_mgr_config;
-
 
 /**
  * @brief Initialize all rtr_sockets in config with the supplied values.
