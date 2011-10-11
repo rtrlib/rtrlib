@@ -44,7 +44,6 @@ static int pfx_table_append_elem(node_data* data, const pfx_record* record);
 static data_elem* pfx_table_find_elem(const node_data* data, const pfx_record* record, unsigned int* index);
 static bool pfx_table_elem_matches(node_data* entry, const uint32_t asn, const uint32_t max_len);
 static void pfx_table_notify_clients(pfx_table* pfx_table, const pfx_record* record, const bool added);
-static int pfx_table_get_state(const lpfst_node* node, const uint32_t asn, const uint8_t mask_len, pfxv_state* result);
 static int pfx_table_remove_id(pfx_table* pfx_table, lpfst_node** root, lpfst_node* node, const uintptr_t socket_id, const unsigned int level);
 
 
@@ -255,31 +254,6 @@ bool pfx_table_elem_matches(node_data* data, const uint32_t asn, const uint32_t 
     return false;
 }
 
-int pfx_table_get_state(const lpfst_node* node, const uint32_t asn, const uint8_t mask_len, pfxv_state* result){
-    if(pfx_table_elem_matches(node->data, asn, mask_len)){
-        *result =  BGP_PFXV_STATE_VALID;
-        return PFX_SUCCESS;
-    }
-    //TODO: optimize, walk tree instead of get_children(..)
-
-    //check children
-    unsigned int len = 0;
-    lpfst_node** array = NULL;
-    if(lpfst_get_children(node, &array, &len) == -1)
-        return PFX_ERROR;
-
-    for(unsigned int i = 0; i < len; i++){
-        if(pfx_table_elem_matches(array[i]->data, asn, mask_len)){
-            *result =  BGP_PFXV_STATE_VALID;
-            free(array);
-            return PFX_SUCCESS;
-        }
-    }
-    free(array);
-    *result = BGP_PFXV_STATE_INVALID;
-    return PFX_SUCCESS;
-}
-
 int pfx_table_validate(struct pfx_table* pfx_table, const uint32_t asn, const ip_addr *prefix, const uint8_t mask_len, pfxv_state* result){
     pthread_rwlock_rdlock(&(pfx_table->lock));
     lpfst_node* root = pfx_table_get_root(pfx_table, prefix->ver);
@@ -291,15 +265,29 @@ int pfx_table_validate(struct pfx_table* pfx_table, const uint32_t asn, const ip
 
     unsigned int lvl = 0;
     lpfst_node* node = lpfst_lookup(root, prefix, mask_len, &lvl);
-
     if(node == NULL){
         *result = BGP_PFXV_STATE_NOT_FOUND;
         pthread_rwlock_unlock(&pfx_table->lock);
         return PFX_SUCCESS;
     }
-    const int rtval = pfx_table_get_state(node, asn, mask_len, result);
+
+    while(!pfx_table_elem_matches(node->data, asn, mask_len)){
+        if(ip_addr_is_zero(ip_addr_get_bits(prefix, lvl, lvl)))
+            node = node->lchild;
+        else
+            node = node->rchild;
+        lvl++;
+        node = lpfst_lookup(node, prefix, mask_len, &lvl);
+        if(node == NULL){
+            *result = BGP_PFXV_STATE_INVALID;
+            pthread_rwlock_unlock(&pfx_table->lock);
+            return PFX_SUCCESS;
+        }
+    }
+
+    *result = BGP_PFXV_STATE_VALID;
     pthread_rwlock_unlock(&pfx_table->lock);
-    return rtval;
+    return PFX_SUCCESS;
 }
 
 int pfx_table_src_remove(struct pfx_table* pfx_table, const uintptr_t socket_id){
