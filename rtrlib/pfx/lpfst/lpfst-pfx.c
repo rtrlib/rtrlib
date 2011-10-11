@@ -32,7 +32,7 @@ typedef struct data_elem_t{
     uintptr_t socket_id;
 } data_elem;
 
-typedef struct{
+typedef struct node_data_t{
     unsigned int len;
     data_elem* ary;
 } node_data;
@@ -48,18 +48,14 @@ static int pfx_table_remove_id(pfx_table* pfx_table, lpfst_node** root, lpfst_no
 
 
 void pfx_table_notify_clients(pfx_table* pfx_table, const pfx_record* record, const bool added){
-    if(pfx_table->update_fp == NULL)
-        return;
-
-    for(unsigned int i=0;i<pfx_table->update_fp_len;i++)
-        pfx_table->update_fp[i](pfx_table, *record, added);
+    if(pfx_table->update_fp != NULL)
+        pfx_table->update_fp(pfx_table, *record, added);
 }
 
-void pfx_table_init(struct pfx_table* pfx_table, rtr_update_fp update_fp[], unsigned int update_fp_len){
+void pfx_table_init(struct pfx_table* pfx_table, rtr_update_fp update_fp){
     pfx_table->ipv4 = NULL;
     pfx_table->ipv6 = NULL;
     pfx_table->update_fp = update_fp;
-    pfx_table->update_fp_len = update_fp_len;
     pthread_rwlock_init(&(pfx_table->lock), NULL);
 }
 
@@ -258,16 +254,16 @@ int pfx_table_validate(struct pfx_table* pfx_table, const uint32_t asn, const ip
     pthread_rwlock_rdlock(&(pfx_table->lock));
     lpfst_node* root = pfx_table_get_root(pfx_table, prefix->ver);
     if(root == NULL){
-        *result = BGP_PFXV_STATE_NOT_FOUND;
         pthread_rwlock_unlock(&pfx_table->lock);
+        *result = BGP_PFXV_STATE_NOT_FOUND;
         return PFX_SUCCESS;
     }
 
     unsigned int lvl = 0;
     lpfst_node* node = lpfst_lookup(root, prefix, mask_len, &lvl);
     if(node == NULL){
-        *result = BGP_PFXV_STATE_NOT_FOUND;
         pthread_rwlock_unlock(&pfx_table->lock);
+        *result = BGP_PFXV_STATE_NOT_FOUND;
         return PFX_SUCCESS;
     }
 
@@ -279,14 +275,14 @@ int pfx_table_validate(struct pfx_table* pfx_table, const uint32_t asn, const ip
         lvl++;
         node = lpfst_lookup(node, prefix, mask_len, &lvl);
         if(node == NULL){
-            *result = BGP_PFXV_STATE_INVALID;
             pthread_rwlock_unlock(&pfx_table->lock);
+            *result = BGP_PFXV_STATE_INVALID;
             return PFX_SUCCESS;
         }
     }
 
-    *result = BGP_PFXV_STATE_VALID;
     pthread_rwlock_unlock(&pfx_table->lock);
+    *result = BGP_PFXV_STATE_VALID;
     return PFX_SUCCESS;
 }
 

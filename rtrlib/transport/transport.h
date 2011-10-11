@@ -106,7 +106,6 @@ typedef struct tr_socket{
 } tr_socket;
 
 
-
 /**
  * @brief Establish the connection.
  * @param[in] socket Socket that will be used.

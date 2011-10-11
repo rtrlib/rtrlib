@@ -42,7 +42,7 @@ void print_state(const pfxv_state s){
 
 void remove_src_test(){
     pfx_table pfxt;
-    pfx_table_init(&pfxt, NULL, 0);
+    pfx_table_init(&pfxt, NULL);
 
     pfx_record pfx;
     pfx.min_len = 32;
@@ -100,7 +100,7 @@ void remove_src_test(){
 
 void mass_test(){
     pfx_table pfxt;
-    pfx_table_init(&pfxt, NULL, 0);
+    pfx_table_init(&pfxt, NULL);
 
     pfx_record rec;
     pfxv_state res;
@@ -175,7 +175,7 @@ void mass_test(){
 
 int main(){
     pfx_table pfxt;
-    pfx_table_init(&pfxt, NULL, 0);
+    pfx_table_init(&pfxt, NULL);
 
     pfx_record pfx;
     pfx.asn = 123;

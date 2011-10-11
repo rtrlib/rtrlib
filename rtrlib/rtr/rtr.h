@@ -105,7 +105,6 @@ typedef struct rtr_socket{
     unsigned int mgr_config_len;
 } rtr_socket;
 
-
 /**
  * @brief Initialize a rtr_socket
  * @param[out] rtr_socket Pointer to the allocated rtr_socket that will be initialized.

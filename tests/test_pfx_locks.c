@@ -164,7 +164,7 @@ void rec_remove(pfx_table* pfxt){
 int main(){
     unsigned int max_threads = 15;
     pfx_table pfxt;
-    pfx_table_init(&pfxt, NULL, 0);
+    pfx_table_init(&pfxt, NULL);
     pthread_t threads[max_threads];
     srand(time(NULL));
     for(unsigned int i=0;i<max_threads;i++){

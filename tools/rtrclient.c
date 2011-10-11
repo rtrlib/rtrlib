@@ -164,9 +164,7 @@ int main(int argc, char** argv){
 #endif
 
     pfx_table pfxt;
-    rtr_update_fp update_fps[1];
-    update_fps[0] = &update_cb;
-    pfx_table_init(&pfxt, update_fps, 1);
+    pfx_table_init(&pfxt, &update_cb);
 
     struct rtr_socket rtr;
     rtr_init(&rtr, tr_sock, &pfxt, 240, 480);

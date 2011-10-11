@@ -45,8 +45,7 @@
 typedef struct pfx_table{
     lpfst_node* ipv4;
     lpfst_node* ipv6;
-    rtr_update_fp* update_fp;
-    unsigned int update_fp_len;
+    rtr_update_fp update_fp;
     pthread_rwlock_t lock;
 } pfx_table;
 

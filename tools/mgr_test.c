@@ -6,7 +6,7 @@
 
 int main(){
     pfx_table pfxt;
-    pfx_table_init(&pfxt, NULL, 0);
+    pfx_table_init(&pfxt, NULL);
 
     tr_socket* tr_tcp;
     tr_socket* tr_tcp1;

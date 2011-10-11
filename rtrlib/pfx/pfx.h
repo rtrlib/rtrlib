@@ -96,10 +96,9 @@ typedef void (*rtr_update_fp)(struct pfx_table* pfx_table, const pfx_record reco
 /**
  * @brief Initialize the pfx_table struct.
  * @param[in] pfx_table pfx_table that will be initialized.
- * @param[in] update_fp Array of function pointers that will be called if a record was added or removed.
- * @param[in] update_fp_len Number of elements in the update_fp array.
+ * @param[in] update_fp Afunction pointers that will be called if a record was added or removed.
  */
-void pfx_table_init(struct pfx_table* pfx_table, rtr_update_fp update_fp[], const unsigned int update_fp_len );
+void pfx_table_init(struct pfx_table* pfx_table, rtr_update_fp update_fp);
 
 /**
  * @brief Free all memory associcated with pfx_table.
