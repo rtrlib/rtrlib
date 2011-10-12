@@ -36,20 +36,23 @@ int main(){
     rtr_socket rtr_ssh;
     rtr_init(&rtr_ssh, tr_ssh, &pfxt, 240, 520);
 
+    rtr_mgr_group groups[2];
+    groups[0].sockets_len = 2;
+    groups[0].sockets = malloc(2 * sizeof(rtr_socket*));
+    groups[0].sockets[0] = &rtr_ssh;
+    groups[0].sockets[1] = &rtr_tcp;
+    groups[0].preference = 2;
+    groups[1].sockets = malloc(1 * sizeof(rtr_socket*));
+    groups[1].sockets_len = 1;
+    groups[1].sockets[0] = &rtr_tcp1;
+    groups[1].preference = 3;
 
-    rtr_mgr_config conf[2];
-    conf[0].sockets_len = 2;
-    conf[0].sockets = malloc(2 * sizeof(rtr_socket*));
-    conf[0].sockets[0] = &rtr_ssh;
-    conf[0].sockets[1] = &rtr_tcp;
-    conf[0].preference = 2;
-    conf[1].sockets = malloc(1 * sizeof(rtr_socket*));
-    conf[1].sockets_len = 1;
-    conf[1].sockets[0] = &rtr_tcp1;
-    conf[1].preference = 3;
+    rtr_mgr_config conf;
+    conf.groups = groups;
+    conf.len = 2;
 
-    rtr_mgr_init(conf, 2);
-    rtr_mgr_start(conf);
+    rtr_mgr_init(&conf);
+    rtr_mgr_start(&conf);
     printf("started\n");
     sleep(500000);
 }

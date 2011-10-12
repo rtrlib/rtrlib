@@ -49,11 +49,16 @@ typedef enum {
     RTR_MGR_ERROR,
 } rtr_mgr_status;
 
-typedef struct rtr_mgr_config{
+typedef struct {
     rtr_socket** sockets;
     unsigned int sockets_len;
     uint8_t preference;
     rtr_mgr_status status;
+} rtr_mgr_group;
+
+typedef struct rtr_mgr_config{
+    unsigned int len;
+    rtr_mgr_group* groups;
 } rtr_mgr_config;
 
 /**
@@ -61,16 +66,17 @@ typedef struct rtr_mgr_config{
  * @param[in] config The preference must be unique in the rtr_mgr_config array, a reference to the same rtr_socket
  * in two different rtr_socket** arrays will produce unpredictable behaviour.
  * @param[in] rtr_mgr_socket Pointer to a rtr_mgr_socket that will be initialized
+ * @return 0  On success 
+ * @return -1 On error 
  *
  */
-int rtr_mgr_init(rtr_mgr_config config[], const unsigned int config_len);
-
+int rtr_mgr_init(rtr_mgr_config* config);
 
 /**
  * @brief Free all ressources that are associated with the rtr_mgr_socket.
  * @param[in] socket rtr_mgr_socket.
  */
-void rtr_mgr_free(rtr_mgr_config config[], const unsigned int config_len);
+void rtr_mgr_free(rtr_mgr_config* config);
 
 /**
  * @brief Initiates the rtr_connection_pool socket, establishes the connection with the set of rtr_sockets with the lowest preference value and treats error like
@@ -79,7 +85,7 @@ void rtr_mgr_free(rtr_mgr_config config[], const unsigned int config_len);
  * @return 0  On success 
  * @return -1 On error 
  */
-int rtr_mgr_start(rtr_mgr_config config[]);
+int rtr_mgr_start(rtr_mgr_config* config);
 
 /**
  * @brief Terminates all rtr_socket connections in the pool and removes all entries from the pfx_tables.
@@ -87,7 +93,7 @@ int rtr_mgr_start(rtr_mgr_config config[]);
  * @return 0  On success 
  * @return -1 On error 
  */
-void rtr_mgr_stop(rtr_mgr_config config[], const unsigned int config_len);
+void rtr_mgr_stop(rtr_mgr_config* config);
 
 /**
  * @brief Terminates all rtr_socket connections in the pool and removes all entries from the pfx_tables.
@@ -95,7 +101,7 @@ void rtr_mgr_stop(rtr_mgr_config config[], const unsigned int config_len);
  * @return true If the used pfx_table holds non-outdated pfx_records from at least one socket group.
  * @return false If the pfx_table doesn't hold non-outdated pfx_records from at least one socket group.
  */
-bool rtr_mgr_group_in_sync(rtr_mgr_config config[], const unsigned int config_len);
+bool rtr_mgr_group_in_sync(rtr_mgr_config* config);
 
 #endif
 /* @} */

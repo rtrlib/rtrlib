@@ -155,7 +155,7 @@ void rtr_change_socket_state(rtr_socket* rtr_socket, const rtr_socket_state new_
     //TODO: execute callback in a thread?
     rtr_socket->state = new_state;
     if(rtr_socket->connection_state_fp != NULL)
-        rtr_socket->connection_state_fp(rtr_socket, new_state, rtr_socket->mgr_config, rtr_socket->mgr_config_len);
+        rtr_socket->connection_state_fp(rtr_socket, new_state, rtr_socket->cb_data);
 }
 
 void rtr_pdu_header_to_host_byte_order(void* pdu){

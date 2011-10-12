@@ -44,7 +44,7 @@ static void print_usage(char** argv){
 
 }
 
-static void state_cb(const rtr_socket* sock  __attribute__((unused)), const rtr_socket_state state, struct rtr_mgr_config* mgr_config  __attribute__((unused)), unsigned int mgr_config_len  __attribute__((unused))){
+static void state_cb(const rtr_socket* sock  __attribute__((unused)), const rtr_socket_state state, void* cb_data  __attribute__((unused))){
 #ifdef NDEBUG
     printf("Socket State: ");
     switch(state)

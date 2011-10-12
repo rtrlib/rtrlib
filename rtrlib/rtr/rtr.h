@@ -47,7 +47,7 @@ enum rtr_rtvals{
 /**
  * @brief States of the RTR socket.
  */
-typedef enum rtr_socket_state{
+typedef enum {
 /** Socket is establishing the transport connection. */
     RTR_CONNECTING,
 /** Connection is established, socket is waiting for a Serial Notify or expiration of the polling_period timer */
@@ -69,18 +69,18 @@ typedef enum rtr_socket_state{
 } rtr_socket_state;
 
 struct rtr_socket;
-struct rtr_mgr_config;
 
 /**
  * @brief A function pointer that is called if the state of the rtr socket has changed.
  */
-typedef void (*rtr_connection_state_fp)(const struct rtr_socket* rtr_socket, const rtr_socket_state state, struct rtr_mgr_config* mgr_config, unsigned int mgr_config_len);
+typedef void (*rtr_connection_state_fp)(const struct rtr_socket* rtr_socket, const rtr_socket_state state, void* cb_data);
 
 /**
  * @brief A RTR socket.
  * @param tr_socket Pointer to an initialized tr_socket that will be used to communicate with the RTR server.
  * @param polling_period Interval in seconds between update queries to the server. Must be <= 3600
- * @param last_update Timestamp of the last validation record update
+ * @param last_update Timestamp of the last validation record update. Is 0 if the pfx_table doesn't stores any
+ * validation reords from this rtr_socket.
  * @param cache_timout Stored validation records will be deleted if cache was unable to refresh data for this period.\n
  * The default value is twice the polling_period.
  * @param state Current state of the socket.
@@ -101,8 +101,7 @@ typedef struct rtr_socket{
     struct pfx_table* pfx_table;
     pthread_t thread_id;
     rtr_connection_state_fp connection_state_fp;
-    struct rtr_mgr_config* mgr_config;
-    unsigned int mgr_config_len;
+    void* cb_data;
 } rtr_socket;
 
 /**
@@ -118,7 +117,7 @@ typedef struct rtr_socket{
 void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table, const unsigned int polling_period, const unsigned int cache_timeout);
 
 /**
- * @brief Starts the RTR protocol state machine in a pthread. Connection to the rtr_server will be established and the
+ * @brief Start the RTR protocol state machine in a pthread. Connection to the rtr_server will be established and the
  * pfx_records will be synced.
  * @param[in] rtr_socket rtr_socket that will be used.
  * @return RTR_ERROR

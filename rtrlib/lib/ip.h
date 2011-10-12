@@ -28,7 +28,7 @@
 /**
  * @brief Version of the IP protocol.
  */
-typedef enum ip_version {
+typedef enum {
     /** IPV4 */
     IPV4,
     /** IPV6 */
@@ -47,7 +47,6 @@ typedef struct {
         ipv6_addr addr6;
     } u;
 } ip_addr;
-
 
 bool ip_addr_is_zero(const ip_addr);
 ip_addr ip_addr_get_bits(const ip_addr* val, const uint8_t from, const uint8_t to);

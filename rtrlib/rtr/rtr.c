@@ -63,8 +63,7 @@ void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table
     rtr_socket->pfx_table = pfx_table;
     rtr_socket->connection_state_fp = NULL;
     rtr_socket->thread_id = 0;
-    rtr_socket->mgr_config = NULL;
-    rtr_socket->mgr_config_len = 0;
+    rtr_socket->cb_data = NULL;
 }
 
 int rtr_start(rtr_socket* rtr_socket){
