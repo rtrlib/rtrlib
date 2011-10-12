@@ -52,7 +52,7 @@ void pfx_table_notify_clients(pfx_table* pfx_table, const pfx_record* record, co
         pfx_table->update_fp(pfx_table, *record, added);
 }
 
-void pfx_table_init(struct pfx_table* pfx_table, rtr_update_fp update_fp){
+void pfx_table_init(struct pfx_table* pfx_table, pfx_update_fp update_fp){
     pfx_table->ipv4 = NULL;
     pfx_table->ipv6 = NULL;
     pfx_table->update_fp = update_fp;

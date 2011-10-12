@@ -154,7 +154,7 @@ int rtr_mgr_config_cmp(const void* a, const void* b){
     return 0;
 }
 
-int rtr_mgr_init(rtr_mgr_config* config, const unsigned int polling_period, const unsigned int cache_timeout, rtr_update_fp update_fp){
+int rtr_mgr_init(rtr_mgr_config* config, const unsigned int polling_period, const unsigned int cache_timeout, pfx_update_fp update_fp){
     //sort array in asc preference order
     qsort(&(config->groups), config->len, sizeof(rtr_mgr_config), &rtr_mgr_config_cmp);
 

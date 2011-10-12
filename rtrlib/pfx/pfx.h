@@ -91,14 +91,14 @@ typedef struct pfx_record{
  * @param added True if the record was added, false if the record was removed
  * servers 
  */
-typedef void (*rtr_update_fp)(struct pfx_table* pfx_table, const pfx_record record, const bool added);
+typedef void (*pfx_update_fp)(struct pfx_table* pfx_table, const pfx_record record, const bool added);
 
 /**
  * @brief Initialize the pfx_table struct.
  * @param[in] pfx_table pfx_table that will be initialized.
  * @param[in] update_fp Afunction pointers that will be called if a record was added or removed.
  */
-void pfx_table_init(struct pfx_table* pfx_table, rtr_update_fp update_fp);
+void pfx_table_init(struct pfx_table* pfx_table, pfx_update_fp update_fp);
 
 /**
  * @brief Free all memory associcated with pfx_table.
