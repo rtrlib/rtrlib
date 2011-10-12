@@ -8,9 +8,10 @@
 #define MGR_DBG(fmt, ...) dbg("RTR_MGR: " fmt, ## __VA_ARGS__)
 #define MGR_DBG1(a) dbg("RTR_MGR: " a)
 
-static int rtr_mgr_find_config(rtr_mgr_config config[], unsigned int config_len, const rtr_socket* sock, unsigned int* ind);
+static int rtr_mgr_find_config(const rtr_mgr_config config[], const unsigned int config_len, const const rtr_socket* sock, unsigned int* ind);
 static int rtr_mgr_start_sockets(rtr_mgr_config* config);
 static int rtr_mgr_config_cmp(const void* a, const void* b);
+static bool rtr_mgr_config_status_is_established(const rtr_mgr_config* config);
 
 int rtr_mgr_start_sockets(rtr_mgr_config* config){
     for(unsigned int i = 0; i < config->sockets_len; i++){
@@ -24,7 +25,7 @@ int rtr_mgr_start_sockets(rtr_mgr_config* config){
     return 0;
 }
 
-int rtr_mgr_find_config(rtr_mgr_config config[], unsigned int config_len, const rtr_socket* sock, unsigned int* ind){
+int rtr_mgr_find_config(const rtr_mgr_config config[], const unsigned int config_len, const rtr_socket* sock, unsigned int* ind){
     for(unsigned int i = 0; i < config_len; i++){
         for(unsigned int j = 0; j < config[i].sockets_len; j++){
             if(config[i].sockets[j] == sock){
@@ -37,7 +38,18 @@ int rtr_mgr_find_config(rtr_mgr_config config[], unsigned int config_len, const 
     return -1;
 }
 
-void rtr_mgr_cb(const rtr_socket* sock, const rtr_socket_state state, rtr_mgr_config config[], unsigned int config_len){
+bool rtr_mgr_config_status_is_established(const rtr_mgr_config* config){
+    for(unsigned int i = 0; i < config->sockets_len; i++){
+        rtr_socket_state state = config->sockets[i]->state;
+        if(state != RTR_ESTABLISHED && state != RTR_RESET && state != RTR_SYNC){
+            return false;
+        }
+    }
+    return true;
+}
+
+//typedef void (*rtr_connection_state_fp)(const struct rtr_socket* rtr_socket, const rtr_socket_state state, struct rtr_mgr_config* mgr_config, unsigned int mgr_config_len);
+void rtr_mgr_cb(const struct rtr_socket* sock, const rtr_socket_state state, struct rtr_mgr_config* config, unsigned int config_len){
     //TODO: locks needed?
 
     //return if group contains no other socket groups => nothing todo :-)
@@ -55,20 +67,9 @@ void rtr_mgr_cb(const rtr_socket* sock, const rtr_socket_state state, rtr_mgr_co
         if(config[ind].status == RTR_MGR_CONNECTING){
             //if previous state was CONNECTING, check if all other sockets in the group also have a established connection,
             //if yes change group state to ESTABLISHED
-            bool connected = true;
-            for(unsigned int i = 0; i < config[ind].sockets_len; i++){
-                rtr_socket_state state = config[ind].sockets[i]->state;
-                if(state != RTR_ESTABLISHED && state != RTR_RESET && state != RTR_SYNC){
-                    connected = false;
-                    break;
-                }
-            }
-            if(connected){
+            if(rtr_mgr_config_status_is_established(&(config[ind])))
                 config[ind].status = RTR_MGR_ESTABLISHED;
                 MGR_DBG("Group(%u) status changed to: ESTABLISHED", config[ind].preference);
-                //TODO: Gruppe finden, welche State = Established hat + höchste priorität hat
-                //alle anderen socket gruppen beenden
-                //
                 for(unsigned int i = 0; i < config_len; i++){
                     if(config[i].status != RTR_MGR_CLOSED && i != ind){
                         for(unsigned int j = 0; j < config[i].sockets_len;j++){
@@ -79,7 +80,6 @@ void rtr_mgr_cb(const rtr_socket* sock, const rtr_socket_state state, rtr_mgr_co
                     }
                 }
             }
-        }
         if(config[ind].status == RTR_MGR_ERROR){
             //if previous state was ERROR, only change state to ESTABLISHED if all other socket groups are also in error or SHUTDOWN state
             bool all_error = true;
@@ -87,7 +87,7 @@ void rtr_mgr_cb(const rtr_socket* sock, const rtr_socket_state state, rtr_mgr_co
                 if(config[i].status != RTR_MGR_ERROR && config[i].status != RTR_MGR_CLOSED)
                     all_error = false;
             }
-            if(all_error){
+            if(all_error && rtr_mgr_config_status_is_established(&(config[ind]))){
                 config[ind].status = RTR_MGR_ESTABLISHED;
                 MGR_DBG("Group(%u) status changed to: ESTABLISHED", config[ind].preference);
                 for(unsigned int i = 0; i < config_len; i++){
@@ -133,8 +133,8 @@ void rtr_mgr_cb(const rtr_socket* sock, const rtr_socket_state state, rtr_mgr_co
     }
     else if(state == RTR_ERROR_NO_INCR_UPDATE_AVAIL){
         config[ind].status = RTR_MGR_ERROR;
-        //find a group with a lower preference value, if no exists, do nothing,
-        //if it is the only active group it will be get status ESTABLISHED after the connection was restablished
+        //find a group with a lower preference value, if no other group exists, do nothing,
+        //if it is the only active group it will get the status ESTABLISHED after the connection was restablished
         int next_config = ind - 1;
         while(next_config >= 0 && config[next_config].status != RTR_MGR_CLOSED){
             next_config--;
@@ -171,8 +171,8 @@ int rtr_mgr_init(rtr_mgr_config config[], const unsigned int config_len){
 
         config[i].status = RTR_MGR_CLOSED;
         for(unsigned int j = 0; j < config[i].sockets_len; j++){
-            config[i].sockets[j]->connection_state_fp = &rtr_mgr_cb;
-            config[i].sockets[j]->mgr_config = config;
+            config[i].sockets[j]->connection_state_fp = rtr_mgr_cb;
+            config[i].sockets[j]->mgr_config = (struct rtr_mgr_config*) config;
             config[i].sockets[j]->mgr_config_len = config_len;
         }
     }
