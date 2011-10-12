@@ -154,7 +154,7 @@ int rtr_mgr_config_cmp(const void* a, const void* b){
     return 0;
 }
 
-int rtr_mgr_init(rtr_mgr_config* config){
+int rtr_mgr_init(rtr_mgr_config* config, const unsigned int polling_period, const unsigned int cache_timeout, rtr_update_fp update_fp){
     //sort array in asc preference order
     qsort(&(config->groups), config->len, sizeof(rtr_mgr_config), &rtr_mgr_config_cmp);
 
@@ -167,11 +167,17 @@ int rtr_mgr_init(rtr_mgr_config* config){
             MGR_DBG1("Error Socket group contains 2 members with the same preference value");
             return -1;
         }
+    }
 
+    pfx_table* pfxt = malloc(sizeof(pfx_table));
+    if(pfxt == NULL)
+        return -1;
+    pfx_table_init(pfxt, update_fp);
+
+    for(unsigned int i = 0; i < config->len; i++){
         config->groups[i].status = RTR_MGR_CLOSED;
         for(unsigned int j = 0; j < config->groups[i].sockets_len; j++){
-            config->groups[i].sockets[j]->connection_state_fp = rtr_mgr_cb;
-            config->groups[i].sockets[j]->connection_state_fp_param = (struct rtr_mgr_config*) config;
+            rtr_init(config->groups[i].sockets[j], NULL, pfxt, polling_period, cache_timeout, rtr_mgr_cb, config);
         }
     }
     return 0;
@@ -191,4 +197,9 @@ bool rtr_mgr_group_in_sync(rtr_mgr_config* config){
             return true;
     }
     return false;
+}
+
+void rtr_mgr_free(rtr_mgr_config* config){
+    pfx_table_free(config->groups[0].sockets[0]->pfx_table);
+    free(config->groups[0].sockets[0]->pfx_table);
 }

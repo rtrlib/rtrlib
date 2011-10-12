@@ -5,9 +5,6 @@
 
 
 int main(){
-    pfx_table pfxt;
-    pfx_table_init(&pfxt, NULL);
-
     tr_socket* tr_tcp;
     tr_socket* tr_tcp1;
     tr_socket* tr_ssh;
@@ -19,9 +16,9 @@ int main(){
     tr_tcp_init(&tcp_config, &tr_tcp);
     tr_tcp_init(&tcp_config, &tr_tcp1);
     rtr_socket rtr_tcp;
-    rtr_init(&rtr_tcp, tr_tcp, &pfxt, 240, 520, NULL, NULL);
+    rtr_tcp.tr_socket = tr_tcp;
     rtr_socket rtr_tcp1;
-    rtr_init(&rtr_tcp1, tr_tcp1, &pfxt, 240, 520, NULL, NULL);
+    rtr_tcp1.tr_socket = tr_tcp1;
 
     tr_ssh_config ssh_config = {
         "141.22.26.232",
@@ -34,7 +31,7 @@ int main(){
 
     tr_ssh_init(&ssh_config, &tr_ssh);
     rtr_socket rtr_ssh;
-    rtr_init(&rtr_ssh, tr_ssh, &pfxt, 240, 520, NULL, NULL);
+    rtr_ssh.tr_socket = tr_ssh;
 
     rtr_mgr_group groups[2];
     groups[0].sockets_len = 2;
@@ -51,7 +48,7 @@ int main(){
     conf.groups = groups;
     conf.len = 2;
 
-    rtr_mgr_init(&conf);
+    rtr_mgr_init(&conf, 240, 520, NULL);
     rtr_mgr_start(&conf);
     printf("started\n");
     sleep(500000);

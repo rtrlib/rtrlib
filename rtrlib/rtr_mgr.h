@@ -56,7 +56,7 @@ typedef struct {
     rtr_mgr_status status;
 } rtr_mgr_group;
 
-typedef struct rtr_mgr_config{
+typedef struct rtr_mgr_config {
     unsigned int len;
     rtr_mgr_group* groups;
 } rtr_mgr_config;
@@ -70,7 +70,7 @@ typedef struct rtr_mgr_config{
  * @return -1 On error 
  *
  */
-int rtr_mgr_init(rtr_mgr_config* config);
+int rtr_mgr_init(rtr_mgr_config* config, const unsigned int polling_period, const unsigned int cache_timeout, rtr_update_fp);
 
 /**
  * @brief Free all ressources that are associated with the rtr_mgr_socket.

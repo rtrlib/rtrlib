@@ -52,7 +52,8 @@ int install_sig_handler(){
 }
 
 void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table, const unsigned int polling_period, const unsigned int cache_timeout, rtr_connection_state_fp fp, void* fp_param){
-    rtr_socket->tr_socket = tr;
+    if(tr != NULL)
+        rtr_socket->tr_socket = tr;
     assert(polling_period <= 3600);
     rtr_socket->polling_period = (polling_period > (3600 - RTR_RECV_TIMEOUT) ? (3600 - RTR_RECV_TIMEOUT) : polling_period);
     rtr_socket->cache_timeout = (cache_timeout == 0 ? (rtr_socket->polling_period / 2) : cache_timeout);
