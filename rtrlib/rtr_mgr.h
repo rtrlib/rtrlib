@@ -42,7 +42,7 @@
 #include "rtrlib/pfx/pfx.h"
 #include "rtrlib/rtr/rtr.h"
 
-typedef enum rtr_group_status{
+typedef enum {
     RTR_MGR_CLOSED,
     RTR_MGR_CONNECTING,
     RTR_MGR_ESTABLISHED,
