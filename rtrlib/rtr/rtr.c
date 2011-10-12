@@ -56,7 +56,7 @@ void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table
     assert(polling_period <= 3600);
     rtr_socket->polling_period = (polling_period > (3600 - RTR_RECV_TIMEOUT) ? (3600 - RTR_RECV_TIMEOUT) : polling_period);
     rtr_socket->cache_timeout = (cache_timeout == 0 ? (rtr_socket->polling_period / 2) : cache_timeout);
-    rtr_socket->state = RTR_CONNECTING;
+    rtr_socket->state = RTR_SHUTDOWN;
     rtr_socket->request_nonce = true;
     rtr_socket->serial_number = 0;
     rtr_socket->last_update = 0;
@@ -68,6 +68,7 @@ void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table
 }
 
 int rtr_start(rtr_socket* rtr_socket){
+    rtr_socket->state = RTR_CONNECTING;
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     int rtval = pthread_create(&(rtr_socket->thread_id), &attr, (void* (*)(void*)) &rtr_fsm_start, rtr_socket);
