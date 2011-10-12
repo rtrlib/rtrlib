@@ -167,7 +167,7 @@ int main(int argc, char** argv){
     pfx_table_init(&pfxt, &update_cb);
 
     struct rtr_socket rtr;
-    rtr_init(&rtr, tr_sock, &pfxt, 240, 480);
+    rtr_init(&rtr, tr_sock, &pfxt, 240, 480, NULL, NULL);
     rtr.connection_state_fp = &state_cb;
 
     rtr_start(&rtr);

@@ -47,7 +47,6 @@ bool rtr_mgr_config_status_is_synced(const rtr_mgr_group* group){
     return true;
 }
 
-//typedef void (*rtr_connection_state_fp)(const struct rtr_socket* rtr_socket, const rtr_socket_state state, struct rtr_mgr_config* mgr_config, unsigned int mgr_config->len);
 void rtr_mgr_cb(const struct rtr_socket* sock, const rtr_socket_state state, void* data){
     rtr_mgr_config* config = data;
     //TODO: locks needed?
@@ -172,7 +171,7 @@ int rtr_mgr_init(rtr_mgr_config* config){
         config->groups[i].status = RTR_MGR_CLOSED;
         for(unsigned int j = 0; j < config->groups[i].sockets_len; j++){
             config->groups[i].sockets[j]->connection_state_fp = rtr_mgr_cb;
-            config->groups[i].sockets[j]->cb_data = (struct rtr_mgr_config*) config;
+            config->groups[i].sockets[j]->connection_state_fp_param = (struct rtr_mgr_config*) config;
         }
     }
     return 0;

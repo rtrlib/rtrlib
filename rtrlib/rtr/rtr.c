@@ -51,7 +51,7 @@ int install_sig_handler(){
     return sigaction(SIGUSR1, &sa, NULL);
 }
 
-void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table, const unsigned int polling_period, const unsigned int cache_timeout){
+void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table, const unsigned int polling_period, const unsigned int cache_timeout, rtr_connection_state_fp fp, void* fp_param){
     rtr_socket->tr_socket = tr;
     assert(polling_period <= 3600);
     rtr_socket->polling_period = (polling_period > (3600 - RTR_RECV_TIMEOUT) ? (3600 - RTR_RECV_TIMEOUT) : polling_period);
@@ -61,9 +61,9 @@ void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table
     rtr_socket->serial_number = 0;
     rtr_socket->last_update = 0;
     rtr_socket->pfx_table = pfx_table;
-    rtr_socket->connection_state_fp = NULL;
+    rtr_socket->connection_state_fp = fp;
+    rtr_socket->connection_state_fp_param = fp_param;
     rtr_socket->thread_id = 0;
-    rtr_socket->cb_data = NULL;
 }
 
 int rtr_start(rtr_socket* rtr_socket){

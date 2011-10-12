@@ -101,7 +101,7 @@ typedef struct rtr_socket{
     struct pfx_table* pfx_table;
     pthread_t thread_id;
     rtr_connection_state_fp connection_state_fp;
-    void* cb_data;
+    void* connection_state_fp_param;
 } rtr_socket;
 
 /**
@@ -114,7 +114,7 @@ typedef struct rtr_socket{
  * @param[in] connection_state_fp
  * @param[in] connection_state_fp_len
  */
-void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table, const unsigned int polling_period, const unsigned int cache_timeout);
+void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table, const unsigned int polling_period, const unsigned int cache_timeout, rtr_connection_state_fp fp, void* fp_data);
 
 /**
  * @brief Start the RTR protocol state machine in a pthread. Connection to the rtr_server will be established and the
