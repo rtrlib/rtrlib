@@ -73,7 +73,7 @@ struct rtr_socket;
 /**
  * @brief A function pointer that is called if the state of the rtr socket has changed.
  */
-typedef void (*rtr_connection_state_fp)(const struct rtr_socket* rtr_socket, const rtr_socket_state state, void* cb_data);
+typedef void (*rtr_connection_state_fp)(const struct rtr_socket* rtr_socket, const rtr_socket_state state, void* connection_state_fp_param);
 
 /**
  * @brief A RTR socket.
@@ -129,12 +129,6 @@ int rtr_start(rtr_socket* rtr_socket);
  * @param[in] rtr_socket rtr_socket that will be used.
  */
 void rtr_stop(rtr_socket* rtr_socket);
-
-/**
- * @brief Free all memory that was allocated by the rtr_socket.
- * @param[in] rtr_socket rtr_socket that will be used.
- */
-void rtr_free(rtr_socket* rtr_socket);
 
 #endif
 /* @} */
