@@ -75,16 +75,18 @@ int tr_tcp_open(void* tr_socket){
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_ADDRCONFIG;
-    if(getaddrinfo(tcp_socket->config->host, tcp_socket->config->port, &hints, &res) != 0)
+    if(getaddrinfo(tcp_socket->config->host, tcp_socket->config->port, &hints, &res) != 0){
+        TCP_DBG("getaddrinfo error, %s", tcp_socket, gai_strerror(errno));
         goto end;
+    }
 
     if ((tcp_socket->socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) == -1){
-        TCP_DBG("creating socket failed, %s", tcp_socket, strerror(errno));
+        TCP_DBG("Socket creation failed, %s", tcp_socket, strerror(errno));
         goto end;
     }
 
     if (connect(tcp_socket->socket, res->ai_addr, res->ai_addrlen) == -1){
-        TCP_DBG("connect failed, %s", tcp_socket, strerror(errno));
+        TCP_DBG("Couldn't establish TCP connection, %s", tcp_socket, strerror(errno));
         goto end;
     }
     TCP_DBG1("Connection established", tcp_socket);

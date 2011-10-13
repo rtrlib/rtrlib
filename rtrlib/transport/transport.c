@@ -78,9 +78,7 @@ int tr_recv_all(const tr_socket* socket, const void* pdu, const size_t len, cons
         rtval = tr_recv(socket, ((char*) pdu)+total_recv, (len - total_recv), end_time - cur_time);
         if(rtval < 0)
             return rtval;
-        if(rtval > 0){
-            total_recv += rtval;
-        }
+        total_recv += rtval;
     }
     return total_recv;
 }
