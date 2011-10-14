@@ -64,6 +64,7 @@ void rec_insert(pfx_table* pfxt){
     rec.max_len = 32;
     rec.prefix.ver = IPV4;
     rec.prefix.u.addr4.addr = 0;
+    pfxv_state res;
 
 
     printf("Inserting %u records\n", (max_i - min_i) * 3);
@@ -87,6 +88,7 @@ void rec_insert(pfx_table* pfxt){
         rec.prefix.u.addr6.addr[1] = min_i + 0xFFFFFFFF;
         rec.prefix.u.addr6.addr[0] = htonl(i) + 0xFFFFFFFF;
         pfx_table_add(pfxt, &rec);
+        usleep(rand() / (RAND_MAX / 20));
         //printf("%i: Record inserted\n", tid);
     }
 }
@@ -98,7 +100,6 @@ void rec_validate(pfx_table* pfxt){
     rec.prefix.ver = IPV4;
     rec.prefix.u.addr4.addr = 0;
     pfxv_state res;
-
     printf("validating..\n");
     for(uint32_t i = max_i; i >= min_i; i--){
         rec.min_len = 32;
@@ -122,6 +123,7 @@ void rec_validate(pfx_table* pfxt){
         pfx_table_validate(pfxt, (tid % 2) + 1, &(rec.prefix), rec.min_len, &res);
         //printf("%i: Record validated,status: ", tid);
         //print_state(res);
+        usleep(rand() / (RAND_MAX / 20));
     }
 }
 void rec_remove(pfx_table* pfxt){
@@ -157,6 +159,7 @@ void rec_remove(pfx_table* pfxt){
         pfx_table_remove(pfxt, &rec);
         //printf("%i: Record removed, rtval: ", tid);
         //print_pfx_rtval(rtval);
+        usleep(rand() / (RAND_MAX / 20));
     }
     printf("Done\n");
 }
