@@ -203,3 +203,7 @@ void rtr_mgr_free(rtr_mgr_config* config){
     pfx_table_free(config->groups[0].sockets[0]->pfx_table);
     free(config->groups[0].sockets[0]->pfx_table);
 }
+
+inline int rtr_mgr_validate(rtr_mgr_config* config, const uint32_t asn, const ip_addr* prefix, const uint8_t mask_len, pfxv_state* result){
+    return pfx_table_validate(config->groups[0].sockets[0]->pfx_table, asn, prefix, mask_len, result);
+}

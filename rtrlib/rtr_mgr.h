@@ -103,5 +103,7 @@ void rtr_mgr_stop(rtr_mgr_config* config);
  */
 bool rtr_mgr_group_in_sync(rtr_mgr_config* config);
 
+int rtr_mgr_validate(rtr_mgr_config* config, const uint32_t asn, const ip_addr* prefix, const uint8_t mask_len, pfxv_state* result);
+
 #endif
 /* @} */
