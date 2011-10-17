@@ -69,10 +69,7 @@ void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table
 
 int rtr_start(rtr_socket* rtr_socket){
     rtr_socket->state = RTR_CONNECTING;
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    int rtval = pthread_create(&(rtr_socket->thread_id), &attr, (void* (*)(void*)) &rtr_fsm_start, rtr_socket);
-    pthread_attr_destroy(&attr);
+    int rtval = pthread_create(&(rtr_socket->thread_id), NULL, (void* (*)(void*)) &rtr_fsm_start, rtr_socket);
     if(rtval == 0)
         return RTR_SUCCESS;
     return RTR_ERROR;
