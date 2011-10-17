@@ -190,7 +190,7 @@ bool rtr_mgr_group_in_sync(rtr_mgr_config* config){
     for(unsigned int i = 0; i < config->len; i++){
         bool all_sync = true;
         for(unsigned int j = 0; all_sync && (j < config->groups[i].sockets_len); j++){
-            if(config->groups[i].sockets[j]->last_update != 0)
+            if(config->groups[i].sockets[j]->last_update == 0)
                 all_sync = false;
         }
         if(all_sync)
