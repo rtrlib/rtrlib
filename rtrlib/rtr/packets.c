@@ -406,6 +406,7 @@ int rtr_sync(rtr_socket* rtr_socket){
         }
     }
 
+    unsigned int received_prefixes = 0; //only for debug builds
     //receive IPV4/IPV6 PDUs till EOD
     do {
         rtval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
@@ -417,6 +418,7 @@ int rtr_sync(rtr_socket* rtr_socket){
             return RTR_ERROR;
         type = rtr_get_pdu_type(pdu);
         if(type == IPV4_PREFIX || type == IPV6_PREFIX){
+            received_prefixes++;
             if(rtr_update_pfx_table(rtr_socket, pdu) == RTR_ERROR)
                 return RTR_ERROR;
         }
@@ -449,7 +451,7 @@ int rtr_sync(rtr_socket* rtr_socket){
     rtr_socket->request_nonce = false;
     if (rtr_set_last_update(rtr_socket) == RTR_ERROR)
         return RTR_ERROR;
-    RTR_DBG("Sync successfull, Nonce: %u, SN: %u", rtr_socket->nonce, rtr_socket->serial_number);
+    RTR_DBG("Sync successfull, No. of received Prefixes: %u, Nonce: %u, SN: %u", received_prefixes, rtr_socket->nonce, rtr_socket->serial_number);
     return RTR_SUCCESS;
 }
 
