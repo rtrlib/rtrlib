@@ -156,7 +156,7 @@ int rtr_mgr_config_cmp(const void* a, const void* b){
 
 int rtr_mgr_init(rtr_mgr_config* config, const unsigned int polling_period, const unsigned int cache_timeout, pfx_update_fp update_fp){
     //sort array in asc preference order
-    qsort(&(config->groups), config->len, sizeof(rtr_mgr_config), &rtr_mgr_config_cmp);
+    qsort(config->groups, config->len, sizeof(rtr_mgr_group), &rtr_mgr_config_cmp);
 
     for(unsigned int i = 0; i < config->len; i++){
         if(config->groups[i].sockets_len == 0){
