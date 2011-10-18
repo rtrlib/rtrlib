@@ -33,6 +33,7 @@
 #include "rtrlib/rtr_mgr.h"
 #include "rtrlib/pfx/lpfst/lpfst-pfx.h"
 #include "rtrlib/rtr/rtr.h"
+#include "rtrlib/lib/utils.h"
 #ifdef RTRLIB_HAVE_LIBSSH
 #include "rtrlib/transport/ssh/ssh_transport.h"
 #endif
