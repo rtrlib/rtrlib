@@ -86,7 +86,7 @@ static void update_cb(struct pfx_table* p  __attribute__((unused)), const pfx_re
         printf("Record added:\n");
     else
         printf("Record removed:\n");
-    ipaddr_to_string(&(rec.prefix), ip, INET6_ADDRSTRLEN);
+    rtr_ipaddr_to_string(&(rec.prefix), ip, INET6_ADDRSTRLEN);
     printf("prefix: %s\n", ip);
     printf("asn: %u\n", rec.asn);
     printf("min_len: %u\n", rec.min_len);

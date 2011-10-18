@@ -49,12 +49,12 @@ int tr_send_all(const tr_socket* socket, const void* pdu, const size_t len, cons
     unsigned int total_send = 0;
     int rtval = 0;
     time_t end_time;
-    get_monotonic_time(&end_time);
+    rtr_get_monotonic_time(&end_time);
     end_time = end_time + timeout;
 
     while(total_send < len){
         time_t cur_time;
-        get_monotonic_time(&cur_time);
+        rtr_get_monotonic_time(&cur_time);
 
         rtval = tr_send(socket, ((char*) pdu) + total_send, (len - total_send), (end_time - cur_time));
         if(rtval < 0)
@@ -68,12 +68,12 @@ int tr_recv_all(const tr_socket* socket, const void* pdu, const size_t len, cons
     size_t total_recv = 0;
     int rtval = 0;
     time_t end_time;
-    get_monotonic_time(&end_time);
+    rtr_get_monotonic_time(&end_time);
     end_time += timeout;
 
     while(total_recv < len){
         time_t cur_time;
-        get_monotonic_time(&cur_time);
+        rtr_get_monotonic_time(&cur_time);
 
         rtval = tr_recv(socket, ((char*) pdu)+total_recv, (len - total_recv), end_time - cur_time);
         if(rtval < 0)

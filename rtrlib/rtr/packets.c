@@ -339,7 +339,7 @@ error:
 }
 
 int rtr_set_last_update(rtr_socket* rtr_socket){
-    if(get_monotonic_time(&(rtr_socket->last_update)) == -1){
+    if(rtr_get_monotonic_time(&(rtr_socket->last_update)) == -1){
         RTR_DBG1("get_monotonic_time(..) failed ");
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
         return RTR_ERROR;
@@ -500,7 +500,7 @@ int rtr_update_pfx_table(rtr_socket* rtr_socket, const void* pdu){
 
     if(rtval == PFX_DUPLICATE_RECORD){
         char ip[INET6_ADDRSTRLEN];
-        ipaddr_to_string(&(pfxr.prefix), ip, INET6_ADDRSTRLEN);
+        rtr_ipaddr_to_str(&(pfxr.prefix), ip, INET6_ADDRSTRLEN);
         RTR_DBG("Duplicate Announcement for record: %s/%u-%u, ASN: %u, received", ip, pfxr.min_len, pfxr.max_len, pfxr.asn);
         rtr_send_error_pdu(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT , NULL, 0);
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
@@ -527,7 +527,7 @@ int rtr_wait_for_sync(rtr_socket* rtr_socket){
     char pdu[RTR_MAX_PDU_LEN]; 
 
     time_t cur_time;
-    get_monotonic_time(&cur_time);
+    rtr_get_monotonic_time(&cur_time);
     time_t wait = (rtr_socket->last_update + rtr_socket->polling_period) - cur_time;
     if(wait < 0)
         wait = 0;

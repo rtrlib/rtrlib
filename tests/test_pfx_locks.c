@@ -31,7 +31,6 @@
 #include <time.h>
 #include "rtrlib/lib/ip.h"
 #include "rtrlib/pfx/lpfst/lpfst-pfx.h"
-#include "rtrlib/lib/test.h"
 
 void print_state(const pfxv_state s){
     if(s == BGP_PFXV_STATE_VALID)

@@ -61,7 +61,6 @@ install(TARGETS rtrlib LIBRARY DESTINATION lib)
 #install includes
 install(DIRECTORY rtrlib/ DESTINATION include/rtrlib 
     FILES_MATCHING PATTERN "*.h"
-    PATTERN rtrlib/lib/test.h EXCLUDE
     PATTERN rtrlib/rtr_mgr. EXCLUDE)
 install(PROGRAMS tools/rtrclient DESTINATION bin)
 

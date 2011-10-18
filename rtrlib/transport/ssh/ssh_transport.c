@@ -203,7 +203,7 @@ int tr_ssh_recv(const void* tr_ssh_sock, void* buf, const size_t buf_len, const 
             return tr_ssh_recv_async(tr_ssh_sock, buf, buf_len);
 
     time_t end_time;
-    get_monotonic_time(&end_time);
+    rtr_get_monotonic_time(&end_time);
     end_time += timeout;
     time_t cur_time;
     do{
@@ -215,7 +215,7 @@ int tr_ssh_recv(const void* tr_ssh_sock, void* buf, const size_t buf_len, const 
         }
 
         sleep(1);
-        get_monotonic_time(&cur_time);
+        rtr_get_monotonic_time(&cur_time);
     } while((end_time - cur_time) >0);
     return TR_WOULDBLOCK;;
 }

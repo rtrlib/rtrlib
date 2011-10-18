@@ -25,7 +25,10 @@
 #include <time.h>
 #include "rtrlib/lib/ip.h"
 
-int get_monotonic_time(time_t* seconds);
-int ipaddr_to_string(const ip_addr* addr, char* result, const size_t len);
+int rtr_get_monotonic_time(time_t* seconds);
+int rtr_ipaddr_to_str(const ip_addr* addr, char* result, const size_t len);
+int rtr_str_to_ipaddr(const char* str, ip_addr* ip_addr);
+bool rtr_cmp_ipv4(const ip_addr* addr1, const char* addr2);
+bool rtr_cmp_ipv6(const ip_addr* addr1, const char* addr2);
 
 #endif
