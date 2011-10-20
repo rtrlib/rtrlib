@@ -39,6 +39,14 @@ typedef struct lpfst_node_t {
  */
 void lpfst_insert(lpfst_node* root, lpfst_node* new_node, const unsigned int level);
 lpfst_node* lpfst_lookup(const lpfst_node* root_node, const ip_addr* prefix, const uint8_t mask_len,  unsigned int* level);
+
+/**
+ * @brief Search a node with prefix and node.len <= mask_len
+ * @param[in] found Is true if a node which matches could be found, else found is set to false.
+ * @return A node which matches the passed parameter (found==true)
+ * @return the parent of the node where the lookup operation stops, (found==false
+ * @return NULL if root_node is NULL
+*/
 lpfst_node* lpfst_lookup_exact(lpfst_node* root_node, const ip_addr* prefix, const uint8_t mask_len, unsigned int* level, bool* found);
 lpfst_node* lpfst_remove(lpfst_node* root_node, const ip_addr* prefix, const unsigned int level);
 
