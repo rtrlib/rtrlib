@@ -221,7 +221,41 @@ int main(){
     assert(pfx_table_validate(&pfxt, 124, &(pfx.prefix), 56, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_INVALID);
 
+
+    assert(rtr_str_to_ipaddr("1.0.4.0", &(pfx.prefix)) == 0);
+    pfx.min_len=22;
+    pfx.max_len=22;
+    pfx.asn=56203;
+    assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
+    assert(pfx_table_validate(&pfxt, pfx.asn, &(pfx.prefix), pfx.min_len, &res) == PFX_SUCCESS);
+    assert(res == BGP_PFXV_STATE_VALID);
+
+    assert(rtr_str_to_ipaddr("1.8.1.0", &(pfx.prefix)) == 0);
+    pfx.min_len=24;
+    pfx.max_len=24;
+    pfx.asn=38345;
+    assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
+    assert(pfx_table_validate(&pfxt, pfx.asn, &(pfx.prefix), pfx.min_len, &res) == PFX_SUCCESS);
+    assert(res == BGP_PFXV_STATE_VALID);
+
+    assert(rtr_str_to_ipaddr("1.8.8.0", &(pfx.prefix)) == 0);
+    pfx.min_len=24;
+    pfx.max_len=24;
+    pfx.asn=38345;
+    assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
+    assert(pfx_table_validate(&pfxt, pfx.asn, &(pfx.prefix), pfx.min_len, &res) == PFX_SUCCESS);
+    assert(res == BGP_PFXV_STATE_VALID);
     pfx_table_free(&pfxt);
+
+    assert(rtr_str_to_ipaddr("1.0.65.0", &(pfx.prefix)) == 0);
+    pfx.min_len=18;
+    pfx.max_len=18;
+    pfx.asn=18144;
+    assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
+    assert(pfx_table_validate(&pfxt, pfx.asn, &(pfx.prefix), pfx.min_len, &res) == PFX_SUCCESS);
+    assert(res == BGP_PFXV_STATE_VALID);
+    pfx_table_free(&pfxt);
+
     remove_src_test();
     mass_test();
 }
