@@ -42,7 +42,7 @@ static int pfx_table_del_elem(node_data* data, const unsigned int index);
 static int pfx_table_create_node(lpfst_node** node, const pfx_record* record);
 static int pfx_table_append_elem(node_data* data, const pfx_record* record);
 static data_elem* pfx_table_find_elem(const node_data* data, const pfx_record* record, unsigned int* index);
-static bool pfx_table_elem_matches(node_data* entry, const uint32_t asn, const uint32_t max_len);
+static bool pfx_table_elem_matches(node_data* entry, const uint32_t asn, const uint8_t max_len);
 static void pfx_table_notify_clients(pfx_table* pfx_table, const pfx_record* record, const bool added);
 static int pfx_table_remove_id(pfx_table* pfx_table, lpfst_node** root, lpfst_node* node, const uintptr_t socket_id, const unsigned int level);
 
@@ -242,7 +242,7 @@ int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* record){
     return PFX_SUCCESS;
 }
 
-bool pfx_table_elem_matches(node_data* data, const uint32_t asn, const uint32_t max_len){
+bool pfx_table_elem_matches(node_data* data, const uint32_t asn, const uint8_t max_len){
     for(unsigned int i = 0; i < data->len; i++){
         if(data->ary[i].asn == asn && max_len <= data->ary[i].max_len)
             return true;
