@@ -256,6 +256,21 @@ int main(){
     assert(res == BGP_PFXV_STATE_VALID);
     pfx_table_free(&pfxt);
 
+    assert(rtr_str_to_ipaddr("10.0.0.0", &(pfx.prefix)) == 0);
+    pfx.min_len=16;
+    pfx.max_len=16;
+    pfx.asn=123;
+    assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
+    assert(pfx_table_validate(&pfxt, pfx.asn, &(pfx.prefix), pfx.min_len, &res) == PFX_SUCCESS);
+    assert(res == BGP_PFXV_STATE_VALID);
+
+    assert(rtr_str_to_ipaddr("10.0.5.0", &(pfx.prefix)) == 0);
+    pfx.min_len=24;
+    pfx.max_len=24;
+    pfx.asn=124;
+    assert(pfx_table_validate(&pfxt, pfx.asn, &(pfx.prefix), pfx.min_len, &res) == PFX_SUCCESS);
+    assert(res == BGP_PFXV_STATE_INVALID);
+
     remove_src_test();
     mass_test();
 }
