@@ -30,6 +30,14 @@
 #include "rtrlib/lib/ip.h"
 #include "rtrlib/lib/utils.h"
 #include "rtrlib/pfx/lpfst/lpfst-pfx.h"
+void print_bytes(void* buf, size_t len){
+    for(unsigned int i = 0;i < len; i++){
+        if(len != 0)
+            printf(":");
+        printf("%02x", *((uint8_t*) ((char*) buf + i)));
+    }
+    printf("\n");
+}
 
 void print_state(const pfxv_state s){
     if(s == BGP_PFXV_STATE_VALID)
@@ -90,7 +98,6 @@ void remove_src_test(){
     assert(pfx_table_validate(&pfxt, 90, &(pfx.prefix), 32, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_VALID);
     assert(pfx_table_validate(&pfxt, 80, &(pfx.prefix), 32, &res) == PFX_SUCCESS);
-    print_state(res);
     assert(res == BGP_PFXV_STATE_INVALID);
 
     printf("remove_src_test successfull\n");
@@ -271,6 +278,45 @@ int main(){
     assert(pfx_table_validate(&pfxt, pfx.asn, &(pfx.prefix), pfx.min_len, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_INVALID);
 
+    pfx_table_free(&pfxt);
+    assert(rtr_str_to_ipaddr("109.105.96.0", &(pfx.prefix)) == 0);
+    //memcpy(&(pfx.prefix.u.addr4.addr),  &i, sizeof(i));
+    pfx.min_len=19;
+    pfx.max_len=19;
+    pfx.asn=123;
+    assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
+    assert(rtr_str_to_ipaddr("109.105.128.0", &(pfx.prefix)) == 0);
+    assert(pfx_table_validate(&pfxt, 456, &(pfx.prefix), 20, &res) == PFX_SUCCESS);
+    assert(res == BGP_PFXV_STATE_NOT_FOUND);
+
+    pfx_table_free(&pfxt);
+    assert(rtr_str_to_ipaddr("190.57.224.0", &(pfx.prefix)) == 0);
+    pfx.min_len=19;
+    pfx.max_len=24;
+    pfx.asn=123;
+    assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
+    assert(rtr_str_to_ipaddr("190.57.72.0", &(pfx.prefix)) == 0);
+    assert(pfx_table_validate(&pfxt, 123, &(pfx.prefix), 21, &res) == PFX_SUCCESS);
+    assert(res == BGP_PFXV_STATE_NOT_FOUND);
+
+
+    pfx_table_free(&pfxt);
+
+    assert(rtr_str_to_ipaddr("80.253.128.0", &(pfx.prefix)) == 0);
+    pfx.min_len=19;
+    pfx.max_len=19;
+    pfx.asn=123;
+    assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
+    assert(rtr_str_to_ipaddr("80.253.144.0", &(pfx.prefix)) == 0);
+    assert(pfx_table_validate(&pfxt, 123, &(pfx.prefix), 20, &res) == PFX_SUCCESS);
+    assert(res == BGP_PFXV_STATE_INVALID);
+
+    char tmp[512];
+    ipv6_addr_to_str(&(pfx.prefix.u.addr6), tmp, sizeof(tmp));
+    printf("%s\n", tmp);
+
+    pfx_table_free(&pfxt);
     remove_src_test();
     mass_test();
 }
+

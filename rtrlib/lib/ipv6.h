@@ -28,13 +28,17 @@
 
 
 /**
- * @brief Struct holding an IPv6 address in network byte order.
+ * @brief Struct holding an IPv6 address in host byte order.
  * @param addr The IPv6 address.
  */
 typedef struct {
-    uint64_t addr[2];
+    uint32_t addr[4];
 } ipv6_addr;
 
-extern bool ipv6_addr_equal(ipv6_addr a, ipv6_addr b);
-extern ipv6_addr ipv6_get_bits(const ipv6_addr* val, const uint8_t from, const uint8_t to);
+bool ipv6_addr_equal(ipv6_addr a, ipv6_addr b);
+ipv6_addr ipv6_get_bits(const ipv6_addr* val, const uint8_t from, const uint8_t to);
+int ipv6_addr_to_str(const ipv6_addr* ip_addr, char *b, const unsigned int len);
+int str_to_ipv6_addr(const char *a, ipv6_addr* ip);
+bool ipv6_addr_eq(const ipv6_addr* a, const ipv6_addr* b);
+void ipv6_addr_to_host_byte_order(const uint32_t* src, uint32_t* dest);
 #endif 

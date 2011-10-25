@@ -99,7 +99,7 @@ typedef struct pdu_ipv6{
     uint8_t prefix_len;
     uint8_t max_prefix_len;
     uint8_t zero;
-    uint8_t prefix[16];
+    uint32_t prefix[4];
     uint32_t asn;
 } pdu_ipv6;
 
@@ -234,7 +234,7 @@ void rtr_pdu_to_network_byte_order(void* pdu){
  * @return TR_WOULDBLOCK
  */
 int rtr_receive_pdu(rtr_socket* rtr_socket, void* pdu, const size_t pdu_len, const time_t timeout){
-    //bitwise error field:
+    //error values:
     // -1 internal error
     // -2 TR_WOULDBLOCK
     // -3 TR_INTR
@@ -263,7 +263,7 @@ int rtr_receive_pdu(rtr_socket* rtr_socket, void* pdu, const size_t pdu_len, con
     rtr_pdu_header_to_host_byte_order(&header);
 
     if(header.ver != RTR_PROTOCOL_VERSION){
-        error =16;
+        error = 16;
         goto error;
     }
     if(header.type > 10){
@@ -465,20 +465,19 @@ int rtr_update_pfx_table(rtr_socket* rtr_socket, const void* pdu){
     if(type ==  IPV4_PREFIX){
         pdu_size = sizeof(pdu_ipv4);
         const pdu_ipv4* ipv4 = pdu;
-        pfxr.prefix.u.addr4.addr = ipv4->prefix;
+        pfxr.prefix.u.addr4.addr = ntohl(ipv4->prefix);
         pfxr.asn = ipv4->asn;
         pfxr.prefix.ver = IPV4;
         pfxr.min_len = ipv4->prefix_len;
         pfxr.max_len = ipv4->max_prefix_len;
-        pfxr.socket_id = (uintptr_t) rtr_socket; //TODO: is the pointer addr as unique id safe?
+        pfxr.socket_id = (uintptr_t) rtr_socket;
     }
     else if(type == IPV6_PREFIX){
         pdu_size = sizeof(pdu_ipv6);
         const pdu_ipv6* ipv6 = pdu;
         pfxr.asn = ipv6->asn;
         pfxr.prefix.ver = IPV6;
-
-        memcpy(pfxr.prefix.u.addr6.addr, ipv6->prefix, sizeof(ipv6->prefix));
+        ipv6_addr_to_host_byte_order(ipv6->prefix, pfxr.prefix.u.addr6.addr);
         pfxr.min_len = ipv6->prefix_len;
         pfxr.max_len = ipv6->max_prefix_len;
         pfxr.socket_id = (uintptr_t) rtr_socket;
@@ -566,8 +565,8 @@ int rtr_send_error_pdu(const rtr_socket* rtr_socket, const void* erroneous_pdu, 
 
     memcpy(msg+8, &pdu_len, sizeof(pdu_len));
     if(pdu_len > 0)
-        memcpy(msg+12,erroneous_pdu, pdu_len);
-    *(msg+12+pdu_len) = htonl(text_len);
+        memcpy(msg + 12, erroneous_pdu, pdu_len);
+    *(msg + 12 + pdu_len) = htonl(text_len);
     if(text_len > 0)
         memcpy(msg+16+pdu_len, text, text_len);
 

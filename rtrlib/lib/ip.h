@@ -49,7 +49,15 @@ typedef struct {
 } ip_addr;
 
 bool ip_addr_is_zero(const ip_addr);
-ip_addr ip_addr_get_bits(const ip_addr* val, const uint8_t from, const uint8_t to);
+
+/**
+ * @brief Extracts number bits from val, numbering starts at the the bit with the highest address(left on little endian)
+ * @param[in] Address of the first bit that will be extracted 
+ * @param[in] number how many bits will be extracted
+ * @returns a ipv4_addr which contains the extracted bits
+*/
+ip_addr ip_addr_get_bits(const ip_addr* val, const uint8_t from, const uint8_t number);
+
 
 /**
  * @brief Check if two ip_addr structs are equal

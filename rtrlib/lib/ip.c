@@ -35,18 +35,19 @@ bool ip_addr_is_zero(const ip_addr prefix){
     return false;
 }
 
-ip_addr ip_addr_get_bits(const ip_addr* val, const uint8_t from, const uint8_t to){
+ip_addr ip_addr_get_bits(const ip_addr* val, const uint8_t from, const uint8_t number){
     ip_addr result;
     if(val->ver == IPV6){
         result.ver = IPV6;
-        result.u.addr6 = ipv6_get_bits(&(val->u.addr6), from, to);
+        result.u.addr6 = ipv6_get_bits(&(val->u.addr6), from, number);
     }
     else{
         result.ver = IPV4;
-        result.u.addr4 = ipv4_get_bits(&(val->u.addr4), from, to);
+        result.u.addr4 = ipv4_get_bits(&(val->u.addr4), from, number);
     }
     return result;
 }
+
 
 bool ip_addr_equal(const ip_addr a, const ip_addr b ){
     if(a.ver != b.ver)

@@ -23,14 +23,18 @@
 #ifndef RTR_IPV4_H
 #define RTR_IPV4_H
 #include <inttypes.h>
+#include <stdbool.h>
 
 /**
- * @brief Struct holding an IPv4 address in network byte order.
+ * @brief Struct holding an IPv4 address in host byte order.
  * @param addr The IPv4 address.
  */
 typedef struct {
     uint32_t addr;
 } ipv4_addr;
 
-ipv4_addr ipv4_get_bits(const ipv4_addr* val, const uint8_t from, const uint8_t to);
+ipv4_addr ipv4_get_bits(const ipv4_addr* val, const uint8_t from, const uint8_t number);
+int str_to_ipv4_addr(const char* str, ipv4_addr* ip);
+int ipv4_addr_to_str(const ipv4_addr* ip, char* str, unsigned int len);
+bool ipv4_addr_eq(const ipv4_addr* a, const ipv4_addr* b);
 #endif

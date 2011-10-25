@@ -30,5 +30,7 @@ int rtr_ipaddr_to_str(const ip_addr* addr, char* result, const size_t len);
 int rtr_str_to_ipaddr(const char* str, ip_addr* ip_addr);
 bool rtr_cmp_ipv4(const ip_addr* addr1, const char* addr2);
 bool rtr_cmp_ipv6(const ip_addr* addr1, const char* addr2);
+char* ip6_to_str(ip_addr* ip_addr, char *b);
+uint32_t rtr_get_bits(const uint32_t val, const uint8_t from, const uint8_t number);
 
 #endif

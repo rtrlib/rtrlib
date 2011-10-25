@@ -38,7 +38,7 @@ void lpfst_insert(lpfst_node* root_node, lpfst_node* new_node, const unsigned in
         new_node->len = tmp.len;
         new_node->data = tmp.data;
     }
-    if(ip_addr_is_zero(ip_addr_get_bits(&(new_node->prefix), level, level))){
+    if(ip_addr_is_zero(ip_addr_get_bits(&(new_node->prefix), level, 1))){
         if(root_node->lchild == NULL){
             root_node->lchild = new_node;
             new_node->parent = root_node;
@@ -63,10 +63,10 @@ lpfst_node* lpfst_lookup(const lpfst_node* root_node, const ip_addr* prefix, con
     while(root_node != NULL)
     {
         //if the first prefix_len bits from root_node->prefix match prefix, return root_node
-        if(root_node->len <= mask_len && ip_addr_equal(ip_addr_get_bits(&(root_node->prefix), 0, root_node->len - 1), ip_addr_get_bits(prefix, 0, root_node->len -1)))
+        if(root_node->len <= mask_len && ip_addr_equal(ip_addr_get_bits(&(root_node->prefix), 0, root_node->len), ip_addr_get_bits(prefix, 0, root_node->len)))
             return (lpfst_node*) root_node;
 
-        if(ip_addr_is_zero(ip_addr_get_bits(prefix, *level, *level)))
+        if(ip_addr_is_zero(ip_addr_get_bits(prefix, *level, 1)))
             root_node = root_node->lchild;
         else
             root_node = root_node->rchild;
@@ -90,7 +90,7 @@ lpfst_node* lpfst_lookup_exact(lpfst_node* root_node, const ip_addr* prefix, con
             return (lpfst_node*) root_node;
         }
 
-        if(ip_addr_is_zero(ip_addr_get_bits(prefix, *level, *level))){
+        if(ip_addr_is_zero(ip_addr_get_bits(prefix, *level, 1))){
             if(root_node->lchild == NULL){
                 return root_node;
             }
@@ -140,7 +140,7 @@ lpfst_node* lpfst_remove(lpfst_node* root_node, const ip_addr* prefix, const uns
             }
         }
     }
-    if(ip_addr_is_zero(ip_addr_get_bits(prefix, level, level)))
+    if(ip_addr_is_zero(ip_addr_get_bits(prefix, level, 1)))
         return lpfst_remove(root_node->lchild, prefix, level+1);
     else
         return lpfst_remove(root_node->rchild, prefix, level+1);
