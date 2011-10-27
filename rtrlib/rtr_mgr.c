@@ -61,6 +61,7 @@ void rtr_mgr_cb(const struct rtr_socket* sock, const rtr_socket_state state, voi
     unsigned int ind = 0;
     if(rtr_mgr_find_group(config, sock, &ind) == -1)
         return;
+    pthread_mutex_lock(&(config->mutex));
     if(state == RTR_ESTABLISHED){
         //socket established successfull a connection to the rtr_server
         if(config->groups[ind].status == RTR_MGR_CONNECTING){
@@ -141,7 +142,8 @@ void rtr_mgr_cb(const struct rtr_socket* sock, const rtr_socket_state state, voi
         if(next_config >= 0)
             rtr_mgr_start_sockets(&(config->groups[next_config]));
     }
-    return;
+
+    pthread_mutex_unlock(&(config->mutex));
 }
 
 int rtr_mgr_config_cmp(const void* a, const void* b){
@@ -155,6 +157,9 @@ int rtr_mgr_config_cmp(const void* a, const void* b){
 }
 
 int rtr_mgr_init(rtr_mgr_config* config, const unsigned int polling_period, const unsigned int cache_timeout, pfx_update_fp update_fp){
+    if(pthread_mutex_init(&(config->mutex), NULL) != 0)
+        MGR_DBG1("Mutex initialization failed");
+
     //sort array in asc preference order
     qsort(config->groups, config->len, sizeof(rtr_mgr_group), &rtr_mgr_config_cmp);
 

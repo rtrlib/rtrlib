@@ -52,4 +52,6 @@ int main(){
     rtr_mgr_start(&conf);
     printf("started\n");
     sleep(500000);
+    //rtr_mgr_stop(&conf);
+    //rtr_mgr_free(&conf);
 }

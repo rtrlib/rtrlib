@@ -59,13 +59,14 @@ typedef struct {
 typedef struct rtr_mgr_config {
     unsigned int len;
     rtr_mgr_group* groups;
+    pthread_mutex_t mutex;
 } rtr_mgr_config;
 
 /**
  * @brief Initialize all rtr_sockets in config with the supplied values.
- * @param[in] config The preference must be unique in the rtr_mgr_config array, a reference to the same rtr_socket
+ * @param[in] config a rtr_mgr_config struct with initialized len and groups members.
+ The preference value must be unique in the rtr_mgr_config array, a reference to the same rtr_socket
  * in two different rtr_socket** arrays will produce unpredictable behaviour.
- * @param[in] rtr_mgr_socket Pointer to a rtr_mgr_socket that will be initialized
  * @return 0  On success 
  * @return -1 On error 
  *
