@@ -48,8 +48,10 @@ bool rtr_mgr_config_status_is_synced(const rtr_mgr_group* group){
 }
 
 void rtr_mgr_cb(const struct rtr_socket* sock, const rtr_socket_state state, void* data){
+
+    if(state == RTR_SHUTDOWN)
+        return;
     rtr_mgr_config* config = data;
-    //TODO: locks needed?
 
     //return if group contains no other socket groups => nothing todo :-)
     if(config->len == 1){
@@ -205,10 +207,25 @@ bool rtr_mgr_group_in_sync(rtr_mgr_config* config){
 }
 
 void rtr_mgr_free(rtr_mgr_config* config){
+    pthread_mutex_lock(&(config->mutex));
     pfx_table_free(config->groups[0].sockets[0]->pfx_table);
     free(config->groups[0].sockets[0]->pfx_table);
+    pthread_mutex_unlock(&(config->mutex));
+    pthread_mutex_destroy(&(config->mutex));
 }
 
 inline int rtr_mgr_validate(rtr_mgr_config* config, const uint32_t asn, const ip_addr* prefix, const uint8_t mask_len, pfxv_state* result){
     return pfx_table_validate(config->groups[0].sockets[0]->pfx_table, asn, prefix, mask_len, result);
+}
+
+void rtr_mgr_stop(rtr_mgr_config* config){
+    pthread_mutex_lock(&(config->mutex));
+    for(unsigned int i = 0; i < config->len; i++){
+        for(unsigned int j = 0; j < config->groups[i].sockets_len; j++){
+            rtr_stop(config->groups[i].sockets[j]);
+            MGR_DBG("Group(%u) status changed to: CLOSED", config->groups[i].preference);
+        }
+        config->groups[i].status = RTR_MGR_CLOSED;
+    }
+    pthread_mutex_unlock(&(config->mutex));
 }
