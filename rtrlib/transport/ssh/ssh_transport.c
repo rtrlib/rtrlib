@@ -50,7 +50,6 @@ int tr_ssh_init(const tr_ssh_config* config, tr_socket** socket){
     *socket = malloc(sizeof(tr_socket));
     tr_socket* tr_socket = *socket;
 
-    tr_socket->proto_name = "SSH";
     tr_socket->close_fp = &tr_ssh_close;
     tr_socket->free_fp = &tr_ssh_free;
     tr_socket->open_fp = &tr_ssh_open;

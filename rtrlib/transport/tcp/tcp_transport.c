@@ -50,7 +50,6 @@ int tr_tcp_init(const tr_tcp_config* config, tr_socket** socket){
     *socket = malloc(sizeof(tr_socket));
     tr_socket* tr_socket = *socket;
 
-    tr_socket->proto_name = "TCP";
     tr_socket->close_fp = &tr_tcp_close;
     tr_socket->free_fp = &tr_tcp_free;
     tr_socket->open_fp = &tr_tcp_open;

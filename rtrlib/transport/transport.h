@@ -87,7 +87,6 @@ typedef int (*tr_send_fp)(const void* socket, const void* pdu, const size_t len,
 /**
  * @brief A transport socket datastructure.
  *
- * @param techn_name The name of the protocol that this tr_socket uses.
  * @param socket A pointer to a technology specific socket.
  * @param open_fp Pointer to a function that establishes the socket connection.
  * @param close_fp Pointer to a function that closes the socket.
@@ -96,7 +95,6 @@ typedef int (*tr_send_fp)(const void* socket, const void* pdu, const size_t len,
  * @param recv_fp Pointer to a function that receives data from this socket.
  */
 typedef struct tr_socket{
-    const char* proto_name;
     void* socket;
     tr_open_fp open_fp;
     tr_close_fp close_fp;
