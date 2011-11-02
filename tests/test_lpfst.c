@@ -95,6 +95,14 @@ void get_bits_testv4(){
     assert(rtr_ipaddr_to_str(&addr, buf, sizeof(buf)) == 0);
     assert(strcmp("10.10.10.5", buf) == 0);
 
+    assert(rtr_str_to_ipaddr("132.200.0.0", &addr) == 0);
+    result = ip_addr_get_bits(&addr, 0, 1);
+    assert(result.u.addr4.addr == 0x80000000);
+
+    assert(rtr_str_to_ipaddr("101.200.0.0", &addr) == 0);
+    result = ip_addr_get_bits(&addr, 0, 1);
+    printf("%x\n", result.u.addr4.addr);
+    assert(result.u.addr4.addr == 0x80000000);
 }
 
 void get_bits_testv6(){
