@@ -17,12 +17,12 @@ int rtr_mgr_start_sockets(rtr_mgr_group* config){
     for(unsigned int i = 0; i < config->sockets_len; i++){
         if(rtr_start(config->sockets[i]) != 0){
             MGR_DBG1("rtr_mgr: Error starting rtr_socket pthread");
-            return -1;
+            return RTR_ERROR;
         }
     }
     config->status = RTR_MGR_CONNECTING;
     MGR_DBG("Group(%u) status changed to: CONNECTING", config->preference);
-    return 0;
+    return RTR_SUCCESS;
 }
 
 int rtr_mgr_find_group(const rtr_mgr_config* config, const rtr_socket* sock, unsigned int* ind){
@@ -30,12 +30,12 @@ int rtr_mgr_find_group(const rtr_mgr_config* config, const rtr_socket* sock, uns
         for(unsigned int j = 0; j < config->groups[i].sockets_len; j++){
             if(config->groups[i].sockets[j] == sock){
                 *ind = i;
-                return 0;
+                return RTR_SUCCESS;
             }
         }
     }
     MGR_DBG1("Error couldn't find a wanted rtr_socket in rtr_mgr_config");
-    return -1;
+    return RTR_ERROR;
 }
 
 bool rtr_mgr_config_status_is_synced(const rtr_mgr_group* group){
@@ -154,8 +154,8 @@ int rtr_mgr_config_cmp(const void* a, const void* b){
     if(ar->preference > br->preference)
         return 1;
     else if(ar->preference < br->preference)
-        return -1;
-    return 0;
+        return RTR_ERROR;
+    return RTR_SUCCESS;
 }
 
 int rtr_mgr_init(rtr_mgr_config* config, const unsigned int polling_period, const unsigned int cache_timeout, pfx_update_fp update_fp){
@@ -168,17 +168,17 @@ int rtr_mgr_init(rtr_mgr_config* config, const unsigned int polling_period, cons
     for(unsigned int i = 0; i < config->len; i++){
         if(config->groups[i].sockets_len == 0){
             MGR_DBG1("Error Socket group contains an empty sockets array");
-            return -1;
+            return RTR_ERROR;
         }
         if(i > 0 && config->groups[i-1].preference == config->groups[i].preference){
             MGR_DBG1("Error Socket group contains 2 members with the same preference value");
-            return -1;
+            return RTR_ERROR;
         }
     }
 
     pfx_table* pfxt = malloc(sizeof(pfx_table));
     if(pfxt == NULL)
-        return -1;
+        return RTR_ERROR;
     pfx_table_init(pfxt, update_fp);
 
     for(unsigned int i = 0; i < config->len; i++){
@@ -187,7 +187,7 @@ int rtr_mgr_init(rtr_mgr_config* config, const unsigned int polling_period, cons
             rtr_init(config->groups[i].sockets[j], NULL, pfxt, polling_period, cache_timeout, rtr_mgr_cb, config);
         }
     }
-    return 0;
+    return RTR_SUCCESS;
 }
 
 int rtr_mgr_start(rtr_mgr_config* config){

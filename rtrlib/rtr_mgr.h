@@ -67,8 +67,8 @@ typedef struct rtr_mgr_config {
  * @param[in] config a rtr_mgr_config struct with initialized len and groups members.
  The preference value must be unique in the rtr_mgr_config array, a reference to the same rtr_socket
  * in two different rtr_socket** arrays will produce unpredictable behaviour.
- * @return 0  On success 
- * @return -1 On error 
+ * @return RTR_SUCCESS On success 
+ * @return RTR_ERROR On error 
  *
  */
 int rtr_mgr_init(rtr_mgr_config* config, const unsigned int polling_period, const unsigned int cache_timeout, pfx_update_fp update_fp);
@@ -83,16 +83,16 @@ void rtr_mgr_free(rtr_mgr_config* config);
  * @brief Initiates the rtr_connection_pool socket, establishes the connection with the set of rtr_sockets with the lowest preference value and treats error like
  * described in the rpki-rtr draft.
  * @param[in] socket Pointer to an allocated rtr_mgr_socket that will be initialized.
- * @return 0  On success 
- * @return -1 On error 
+ * @return RTR_SUCCESS On success 
+ * @return RTR_ERROR On error 
  */
 int rtr_mgr_start(rtr_mgr_config* config);
 
 /**
  * @brief Terminates all rtr_socket connections in the pool and removes all entries from the pfx_tables.
  * @param[in] socket The rtr_mgr_socket.
- * @return 0  On success 
- * @return -1 On error 
+ * @return RTR_SUCCESS  On success 
+ * @return RTR_ERROR On error 
  */
 void rtr_mgr_stop(rtr_mgr_config* config);
 
