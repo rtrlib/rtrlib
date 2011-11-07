@@ -5,9 +5,9 @@ cmake_minimum_required(VERSION 2.6)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
 if(CMAKE_BUILD_TYPE STREQUAL Debug)
-    set(CMAKE_C_FLAGS "-std=gnu99 -W -Wall -pedantic")
+    set(CMAKE_C_FLAGS "-std=gnu99 -W -Wall -pedantic -fstack-protector-all")
 else()
-    set(CMAKE_C_FLAGS "-std=gnu99")
+    set(CMAKE_C_FLAGS "-std=gnu99 -fstack-protector-all")
 endif(CMAKE_BUILD_TYPE STREQUAL Debug)
 
 include_directories(.)
