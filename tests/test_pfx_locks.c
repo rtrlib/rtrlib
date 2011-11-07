@@ -63,7 +63,6 @@ void rec_insert(pfx_table* pfxt){
     rec.max_len = 32;
     rec.prefix.ver = IPV4;
     rec.prefix.u.addr4.addr = 0;
-    pfxv_state res;
 
 
     printf("Inserting %u records\n", (max_i - min_i) * 3);
@@ -127,7 +126,6 @@ void rec_validate(pfx_table* pfxt){
 }
 void rec_remove(pfx_table* pfxt){
     const int tid = getpid();
-    int rtval;
     pfx_record rec;
     rec.min_len = 32;
     rec.max_len = 32;
@@ -141,7 +139,7 @@ void rec_remove(pfx_table* pfxt){
         rec.asn = tid %2;
         rec.prefix.ver = IPV4;
         rec.prefix.u.addr4.addr = htonl(i);
-        rtval = pfx_table_remove(pfxt, &rec);
+        pfx_table_remove(pfxt, &rec);
         //printf("%i: Record removed, rtval: ", tid);
         //print_pfx_rtval(rtval);
 

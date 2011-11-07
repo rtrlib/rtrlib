@@ -382,11 +382,9 @@ int rtr_sync(rtr_socket* rtr_socket){
         return RTR_ERROR;
     }
 
-    uint16_t cr_nonce;
     if(type == CACHE_RESPONSE){
         RTR_DBG1("Cache Response PDU received");
         pdu_header* cr_pdu = (pdu_header*) pdu;
-        cr_nonce = cr_pdu->reserved;
         //set connection nonce
         if(rtr_socket->request_nonce){
             if(rtr_socket->last_update != 0){
