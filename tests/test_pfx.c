@@ -313,7 +313,6 @@ int main(){
 
     char tmp[512];
     ipv6_addr_to_str(&(pfx.prefix.u.addr6), tmp, sizeof(tmp));
-    printf("%s\n", tmp);
 
     pfx_table_free(&pfxt);
     remove_src_test();

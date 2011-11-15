@@ -87,7 +87,6 @@ void get_bits_testv4(){
 
     assert(rtr_str_to_ipaddr("101.200.0.0", &addr) == 0);
     result = ip_addr_get_bits(&addr, 0, 1);
-    printf("%x\n", result.u.addr4.addr);
     assert(result.u.addr4.addr == 0);
 
     addr.u.addr4.addr = 0x6D698000;
@@ -162,7 +161,6 @@ void get_bits_testv6(){
 
     rtr_str_to_ipaddr("2001:0db8:85a3:08d3:1319:8a2e:0370:7344", &addr);
     assert(rtr_ipaddr_to_str(&addr, buf, sizeof(buf)) == 0);
-    printf("%s\n", buf);
     assert(strcmp("2001:db8:85a3:8d3:1319:8a2e:370:7344", buf) == 0);
 
     result = ip_addr_get_bits(&addr, 0, 16);
@@ -171,7 +169,6 @@ void get_bits_testv6(){
 
     result = ip_addr_get_bits(&addr, 16, 16);
     assert(rtr_ipaddr_to_str(&result, buf, sizeof(buf)) == 0);
-    printf("%s\n",buf);
     assert(rtr_cmp_ipv6(&result, "0:db8::"));
     result = ip_addr_get_bits(&addr, 0, 1);
     assert(rtr_cmp_ipv6(&result, "::"));
