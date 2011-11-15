@@ -71,8 +71,9 @@ void pfx_table_free(struct pfx_table* pfx_table){
                     pfx_record record = { data->ary[i].asn, (root->prefix), root->len, data->ary[i].max_len, data->ary[i].socket_id};
                     pfx_table_notify_clients(pfx_table, &record, false);
                 }
-                free(data);
                 rm_node = (lpfst_remove(root, &(root->prefix), 0));
+                free(((node_data*) rm_node->data)->ary);
+                free(rm_node->data);
                 free(rm_node);
             }
             while(rm_node != root);
@@ -233,6 +234,7 @@ int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* record){
             else
                 pfx_table->ipv6 = NULL;
         }
+        free(node->data);
         free(node);
     }
     pthread_rwlock_unlock(&pfx_table->lock);
@@ -318,8 +320,8 @@ int pfx_table_remove_id(pfx_table* pfx_table, lpfst_node** root, lpfst_node* nod
             }
         }
         if(data->len == 0){
-            free(((node_data*) node->data));
             lpfst_node* rm_node = lpfst_remove(node, &(node->prefix), level);
+            free(((node_data*) rm_node->data));
             free(rm_node);
             if(rm_node == *root){
                 *root = NULL;

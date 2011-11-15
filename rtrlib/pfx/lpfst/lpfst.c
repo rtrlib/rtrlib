@@ -129,13 +129,18 @@ lpfst_node* lpfst_remove(lpfst_node* root_node, const ip_addr* prefix, const uns
             if(root_node->lchild != NULL && (root_node->rchild == NULL || (root_node->lchild->len > root_node->rchild->len))){
                     root_node->prefix = root_node->lchild->prefix;
                     root_node->len = root_node->lchild->len;
+                    void* tmp = root_node->data;
                     root_node->data = root_node->lchild->data;
+                    root_node->lchild->data = tmp;
                     return lpfst_remove(root_node->lchild, &(root_node->lchild->prefix), level+1);
             }
             else{
                 root_node->prefix = root_node->rchild->prefix;
                 root_node->len = root_node->rchild->len;
+                void* tmp = root_node->data;
+                tmp = root_node->data;
                 root_node->data = root_node->rchild->data;
+                root_node->rchild->data = tmp;
                 return lpfst_remove(root_node->rchild, &(root_node->rchild->prefix), level+1);
             }
         }
