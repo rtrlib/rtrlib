@@ -154,7 +154,6 @@ void rtr_fsm_start(rtr_socket* rtr_socket){
             rtr_socket->request_nonce = true;
             rtr_socket->serial_number = 0;
             rtr_change_socket_state(rtr_socket, RTR_RESET);
-            sleep(ERR_TIMEOUT);
             rtr_purge_outdated_records(rtr_socket);
         }
 
