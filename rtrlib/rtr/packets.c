@@ -497,7 +497,7 @@ int rtr_update_pfx_table(rtr_socket* rtr_socket, const void* pdu){
 
     if(rtval == PFX_DUPLICATE_RECORD){
         char ip[INET6_ADDRSTRLEN];
-        rtr_ipaddr_to_str(&(pfxr.prefix), ip, INET6_ADDRSTRLEN);
+        ip_addr_to_str(&(pfxr.prefix), ip, INET6_ADDRSTRLEN);
         RTR_DBG("Duplicate Announcement for record: %s/%u-%u, ASN: %u, received", ip, pfxr.min_len, pfxr.max_len, pfxr.asn);
         rtr_send_error_pdu(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT , NULL, 0);
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);

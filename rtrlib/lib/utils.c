@@ -31,7 +31,6 @@
 #include <string.h>
 #include "rtrlib/lib/utils.h"
 
-
 int rtr_get_monotonic_time(time_t* seconds){
     struct timespec time;
     if(clock_gettime(CLOCK_MONOTONIC, &time) == -1)
@@ -40,45 +39,6 @@ int rtr_get_monotonic_time(time_t* seconds){
     if((time.tv_nsec *  1000000000) >=5)
         *seconds +=1;
     return 0;
-}
-
-
-
-
-int rtr_str_to_ipaddr(const char* str, ip_addr* ip_addr)
-{
-    if(strchr(str, ':') == NULL){ //IPv4 Addr
-        ip_addr->ver = IPV4;
-        return str_to_ipv4_addr(str, &(ip_addr->u.addr4));
-    }
-    //IPv6 Addr
-    ip_addr->ver = IPV6;
-    return str_to_ipv6_addr(str, &(ip_addr->u.addr6));
-}
-
-
-int rtr_ipaddr_to_str(const ip_addr* addr, char* result, const size_t len){
-    if(addr->ver == IPV4){
-        return ipv4_addr_to_str(&(addr->u.addr4), result, len);
-    }
-    else if(addr->ver == IPV6){
-        return ipv6_addr_to_str(&(addr->u.addr6), result, len);
-    }
-    return 0;
-}
-
-bool rtr_cmp_ipv4(const ip_addr* addr1, const char* addr2){
-    ip_addr tmp;
-    if(rtr_str_to_ipaddr(addr2, &tmp) == -1)
-        return false;
-    return(ipv4_addr_eq(&(addr1->u.addr4), &(tmp.u.addr4)));
-}
-
-bool rtr_cmp_ipv6(const ip_addr* addr1, const char* addr2){
-    ip_addr tmp;
-    if(rtr_str_to_ipaddr(addr2, &tmp) == -1)
-        return false;
-    return(ipv6_addr_eq(&(addr1->u.addr6), &(tmp.u.addr6)));
 }
 
 uint32_t rtr_get_bits(const uint32_t val, const uint8_t from, const uint8_t number){

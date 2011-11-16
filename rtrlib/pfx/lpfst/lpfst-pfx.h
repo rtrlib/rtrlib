@@ -21,7 +21,7 @@
  */
 
 /**
- * @defgroup mod_lpfst_pfx_h Longest Prefix Tree
+ * @defgroup mod_lpfst_pfx_h Longest prefix tree
  * @ingroup mod_pfx_h
  * @brief An implementation of a \ref mod_pfx_h "pfx_table" data structure
  * using longest prefix first trees (lpfst) for storing @ref pfx_record "pfx_records".
@@ -42,6 +42,13 @@
 #include "rtrlib/pfx/pfx.h"
 #include "rtrlib/pfx/lpfst/lpfst.h"
 
+/**
+ * @brief pfx_table.
+ * @param ipv4
+ * @param ipv6
+ * @param update_fp
+ * @param lock
+ */
 typedef struct pfx_table{
     lpfst_node* ipv4;
     lpfst_node* ipv6;

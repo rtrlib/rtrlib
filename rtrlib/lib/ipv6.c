@@ -28,10 +28,8 @@
 #include <string.h>
 #include <stdio.h>
 
-static inline int64_t get_bits64(const uint64_t val, const uint8_t from, const uint8_t number);
-
-inline bool ipv6_addr_equal(ipv6_addr a, ipv6_addr b){
-    if(a.addr[0] == b.addr[0] && a.addr[1] == b.addr[1])
+inline bool ipv6_addr_equal(const ipv6_addr* a, const ipv6_addr* b){
+    if(a->addr[0] == b->addr[0] && a->addr[1] == b->addr[1] && a->addr[2] == b->addr[2] && a->addr[3] == b->addr[3])
         return true;
     return false;
 }
@@ -76,20 +74,10 @@ ipv6_addr ipv6_get_bits(const ipv6_addr* val, const uint8_t from, const uint8_t 
     return result;
 }
 
-static int64_t get_bits64(const uint64_t val, const uint8_t from, const uint8_t number){
-    assert(number < 65);
-    assert(number > 0);
-
-    uint64_t mask = ~0;
-    if(number != 64)
-        mask = ~(mask << number);
-    mask <<= from;
-    return mask & val;
-}
 /*
  * This function was copied from the bird routing daemon's ip_pton(..) function
 */
-int str_to_ipv6_addr(const char *a, ipv6_addr* ip)
+int ipv6_str_to_addr(const char *a, ipv6_addr* ip)
 {
     uint32_t* o = ip->addr;
     uint16_t words[8];
@@ -131,7 +119,7 @@ int str_to_ipv6_addr(const char *a, ipv6_addr* ip)
             a++;
         else if (*a == '.' && (i == 6 || i < 6 && hfil >= 0)) {             /* Embedded IPv4 address */
             ipv4_addr addr4;
-            if (str_to_ipv4_addr(start, &addr4) == -1)
+            if (ipv4_str_to_addr(start, &addr4) == -1)
                 return -1;
             words[i++] = addr4.addr >> 16;
             words[i++] = addr4.addr;
@@ -214,12 +202,6 @@ int ipv6_addr_to_str(const ipv6_addr* ip_addr, char *b, const unsigned int len) 
     }
     *b = '\0';
     return 0;
-}
-
-bool ipv6_addr_eq(const ipv6_addr* a, const ipv6_addr* b){
-    if(a->addr[0] == b->addr[0] && a->addr[1] == b->addr[1] && a->addr[2] == b->addr[2] && a->addr[3] == b->addr[3])
-        return true;
-    return false;
 }
 
 void ipv6_addr_to_host_byte_order(const uint32_t* src, uint32_t* dest)

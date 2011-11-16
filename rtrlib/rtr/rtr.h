@@ -78,7 +78,7 @@ typedef void (*rtr_connection_state_fp)(const struct rtr_socket* rtr_socket, con
 /**
  * @brief A RTR socket.
  * @param tr_socket Pointer to an initialized tr_socket that will be used to communicate with the RTR server.
- * @param polling_period Interval in seconds between update queries to the server. Must be <= 3600
+ * @param polling_period Interval in seconds between serial queries that are sent to the server. Must be <= 3600
  * @param last_update Timestamp of the last validation record update. Is 0 if the pfx_table doesn't stores any
  * validation reords from this rtr_socket.
  * @param cache_timout Stored validation records will be deleted if cache was unable to refresh data for this period.\n
@@ -88,6 +88,8 @@ typedef void (*rtr_connection_state_fp)(const struct rtr_socket* rtr_socket, con
  * @param request_nonce True, if the rtr_client have to request a new none from the server.
  * @param serial_number Last serial number of the obtained validation records.
  * @param pfx_table pfx_table that stores the validation records obtained from the connected rtr server.
+ * @param connection_state_fp A callback function that is executed when the state of the socket changes.
+ * @param connection_state_fp_param Parameter that is passed to the connection_state_fp callback.
  */
 typedef struct rtr_socket{
     tr_socket* tr_socket;
@@ -107,12 +109,14 @@ typedef struct rtr_socket{
 /**
  * @brief Initialize a rtr_socket
  * @param[out] rtr_socket Pointer to the allocated rtr_socket that will be initialized.
- * @param[in] tr Pointer to a tr_socket that will be used for the transport connection.
- * @param[in] polling_period
- * @param[in] cache_timeout
- * @param[in] pfx_table
- * @param[in] connection_state_fp
- * @param[in] connection_state_fp_len
+ * @param[in] tr Pointer to a tr_socket that will be used for the transport connection. If NULL the tr_socket element of
+ * the rtr_socket won't be changed.
+ * @param[in] polling_period Interval in seconds between serial queries that are sent to the server. Must be <= 3600
+ * @param[in] cache_timout Stored validation records will be deleted if cache was unable to refresh data for this period.\n
+ * The default value is twice the polling_period.
+ * @param[in] pfx_table pfx_table that stores the validation records obtained from the connected rtr server.
+ * @param[in] connection_state_fp A callback function that is executed when the state of the socket changes.
+ * @param[in] connection_state_fp_param Parameter that is passed to the connection_state_fp callback.
  */
 void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table, const unsigned int polling_period, const unsigned int cache_timeout, rtr_connection_state_fp fp, void* fp_data);
 
@@ -121,6 +125,7 @@ void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table
  * pfx_records will be synced.
  * @param[in] rtr_socket rtr_socket that will be used.
  * @return RTR_ERROR
+ * @return RTR_SUCCESS
  */
 int rtr_start(rtr_socket* rtr_socket);
 

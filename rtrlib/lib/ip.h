@@ -36,7 +36,7 @@ typedef enum {
 } ip_version;
 
 /**
- * @brief The ip_addr struct, can hold a IPv4 or IPv6 address.
+ * @brief The ip_addr struct, stores a IPv4 or IPv6 address in host byte order.
  * @param ver Specifies the type of address that is stored in this struct.
  * @param u Union holding a ipv4_addr or ipv6_addr.
  */
@@ -48,25 +48,61 @@ typedef struct {
     } u;
 } ip_addr;
 
+/**
+ * @brief Detects if the ip_addr only stores 0 bits
+ * @param[in] ip_addr
+ * @returns true if the saved ip_addr is 0
+ * @returns false if the saved ip_addr isn't 0
+ */
 bool ip_addr_is_zero(const ip_addr);
 
 /**
- * @brief Extracts number bits from val, numbering starts at the the bit with the highest address(left on little endian)
- * @param[in] Address of the first bit that will be extracted 
- * @param[in] number how many bits will be extracted
- * @returns a ipv4_addr which contains the extracted bits
+ * @brief Extracts number bits from the passed ip_addr, starting at bit number from. The bit with the highest
+ * significance is bit 0. All other bits in the ip_addr will be 0
+ * @param[in] val ip_addr
+ * @param[in] from Number of first bit, that will be extracted
+ * @param[in] number How many bits will be extracted
+ * @returns a ip_addr which only contains the extracted bits
 */
 ip_addr ip_addr_get_bits(const ip_addr* val, const uint8_t from, const uint8_t number);
 
-
 /**
- * @brief Check if two ip_addr structs are equal
- * @param a
- * @param b
+ * @brief Checks if two ip_addr structs are equal
+ * @param[in] a ip_addr
+ * @param[in] b ip_addr
  * @return true if a == b
  * @return false if a != b
  */
 bool ip_addr_equal(const ip_addr a, const ip_addr b);
+
+/**
+ * Converts the passed ip_addr struct to string representation
+ * @param[in] ip ip_addr
+ * @param[out] str Pointer to a string buffer. The Buffer must be at least INET_ADDRSTRLEN bytes long if the passed ip_addr stores
+ * an IPv4 address. If ip_addr stores an IPv6 address str must be at least INET6_ADDRSTRLEN bytes long.
+ * @result 0 on success
+ * @result -1 on error
+*/
+int ip_addr_to_str(const ip_addr* ip, char* str, const unsigned int len);
+
+/**
+ * Converts the passed IP address in string representation to an ip_addr struct.
+ * @param[in] str Pointer to a string buffer
+ * @param[in] ver IP-Version of the passed IP-Address
+ * @param[out] ip ip_addr
+ * @result 0 on success
+ * @result -1 on error
+*/
+int ip_str_to_addr(const char* str, ip_addr* ip, const ip_version ver);
+
+/**
+ * Compares addr1 in the ip_addr struct with addr2 in string representation.
+ * @param[in] addr1 ip_addr
+ * @param[in] addr2 IP-address as string
+ * @return true if a == b
+ * @return false if a != b
+*/
+bool ip_str_cmp(const ip_addr* addr1, const char* addr2);
 
 #endif
 /* @} */

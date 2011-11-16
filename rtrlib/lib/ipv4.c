@@ -40,15 +40,16 @@ int ipv4_addr_to_str(const ipv4_addr* ip, char* str, unsigned int len){
     return 0;
 }
 
-int str_to_ipv4_addr(const char* str, ipv4_addr* ip){
+int ipv4_str_to_addr(const char* str, ipv4_addr* ip){
     unsigned char* t =  (unsigned char*) &(ip->addr);
     if(sscanf(str, "%hhu.%hhu.%hhu.%hhu", &(t[3]), &(t[2]), &(t[1]), &(t[0])) != 4)
         return -1;
     return 0;
 }
 
-bool ipv4_addr_eq(const ipv4_addr* a, const ipv4_addr* b){
+bool ipv4_addr_equal(const ipv4_addr* a, const ipv4_addr* b){
     if(a->addr == b->addr)
         return true;
     return false;
 }
+

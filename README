@@ -1,8 +1,8 @@
 Introduction
 ------------
 The RTRlib implements the client-side part of the RPKI-RTR protocol.
-This release supports the IETF drafts draft-ietf-sidr-rpki-rtr-16 and
-draft-ietf-sidr-pfx-validate-02. It was successfully tested on Linux
+This release supports the IETF drafts draft-ietf-sidr-rpki-rtr-19 and
+draft-ietf-sidr-pfx-validate-03. It was successfully tested on Linux
 and FreeBSD.
 
 This package contains also the rtrclient program. It connects to an
@@ -10,16 +10,17 @@ RTR-Server over TCP or SSH and shows on STDOUT the validation state of
 the BGP prefixes, which has been received from the RTR server. The
 binary can be found in the tools/ directory.
 
-Open Issues
------------
-* The rtr_mgr component isn't implemented yet, only the rtr_sockets
-  could be used to connect to a single RTR-Server.
-* Thread-safety for the pfst_lpfst datastructure.
-* Threaded execution of the rtr_update_fp and connection_state_fp
-  callback.
 
 Release History:
 ----------------
+* Version 0.2
+    - RTR manager component implemented
+    - extended debug message
+    - renamed rtr_update_fp callback to pfx_update_fp. Callback is
+      executed for every added and deleted pfx_records
+    - ip addresses are stored in host byte order
+    - rtr_sockets reconnect automatically on errors
+    - many bug fixes
 * Version 0.1
     Beta version
 

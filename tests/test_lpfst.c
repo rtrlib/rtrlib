@@ -58,19 +58,19 @@ void get_bits_testv4(){
     assert(result.u.addr4.addr == 0x00BB0000);
 
 
-    rtr_str_to_ipaddr("10.10.10.0", &addr);
+    ip_str_to_addr("10.10.10.0", &addr, IPV4);
 
     result = ip_addr_get_bits(&addr, 0, 8);
-    assert(rtr_cmp_ipv4(&result, "10.0.0.0"));
+    assert(ip_str_cmp(&result, "10.0.0.0"));
 
     result = ip_addr_get_bits(&addr, 0, 16);
-    assert(rtr_cmp_ipv4(&result, "10.10.0.0"));
+    assert(ip_str_cmp(&result, "10.10.0.0"));
 
     result = ip_addr_get_bits(&addr, 8, 8);
-    assert(rtr_cmp_ipv4(&result, "0.10.0.0"));
+    assert(ip_str_cmp(&result, "0.10.0.0"));
 
     result = ip_addr_get_bits(&addr, 8, 24);
-    assert(rtr_cmp_ipv4(&result, "0.10.10.0"));
+    assert(ip_str_cmp(&result, "0.10.10.0"));
 
     result = ip_addr_get_bits(&addr, 31, 1);
     assert(result.u.addr4.addr == 0);
@@ -79,13 +79,13 @@ void get_bits_testv4(){
     assert(result.u.addr4.addr == 0);
 
     result = ip_addr_get_bits(&addr, 3, 3);
-    assert(rtr_cmp_ipv4(&result, "8.0.0.0"));
+    assert(ip_str_cmp(&result, "8.0.0.0"));
 
-    assert(rtr_str_to_ipaddr("132.200.0.0", &addr) == 0);
+    assert(ip_str_to_addr("132.200.0.0", &addr, IPV4) == 0);
     result = ip_addr_get_bits(&addr, 0, 1);
     assert(result.u.addr4.addr == 0x80000000);
 
-    assert(rtr_str_to_ipaddr("101.200.0.0", &addr) == 0);
+    assert(ip_str_to_addr("101.200.0.0", &addr, IPV4) == 0);
     result = ip_addr_get_bits(&addr, 0, 1);
     assert(result.u.addr4.addr == 0);
 
@@ -93,14 +93,14 @@ void get_bits_testv4(){
     result = ip_addr_get_bits(&addr, 0, 19);
     assert(result.u.addr4.addr == 0x6D698000);
     /*
-    rtr_str_to_ipaddr("109.105.128.0", &addr);
+    ip_str_to_addr("109.105.128.0", &addr);
     result = ip_addr_get_bits(&addr, 0, 8);
     printf("%u\n", result.u.addr4.addr);
     */
 
     char buf[INET_ADDRSTRLEN];
-    assert(rtr_str_to_ipaddr("10.10.10.5", &addr) == 0);
-    assert(rtr_ipaddr_to_str(&addr, buf, sizeof(buf)) == 0);
+    assert(ip_str_to_addr("10.10.10.5", &addr, IPV4) == 0);
+    assert(ip_addr_to_str(&addr, buf, sizeof(buf)) == 0);
     assert(strcmp("10.10.10.5", buf) == 0);
 
 }
@@ -143,35 +143,35 @@ void get_bits_testv6(){
 
     char buf[INET6_ADDRSTRLEN];
 
-    rtr_str_to_ipaddr("fe80::862b:2bff:fe9a:f50f", &addr);
+    ip_str_to_addr("fe80::862b:2bff:fe9a:f50f", &addr, IPV6);
     addr.ver=IPV6;
     assert(addr.u.addr6.addr[0] == 0xfe800000);
     assert(addr.u.addr6.addr[1] == 0);
     assert(addr.u.addr6.addr[2] == 0x862b2bff);
     assert(addr.u.addr6.addr[3] == 0xfe9af50f);
 
-    assert(rtr_str_to_ipaddr("2001::", &addr) == 0);
+    assert(ip_str_to_addr("2001::", &addr, IPV6) == 0);
     assert(addr.u.addr6.addr[0] == 0x20010000);
     assert(addr.u.addr6.addr[1] == 0);
     assert(addr.u.addr6.addr[2] == 0);
     assert(addr.u.addr6.addr[3] == 0);
 
-    assert(rtr_ipaddr_to_str(&addr, buf, sizeof(buf)) == 0);
+    assert(ip_addr_to_str(&addr, buf, sizeof(buf)) == 0);
     assert(strcmp("2001::", buf) == 0);
 
-    rtr_str_to_ipaddr("2001:0db8:85a3:08d3:1319:8a2e:0370:7344", &addr);
-    assert(rtr_ipaddr_to_str(&addr, buf, sizeof(buf)) == 0);
+    ip_str_to_addr("2001:0db8:85a3:08d3:1319:8a2e:0370:7344", &addr, IPV6);
+    assert(ip_addr_to_str(&addr, buf, sizeof(buf)) == 0);
     assert(strcmp("2001:db8:85a3:8d3:1319:8a2e:370:7344", buf) == 0);
 
     result = ip_addr_get_bits(&addr, 0, 16);
-    assert(rtr_ipaddr_to_str(&result, buf, sizeof(buf)) == 0);
-    assert(rtr_cmp_ipv6(&result, "2001::"));
+    assert(ip_addr_to_str(&result, buf, sizeof(buf)) == 0);
+    assert(ip_str_cmp(&result, "2001::"));
 
     result = ip_addr_get_bits(&addr, 16, 16);
-    assert(rtr_ipaddr_to_str(&result, buf, sizeof(buf)) == 0);
-    assert(rtr_cmp_ipv6(&result, "0:db8::"));
+    assert(ip_addr_to_str(&result, buf, sizeof(buf)) == 0);
+    assert(ip_str_cmp(&result, "0:db8::"));
     result = ip_addr_get_bits(&addr, 0, 1);
-    assert(rtr_cmp_ipv6(&result, "::"));
+    assert(ip_str_cmp(&result, "::"));
 }
 
 void lpfst_test(){
@@ -186,19 +186,19 @@ void lpfst_test(){
     n1.rchild = NULL;
     n1.parent = NULL;
     n1.data = NULL;
-    rtr_str_to_ipaddr( "100.200.0.0", &(n1.prefix));
+    ip_str_to_addr( "100.200.0.0", &(n1.prefix), IPV4);
 
-    rtr_str_to_ipaddr( "100.200.0.0", &(addr)); 
+    ip_str_to_addr( "100.200.0.0", &(addr), IPV4); 
     lvl = 0;
     result = lpfst_lookup(&n1, &addr, 16, &lvl);
     assert(result != NULL);
-    assert(rtr_cmp_ipv4(&(result->prefix), "100.200.0.0"));
+    assert(ip_str_cmp(&(result->prefix), "100.200.0.0"));
 
-    rtr_str_to_ipaddr( "100.200.30.0", &(addr)); 
+    ip_str_to_addr( "100.200.30.0", &(addr), IPV4); 
     lvl = 0;
     result = lpfst_lookup(&n1, &addr, 16, &lvl);
     assert(result != NULL);
-    assert(rtr_cmp_ipv4(&(result->prefix), "100.200.0.0"));
+    assert(ip_str_cmp(&(result->prefix), "100.200.0.0"));
 
 
     //n2
@@ -208,14 +208,14 @@ void lpfst_test(){
     n2.rchild = NULL;
     n2.parent = NULL;
     n2.data = NULL;
-    rtr_str_to_ipaddr("132.200.0.0", &(n2.prefix)); 
+    ip_str_to_addr("132.200.0.0", &(n2.prefix), IPV4); 
     lpfst_insert(&n1, &n2, 0);
 
-    rtr_str_to_ipaddr("132.200.0.0", &(addr)); 
+    ip_str_to_addr("132.200.0.0", &(addr), IPV4); 
     lvl = 0;
     result = lpfst_lookup(&n1, &addr, 16, &lvl);
     assert(result != NULL);
-    assert(rtr_cmp_ipv4(&(result->prefix), "132.200.0.0"));
+    assert(ip_str_cmp(&(result->prefix), "132.200.0.0"));
     assert(n1.rchild == &n2);
 
 
@@ -226,14 +226,14 @@ void lpfst_test(){
     n3.rchild = NULL;
     n3.parent = NULL;
     n3.data = NULL;
-    rtr_str_to_ipaddr("101.200.0.0", &(n3.prefix)); 
+    ip_str_to_addr("101.200.0.0", &(n3.prefix), IPV4); 
     lpfst_insert(&n1, &n3, 0);
 
-    rtr_str_to_ipaddr("101.200.0.0", &(addr)); 
+    ip_str_to_addr("101.200.0.0", &(addr), IPV4); 
     lvl = 0;
     result = lpfst_lookup(&n1, &addr, 16, &lvl);
     assert(result != NULL);
-    assert(rtr_cmp_ipv4(&(result->prefix), "101.200.0.0"));
+    assert(ip_str_cmp(&(result->prefix), "101.200.0.0"));
     assert(n1.lchild == &n3);
 
     //n4
@@ -243,56 +243,56 @@ void lpfst_test(){
     n4.rchild = NULL;
     n4.parent = NULL;
     n4.data = NULL;
-    rtr_str_to_ipaddr("132.200.3.0", &(n4.prefix)); 
+    ip_str_to_addr("132.200.3.0", &(n4.prefix), IPV4); 
     lpfst_insert(&n1, &n4, 0);
 
-    rtr_str_to_ipaddr("132.200.3.0", &(addr)); 
+    ip_str_to_addr("132.200.3.0", &(addr), IPV4); 
     lvl = 0;
     result = lpfst_lookup(&n1, &addr, 24, &lvl);
     assert(result != NULL);
-    assert(rtr_cmp_ipv4(&(result->prefix), "132.200.3.0"));
-    assert(rtr_cmp_ipv4(&(n1.prefix), "132.200.3.0"));
-    assert(rtr_cmp_ipv4(&(n1.lchild->prefix), "101.200.0.0"));
-    assert(rtr_cmp_ipv4(&(n1.rchild->prefix), "132.200.0.0"));
-    assert(rtr_cmp_ipv4(&(n1.lchild->rchild->prefix), "100.200.0.0"));
+    assert(ip_str_cmp(&(result->prefix), "132.200.3.0"));
+    assert(ip_str_cmp(&(n1.prefix), "132.200.3.0"));
+    assert(ip_str_cmp(&(n1.lchild->prefix), "101.200.0.0"));
+    assert(ip_str_cmp(&(n1.rchild->prefix), "132.200.0.0"));
+    assert(ip_str_cmp(&(n1.lchild->rchild->prefix), "100.200.0.0"));
 
-    rtr_str_to_ipaddr("132.200.0.0", &(addr)); 
+    ip_str_to_addr("132.200.0.0", &(addr), IPV4); 
     lvl = 0;
     result = lpfst_lookup(&n1, &addr, 16, &lvl);
     assert(result != NULL);
-    assert(rtr_cmp_ipv4(&(result->prefix), "132.200.0.0"));
+    assert(ip_str_cmp(&(result->prefix), "132.200.0.0"));
 
-    rtr_str_to_ipaddr("132.200.3.0", &(addr)); 
+    ip_str_to_addr("132.200.3.0", &(addr), IPV4); 
     lvl = 0;
     result = lpfst_lookup(&n1, &addr, 16, &lvl);
     assert(result != NULL);
-    assert(rtr_cmp_ipv4(&(result->prefix), "132.200.0.0"));
+    assert(ip_str_cmp(&(result->prefix), "132.200.0.0"));
 
 
     lvl = 0;
-    rtr_str_to_ipaddr("132.0.0.0", &(addr)); 
+    ip_str_to_addr("132.0.0.0", &(addr), IPV4); 
     bool found;
     result = lpfst_lookup_exact(&n1, &addr, 16, &lvl, &found);
     assert(!found);
 
     lvl = 0;
-    rtr_str_to_ipaddr("132.200.3.0", &(addr)); 
+    ip_str_to_addr("132.200.3.0", &(addr), IPV4); 
     result = lpfst_lookup_exact(&n1, &addr, 24, &lvl, &found);
     assert(found);
-    assert(rtr_cmp_ipv4(&(result->prefix), "132.200.3.0"));
+    assert(ip_str_cmp(&(result->prefix), "132.200.3.0"));
 
     result = lpfst_remove(&n1, &addr, 0);
-    assert(rtr_cmp_ipv4(&(n1.prefix), "132.200.0.0"));
-    assert(rtr_cmp_ipv4(&(n1.lchild->prefix), "101.200.0.0"));
-    assert(rtr_cmp_ipv4(&(n1.lchild->rchild->prefix), "100.200.0.0"));
+    assert(ip_str_cmp(&(n1.prefix), "132.200.0.0"));
+    assert(ip_str_cmp(&(n1.lchild->prefix), "101.200.0.0"));
+    assert(ip_str_cmp(&(n1.lchild->rchild->prefix), "100.200.0.0"));
     assert(n1.rchild == NULL);
 
-    rtr_str_to_ipaddr("101.200.0.0", &(addr)); 
+    ip_str_to_addr("101.200.0.0", &(addr), IPV4); 
     result = lpfst_remove(&n1, &addr, 0);
-    assert(rtr_cmp_ipv4(&(n1.lchild->prefix), "100.200.0.0"));
+    assert(ip_str_cmp(&(n1.lchild->prefix), "100.200.0.0"));
     assert(n1.rchild == NULL);
 
-    rtr_str_to_ipaddr("100.200.0.0", &(addr)); 
+    ip_str_to_addr("100.200.0.0", &(addr), IPV4); 
     result = lpfst_remove(&n1, &addr, 0);
     assert(n1.lchild == NULL);
     assert(n1.rchild == NULL);

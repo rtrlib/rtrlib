@@ -136,11 +136,11 @@ int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* pfx_record);
 int pfx_table_src_remove(struct pfx_table* pfx_table, const uintptr_t socket_id);
 
 /**
- * @brief Validate the origin of a BGP-Route
+ * @brief Validates the origin of a BGP-Route
  * @param[in] pfx_table pfx_table to use.
- * @param[in] asn Autonomous system number.
- * @param[in] prefix Pointer to an IP-Prefix.
- * @param[in] mask_len IP-Prefix length.
+ * @param[in] asn Autonomous system number of the Origin-AS of the route.
+ * @param[in] prefix Announcend network Prefix
+ * @param[in] mask_len Length of the network mask of the announced prefix
  * @param[out] result Result of the validation.
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR If an error occured.

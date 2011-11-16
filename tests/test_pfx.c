@@ -58,22 +58,22 @@ void remove_src_test(){
 
     pfx.asn = 80;
     pfx.socket_id = 1;
-    rtr_str_to_ipaddr("10.11.10.0", &(pfx.prefix));
+    ip_str_to_addr("10.11.10.0", &(pfx.prefix), IPV4);
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
     pfx.asn = 90;
     pfx.socket_id = 2;
-    rtr_str_to_ipaddr("10.11.10.0", &(pfx.prefix));
+    ip_str_to_addr("10.11.10.0", &(pfx.prefix), IPV4);
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
     pfx.socket_id = 2;
     pfx.min_len = 24;
-    rtr_str_to_ipaddr("192.168.0.0", &(pfx.prefix));
+    ip_str_to_addr("192.168.0.0", &(pfx.prefix), IPV4);
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
     pfx.socket_id = 1;
     pfx.min_len = 8;
-    rtr_str_to_ipaddr("10.0.0.0", &(pfx.prefix));
+    ip_str_to_addr("10.0.0.0", &(pfx.prefix), IPV4);
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
     unsigned int len = 0;
@@ -93,7 +93,7 @@ void remove_src_test(){
     pfxv_state res;
     assert(pfx_table_validate(&pfxt, 90, &(pfx.prefix), 8, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_NOT_FOUND);
-    rtr_str_to_ipaddr("10.11.10.0", &(pfx.prefix));
+    ip_str_to_addr("10.11.10.0", &(pfx.prefix), IPV4);
 
     assert(pfx_table_validate(&pfxt, 90, &(pfx.prefix), 32, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_VALID);
@@ -187,7 +187,7 @@ int main(){
     pfx_record pfx;
     pfx.asn = 123;
     pfx.prefix.ver = IPV4;
-    rtr_str_to_ipaddr("10.10.0.0", &(pfx.prefix));
+    ip_str_to_addr("10.10.0.0", &(pfx.prefix), IPV4);
     pfx.min_len = 16;
     pfx.max_len = 24;
 
@@ -202,20 +202,20 @@ int main(){
     assert(pfx_table_validate(&pfxt, 123, &(pfx.prefix), 24, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_VALID);
 
-    rtr_str_to_ipaddr("10.10.10.0", &(pfx.prefix));
+    ip_str_to_addr("10.10.10.0", &(pfx.prefix), IPV4);
     assert(pfx_table_validate(&pfxt, 123, &(pfx.prefix), 20, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_VALID);
 
     assert(pfx_table_validate(&pfxt, 123, &(pfx.prefix), 25, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_INVALID);
 
-    rtr_str_to_ipaddr("10.11.10.0", &(pfx.prefix));
+    ip_str_to_addr("10.11.10.0", &(pfx.prefix), IPV4);
     assert(pfx_table_validate(&pfxt, 123, &(pfx.prefix), 16, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_NOT_FOUND);
 
 
 
-    rtr_str_to_ipaddr("2a01:4f8:131::", &(pfx.prefix));
+    ip_str_to_addr("2a01:4f8:131::", &(pfx.prefix), IPV6);
     pfx.prefix.ver = IPV6;
     pfx.min_len = 48;
     pfx.max_len = 48;
@@ -224,12 +224,12 @@ int main(){
     assert(pfx_table_validate(&pfxt, 124, &(pfx.prefix), 48, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_VALID);
 
-    rtr_str_to_ipaddr("2a01:4f8:131:15::", &(pfx.prefix));
+    ip_str_to_addr("2a01:4f8:131:15::", &(pfx.prefix), IPV6);
     assert(pfx_table_validate(&pfxt, 124, &(pfx.prefix), 56, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_INVALID);
 
 
-    assert(rtr_str_to_ipaddr("1.0.4.0", &(pfx.prefix)) == 0);
+    assert(ip_str_to_addr("1.0.4.0", &(pfx.prefix), IPV4) == 0);
     pfx.min_len=22;
     pfx.max_len=22;
     pfx.asn=56203;
@@ -237,7 +237,7 @@ int main(){
     assert(pfx_table_validate(&pfxt, pfx.asn, &(pfx.prefix), pfx.min_len, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_VALID);
 
-    assert(rtr_str_to_ipaddr("1.8.1.0", &(pfx.prefix)) == 0);
+    assert(ip_str_to_addr("1.8.1.0", &(pfx.prefix), IPV4) == 0);
     pfx.min_len=24;
     pfx.max_len=24;
     pfx.asn=38345;
@@ -245,7 +245,7 @@ int main(){
     assert(pfx_table_validate(&pfxt, pfx.asn, &(pfx.prefix), pfx.min_len, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_VALID);
 
-    assert(rtr_str_to_ipaddr("1.8.8.0", &(pfx.prefix)) == 0);
+    assert(ip_str_to_addr("1.8.8.0", &(pfx.prefix), IPV4) == 0);
     pfx.min_len=24;
     pfx.max_len=24;
     pfx.asn=38345;
@@ -254,7 +254,7 @@ int main(){
     assert(res == BGP_PFXV_STATE_VALID);
     pfx_table_free(&pfxt);
 
-    assert(rtr_str_to_ipaddr("1.0.65.0", &(pfx.prefix)) == 0);
+    assert(ip_str_to_addr("1.0.65.0", &(pfx.prefix), IPV4) == 0);
     pfx.min_len=18;
     pfx.max_len=18;
     pfx.asn=18144;
@@ -263,7 +263,7 @@ int main(){
     assert(res == BGP_PFXV_STATE_VALID);
     pfx_table_free(&pfxt);
 
-    assert(rtr_str_to_ipaddr("10.0.0.0", &(pfx.prefix)) == 0);
+    assert(ip_str_to_addr("10.0.0.0", &(pfx.prefix), IPV4) == 0);
     pfx.min_len=16;
     pfx.max_len=16;
     pfx.asn=123;
@@ -271,7 +271,7 @@ int main(){
     assert(pfx_table_validate(&pfxt, pfx.asn, &(pfx.prefix), pfx.min_len, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_VALID);
 
-    assert(rtr_str_to_ipaddr("10.0.5.0", &(pfx.prefix)) == 0);
+    assert(ip_str_to_addr("10.0.5.0", &(pfx.prefix), IPV4) == 0);
     pfx.min_len=24;
     pfx.max_len=24;
     pfx.asn=124;
@@ -279,35 +279,35 @@ int main(){
     assert(res == BGP_PFXV_STATE_INVALID);
 
     pfx_table_free(&pfxt);
-    assert(rtr_str_to_ipaddr("109.105.96.0", &(pfx.prefix)) == 0);
+    assert(ip_str_to_addr("109.105.96.0", &(pfx.prefix), IPV4) == 0);
     //memcpy(&(pfx.prefix.u.addr4.addr),  &i, sizeof(i));
     pfx.min_len=19;
     pfx.max_len=19;
     pfx.asn=123;
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
-    assert(rtr_str_to_ipaddr("109.105.128.0", &(pfx.prefix)) == 0);
+    assert(ip_str_to_addr("109.105.128.0", &(pfx.prefix), IPV4) == 0);
     assert(pfx_table_validate(&pfxt, 456, &(pfx.prefix), 20, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_NOT_FOUND);
 
     pfx_table_free(&pfxt);
-    assert(rtr_str_to_ipaddr("190.57.224.0", &(pfx.prefix)) == 0);
+    assert(ip_str_to_addr("190.57.224.0", &(pfx.prefix), IPV4) == 0);
     pfx.min_len=19;
     pfx.max_len=24;
     pfx.asn=123;
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
-    assert(rtr_str_to_ipaddr("190.57.72.0", &(pfx.prefix)) == 0);
+    assert(ip_str_to_addr("190.57.72.0", &(pfx.prefix), IPV4) == 0);
     assert(pfx_table_validate(&pfxt, 123, &(pfx.prefix), 21, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_NOT_FOUND);
 
 
     pfx_table_free(&pfxt);
 
-    assert(rtr_str_to_ipaddr("80.253.128.0", &(pfx.prefix)) == 0);
+    assert(ip_str_to_addr("80.253.128.0", &(pfx.prefix), IPV4) == 0);
     pfx.min_len=19;
     pfx.max_len=19;
     pfx.asn=123;
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
-    assert(rtr_str_to_ipaddr("80.253.144.0", &(pfx.prefix)) == 0);
+    assert(ip_str_to_addr("80.253.144.0", &(pfx.prefix), IPV4) == 0);
     assert(pfx_table_validate(&pfxt, 123, &(pfx.prefix), 20, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_INVALID);
 

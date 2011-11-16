@@ -28,7 +28,6 @@
 #include <sys/socket.h>
 #include "rtrlib/rtrlib.h"
 
-
 static void print_usage(char** argv){
     printf("Usage:\n");
     printf(" %s tcp <host> <port>\n", argv[0]);
@@ -85,7 +84,7 @@ static void update_cb(struct pfx_table* p  __attribute__((unused)), const pfx_re
         printf("Record added:\n");
     else
         printf("Record removed:\n");
-    rtr_ipaddr_to_str(&(rec.prefix), ip, INET6_ADDRSTRLEN);
+    ip_addr_to_str(&(rec.prefix), ip, INET6_ADDRSTRLEN);
     printf("prefix: %s\n", ip);
     printf("asn: %u\n", rec.asn);
     printf("min_len: %u\n", rec.min_len);

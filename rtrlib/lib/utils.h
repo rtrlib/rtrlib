@@ -25,12 +25,22 @@
 #include <time.h>
 #include "rtrlib/lib/ip.h"
 
+/**
+ * @brief returns the current time of the CLOCK_MONOTONIC clock
+ * @param[in] seconds time in seconds since some unspecified start point
+ * @return 0 on successs
+ * @return -1 on error
+ */
 int rtr_get_monotonic_time(time_t* seconds);
-int rtr_ipaddr_to_str(const ip_addr* addr, char* result, const size_t len);
-int rtr_str_to_ipaddr(const char* str, ip_addr* ip_addr);
-bool rtr_cmp_ipv4(const ip_addr* addr1, const char* addr2);
-bool rtr_cmp_ipv6(const ip_addr* addr1, const char* addr2);
-char* ip6_to_str(ip_addr* ip_addr, char *b);
+
+/**
+ * @brief Extracts number bits from the passed uint32_t, starting at bit number from. The bit with the highest
+ * significance is bit 0. All other bits in the ipv6_addr will be 0
+ * @param[in] val uint32_t
+ * @param[in] from Number of first bit, that will be extracted
+ * @param[in] number How many bits will be extracted
+ * @returns a uint32_t which only contains the extracted bits
+*/
 uint32_t rtr_get_bits(const uint32_t val, const uint8_t from, const uint8_t number);
 
 #endif

@@ -76,7 +76,6 @@ lpfst_node* lpfst_lookup(const lpfst_node* root_node, const ip_addr* prefix, con
     return NULL;
 }
 
-//return node with node->prefix == prefix(exact match)
 lpfst_node* lpfst_lookup_exact(lpfst_node* root_node, const ip_addr* prefix, const uint8_t mask_len, unsigned int* level, bool* found){
     *found = false;
     while(root_node != NULL)

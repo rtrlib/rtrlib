@@ -35,10 +35,48 @@ typedef struct {
     uint32_t addr[4];
 } ipv6_addr;
 
-bool ipv6_addr_equal(ipv6_addr a, ipv6_addr b);
+/**
+ * Compares two ipv6_addr structs
+ * @param[in] a ipv6_addr
+ * @param[in] b ipv6_addr
+ * @return true if a == b
+ * @return false if a != b
+*/
+bool ipv6_addr_equal(const ipv6_addr* a, const ipv6_addr* b);
+
+/**
+ * @brief Extracts number bits from the passed ipv6_addr, starting at bit number from. The bit with the highest
+ * significance is bit 0. All other bits in the ipv6_addr will be 0
+ * @param[in] val ipv4_addr
+ * @param[in] from Number of first bit, that will be extracted
+ * @param[in] number How many bits will be extracted
+ * @returns a ipv4_addr which only contains the extracted bits
+*/
 ipv6_addr ipv6_get_bits(const ipv6_addr* val, const uint8_t from, const uint8_t to);
+
+/**
+ * Converts the passed ipv6_addr to string representation
+ * @param[in] ip ipv6_addr
+ * @param[out] str Pointer to a string buffer must be at least INET6_ADDRSTRLEN bytes long.
+ * @result 0 on success
+ * @result -1 on error
+*/
 int ipv6_addr_to_str(const ipv6_addr* ip_addr, char *b, const unsigned int len);
-int str_to_ipv6_addr(const char *a, ipv6_addr* ip);
-bool ipv6_addr_eq(const ipv6_addr* a, const ipv6_addr* b);
+
+/**
+ * Converts the passed IPv6 address in string representation to an ipv6_addr struct.
+ * @param[in] str Pointer to a string buffer
+ * @param[out] ip ipv6_addr
+ * @result 0 on success
+ * @result -1 on error
+*/
+int ipv6_str_to_addr(const char *a, ipv6_addr* ip);
+
+/**
+ * Converts the passed IPv6 address from network byte order to host byte order.
+ * @param[in] src Pointer to a uint32_t array storing a ipv6 address in network byte order.
+ * @param[out] dest Pointer a uint32_t array that will be used to store the ipv6 addr in host byte order.
+*/
 void ipv6_addr_to_host_byte_order(const uint32_t* src, uint32_t* dest);
+
 #endif 
