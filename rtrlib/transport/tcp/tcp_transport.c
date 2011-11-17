@@ -100,15 +100,18 @@ end:
 
 void tr_tcp_close(void* tr_tcp_sock){
     tr_tcp_socket* tcp_socket = tr_tcp_sock;
-    if(tr_tcp_sock != NULL)
+    if(tcp_socket->socket != -1)
         close(tcp_socket->socket);
 }
 
 void tr_tcp_free(tr_socket* tr_sock){
     tr_tcp_socket* tcp_sock = tr_sock->socket;
-    tr_tcp_close(tcp_sock);
-    free(tr_sock->socket);
+    if(tr_sock->socket != NULL){
+        tr_tcp_close(tcp_sock);
+        free(tr_sock->socket);
+    }
     tr_sock->socket = NULL;
+        free(tr_sock);
 }
 
 int tr_tcp_recv(const void* tr_tcp_sock, void* pdu, const size_t len, const time_t timeout){
