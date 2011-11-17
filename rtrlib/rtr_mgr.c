@@ -214,7 +214,7 @@ int rtr_mgr_init(rtr_mgr_config* config, const unsigned int polling_period, cons
 int rtr_mgr_start(rtr_mgr_config* config){
     return rtr_mgr_start_sockets(&(config->groups[0]));
 }
-bool rtr_mgr_group_in_sync(rtr_mgr_config* config){
+bool rtr_mgr_conf_in_sync(rtr_mgr_config* config){
     for(unsigned int i = 0; i < config->len; i++){
         bool all_sync = true;
         for(unsigned int j = 0; all_sync && (j < config->groups[i].sockets_len); j++){

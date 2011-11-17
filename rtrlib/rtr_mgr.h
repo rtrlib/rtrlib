@@ -116,7 +116,7 @@ void rtr_mgr_stop(rtr_mgr_config* config);
  * @return true If the pfx_table stores non-outdated pfx_records from at least one socket group.
  * @return false If the pfx_table isn't fully synchronized with at least one group.
  */
-bool rtr_mgr_group_in_sync(rtr_mgr_config* config);
+bool rtr_mgr_conf_in_sync(rtr_mgr_config* config);
 
 /**
  * @brief Validates the origin of a BGP-Route. 

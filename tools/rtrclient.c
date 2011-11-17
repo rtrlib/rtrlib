@@ -179,6 +179,7 @@ int main(int argc, char** argv){
     pause();
     rtr_mgr_stop(&conf);
     rtr_mgr_free(&conf);
+    free(groups[0].sockets);
     tr_free(tr_sock);
 
     return(EXIT_SUCCESS);
