@@ -185,6 +185,8 @@ void rtr_fsm_start(rtr_socket* rtr_socket){
 
 void rtr_stop(rtr_socket* rtr_socket){
     rtr_change_socket_state(rtr_socket, RTR_SHUTDOWN);
-    if(rtr_socket->thread_id != 0)
+    if(rtr_socket->thread_id != 0){
         pthread_kill(rtr_socket->thread_id, SIGUSR1);
+        pthread_join(rtr_socket->thread_id, NULL);
+    }
 }
