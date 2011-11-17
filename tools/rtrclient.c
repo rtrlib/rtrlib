@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <unistd.h>
 #include "rtrlib/rtrlib.h"
 
 static void print_usage(char** argv){
@@ -42,6 +43,7 @@ static void print_usage(char** argv){
 
 }
 
+/*
 static void state_cb(const rtr_socket* sock  __attribute__((unused)), const rtr_socket_state state, void* cb_data  __attribute__((unused))){
 #ifdef NDEBUG
     printf("Socket State: ");
@@ -77,19 +79,16 @@ static void state_cb(const rtr_socket* sock  __attribute__((unused)), const rtr_
     }
 #endif
 }
+*/
 
 static void update_cb(struct pfx_table* p  __attribute__((unused)), const pfx_record rec, const bool added){
     char ip[INET6_ADDRSTRLEN];
     if(added)
-        printf("Record added:\n");
+        printf("+ ");
     else
-        printf("Record removed:\n");
+        printf("- ");
     ip_addr_to_str(&(rec.prefix), ip, INET6_ADDRSTRLEN);
-    printf("prefix: %s\n", ip);
-    printf("asn: %u\n", rec.asn);
-    printf("min_len: %u\n", rec.min_len);
-    printf("max_len: %u\n", rec.max_len);
-    printf("------------------------------\n\n");
+    printf("%-18s %3u-%-3u %10u\n", ip, rec.min_len, rec.max_len, rec.asn);
     return;
 }
 
@@ -161,15 +160,26 @@ int main(int argc, char** argv){
     }
 #endif
 
-    pfx_table pfxt;
-    pfx_table_init(&pfxt, &update_cb);
+    rtr_socket rtr;
+    rtr.tr_socket = tr_sock;
 
-    struct rtr_socket rtr;
-    rtr_init(&rtr, tr_sock, &pfxt, 240, 480, NULL, NULL);
-    rtr.connection_state_fp = &state_cb;
+    rtr_mgr_group groups[1];
+    groups[0].sockets_len = 1;
+    groups[0].sockets = malloc(1 * sizeof(rtr_socket*));
+    groups[0].sockets[0] = &rtr;
+    groups[0].preference = 1;
 
-    rtr_start(&rtr);
-    pthread_join(rtr.thread_id, NULL);
+    rtr_mgr_config conf;
+    conf.groups = groups;
+    conf.len = 1;
+
+    rtr_mgr_init(&conf, 240, 520, &update_cb);
+    rtr_mgr_start(&conf);
+    printf("%-18s %3s %-3s %10s\n", "Prefix", "Prefix Length", "", "ASN");
+    pause();
+    rtr_mgr_stop(&conf);
+    rtr_mgr_free(&conf);
+    tr_free(tr_sock);
 
     return(EXIT_SUCCESS);
 }

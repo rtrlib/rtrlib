@@ -77,7 +77,6 @@ void rtr_mgr_cb(const struct rtr_socket* sock, const rtr_socket_state state, voi
 
     //return if group contains no other socket groups => nothing todo :-)
     if(config->len == 1){
-        MGR_DBG1("rtr_mgr_config contains no other rtr_socket groups");
         return;
     }
 
