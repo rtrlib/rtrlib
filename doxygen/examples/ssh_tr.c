@@ -9,7 +9,7 @@ int main(){
         22,
         "rpki_user",
         "/etc/rpki-rtr/hostkey",
-        "/etc/rpki-rtr/server.priv"
+        "/etc/rpki-rtr/server.priv",
         "/etc/rpki-rtr/server.pub"
     };
 
