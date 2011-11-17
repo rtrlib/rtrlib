@@ -20,6 +20,7 @@
  * Website: http://rpki.realmv6.org/
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <netdb.h>
 #include <stdlib.h>
@@ -58,15 +59,17 @@ int tr_tcp_init(const tr_tcp_config* config, tr_socket** socket){
 
     tr_socket->socket = malloc(sizeof(tr_tcp_socket));
     tr_tcp_socket* tcp_socket = tr_socket->socket;
-    tcp_socket->socket = 0;
+    tcp_socket->socket = -1;
     tcp_socket->config = config;
 
     return TR_SUCCESS;
 }
 
 int tr_tcp_open(void* tr_socket){
+
     int rtval = TR_ERROR;
     tr_tcp_socket* tcp_socket = tr_socket;
+    assert(tcp_socket->socket == -1);
 
     struct addrinfo hints;
     struct addrinfo* res;
