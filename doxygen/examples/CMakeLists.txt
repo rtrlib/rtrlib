@@ -1,0 +1,8 @@
+if(CMAKE_BUILD_TYPE STREQUAL Debug)
+    if(LIBSSH_FOUND)
+        add_executable(rtr_mgr rtr_mgr.c)
+        target_link_libraries(rtr_mgr rtrlib)
+        add_executable(ssh_tr ssh_tr.c)
+        target_link_libraries(ssh_tr rtrlib)
+    endif(LIBSSH_FOUND)
+endif(CMAKE_BUILD_TYPE STREQUAL Debug)

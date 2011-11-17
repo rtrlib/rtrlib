@@ -43,6 +43,8 @@ target_link_libraries(rtrlib ${RTRLIB_LINK})
 
 ADD_SUBDIRECTORY(tools)
 
+ADD_SUBDIRECTORY(doxygen/examples)
+
 ADD_SUBDIRECTORY(tests)
 ENABLE_TESTING()
 ADD_TEST(test_pfx tests/test_pfx)
