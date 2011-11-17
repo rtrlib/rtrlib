@@ -62,7 +62,7 @@ int tr_ssh_init(const tr_ssh_config* config, tr_socket** socket){
     ssh_socket->session = NULL;
     ssh_socket->config = config;
 
-    return 0;
+    return TR_SUCCESS;
 }
 
 int tr_ssh_open(void* socket){
@@ -126,11 +126,11 @@ int tr_ssh_open(void* socket){
     }
     SSH_DBG1("Connection established", ssh_socket);
 
-    return 0;
+    return TR_SUCCESS;
 
 error:
     tr_ssh_close(ssh_socket);
-    return -1;
+    return TR_ERROR;
 
 }
 
@@ -138,7 +138,8 @@ void tr_ssh_close(void* tr_ssh_sock){
     tr_ssh_socket* socket = tr_ssh_sock;
 
     if(socket->channel != NULL){
-        channel_close(socket->channel);
+        if(channel_is_open(socket->channel))
+            channel_close(socket->channel);
         channel_free(socket->channel);
         socket->channel = NULL;
     }
@@ -147,13 +148,12 @@ void tr_ssh_close(void* tr_ssh_sock){
         ssh_free(socket->session);
         socket->session = NULL;
    }
-    SSH_DBG1("Socket closed", socket);
 }
 
 void tr_ssh_free(tr_socket* tr_sock){
     tr_ssh_socket* tr_ssh_sock = tr_sock->socket;
 
-    tr_ssh_close(tr_sock);
+    tr_ssh_close(tr_ssh_sock);
     free(tr_ssh_sock);
     tr_sock->socket = NULL;
 }
