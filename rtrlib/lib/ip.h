@@ -89,11 +89,10 @@ int ip_addr_to_str(const ip_addr* ip, char* str, const unsigned int len);
  * Converts the passed IP address in string representation to an ip_addr struct.
  * @param[in] str Pointer to a string buffer
  * @param[in] ver IP-Version of the passed IP-Address
- * @param[out] ip ip_addr
  * @result 0 on success
  * @result -1 on error
 */
-int ip_str_to_addr(const char* str, ip_addr* ip, const ip_version ver);
+int ip_str_to_addr(const char* str, ip_addr* ip);
 
 /**
  * Compares addr1 in the ip_addr struct with addr2 in string representation.
