@@ -133,7 +133,7 @@ void rtr_fsm_start(rtr_socket* rtr_socket){
 
         else if(rtr_socket->state == RTR_ESTABLISHED){
             RTR_DBG1("State: RTR_ESTABLISHED");
-            if(rtr_wait_for_sync(rtr_socket) == RTR_SUCCESS){ //blockiert bis cache_timout abgelaufen ist oder Paket eingetroffen ist
+            if(rtr_wait_for_sync(rtr_socket) == RTR_SUCCESS){ //blocks till cache_timeout is expired or PDU was received
                 //serial query senden
                 if(rtr_send_serial_query(rtr_socket) == RTR_SUCCESS)
                     rtr_change_socket_state(rtr_socket, RTR_SYNC);
