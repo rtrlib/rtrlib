@@ -71,7 +71,8 @@ void pfx_table_free(struct pfx_table* pfx_table){
                     pfx_record record = { data->ary[i].asn, (root->prefix), root->len, data->ary[i].max_len, data->ary[i].socket_id};
                     pfx_table_notify_clients(pfx_table, &record, false);
                 }
-                rm_node = (lpfst_remove(root, &(root->prefix), 0));
+                rm_node = (lpfst_remove(root, &(root->prefix), root->len, 0));
+                assert(rm_node != NULL);
                 free(((node_data*) rm_node->data)->ary);
                 free(rm_node->data);
                 free(rm_node);
@@ -226,7 +227,8 @@ int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* record){
     }
 
     if(ndata->len == 0){
-        node = lpfst_remove(node, &(record->prefix), lvl);
+        node = lpfst_remove(node, &(record->prefix), root->len, lvl);
+        assert(node != NULL);
 
         if(node == root){
             if(record->prefix.ver == IPV4)
@@ -320,7 +322,8 @@ int pfx_table_remove_id(pfx_table* pfx_table, lpfst_node** root, lpfst_node* nod
             }
         }
         if(data->len == 0){
-            lpfst_node* rm_node = lpfst_remove(node, &(node->prefix), level);
+            lpfst_node* rm_node = lpfst_remove(node, &(node->prefix), node->len, level);
+            assert(rm_node != NULL);
             free(((node_data*) rm_node->data));
             free(rm_node);
             if(rm_node == *root){

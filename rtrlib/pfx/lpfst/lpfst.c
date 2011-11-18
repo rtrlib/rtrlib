@@ -113,8 +113,8 @@ lpfst_node* lpfst_lookup_exact(lpfst_node* root_node, const ip_addr* prefix, con
 
 
 //returns node that isnt used anymore in the tree
-lpfst_node* lpfst_remove(lpfst_node* root_node, const ip_addr* prefix, const unsigned int level){
-    if(ip_addr_equal(root_node->prefix, *prefix)){
+lpfst_node* lpfst_remove(lpfst_node* root_node, const ip_addr* prefix, const uint8_t mask_len, const unsigned int level){
+    if(root_node->len == mask_len && ip_addr_equal(root_node->prefix, *prefix)){
         if(lpfst_is_leaf(root_node)){
             if(level != 0){
                 if(root_node->parent->lchild == root_node)
@@ -131,7 +131,7 @@ lpfst_node* lpfst_remove(lpfst_node* root_node, const ip_addr* prefix, const uns
                     void* tmp = root_node->data;
                     root_node->data = root_node->lchild->data;
                     root_node->lchild->data = tmp;
-                    return lpfst_remove(root_node->lchild, &(root_node->lchild->prefix), level+1);
+                    return lpfst_remove(root_node->lchild, &(root_node->lchild->prefix), root_node->lchild->len, level+1);
             }
             else{
                 root_node->prefix = root_node->rchild->prefix;
@@ -140,14 +140,20 @@ lpfst_node* lpfst_remove(lpfst_node* root_node, const ip_addr* prefix, const uns
                 tmp = root_node->data;
                 root_node->data = root_node->rchild->data;
                 root_node->rchild->data = tmp;
-                return lpfst_remove(root_node->rchild, &(root_node->rchild->prefix), level+1);
+                return lpfst_remove(root_node->rchild, &(root_node->rchild->prefix), root_node->rchild->len, level+1);
             }
         }
     }
-    if(ip_addr_is_zero(ip_addr_get_bits(prefix, level, 1)))
-        return lpfst_remove(root_node->lchild, prefix, level+1);
-    else
-        return lpfst_remove(root_node->rchild, prefix, level+1);
+    if(ip_addr_is_zero(ip_addr_get_bits(prefix, level, 1))){
+        if(root_node->lchild == NULL)
+            return NULL;
+        return lpfst_remove(root_node->lchild, prefix, mask_len, level+1);
+    }
+    else{
+        if(root_node->rchild == NULL)
+            return NULL;
+        return lpfst_remove(root_node->rchild, prefix, mask_len, level+1);
+    }
 }
 
 int lpfst_get_children(const lpfst_node* root_node, lpfst_node*** array, unsigned int* len){

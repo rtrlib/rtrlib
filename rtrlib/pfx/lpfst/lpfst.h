@@ -82,10 +82,12 @@ lpfst_node* lpfst_lookup_exact(lpfst_node* root_node, const ip_addr* prefix, con
  * @brief Removes the passed IP-Prefix from the tree.
  * param[in] root Node were the inserting process starts.
  * @param[in] prefix Prefix that will removed from the tree.
+ * @param[in] mask_len Length of the network mask of the prefix.
  * @param[in] level of the the node root in the tree.
  * @returns Node that was removed from the tree.
+ * @returns NULL If the Prefix could'nt be found in the tree.
  */
-lpfst_node* lpfst_remove(lpfst_node* root_node, const ip_addr* prefix, const unsigned int level);
+lpfst_node* lpfst_remove(lpfst_node* root_node, const ip_addr* prefix, const uint8_t mask_len, const unsigned int level);
 
 
 /**

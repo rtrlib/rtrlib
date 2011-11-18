@@ -252,9 +252,13 @@ void lpfst_test(){
     assert(result != NULL);
     assert(ip_str_cmp(&(result->prefix), "132.200.3.0"));
     assert(ip_str_cmp(&(n1.prefix), "132.200.3.0"));
+    assert(n1.len == 24);
     assert(ip_str_cmp(&(n1.lchild->prefix), "101.200.0.0"));
+    assert(n1.lchild->len == 16);
     assert(ip_str_cmp(&(n1.rchild->prefix), "132.200.0.0"));
+    assert(n1.rchild->len == 16);
     assert(ip_str_cmp(&(n1.lchild->rchild->prefix), "100.200.0.0"));
+    assert(n1.lchild->rchild->len == 16);
 
     ip_str_to_addr("132.200.0.0", &(addr)); 
     lvl = 0;
@@ -281,19 +285,22 @@ void lpfst_test(){
     assert(found);
     assert(ip_str_cmp(&(result->prefix), "132.200.3.0"));
 
-    result = lpfst_remove(&n1, &addr, 0);
+    result = lpfst_remove(&n1, &addr, 24, 0);
+    assert(result != NULL);
     assert(ip_str_cmp(&(n1.prefix), "132.200.0.0"));
     assert(ip_str_cmp(&(n1.lchild->prefix), "101.200.0.0"));
     assert(ip_str_cmp(&(n1.lchild->rchild->prefix), "100.200.0.0"));
     assert(n1.rchild == NULL);
 
     ip_str_to_addr("101.200.0.0", &(addr)); 
-    result = lpfst_remove(&n1, &addr, 0);
+    result = lpfst_remove(&n1, &addr, 16, 0);
+    assert(result != NULL);
     assert(ip_str_cmp(&(n1.lchild->prefix), "100.200.0.0"));
     assert(n1.rchild == NULL);
 
     ip_str_to_addr("100.200.0.0", &(addr)); 
-    result = lpfst_remove(&n1, &addr, 0);
+    result = lpfst_remove(&n1, &addr, 16, 0);
+    assert(result != NULL);
     assert(n1.lchild == NULL);
     assert(n1.rchild == NULL);
 }
