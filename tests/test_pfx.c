@@ -311,8 +311,14 @@ int main(){
     assert(pfx_table_validate(&pfxt, 123, &(pfx.prefix), 20, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_INVALID);
 
-    char tmp[512];
-    ipv6_addr_to_str(&(pfx.prefix.u.addr6), tmp, sizeof(tmp));
+    assert(ip_str_to_addr("10.10.0.0", &(pfx.prefix)) == 0);
+    pfx.min_len=16;
+    pfx.max_len=16;
+    pfx.asn=0;
+    assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
+    assert(pfx_table_validate(&pfxt, 123, &(pfx.prefix), 16, &res) == PFX_SUCCESS);
+    assert(res == BGP_PFXV_STATE_INVALID);
+
 
     pfx_table_free(&pfxt);
     remove_src_test();

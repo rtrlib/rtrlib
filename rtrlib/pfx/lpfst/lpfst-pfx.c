@@ -248,7 +248,7 @@ int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* record){
 
 bool pfx_table_elem_matches(node_data* data, const uint32_t asn, const uint8_t prefix_len){
     for(unsigned int i = 0; i < data->len; i++){
-        if(data->ary[i].asn == asn && prefix_len <= data->ary[i].max_len)
+        if(data->ary[i].asn != 0 && data->ary[i].asn == asn && prefix_len <= data->ary[i].max_len)
             return true;
     }
     return false;
