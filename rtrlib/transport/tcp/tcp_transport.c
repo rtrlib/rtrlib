@@ -77,7 +77,7 @@ int tr_tcp_open(void* tr_socket){
     hints.ai_flags = AI_ADDRCONFIG;
     if(getaddrinfo(tcp_socket->config->host, tcp_socket->config->port, &hints, &res) != 0){
         TCP_DBG("getaddrinfo error, %s", tcp_socket, gai_strerror(errno));
-        goto end;
+        return TR_ERROR;
     }
 
     if ((tcp_socket->socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) == -1){
@@ -89,6 +89,7 @@ int tr_tcp_open(void* tr_socket){
         TCP_DBG("Couldn't establish TCP connection, %s", tcp_socket, strerror(errno));
         goto end;
     }
+
     TCP_DBG1("Connection established", tcp_socket);
     rtval = TR_SUCCESS;
 
