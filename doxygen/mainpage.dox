@@ -1,11 +1,12 @@
 /**
 @mainpage RTRlib
-This is the API documentation of the RPKI/Router Protocol client.
+This is the API documentation of the RTRlib, a C implementation of the
+RPKI/Router Protocol client.
 
 @section Overview
 
 @par
-The library follows a flexible design. The software architecture includes
+The RTRlib follows a flexible design. The software architecture includes
 different layers to simplify the extension or exchange of individual
 parts.\n
 

@@ -1,36 +1,45 @@
 Introduction
 ------------
-The RTRlib implements the client-side part of the RPKI-RTR protocol.
-This release supports the IETF drafts draft-ietf-sidr-rpki-rtr-19 and
-draft-ietf-sidr-pfx-validate-03. It was successfully tested on Linux
-and FreeBSD.
+The RTRlib implements the client-side part of the RPKI-RTR protocol and
+BGP Prefix Origin Validation. This release supports the IETF drafts
+draft-ietf-sidr-rpki-rtr-19 and draft-ietf-sidr-pfx-validate-03. It was
+successfully tested on Linux and FreeBSD.
 
 This package contains also the rtrclient program. It connects to an
 RTR-Server over TCP or SSH and shows on STDOUT the validation state of
-the BGP prefixes, which has been received from the RTR server. The
-binary can be found in the tools/ directory.
+the BGP prefixes that has been received from the RTR server. The program
+can be found in the tools/ directory.
+
+Detailed documentation is available in docs/.
 
 
 Release History:
 ----------------
 * Version 0.2
-    - RTR manager component implemented
-    - extended debug message
-    - renamed rtr_update_fp callback to pfx_update_fp. Callback is
-      executed for every added and deleted pfx_records
-    - ip addresses are stored in host byte order
-    - rtr_sockets reconnect automatically on errors
-    - many bug fixes
+    - Support of RTR-Server failover mechanisms (RTR manager component
+      implemented)
+    - Automatic reconnect of rtr_socket in case of errors
+    - Renamed rtr_update_fp callback to pfx_update_fp. Callback will be
+      executed only if a pfx_record has been added or deleted.
+    - Representation of IP addresses in host byte order within pfx_table
+    - New convenience function to transform an IP address string into a
+      struct ip_addr and vice versa
+    - Extended debug messages
+    - Many bug fixes
+    - New compiler flags: -W and --fstack-protector
 * Version 0.1
-    Beta version
+    - Beta version
 
 
 Requirements
 ------------
-To build the RTRlib the CMake build system must be installed. If you
-want to establish a connection to an RTR-Server over ssh, the libssh
-0.4.x library must also be installed. Doxygen (optional) is required to
-create the HTML documentation.
+To build the RTRlib, the CMake build system must be installed.
+
+To establish a SSH connection between RTR-Client and RTR-Server, the
+libssh 0.4.x library must also be installed.
+
+Doxygen (optional) is required to create the HTML documentation.
+
 
 Compilation
 -----------
@@ -63,15 +72,15 @@ Compilation
 
 Installation
 ------------
-To copy libraries and headers to system directories run (optional):
+To copy libraries and headers to system directories, run (optional):
 
     make install
 
 
 Linking to RTRlib
 ----------------------
-The name of the shared library is rtr. To link programs to the RTRlib
-pass gcc the parameter:
+The name of the shared library is rtr. To link programs to the RTRlib,
+pass the following parameter to gcc:
 
     -lrtr
 
@@ -80,9 +89,21 @@ API Documentation
 -----------------
 The RTRlib includes a HTML documentation of the API. To build them,
 doxygen must be installed. The documentation will be located in the
-docs/ directory after you run:
+docs/ directory after the execution of:
 
     make doc
+
+
+Test RTR-Server Connection
+--------------------------
+The following command establishes a plain TCP connection to an
+RTR-Server using the rtrclient command line tool:
+
+    tools/rtrclient tcp rpki.realmv6.org 42420
+
+rpki.realmv6.org is an open RTR-Server instance for testing purposes,
+which runs rcynic. It listens on port 42420 and validates ROAs from the
+following trust anchors: AfriNIC, APNIC, ARIN, LACNIC, RIPE.
 
 
 Directories
@@ -99,6 +120,7 @@ Contact
 -------
 Website: http://rpki.realmv6.org/
 
+Mailing List: rtrlib@googlegroups.com
 
 
 
