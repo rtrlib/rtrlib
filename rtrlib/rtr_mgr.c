@@ -90,7 +90,7 @@ void rtr_mgr_cb(const struct rtr_socket* sock, const rtr_socket_state state, voi
         if(config->groups[ind].status == RTR_MGR_CONNECTING){
             //if previous state was CONNECTING, check if all other sockets in the group also have a established connection,
             //if yes change group state to ESTABLISHED
-            if(rtr_mgr_config_status_is_synced(&(config->groups[ind])))
+            if(rtr_mgr_config_status_is_synced(&(config->groups[ind]))){
                 config->groups[ind].status = RTR_MGR_ESTABLISHED;
                 MGR_DBG("Group(%u) status changed to: ESTABLISHED", config->groups[ind].preference);
                 for(unsigned int i = 0; i < config->len; i++){
@@ -103,6 +103,7 @@ void rtr_mgr_cb(const struct rtr_socket* sock, const rtr_socket_state state, voi
                     }
                 }
             }
+        }
         if(config->groups[ind].status == RTR_MGR_ERROR){
             //if previous state was ERROR, only change state to ESTABLISHED if all other socket groups are also in error or SHUTDOWN state
             bool all_error = true;
