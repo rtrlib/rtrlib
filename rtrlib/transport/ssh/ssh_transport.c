@@ -151,12 +151,10 @@ void tr_ssh_close(void* tr_ssh_sock){
 
 void tr_ssh_free(tr_socket* tr_sock){
     tr_ssh_socket* tr_ssh_sock = tr_sock->socket;
-
-    if(tr_ssh_sock != NULL){
-        tr_ssh_close(tr_ssh_sock);
-        free(tr_ssh_sock);
-        tr_sock->socket = NULL;
-    }
+    assert(tr_ssh_sock->channel == NULL);
+    assert(tr_ssh_sock->session == NULL);
+    free(tr_ssh_sock);
+    tr_sock->socket = NULL;
     SSH_DBG1("Socket freed", tr_ssh_sock);
 }
 

@@ -110,10 +110,9 @@ void tr_tcp_close(void* tr_tcp_sock){
 
 void tr_tcp_free(tr_socket* tr_sock){
     tr_tcp_socket* tcp_sock = tr_sock->socket;
-    if(tcp_sock != NULL){
-        tr_tcp_close(tcp_sock);
-        free(tcp_sock);
-    }
+    assert(tcp_sock != NULL);
+    assert(tcp_sock->socket == -1);
+    free(tcp_sock);
     tr_sock->socket = NULL;
     TCP_DBG1("Socket freed", tcp_sock);
 }
