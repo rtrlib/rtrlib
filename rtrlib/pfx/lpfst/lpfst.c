@@ -43,26 +43,22 @@ void lpfst_insert(lpfst_node* root_node, lpfst_node* new_node, const unsigned in
             root_node->lchild = new_node;
             new_node->parent = root_node;
         }
-        else{
+        else
             lpfst_insert(root_node->lchild, new_node, level+1);
-        }
     }
     else{
         if(root_node->rchild == NULL){
             root_node->rchild = new_node;
             new_node->parent = root_node;
         }
-        else{
+        else
             lpfst_insert(root_node->rchild, new_node, level+1);
-        }
     }
 }
 
-//returns node with most matching prefix bits
 lpfst_node* lpfst_lookup(const lpfst_node* root_node, const ip_addr* prefix, const uint8_t mask_len, unsigned int* level){
     while(root_node != NULL)
     {
-        //if the first prefix_len bits from root_node->prefix match prefix, return root_node
         if(root_node->len <= mask_len && ip_addr_equal(ip_addr_get_bits(&(root_node->prefix), 0, root_node->len), ip_addr_get_bits(prefix, 0, root_node->len)))
             return (lpfst_node*) root_node;
 
@@ -81,7 +77,7 @@ lpfst_node* lpfst_lookup_exact(lpfst_node* root_node, const ip_addr* prefix, con
     while(root_node != NULL)
     {
         if(*level > 0 && root_node->len < mask_len){
-                (*level)--;
+            (*level)--;
             return root_node->parent;
         }
         if(root_node->len == mask_len && ip_addr_equal(root_node->prefix, *prefix)){
@@ -90,27 +86,22 @@ lpfst_node* lpfst_lookup_exact(lpfst_node* root_node, const ip_addr* prefix, con
         }
 
         if(ip_addr_is_zero(ip_addr_get_bits(prefix, *level, 1))){
-            if(root_node->lchild == NULL){
+            if(root_node->lchild == NULL)
                 return root_node;
-            }
-            else{
+            else
                 root_node = root_node->lchild;
-            }
         }
         else{
-            if(root_node->rchild == NULL){
+            if(root_node->rchild == NULL)
                 return root_node;
-            }
-            else{
+            else
                 root_node = root_node->rchild;
-            }
         }
 
         (*level)++;
     }
     return NULL;
 }
-
 
 //returns node that isnt used anymore in the tree
 lpfst_node* lpfst_remove(lpfst_node* root_node, const ip_addr* prefix, const uint8_t mask_len, const unsigned int level){

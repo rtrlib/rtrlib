@@ -45,12 +45,12 @@ typedef struct {
 bool ipv6_addr_equal(const ipv6_addr* a, const ipv6_addr* b);
 
 /**
- * @brief Extracts number bits from the passed ipv6_addr, starting at bit number from. The bit with the highest
- * significance is bit 0. All other bits in the ipv6_addr will be 0
- * @param[in] val ipv4_addr
- * @param[in] from Number of first bit, that will be extracted
- * @param[in] number How many bits will be extracted
- * @returns a ipv4_addr which only contains the extracted bits
+ * @brief Extracts number bits from the passed ip_addr, starting at bit number from. The bit with the highest
+ * significance is bit 0. All bits that aren't in the specified range will be 0.
+ * @param[in] val ipv6_addr
+ * @param[in] from Position of the first bit that is extracted.
+ * @param[in] number How many bits will be extracted.
+ * @returns An ipv6_addr, where all bits that aren't in the specified range are set to 0.
 */
 ipv6_addr ipv6_get_bits(const ipv6_addr* val, const uint8_t from, const uint8_t to);
 
@@ -79,4 +79,4 @@ int ipv6_str_to_addr(const char *a, ipv6_addr* ip);
 */
 void ipv6_addr_to_host_byte_order(const uint32_t* src, uint32_t* dest);
 
-#endif 
+#endif

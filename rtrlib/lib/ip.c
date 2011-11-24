@@ -25,7 +25,7 @@
 #include "rtrlib/lib/ip.h"
 
 bool ip_addr_is_zero(const ip_addr prefix){
-    if(prefix.ver ==  IPV6){
+    if(prefix.ver == IPV6){
         if(prefix.u.addr6.addr[0] == 0 && prefix.u.addr6.addr[1] == 0 && prefix.u.addr6.addr[2] == 0 && prefix.u.addr6.addr[3] == 0 ){
             return true;
         }

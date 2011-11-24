@@ -75,10 +75,9 @@ ipv6_addr ipv6_get_bits(const ipv6_addr* val, const uint8_t from, const uint8_t 
 }
 
 /*
- * This function was copied from the bird routing daemon's ip_pton(..) function
-*/
-int ipv6_str_to_addr(const char *a, ipv6_addr* ip)
-{
+ * This function was copied from the bird routing daemon's ip_pton(..) function.
+ */
+int ipv6_str_to_addr(const char *a, ipv6_addr* ip){
     uint32_t* o = ip->addr;
     uint16_t words[8];
     int i, j, k, l, hfil;
@@ -148,9 +147,9 @@ int ipv6_str_to_addr(const char *a, ipv6_addr* ip)
 }
 
 /*
- * This function was copied from the bird routing daemon's ip_ntop(..) function
+ * This function was copied from the bird routing daemon's ip_ntop(..) function.
 */
-int ipv6_addr_to_str(const ipv6_addr* ip_addr, char *b, const unsigned int len) {
+int ipv6_addr_to_str(const ipv6_addr* ip_addr, char *b, const unsigned int len){
     if(len < INET6_ADDRSTRLEN)
         return -1;
     const uint32_t* a = ip_addr->addr;
@@ -204,8 +203,7 @@ int ipv6_addr_to_str(const ipv6_addr* ip_addr, char *b, const unsigned int len) 
     return 0;
 }
 
-void ipv6_addr_to_host_byte_order(const uint32_t* src, uint32_t* dest)
-{
+void ipv6_addr_to_host_byte_order(const uint32_t* src, uint32_t* dest){
   for(int i = 0; i < 4; i++)
     dest[i] = ntohl(src[i]);
 }

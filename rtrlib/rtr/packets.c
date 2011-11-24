@@ -152,7 +152,6 @@ void rtr_change_socket_state(rtr_socket* rtr_socket, const rtr_socket_state new_
     if(rtr_socket->state == RTR_SHUTDOWN)
         return;
 
-    //TODO: execute callback in a thread?
     rtr_socket->state = new_state;
     if(rtr_socket->connection_state_fp != NULL)
         rtr_socket->connection_state_fp(rtr_socket, new_state, rtr_socket->connection_state_fp_param);
@@ -168,7 +167,7 @@ void rtr_pdu_header_to_host_byte_order(void* pdu){
 }
 
 inline pdu_type rtr_get_pdu_type(const void* pdu){
-    return *((char*) pdu +1);
+    return *((char*) pdu + 1);
 }
 
 
@@ -176,6 +175,7 @@ void rtr_pdu_footer_to_host_byte_order(void* pdu){
     const pdu_type type = rtr_get_pdu_type(pdu);
 
     uint32_t int32_tmp;
+    uint32_t addr6[4];
 
     switch(type){
         case SERIAL_NOTIFY:
@@ -185,10 +185,16 @@ void rtr_pdu_footer_to_host_byte_order(void* pdu){
             ((pdu_serial_notify*) pdu)->sn = int32_tmp;
             break;
         case IPV4_PREFIX:
+            int32_tmp = ntohl(((pdu_ipv4*) pdu)->prefix);
+            ((pdu_ipv4*) pdu)->prefix = int32_tmp;
+
             int32_tmp = ntohl(((pdu_ipv4*) pdu)->asn);
             ((pdu_ipv4*) pdu)->asn = int32_tmp;
             break;
         case IPV6_PREFIX:
+            ipv6_addr_to_host_byte_order(((pdu_ipv6*) pdu)->prefix, addr6);
+            memcpy(((pdu_ipv6*) pdu)->prefix, addr6, sizeof(addr6));
+
             int32_tmp = ntohl(((pdu_ipv6*) pdu)->asn);
             ((pdu_ipv6*) pdu)->asn = int32_tmp;
             break;
@@ -196,7 +202,6 @@ void rtr_pdu_footer_to_host_byte_order(void* pdu){
             int32_tmp = ntohl(((pdu_error*) pdu)->len_enc_pdu);
             ((pdu_error*) pdu)->len_enc_pdu = int32_tmp;
             break;
-
         default:
             break;
     }
@@ -235,9 +240,6 @@ void rtr_pdu_to_network_byte_order(void* pdu){
  */
 int rtr_receive_pdu(rtr_socket* rtr_socket, void* pdu, const size_t pdu_len, const time_t timeout){
     //error values:
-    // -1 internal error
-    // -2 TR_WOULDBLOCK
-    // -3 TR_INTR
     // 0 = no_err
     // 1 = internal error
     // 2 = unknown pdu type
@@ -251,10 +253,9 @@ int rtr_receive_pdu(rtr_socket* rtr_socket, void* pdu, const size_t pdu_len, con
     if(rtr_socket->state == RTR_SHUTDOWN)
         return RTR_ERROR;
     error = tr_recv_all(rtr_socket->tr_socket, pdu, sizeof(pdu_header), timeout);
-    if(error < 0){
+    if(error < 0)
         goto error;
-    }
-    else 
+    else
         error = 0;
 
     //header in hostbyte order, retain original received pdu, in case we need to detach it to an error pdu
@@ -271,7 +272,6 @@ int rtr_receive_pdu(rtr_socket* rtr_socket, void* pdu, const size_t pdu_len, con
         goto error;
     }
 
-    //receive packet payload
     //if header->len is < packet_header = corrupt data received
     if(header.len < sizeof(pdu_header)){
         error = 8;
@@ -282,17 +282,16 @@ int rtr_receive_pdu(rtr_socket* rtr_socket, void* pdu, const size_t pdu_len, con
         goto error;
     }
 
+    //receive packet payload
     const unsigned int remaining_len = header.len - sizeof(pdu_header);
     if(remaining_len > 0){
         if(rtr_socket->state == RTR_SHUTDOWN)
             return RTR_ERROR;
         error = tr_recv_all(rtr_socket->tr_socket, (((char*) pdu) + sizeof(pdu_header)), remaining_len, RTR_RECV_TIMEOUT);
-        if(error < 0){
+        if(error < 0)
             goto error;
-        }
-        else{
+        else
             error = 0;
-        }
     }
     memcpy(pdu, &header, sizeof(pdu_header)); //copy header in host_byte_order to pdu
     rtr_pdu_footer_to_host_byte_order(pdu);
@@ -303,7 +302,7 @@ error:
     //send error msg to server, including unmodified pdu header(pdu variable instead header)
     if(error == -1){
         rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
-        return -1;
+        return RTR_ERROR;
     }
     else if(error == TR_WOULDBLOCK){
         RTR_DBG1("receive timeout expired");
@@ -369,7 +368,7 @@ int rtr_sync(rtr_socket* rtr_socket){
         }
         else if(rtval < 0)
             return RTR_ERROR;
-    type = rtr_get_pdu_type(pdu);
+        type = rtr_get_pdu_type(pdu);
     }
 
     if(type == ERROR){
@@ -396,7 +395,7 @@ int rtr_sync(rtr_socket* rtr_socket){
         }
         else{
             if(rtr_socket->nonce != cr_pdu->reserved){
-                char* txt = "Wrong NONCE in CACHE RESPONSE PDU"; //TODO: Append rtr_socket->nonce to string
+                char* txt = "Wrong NONCE in Cache Response PDU"; //TODO: Append rtr_socket->nonce to string
                 rtr_send_error_pdu(rtr_socket, NULL, 0, CORRUPT_DATA, txt, sizeof(txt));
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
                 return RTR_ERROR;
@@ -463,7 +462,7 @@ int rtr_update_pfx_table(rtr_socket* rtr_socket, const void* pdu){
     if(type ==  IPV4_PREFIX){
         pdu_size = sizeof(pdu_ipv4);
         const pdu_ipv4* ipv4 = pdu;
-        pfxr.prefix.u.addr4.addr = ntohl(ipv4->prefix);
+        pfxr.prefix.u.addr4.addr = ipv4->prefix;
         pfxr.asn = ipv4->asn;
         pfxr.prefix.ver = IPV4;
         pfxr.min_len = ipv4->prefix_len;
@@ -475,19 +474,17 @@ int rtr_update_pfx_table(rtr_socket* rtr_socket, const void* pdu){
         const pdu_ipv6* ipv6 = pdu;
         pfxr.asn = ipv6->asn;
         pfxr.prefix.ver = IPV6;
-        ipv6_addr_to_host_byte_order(ipv6->prefix, pfxr.prefix.u.addr6.addr);
+        memcpy(pfxr.prefix.u.addr6.addr, ipv6->prefix, sizeof(pfxr.prefix.u.addr6.addr));
         pfxr.min_len = ipv6->prefix_len;
         pfxr.max_len = ipv6->max_prefix_len;
         pfxr.socket_id = (uintptr_t) rtr_socket;
     }
 
     int rtval;
-    if(((pdu_ipv4*) pdu)->flags == 1){
+    if(((pdu_ipv4*) pdu)->flags == 1)
         rtval = pfx_table_add(rtr_socket->pfx_table, &pfxr);
-    }
-    else if(((pdu_ipv4*) pdu)->flags == 0){
+    else if(((pdu_ipv4*) pdu)->flags == 0)
         rtval = pfx_table_remove(rtr_socket->pfx_table, &pfxr);
-    }
     else{
         const char* txt = "Prefix PDU with invalid flags value received";
         RTR_DBG("%s", txt);
@@ -642,15 +639,15 @@ int rtr_handle_error_pdu(rtr_socket* rtr_socket, const void* buf){
 }
 
 int rtr_send_serial_query(rtr_socket* rtr_socket){
-    pdu_serial_query pdu_sq;
-    pdu_sq.ver = RTR_PROTOCOL_VERSION;
-    pdu_sq.type = SERIAL_QUERY;
-    pdu_sq.nonce = rtr_socket->nonce;
-    pdu_sq.len = sizeof(pdu_sq);
-    pdu_sq.sn = rtr_socket->serial_number;
+    pdu_serial_query pdu;
+    pdu.ver = RTR_PROTOCOL_VERSION;
+    pdu.type = SERIAL_QUERY;
+    pdu.nonce = rtr_socket->nonce;
+    pdu.len = sizeof(pdu);
+    pdu.sn = rtr_socket->serial_number;
 
     RTR_DBG("sending serial query, SN: %u", rtr_socket->serial_number);
-    if(rtr_send_pdu(rtr_socket, &pdu_sq, sizeof(pdu_sq)) != RTR_SUCCESS){
+    if(rtr_send_pdu(rtr_socket, &pdu, sizeof(pdu)) != RTR_SUCCESS){
         rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
         return RTR_ERROR;
     }

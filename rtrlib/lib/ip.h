@@ -31,13 +31,14 @@
 typedef enum {
     /** IPV4 */
     IPV4,
+
     /** IPV6 */
     IPV6
 } ip_version;
 
 /**
- * @brief The ip_addr struct, stores a IPv4 or IPv6 address in host byte order.
- * @param ver Specifies the type of address that is stored in this struct.
+ * @brief The ip_addr struct stores a IPv4 or IPv6 address in host byte order.
+ * @param ver Specifies the address type that is stored.
  * @param u Union holding a ipv4_addr or ipv6_addr.
  */
 typedef struct {
@@ -49,25 +50,25 @@ typedef struct {
 } ip_addr;
 
 /**
- * @brief Detects if the ip_addr only stores 0 bits
+ * @brief Detects if the ip_addr only contains 0 bits.
  * @param[in] ip_addr
- * @returns true if the saved ip_addr is 0
- * @returns false if the saved ip_addr isn't 0
+ * @returns true if the saved ip_addr is 0.
+ * @returns false if the saved ip_addr isn't 0.
  */
 bool ip_addr_is_zero(const ip_addr);
 
 /**
  * @brief Extracts number bits from the passed ip_addr, starting at bit number from. The bit with the highest
- * significance is bit 0. All other bits in the ip_addr will be 0
+ * significance is bit 0. All bits that aren't in the specified range will be 0.
  * @param[in] val ip_addr
- * @param[in] from Number of first bit, that will be extracted
- * @param[in] number How many bits will be extracted
- * @returns a ip_addr which only contains the extracted bits
+ * @param[in] from Position of the first bit that is extracted.
+ * @param[in] number How many bits will be extracted.
+ * @returns An ipv4_addr, where all bits that aren't in the specified range are set to 0.
 */
 ip_addr ip_addr_get_bits(const ip_addr* val, const uint8_t from, const uint8_t number);
 
 /**
- * @brief Checks if two ip_addr structs are equal
+ * @brief Checks if two ip_addr structs are equal.
  * @param[in] a ip_addr
  * @param[in] b ip_addr
  * @return true if a == b
@@ -76,19 +77,19 @@ ip_addr ip_addr_get_bits(const ip_addr* val, const uint8_t from, const uint8_t n
 bool ip_addr_equal(const ip_addr a, const ip_addr b);
 
 /**
- * Converts the passed ip_addr struct to string representation
+ * Converts the passed ip_addr struct to string representation.
  * @param[in] ip ip_addr
- * @param[out] str Pointer to a string buffer. The Buffer must be at least INET_ADDRSTRLEN bytes long if the passed ip_addr stores
- * an IPv4 address. If ip_addr stores an IPv6 address str must be at least INET6_ADDRSTRLEN bytes long.
+ * @param[out] str Pointer to a char array. The array must be at least INET_ADDRSTRLEN bytes long if the passed ip_addr stores
+ * an IPv4 address. If ip_addr stores an IPv6 address, str must be at least INET6_ADDRSTRLEN bytes long.
  * @result 0 on success
  * @result -1 on error
 */
 int ip_addr_to_str(const ip_addr* ip, char* str, const unsigned int len);
 
 /**
- * Converts the passed IP address in string representation to an ip_addr struct.
- * @param[in] str Pointer to a string buffer
- * @param[in] ver IP-Version of the passed IP-Address
+ * Converts the passed IP address in string representation to an ip_addr.
+ * @param[in] str Pointer to a char array
+ * @param[out] ip Pointer to a ip_addr struct
  * @result 0 on success
  * @result -1 on error
 */

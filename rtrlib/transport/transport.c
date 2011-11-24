@@ -23,18 +23,15 @@
 #include "rtrlib/transport/transport.h"
 #include "rtrlib/lib/utils.h"
 
-inline int tr_open(tr_socket* socket)
-{
+inline int tr_open(tr_socket* socket){
     return socket->open_fp(socket->socket);
 }
 
-inline void tr_close(tr_socket* socket)
-{
+inline void tr_close(tr_socket* socket){
     socket->close_fp(socket->socket);
 }
 
-inline void tr_free(tr_socket* socket)
-{
+inline void tr_free(tr_socket* socket){
     socket->free_fp(socket);
 }
 

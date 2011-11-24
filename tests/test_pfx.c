@@ -30,6 +30,7 @@
 #include "rtrlib/lib/ip.h"
 #include "rtrlib/lib/utils.h"
 #include "rtrlib/pfx/lpfst/lpfst-pfx.h"
+
 void print_bytes(void* buf, size_t len){
     for(unsigned int i = 0;i < len; i++){
         if(len != 0)
@@ -190,7 +191,6 @@ int main(){
     ip_str_to_addr("10.10.0.0", &(pfx.prefix));
     pfx.min_len = 16;
     pfx.max_len = 24;
-
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
     pfxv_state res;
@@ -212,6 +212,20 @@ int main(){
     ip_str_to_addr("10.11.10.0", &(pfx.prefix));
     assert(pfx_table_validate(&pfxt, 123, &(pfx.prefix), 16, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_NOT_FOUND);
+
+    ip_str_to_addr("10.10.0.0", &(pfx.prefix));
+    pfx.asn = 122;
+    assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
+
+    assert(pfx_table_validate(&pfxt, 122, &(pfx.prefix), 18, &res) == PFX_SUCCESS);
+    assert(res == BGP_PFXV_STATE_VALID);
+
+    ip_str_to_addr("11.10.0.0", &(pfx.prefix));
+    pfx.asn = 22;
+    pfx.min_len = 17;
+    assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
+    assert(pfx_table_validate(&pfxt, 22, &(pfx.prefix), 17, &res) == PFX_SUCCESS);
+    assert(res == BGP_PFXV_STATE_VALID);
 
 
 

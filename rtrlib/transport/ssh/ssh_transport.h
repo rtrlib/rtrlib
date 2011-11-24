@@ -59,7 +59,7 @@ typedef struct tr_ssh_config{
 } tr_ssh_config;
 
 /**
- * @brief Initialize the tr_socket struct for a SSH connection.
+ * @brief Initializes the tr_socket struct for a SSH connection.
  * @param[in] config SSH configuration for the connection.
  * @param[out] socket Initialized transport socket.
  * @returns TR_SUCCESS on success

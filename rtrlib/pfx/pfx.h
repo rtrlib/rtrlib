@@ -29,8 +29,8 @@
 
 #ifndef RTR_PFX_H
 #define RTR_PFX_H
-#include <sys/types.h>
 #include <stdint.h>
+#include <sys/types.h>
 #include "rtrlib/lib/ip.h"
 
 /**
@@ -59,11 +59,10 @@ typedef enum pfxv_state{
     /** A valid certificate for the pfx_record exists. */
     BGP_PFXV_STATE_VALID,
 
-    /** @brief No entry which matches the prefix and prefix length exists. */
+    /** @brief No certificate for the route exists. */
     BGP_PFXV_STATE_NOT_FOUND,
 
-    /** Validation failed, one or more prefixes that match the input prefix exists in the pfx_table, but prefix
-     * max_len or the ASN does'nt match. */
+    /** @brief One or more records that match the input prefix exists in the pfx_table but the prefix max_len or ASN does'nt match. */
     BGP_PFXV_STATE_INVALID
 } pfxv_state;
 
@@ -85,29 +84,28 @@ typedef struct pfx_record{
 } pfx_record;
 
 /**
- * @brief A function pointer that is called if an record was added or removed to the pfx_table.
+ * @brief A function pointer that is called if an record was added to the pfx_table or was removed from the pfx_table.
  * @param pfx_table which was updated.
  * @param record pfx_record that was modified.
- * @param added True if the record was added, false if the record was removed
- * servers 
+ * @param added True if the record was added, false if the record was removed.
  */
 typedef void (*pfx_update_fp)(struct pfx_table* pfx_table, const pfx_record record, const bool added);
 
 /**
- * @brief Initialize the pfx_table struct.
+ * @brief Initializes the pfx_table struct.
  * @param[in] pfx_table pfx_table that will be initialized.
  * @param[in] update_fp Afunction pointers that will be called if a record was added or removed.
  */
 void pfx_table_init(struct pfx_table* pfx_table, pfx_update_fp update_fp);
 
 /**
- * @brief Free all memory associcated with pfx_table.
- * @param[in] pfx_table pfx_table what will be freed.
+ * @brief Frees all memory associcated with the pfx_table.
+ * @param[in] pfx_table pfx_table that will be freed.
  */
 void pfx_table_free(struct pfx_table* pfx_table);
 
 /**
- * @brief Append pfx_record to pfx_table.
+ * @brief Adds a pfx_record to a pfx_table.
  * @param[in] pfx_table pfx_table to use.
  * @param[in] pfx_record pfx_record that will be added.
  * @return PFX_SUCCESS
@@ -117,7 +115,7 @@ void pfx_table_free(struct pfx_table* pfx_table);
 int pfx_table_add(struct pfx_table* pfx_table, const pfx_record* pfx_record);
 
 /**
- * @brief Remove pfx_record from the pfx_table.
+ * @brief Removes a pfx_record from a pfx_table.
  * @param[in] pfx_table pfx_table to use.
  * @param[in] pfx_record Record that will be removed.
  * @return PFX_SUCCESS
@@ -127,7 +125,7 @@ int pfx_table_add(struct pfx_table* pfx_table, const pfx_record* pfx_record);
 int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* pfx_record);
 
 /**
- * @brief Remove all entries from the source socket_id in pfx_table
+ * @brief Removes all entries in the pfx_table that match the passed socket_id value from a pfx_table
  * @param[in] pfx_table pfx_table to use.
  * @param[in] socket_id ID of the rtr_socket
  * @return PFX_SUCCESS

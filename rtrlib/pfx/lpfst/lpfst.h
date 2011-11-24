@@ -25,9 +25,8 @@
 #include <inttypes.h>
 #include "rtrlib/lib/ip.h"
 
-
 /**
- * @brief lpfst_node.
+ * @brief lpfst_node
  * @param prefix
  * @param len
  * @param rchild
@@ -46,56 +45,54 @@ typedef struct lpfst_node_t {
 
 /**
  * @brief Inserts new_node in the tree.
- * param[in] root Node were the inserting process starts.
- * @param[in] new_node node that will be inserted.
- * @param[in] level of the the node root in the tree.
+ * @param[in] root Root node of the tree for the inserting process.
+ * @param[in] new_node Node that will be inserted.
+ * @param[in] level Level of the the root node in the tree.
  */
 void lpfst_insert(lpfst_node* root, lpfst_node* new_node, const unsigned int level);
 
 /**
- * @brief Search for the node with the longest prefix matching the passed ip prefix and prefix length.
- * param[in] root_node Node were the lookup process starts.
+ * @brief Searches for the node with the longest prefix, matching the passed ip prefix and prefix length.
+ * @param[in] root_node Node were the lookup process starts.
  * @param[in] ip_addr IP-Prefix.
  * @param[in] mask_len Length of the network mask of the prefix.
- * @param[in,out] level of the the node root in the tree. Is set to the level from the node that was found thats
- * matches.
- * the passed ip prefix and prefix length.
+ * @param[in,out] level of the the node root in the tree. Is set to the level of the node that is returned.
  * @returns A The lpfst_node with the longest prefix in the tree matching the passed ip prefix and prefix length.
- * @returns NULL if no node that matches the passed IP prefix and prefix length could be found in the tree.
+ * @returns NULL if no node that matches the passed prefix and prefix length could be found.
  */
 lpfst_node* lpfst_lookup(const lpfst_node* root_node, const ip_addr* prefix, const uint8_t mask_len,  unsigned int* level);
 
 /**
- * @brief Search for a node with the same prefix an prefix length.
- * param[in] root_node Node were the lookup process starts.
+ * @brief Search for a node with the same prefix and prefix length.
+ * @param[in] root_node Node were the lookup process starts.
  * @param[in] ip_addr IP-Prefix.
  * @param[in] mask_len Length of the network mask of the prefix.
- * @param[in,out] level of the the node root in the tree. Is set to the level from the node that was found thats.
- * @param[in] found Is true if a node which matches could be found, else found is set to false.
+ * @param[in,out] level of the the node root in the tree. Is set to the level of the node that is returned.
+ * @param[in] found Is true if a node which matches could be found else found is set to false.
  * @return A node which matches the passed parameter (found==true).
- * @return the parent of the node where the lookup operation stops, (found==false.
+ * @return the parent of the node where the lookup operation stopped (found==false).
  * @return NULL if root_node is NULL.
 */
 lpfst_node* lpfst_lookup_exact(lpfst_node* root_node, const ip_addr* prefix, const uint8_t mask_len, unsigned int* level, bool* found);
 
 /**
- * @brief Removes the passed IP-Prefix from the tree.
- * param[in] root Node were the inserting process starts.
+ * @brief Removes the node with the passed IP prefix and mask_len from the tree.
+ * @param[in] root Node were the inserting process starts.
  * @param[in] prefix Prefix that will removed from the tree.
  * @param[in] mask_len Length of the network mask of the prefix.
- * @param[in] level of the the node root in the tree.
+ * @param[in] level Level of the root node in the tree.
  * @returns Node that was removed from the tree.
  * @returns NULL If the Prefix could'nt be found in the tree.
  */
 lpfst_node* lpfst_remove(lpfst_node* root_node, const ip_addr* prefix, const uint8_t mask_len, const unsigned int level);
 
-
 /**
  * @brief Detects if a node is a leaf in tree.
- * param[in] node lpfst_node.
+ * @param[in] node
  * @returns true if node is a leaf:
  * @returns false if node isn't a leaf.
  */
 int lpfst_is_leaf(const lpfst_node* node);
+
 int lpfst_get_children(const lpfst_node* root_node, lpfst_node*** array, unsigned int* len);
 #endif

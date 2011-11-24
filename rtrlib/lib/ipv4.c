@@ -32,7 +32,7 @@ ipv4_addr ipv4_get_bits(const ipv4_addr* val, const uint8_t from, const uint8_t 
 }
 
 int ipv4_addr_to_str(const ipv4_addr* ip, char* str, unsigned int len){
-    uint8_t* t = (uint8_t*) &(ip->addr);
+    const uint8_t* t = (uint8_t*) &(ip->addr);
 
     if (snprintf(str, len, "%hhu.%hhu.%hhu.%hhu", t[3], t[2], t[1], t[0]) < 0){
         return -1;
@@ -52,4 +52,3 @@ bool ipv4_addr_equal(const ipv4_addr* a, const ipv4_addr* b){
         return true;
     return false;
 }
-

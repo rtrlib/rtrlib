@@ -35,7 +35,6 @@
 
 #ifndef RTR_TRANSPORT_H
 #define RTR_TRANSPORT_H
-
 #include <time.h>
 
 /**
@@ -44,10 +43,13 @@
 enum tr_rtvals{
     /** @brief Operation was successfull. */
     TR_SUCCESS = 0,
+
     /** Error occured. */
     TR_ERROR = -1,
+
     /** No data is available on the socket. */
     TR_WOULDBLOCK = -2,
+
     /** Call was interrupted from a signal */
     TR_INTR = -3
 };
@@ -119,38 +121,37 @@ int tr_open(tr_socket* socket);
 void tr_close(tr_socket* socket);
 
 /**
- * @brief Deallocate all memory that the passed socket uses.
- * @param[in,out] tr_socket which will be freed. After the function returns, *tr_socket is set to NULL.
+ * @brief Deallocates all memory that the passed socket uses.
+ * Socket have to be closed before.
+ * @param[in] tr_socket which will be freed.
  */
 void tr_free(tr_socket* tr_sock);
 
 /**
- * @brief Receive data from the socket (non-blocking).
- * Received <= len Bytes data.
+ * @brief Receives <= len Bytes data from the socket.
  * @param[in] socket Socket that will be used.
  * @param[out] buf Received data, must be an allocated memory area of >=pdu_len bytes.
  * @param[in] len Size of pdu in Bytes.
- * @param[in] timeout Max. seconds the functions should try to recv len data till it returns.
+ * @param[in] timeout Max. seconds the function will block till len data was received.
  * @return >0 Number of Bytes read.
  * @return TR_ERROR
- * @return TR_WOULDBLOCK If no data was available on socket before the timeout expired.
+ * @return TR_WOULDBLOCK If no data was available at the socket before the timeout expired.
  */
 int tr_recv(const tr_socket* socket, void* buf, const size_t len, const time_t timeout);
 
 /**
- * @brief Send data throught the socket (non-blocking).
- * <= len Bytes will be sent.
+ * @brief Send <= len Bytes data over the socket.
  * @param[in] socket Socket that will be used.
  * @param[out] pdu Data that will be be sent.
  * @param[in] len Size of pdu in Bytes.
- * @param[in] timeout Max. seconds the functions should try to send pdu till it returns.
+ * @param[in] timeout Max. seconds the function should try to send the data till it returns.
  * @return >0 Number of Bytes sent.
  * @return TR_ERROR
  */
 int tr_send(const tr_socket* socket, const void* pdu, const size_t len, const time_t timeout);
 
 /**
- * Repeatly calls tr_send till len Bytes were sent or an error occured.
+ * Repeatly calls tr_send(..) till len Bytes were sent, the timeout expired or an error occured.
  * @param[in] socket Socket that will be used.
  * @param[out] pdu Data that will be be sent.
  * @param[in] len Size of pdu in Bytes.
@@ -162,13 +163,14 @@ int tr_send(const tr_socket* socket, const void* pdu, const size_t len, const ti
 int tr_send_all(const tr_socket* socket, const void* pdu, const size_t len, const time_t timeout);
 
 /**
- * Repeatly calls tr_send(socket, pdu, len, -1) till len Bytes were received or an Error occured.
+ * Repeatly calls tr_recv(..) till len Bytes were received, the timeout expired or an error occured.
  * @param[in] socket Socket that will be used.
  * @param[out] buf Received data, must be an allocated memory area of >=len bytes.
  * @param[in] len Size of pdu in Bytes.
- * @param[in] timeout Max. seconds the functions should try to recv len data till it returns.
+ * @param[in] timeout Max. seconds the functions should try to receive len data till it returns.
  * @return >0 Number of Bytes received.
  * @return TR_ERROR
+ * @return TR_WOULDBLOCK If send would block.
  */
 int tr_recv_all(const tr_socket* socket, const void* buf, const size_t len, const time_t timeout);
 

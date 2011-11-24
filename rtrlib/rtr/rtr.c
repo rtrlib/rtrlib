@@ -55,7 +55,10 @@ void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table
     if(tr != NULL)
         rtr_socket->tr_socket = tr;
     assert(polling_period <= 3600);
-    rtr_socket->polling_period = (polling_period > (3600 - RTR_RECV_TIMEOUT) ? (3600 - RTR_RECV_TIMEOUT) : polling_period);
+    if(polling_period == 0)
+        rtr_socket->polling_period = 300;
+    else
+        rtr_socket->polling_period = (polling_period > (3600 - RTR_RECV_TIMEOUT) ? (3600 - RTR_RECV_TIMEOUT) : polling_period);
     rtr_socket->cache_timeout = (cache_timeout == 0 ? (rtr_socket->polling_period / 2) : cache_timeout);
     rtr_socket->state = RTR_SHUTDOWN;
     rtr_socket->request_nonce = true;

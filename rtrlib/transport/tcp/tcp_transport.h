@@ -45,7 +45,7 @@ typedef struct tr_tcp_config{
 
 
 /**
- * @brief Initialize the tr_socket struct for a TCP connection.
+ * @brief Initializes the tr_socket struct for a TCP connection.
  * @param[in] config TCP configuration for the connection.
  * @param[out] socket Initialized transport socket.
  * @returns TR_SUCCESS on success

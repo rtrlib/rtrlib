@@ -50,21 +50,29 @@ enum rtr_rtvals{
 typedef enum {
 /** Socket is establishing the transport connection. */
     RTR_CONNECTING,
+
 /** Connection is established, socket is waiting for a Serial Notify or expiration of the polling_period timer */
     RTR_ESTABLISHED,
+
 /** Resetting RTR connection. */
     RTR_RESET,
+
 /** Receiving validation records from the RTR server.  */
     RTR_SYNC,
+
 /** No validation records are available on the RTR server. */
     RTR_ERROR_NO_DATA_AVAIL,
+
 /** Server was unable to answer the last serial or reset query. */
     RTR_ERROR_NO_INCR_UPDATE_AVAIL,
+
 /** Fatal protocol error occurred. */
     RTR_ERROR_FATAL,
+
 /** Error on the transport socket occurred. */
     RTR_ERROR_TRANSPORT,
-/** Socket is shutting down */
+
+/** RTR Socket is stopped. */
     RTR_SHUTDOWN 
 } rtr_socket_state;
 
@@ -78,11 +86,12 @@ typedef void (*rtr_connection_state_fp)(const struct rtr_socket* rtr_socket, con
 /**
  * @brief A RTR socket.
  * @param tr_socket Pointer to an initialized tr_socket that will be used to communicate with the RTR server.
- * @param polling_period Interval in seconds between serial queries that are sent to the server. Must be <= 3600
+ * @param polling_period Interval in seconds between serial queries that are sent to the server. Must be <= 3600. If 0
+ * is specified the polling_period is set to 300 seconds.
  * @param last_update Timestamp of the last validation record update. Is 0 if the pfx_table doesn't stores any
  * validation reords from this rtr_socket.
- * @param cache_timout Stored validation records will be deleted if cache was unable to refresh data for this period.\n
- * The default value is twice the polling_period.
+ * @param cache_timout Time period in seconds. Received pfx_records are deleted if the client was unable to refresh data for this time period.
+ * If 0 is specified, the cache_timeout will be half the polling_period.
  * @param state Current state of the socket.
  * @param nonce Nonce of the RTR session.
  * @param request_nonce True, if the rtr_client have to request a new none from the server.
@@ -107,7 +116,7 @@ typedef struct rtr_socket{
 } rtr_socket;
 
 /**
- * @brief Initialize a rtr_socket
+ * @brief Initialize a rtr_socket.
  * @param[out] rtr_socket Pointer to the allocated rtr_socket that will be initialized.
  * @param[in] tr Pointer to a tr_socket that will be used for the transport connection. If NULL the tr_socket element of
  * the rtr_socket won't be changed.
@@ -130,7 +139,7 @@ void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table
 int rtr_start(rtr_socket* rtr_socket);
 
 /**
- * @brief Stop the RTR connection and terminate the transport connection
+ * @brief Stop the RTR connection and terminate the transport connection.
  * @param[in] rtr_socket rtr_socket that will be used.
  */
 void rtr_stop(rtr_socket* rtr_socket);

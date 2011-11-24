@@ -138,7 +138,7 @@ inline lpfst_node* pfx_table_get_root(const struct pfx_table* pfx_table, const i
 int pfx_table_del_elem(node_data* data, const unsigned int index){
     //if index is not the last elem in the list, move all other elems backwards in the array
     if(index != data->len - 1){
-        for(unsigned int i = index; i < data->len -1; i++){
+        for(unsigned int i = index; i < data->len - 1; i++){
             data->ary[i] = data->ary[i+1];
         }
     }
@@ -146,6 +146,8 @@ int pfx_table_del_elem(node_data* data, const unsigned int index){
     data->ary = realloc(data->ary, sizeof(data_elem) * data->len);
     if(data->len != 0 && data->ary == NULL)
         return PFX_ERROR;
+    else if(data->len == 0)
+        data->ary = NULL;
 
     return PFX_SUCCESS;
 }
@@ -236,6 +238,7 @@ int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* record){
             else
                 pfx_table->ipv6 = NULL;
         }
+        assert(((node_data*) node->data)->len == 0);
         free(node->data);
         free(node);
     }
@@ -272,12 +275,10 @@ int pfx_table_validate(struct pfx_table* pfx_table, const uint32_t asn, const ip
     }
 
     while(!pfx_table_elem_matches(node->data, asn, prefix_len)){
-        if(ip_addr_is_zero(ip_addr_get_bits(prefix, lvl, 1)))
-            node = node->lchild;
+        if(ip_addr_is_zero(ip_addr_get_bits(prefix, lvl++, 1))) //post-incr lvl, lpfst_lookup is performed on child_nodes => parent lvl + 1
+            node = lpfst_lookup(node->lchild, prefix, prefix_len, &lvl);
         else
-            node = node->rchild;
-        lvl++;
-        node = lpfst_lookup(node, prefix, prefix_len, &lvl);
+            node = lpfst_lookup(node->rchild, prefix, prefix_len, &lvl);
         if(node == NULL){
             pthread_rwlock_unlock(&pfx_table->lock);
             *result = BGP_PFXV_STATE_INVALID;
@@ -314,7 +315,7 @@ int pfx_table_remove_id(pfx_table* pfx_table, lpfst_node** root, lpfst_node* nod
         node_data* data = node->data;
         for(unsigned int i = 0; i < data->len; i++){
             while(data->len > i && data->ary[i].socket_id == socket_id){
-                pfx_record record = { data->ary[i].asn, node->prefix, node->len, data->ary[i].max_len, data->ary[i].socket_id};
+                pfx_record record = { data->ary[i].asn, node->prefix, node->len, data->ary[i].max_len, data->ary[i].socket_id };
                 if(pfx_table_del_elem(data, i) == PFX_ERROR){
                     return PFX_ERROR;
                 }
@@ -324,19 +325,19 @@ int pfx_table_remove_id(pfx_table* pfx_table, lpfst_node** root, lpfst_node* nod
         if(data->len == 0){
             lpfst_node* rm_node = lpfst_remove(node, &(node->prefix), node->len, level);
             assert(rm_node != NULL);
+            assert(((node_data*) node->data)->len == 0);
             free(((node_data*) rm_node->data));
             free(rm_node);
+
             if(rm_node == *root){
                 *root = NULL;
                 return PFX_SUCCESS;
             }
-            else if(rm_node == node){
+            else if(rm_node == node)
                 return PFX_SUCCESS;
-            }
         }
-        else{
+        else
             check_node = false;
-        }
     }
 
     if(node->lchild != NULL){

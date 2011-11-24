@@ -35,7 +35,6 @@
  * draft-ietf-sidr-rpki-rtr</a> for details about error handling).
  *
  * @{
- *
  * @example rtr_mgr.c
  * Usage example of the RTR connection manager.
  */
@@ -44,16 +43,26 @@
 #include "rtrlib/pfx/pfx.h"
 #include "rtrlib/rtr/rtr.h"
 
+/**
+ * @brief Status of a rtr_mgr_group.
+ */
 typedef enum {
+    /** RTR sockets are disconnected */
     RTR_MGR_CLOSED,
+
+    /** RTR sockets trying to establish a connection. */
     RTR_MGR_CONNECTING,
+
+    /** All RTR sockets of the group are synchronized with the rtr servers. */
     RTR_MGR_ESTABLISHED,
+
+    /** Error occured on at least one RTR socket. */
     RTR_MGR_ERROR,
 } rtr_mgr_status;
 
 /**
- * @brief A set of RTR-Sockets
- * @param sockets Array of rtr_socket pointer. The tr_socket element of the rtr_socket must be associated with an initialized Transport Socket.
+ * @brief A set of RTR sockets.
+ * @param sockets Array of rtr_socket pointer. The tr_socket element of the rtr_socket must be associated with an initialized transport socket.
  * @param sockets_len Number of elements in the sockets array.
  * @param preference The preference value of this group. Groups with lower preference values are preferred.
  * @param status Status of the group.
@@ -67,10 +76,10 @@ typedef struct {
 
 
 /**
- * Configuration structure for the rtr_mgr
+ * @brief rtr_mgr configuration structure.
  * @param A Pointer to an array of rtr_mgr_groups.
  * @param len Number of elements in the groups array.
- * @param mutex pthread mutex, which is used internally by the rtr_mgr
+ * @param mutex Pthread mutex, which is used internally by the rtr_mgr.
 */
 typedef struct rtr_mgr_config {
     rtr_mgr_group* groups;
@@ -79,22 +88,32 @@ typedef struct rtr_mgr_config {
 } rtr_mgr_config;
 
 /**
- * @brief Initializes the rtr_mgr_config group. A pfx_table will be created. The parameters will be associated with the rtr_sockets in the config.
- * @param[in] config A rtr_mgr_config structl. The sockets, sockets_len, and preference element must be initialized. The preference values in of the rtr_mgr_groups must be unique. More than one rtr_mgr_group with the same preference value isn't allowed.
- * @param[in] polling_period Interval in seconds between update queries to the server. Must be <= 3600 seconds.
+ * @brief Initializes the rtr_mgr_config.
+ * The passed parameters will be associated with the rtr_sockets in the config.
+ * @param[in] config A rtr_mgr_config struct. The config->sockets, config->sockets_len, config->preference elements must
+ * be initialized.
+ * Every RTR socket in an rtr_mgr_group must be assoziated with an initialized transport socket. A Transport socket is
+ * only allowed to be associated with one rtr socket. The given preference values must be unique in the
+ * rtr_mgr_config->sockets array. More than one rtr_mgr_group with the same preference value isn't allowed.
+ * @param[in] polling_period Interval in seconds between serial queries that are sent to the server. Must be <= 3600.
+ * If 0 is specified the polling_period is set to 300 seconds.
+ * @param[in] cache_timout Time period in seconds. Received pfx_records are deleted if the client was unable to refresh data for this time period.
+ * If 0 is specified, the cache_timeout will be half the polling_period.
+ * The default value is twice the polling_period.
  * @return RTR_SUCCESS On success 
  * @return RTR_ERROR On error 
  */
-int rtr_mgr_init(rtr_mgr_config* config, const unsigned int polling_period, const unsigned int cache_timeout, pfx_update_fp update_fp);
+int rtr_mgr_init(rtr_mgr_config* config, const unsigned int polling_period, const unsigned int cache_timeout, const pfx_update_fp update_fp);
 
 /**
- * @brief Free all resources that were allocated from the rtr_mgr in the rtr_mgr_config.
+ * @brief Frees all resources that were allocated from the rtr_mgr.
+ * rtr_mgr_stop(..) must be called before, to shutdown all RTR socket connections.
  * @param[in] socket rtr_mgr_config.
  */
 void rtr_mgr_free(rtr_mgr_config* config);
 
 /**
- * @brief Establishes the connection with rtr_sockets of the group with the lowest preference value and handles errors as defined in the RPKI-RTR protocol.
+ * @brief Establishes the connection with the rtr_sockets of the group with the lowest preference value and handles errors as defined in the RPKI-RTR protocol.
  * @param[in] config Pointer to an initialized rtr_mgr_config.
  * @return RTR_SUCCESS On success 
  * @return RTR_ERROR On error 
@@ -102,7 +121,7 @@ void rtr_mgr_free(rtr_mgr_config* config);
 int rtr_mgr_start(rtr_mgr_config* config);
 
 /**
- * @brief Terminates all rtr_socket connections that are defined in the config. All pfx_records received from these sockets will also be purged.
+ * @brief Terminates all rtr_socket connections that are defined in the config. All pfx_records received from these sockets will be purged.
  * @param[in] config The rtr_mgr_config struct
  */
 void rtr_mgr_stop(rtr_mgr_config* config);
@@ -116,7 +135,7 @@ void rtr_mgr_stop(rtr_mgr_config* config);
 bool rtr_mgr_conf_in_sync(rtr_mgr_config* config);
 
 /**
- * @brief Validates the origin of a BGP-Route. 
+ * @brief Validates the origin of a BGP-Route.
  * @param[in] rtr_mgr_config
  * @param[in] asn Autonomous system number of the Origin-AS of the prefix.
  * @param[in] prefix Announced network prefix
