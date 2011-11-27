@@ -314,7 +314,7 @@ error:
     }
     else if(error == 8){
         RTR_DBG1("corrupt PDU received");
-        char* txt = "corrupt data received, length value in PDU is too small";
+        const char* txt = "corrupt data received, length value in PDU is too small";
         rtr_send_error_pdu(rtr_socket, pdu, sizeof(pdu_header), CORRUPT_DATA, txt, sizeof(txt));
     }
     else if(error == 4){
@@ -395,7 +395,7 @@ int rtr_sync(rtr_socket* rtr_socket){
         }
         else{
             if(rtr_socket->nonce != cr_pdu->reserved){
-                char* txt = "Wrong NONCE in Cache Response PDU"; //TODO: Append rtr_socket->nonce to string
+                const char* txt = "Wrong NONCE in Cache Response PDU"; //TODO: Append rtr_socket->nonce to string
                 rtr_send_error_pdu(rtr_socket, NULL, 0, CORRUPT_DATA, txt, sizeof(txt));
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
                 return RTR_ERROR;
@@ -440,7 +440,7 @@ int rtr_sync(rtr_socket* rtr_socket){
         }
         else{
             RTR_DBG("Received unexpected PDU (Type: %u)", ((pdu_header*) pdu)->type);
-            char* txt = "unexpected PDU received during data sync";
+            const char* txt = "unexpected PDU received during data sync";
             rtr_send_error_pdu(rtr_socket, pdu, sizeof(pdu_header), CORRUPT_DATA, txt, sizeof(txt));
             return RTR_ERROR;
         }
