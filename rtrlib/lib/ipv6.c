@@ -116,7 +116,7 @@ int ipv6_str_to_addr(const char *a, ipv6_addr* ip){
         }
         if (*a == ':' && a[1])
             a++;
-        else if (*a == '.' && (i == 6 || i < 6 && hfil >= 0)) {             /* Embedded IPv4 address */
+        else if (*a == '.' && (i == 6 || (i < 6 && hfil >= 0))) {             /* Embedded IPv4 address */
             ipv4_addr addr4;
             if (ipv4_str_to_addr(start, &addr4) == -1)
                 return -1;
@@ -177,7 +177,7 @@ int ipv6_addr_to_str(const ipv6_addr* ip_addr, char *b, const unsigned int len){
         bestpos = -1;
 
   /* Is it an encapsulated IPv4 address? */
-    if (!bestpos && (bestlen == 5 && a[2] == 0xffff || bestlen == 6))
+    if (!bestpos && ((bestlen == 5 && a[2] == 0xffff) || bestlen == 6))
     //if (!bestpos && ((bestlen == 5 && (a[2] == 0xffff)) || bestlen == 6))
     {
         uint32_t x = a[3];
