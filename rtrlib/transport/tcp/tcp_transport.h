@@ -48,8 +48,8 @@ typedef struct tr_tcp_config{
  * @brief Initializes the tr_socket struct for a TCP connection.
  * @param[in] config TCP configuration for the connection.
  * @param[out] socket Initialized transport socket.
- * @returns TR_SUCCESS on success
- * @returns TR_ERROR on error
+ * @returns TR_SUCCESS On success.
+ * @returns TR_ERROR On error.
  */
 int tr_tcp_init(const tr_tcp_config* config, tr_socket* socket);
 #endif

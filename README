@@ -26,7 +26,6 @@ Release History:
       struct ip_addr and vice versa
     - Extended debug messages
     - Many bug fixes
-    - New compiler flags: -W and --fstack-protector
 * Version 0.1
     - Beta version
 

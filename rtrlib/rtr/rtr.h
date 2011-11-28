@@ -116,30 +116,30 @@ typedef struct rtr_socket{
 } rtr_socket;
 
 /**
- * @brief Initialize a rtr_socket.
+ * @brief Initializes a rtr_socket.
  * @param[out] rtr_socket Pointer to the allocated rtr_socket that will be initialized.
- * @param[in] tr Pointer to a tr_socket that will be used for the transport connection. If NULL the tr_socket element of
+ * @param[in] tr_socket Pointer to a tr_socket that will be used for the transport connection. If NULL the tr_socket element of
  * the rtr_socket won't be changed.
- * @param[in] polling_period Interval in seconds between serial queries that are sent to the server. Must be <= 3600
- * @param[in] cache_timout Stored validation records will be deleted if cache was unable to refresh data for this period.\n
- * The default value is twice the polling_period.
  * @param[in] pfx_table pfx_table that stores the validation records obtained from the connected rtr server.
- * @param[in] connection_state_fp A callback function that is executed when the state of the socket changes.
- * @param[in] connection_state_fp_param Parameter that is passed to the connection_state_fp callback.
+ * @param[in] polling_period Interval in seconds between serial queries that are sent to the server. Must be <= 3600
+ * @param[in] cache_timeout Stored validation records will be deleted if cache was unable to refresh data for this period.\n
+ * The default value is twice the polling_period.
+ * @param[in] fp A callback function that is executed when the state of the socket changes.
+ * @param[in] fp_data Parameter that is passed to the connection_state_fp callback.
  */
-void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table, const unsigned int polling_period, const unsigned int cache_timeout, rtr_connection_state_fp fp, void* fp_data);
+void rtr_init(rtr_socket* rtr_socket, tr_socket* tr_socket, struct pfx_table* pfx_table, const unsigned int polling_period, const unsigned int cache_timeout, rtr_connection_state_fp fp, void* fp_data);
 
 /**
- * @brief Start the RTR protocol state machine in a pthread. Connection to the rtr_server will be established and the
+ * @brief Starts the RTR protocol state machine in a pthread. Connection to the rtr_server will be established and the
  * pfx_records will be synced.
  * @param[in] rtr_socket rtr_socket that will be used.
- * @return RTR_ERROR
- * @return RTR_SUCCESS
+ * @return RTR_ERROR On error.
+ * @return RTR_SUCCESS On success.
  */
 int rtr_start(rtr_socket* rtr_socket);
 
 /**
- * @brief Stop the RTR connection and terminate the transport connection.
+ * @brief Stops the RTR connection and terminate the transport connection.
  * @param[in] rtr_socket rtr_socket that will be used.
  */
 void rtr_stop(rtr_socket* rtr_socket);

@@ -62,8 +62,8 @@ typedef struct tr_ssh_config{
  * @brief Initializes the tr_socket struct for a SSH connection.
  * @param[in] config SSH configuration for the connection.
  * @param[out] socket Initialized transport socket.
- * @returns TR_SUCCESS on success
- * @returns TR_ERROR on error
+ * @returns TR_SUCCESS On success.
+ * @returns TR_ERROR On error.
  */
 int tr_ssh_init(const tr_ssh_config* config, tr_socket* socket);
 

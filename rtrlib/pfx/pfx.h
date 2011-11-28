@@ -108,9 +108,9 @@ void pfx_table_free(struct pfx_table* pfx_table);
  * @brief Adds a pfx_record to a pfx_table.
  * @param[in] pfx_table pfx_table to use.
  * @param[in] pfx_record pfx_record that will be added.
- * @return PFX_SUCCESS
- * @return PFX_ERROR
- * @return PFX_DUPLICATE_RECORD
+ * @return PFX_SUCCESS On success.
+ * @return PFX_ERROR On error.
+ * @return PFX_DUPLICATE_RECORD If the pfx_record already exists.
  */
 int pfx_table_add(struct pfx_table* pfx_table, const pfx_record* pfx_record);
 
@@ -118,9 +118,9 @@ int pfx_table_add(struct pfx_table* pfx_table, const pfx_record* pfx_record);
  * @brief Removes a pfx_record from a pfx_table.
  * @param[in] pfx_table pfx_table to use.
  * @param[in] pfx_record Record that will be removed.
- * @return PFX_SUCCESS
- * @return PFX_ERROR
- * @return PFX_RECORD_NOT_FOUND
+ * @return PFX_SUCCESS On success.
+ * @return PFX_ERROR On error.
+ * @return PFX_RECORD_NOT_FOUND If pfx_records could'nt be found.
  */
 int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* pfx_record);
 
@@ -128,8 +128,8 @@ int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* pfx_record);
  * @brief Removes all entries in the pfx_table that match the passed socket_id value from a pfx_table
  * @param[in] pfx_table pfx_table to use.
  * @param[in] socket_id ID of the rtr_socket
- * @return PFX_SUCCESS
- * @return PFX_ERROR
+ * @return PFX_SUCCESS On success.
+ * @return PFX_ERROR On error.
  */
 int pfx_table_src_remove(struct pfx_table* pfx_table, const uintptr_t socket_id);
 
@@ -141,7 +141,7 @@ int pfx_table_src_remove(struct pfx_table* pfx_table, const uintptr_t socket_id)
  * @param[in] mask_len Length of the network mask of the announced prefix
  * @param[out] result Result of the validation.
  * @return PFX_SUCCESS On success.
- * @return PFX_ERROR If an error occured.
+ * @return PFX_ERROR On error.
  */
 int pfx_table_validate(struct pfx_table* pfx_table, const uint32_t asn, const ip_addr* prefix, const uint8_t mask_len, pfxv_state* result);
 

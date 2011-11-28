@@ -97,9 +97,10 @@ typedef struct rtr_mgr_config {
  * rtr_mgr_config->sockets array. More than one rtr_mgr_group with the same preference value isn't allowed.
  * @param[in] polling_period Interval in seconds between serial queries that are sent to the server. Must be <= 3600.
  * If 0 is specified the polling_period is set to 300 seconds.
- * @param[in] cache_timout Time period in seconds. Received pfx_records are deleted if the client was unable to refresh data for this time period.
+ * @param[in] cache_timeout Time period in seconds. Received pfx_records are deleted if the client was unable to refresh data for this time period.
  * If 0 is specified, the cache_timeout will be half the polling_period.
  * The default value is twice the polling_period.
+ * @param[in] update_fp A Pointer to a pfx_update_fp callback, that is executed for every added and removed pfx_record.
  * @return RTR_SUCCESS On success 
  * @return RTR_ERROR On error 
  */
@@ -108,7 +109,7 @@ int rtr_mgr_init(rtr_mgr_config* config, const unsigned int polling_period, cons
 /**
  * @brief Frees all resources that were allocated from the rtr_mgr.
  * rtr_mgr_stop(..) must be called before, to shutdown all RTR socket connections.
- * @param[in] socket rtr_mgr_config.
+ * @param[in] config rtr_mgr_config.
  */
 void rtr_mgr_free(rtr_mgr_config* config);
 
@@ -128,7 +129,7 @@ void rtr_mgr_stop(rtr_mgr_config* config);
 
 /**
  * @brief Detects if the rtr_mgr_group is fully synchronized with at least one group.
- * @param[in] socket The rtr_mgr_config.
+ * @param[in] config The rtr_mgr_config.
  * @return true If the pfx_table stores non-outdated pfx_records from at least one socket group.
  * @return false If the pfx_table isn't fully synchronized with at least one group.
  */
@@ -136,7 +137,7 @@ bool rtr_mgr_conf_in_sync(rtr_mgr_config* config);
 
 /**
  * @brief Validates the origin of a BGP-Route.
- * @param[in] rtr_mgr_config
+ * @param[in] config
  * @param[in] asn Autonomous system number of the Origin-AS of the prefix.
  * @param[in] prefix Announced network prefix
  * @param[in] mask_len Length of the network mask of the announced prefix

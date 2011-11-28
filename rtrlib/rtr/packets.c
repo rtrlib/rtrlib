@@ -75,7 +75,7 @@ typedef struct pdu_serial_query{
     uint32_t sn;
 } pdu_serial_query;
 
-typedef struct pdu_serial_query pdu_eod;
+typedef pdu_serial_query pdu_eod;
 
 typedef struct pdu_ipv4{
     uint8_t ver;

@@ -38,7 +38,7 @@ typedef enum {
 
 /**
  * @brief The ip_addr struct stores a IPv4 or IPv6 address in host byte order.
- * @param ver Specifies the address type that is stored.
+ * @param ver Specifies the type of the stored address.
  * @param u Union holding a ipv4_addr or ipv6_addr.
  */
 typedef struct {
@@ -52,8 +52,8 @@ typedef struct {
 /**
  * @brief Detects if the ip_addr only contains 0 bits.
  * @param[in] ip_addr
- * @returns true if the saved ip_addr is 0.
- * @returns false if the saved ip_addr isn't 0.
+ * @returns true If the saved ip_addr is 0.
+ * @returns false If the saved ip_addr isn't 0.
  */
 bool ip_addr_is_zero(const ip_addr);
 
@@ -71,8 +71,8 @@ ip_addr ip_addr_get_bits(const ip_addr* val, const uint8_t from, const uint8_t n
  * @brief Checks if two ip_addr structs are equal.
  * @param[in] a ip_addr
  * @param[in] b ip_addr
- * @return true if a == b
- * @return false if a != b
+ * @return true If a == b.
+ * @return false If a != b.
  */
 bool ip_addr_equal(const ip_addr a, const ip_addr b);
 
@@ -81,17 +81,17 @@ bool ip_addr_equal(const ip_addr a, const ip_addr b);
  * @param[in] ip ip_addr
  * @param[out] str Pointer to a char array. The array must be at least INET_ADDRSTRLEN bytes long if the passed ip_addr stores
  * an IPv4 address. If ip_addr stores an IPv6 address, str must be at least INET6_ADDRSTRLEN bytes long.
- * @result 0 on success
- * @result -1 on error
+ * @result 0 On success
+ * @result -1 On error
 */
 int ip_addr_to_str(const ip_addr* ip, char* str, const unsigned int len);
 
 /**
  * Converts the passed IP address in string representation to an ip_addr.
- * @param[in] str Pointer to a char array
- * @param[out] ip Pointer to a ip_addr struct
- * @result 0 on success
- * @result -1 on error
+ * @param[in] str Pointer to a Null terminated char array.
+ * @param[out] ip Pointer to a ip_addr struct.
+ * @result 0 On success.
+ * @result -1 On error.
 */
 int ip_str_to_addr(const char* str, ip_addr* ip);
 
@@ -99,8 +99,8 @@ int ip_str_to_addr(const char* str, ip_addr* ip);
  * Compares addr1 in the ip_addr struct with addr2 in string representation.
  * @param[in] addr1 ip_addr
  * @param[in] addr2 IP-address as string
- * @return true if a == b
- * @return false if a != b
+ * @return true If a == b
+ * @return false If a != b
 */
 bool ip_str_cmp(const ip_addr* addr1, const char* addr2);
 

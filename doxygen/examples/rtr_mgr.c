@@ -17,15 +17,15 @@ int main(){
     //create a TCP transport socket
     tr_socket tr_tcp1;
     tr_tcp_config tcp_config1 = {
-        "141.22.26.252",          //IP
-        "8282"                      //Port
+        "rpki.realmv6.org",          //IP
+        "42420"                      //Port
     };
     tr_tcp_init(&tcp_config1, &tr_tcp1);
 
     //create another TCP transport socket
     tr_socket tr_tcp2;
     tr_tcp_config tcp_config2 = {
-        "141.22.26.252",          //IP
+        "localhost",                //IP
         "8282"                      //Port
     };
     tr_tcp_init(&tcp_config2, &tr_tcp2);
@@ -64,12 +64,14 @@ int main(){
     rtr_mgr_start(&conf);
 
     //wait till at least one rtr_mgr_group is fully synchronized with the server
+    /*
     while(!rtr_mgr_conf_in_sync(&conf))
         sleep(1);
-    //validate the BGP origin ASN 12345 for prefix 0x0A0A/24
+    */
+
+    //validate the BGP-Route 10.10.0.0/24, origin ASN: 12345
     ip_addr pref;
-    pref.ver = IPV4;
-    pref.u.addr4.addr = 0x0A0A0000;
+    ip_str_to_addr("10.10.0.0", &pref);
     pfxv_state result;
     rtr_mgr_validate(&conf, 12345, &pref, 24, &result);
 

@@ -325,7 +325,7 @@ int pfx_table_remove_id(pfx_table* pfx_table, lpfst_node** root, lpfst_node* nod
         if(data->len == 0){
             lpfst_node* rm_node = lpfst_remove(node, &(node->prefix), node->len, level);
             assert(rm_node != NULL);
-            assert(((node_data*) node->data)->len == 0);
+            assert(((node_data*) rm_node->data)->len == 0);
             free(((node_data*) rm_node->data));
             free(rm_node);
 
