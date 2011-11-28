@@ -38,7 +38,7 @@ static void print_usage(char** argv){
     printf("\nExamples:\n");
     printf(" %s tcp rpki.realmv6.org 42420\n", argv[0]);
 #ifdef RTRLIB_HAVE_LIBSSH
-    printf(" %s ssh 10.10.10.1 22 rtr_user ~/.ssh/id_rsa ~/.ssh/id_rsa.pub\n", argv[0]);
+    printf(" %s ssh rpki.realmv6.org rtr-ssh ~/.ssh/id_rsa ~/.ssh/id_rsa.pub\n", argv[0]);
 #endif
 
 }
@@ -87,9 +87,8 @@ static void update_cb(struct pfx_table* p  __attribute__((unused)), const pfx_re
         printf("+ ");
     else
         printf("- ");
-    ip_addr_to_str(&(rec.prefix), ip, INET6_ADDRSTRLEN);
+    ip_addr_to_str(&(rec.prefix), ip, sizeof(ip));
     printf("%-18s %3u-%-3u %10u\n", ip, rec.min_len, rec.max_len, rec.asn);
-    return;
 }
 
 
