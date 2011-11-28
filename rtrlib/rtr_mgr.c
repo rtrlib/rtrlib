@@ -238,13 +238,13 @@ inline int rtr_mgr_validate(rtr_mgr_config* config, const uint32_t asn, const ip
 }
 
 void rtr_mgr_stop(rtr_mgr_config* config){
-    pthread_mutex_lock(&(config->mutex));
     for(unsigned int i = 0; i < config->len; i++){
         for(unsigned int j = 0; j < config->groups[i].sockets_len; j++){
             rtr_stop(config->groups[i].sockets[j]);
         }
+        pthread_mutex_lock(&(config->mutex));
         config->groups[i].status = RTR_MGR_CLOSED;
+        pthread_mutex_unlock(&(config->mutex));
         MGR_DBG("Group(%u) status changed to: CLOSED", config->groups[i].preference);
     }
-    pthread_mutex_unlock(&(config->mutex));
 }

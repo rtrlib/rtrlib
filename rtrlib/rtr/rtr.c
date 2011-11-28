@@ -71,7 +71,6 @@ void rtr_init(rtr_socket* rtr_socket, tr_socket* tr, struct pfx_table* pfx_table
 }
 
 int rtr_start(rtr_socket* rtr_socket){
-    rtr_socket->state = RTR_CONNECTING;
     int rtval = pthread_create(&(rtr_socket->thread_id), NULL, (void* (*)(void*)) &rtr_fsm_start, rtr_socket);
     if(rtval == 0)
         return RTR_SUCCESS;
@@ -95,6 +94,7 @@ void rtr_purge_outdated_records(rtr_socket* rtr_socket){
 }
 
 void rtr_fsm_start(rtr_socket* rtr_socket){
+    rtr_socket->state = RTR_CONNECTING;
     install_sig_handler();
     while(1){
         if(rtr_socket->state == RTR_CONNECTING){
@@ -102,7 +102,6 @@ void rtr_fsm_start(rtr_socket* rtr_socket){
             //old pfx_record could exists in the pfx_table, check if they are too old and must be removed
             rtr_purge_outdated_records(rtr_socket);
 
-            RTR_DBG1("rtr_start: open transport connection");
             if(tr_open(rtr_socket->tr_socket) == TR_ERROR){
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
             }
@@ -118,6 +117,7 @@ void rtr_fsm_start(rtr_socket* rtr_socket){
                     else
                         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
                 }
+
         }
 
         else if(rtr_socket->state == RTR_RESET){
@@ -192,4 +192,5 @@ void rtr_stop(rtr_socket* rtr_socket){
         pthread_kill(rtr_socket->thread_id, SIGUSR1);
         pthread_join(rtr_socket->thread_id, NULL);
     }
+    RTR_DBG1("Socket shut down");
 }
