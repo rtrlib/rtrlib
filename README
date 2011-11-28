@@ -24,6 +24,8 @@ Release History:
     - Representation of IP addresses in host byte order within pfx_table
     - New convenience function to transform an IP address string into a
       struct ip_addr and vice versa
+    - support for the IETF drafts draft-ietf-sidr-rpki-rtr-19 and
+      draft-ietf-sidr-pfx-validate-03
     - Extended debug messages
     - Many bug fixes
 * Version 0.1
