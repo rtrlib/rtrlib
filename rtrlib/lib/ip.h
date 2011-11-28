@@ -25,6 +25,7 @@
 #include "rtrlib/lib/ipv4.h"
 #include "rtrlib/lib/ipv6.h"
 
+
 /**
  * @brief Version of the IP protocol.
  */
@@ -68,6 +69,9 @@ bool ip_addr_is_zero(const ip_addr);
 ip_addr ip_addr_get_bits(const ip_addr* val, const uint8_t from, const uint8_t number);
 
 /**
+ * @defgroup util_h Utility functions
+ * @{
+ *
  * @brief Checks if two ip_addr structs are equal.
  * @param[in] a ip_addr
  * @param[in] b ip_addr
@@ -81,8 +85,9 @@ bool ip_addr_equal(const ip_addr a, const ip_addr b);
  * @param[in] ip ip_addr
  * @param[out] str Pointer to a char array. The array must be at least INET_ADDRSTRLEN bytes long if the passed ip_addr stores
  * an IPv4 address. If ip_addr stores an IPv6 address, str must be at least INET6_ADDRSTRLEN bytes long.
- * @result 0 On success
- * @result -1 On error
+ * @param[in] len Length of the str array.
+ * @result 0 On success.
+ * @result -1 On error.
 */
 int ip_addr_to_str(const ip_addr* ip, char* str, const unsigned int len);
 

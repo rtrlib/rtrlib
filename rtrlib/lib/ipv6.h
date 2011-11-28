@@ -73,9 +73,11 @@ int ipv6_addr_to_str(const ipv6_addr* ip_addr, char *b, const unsigned int len);
 int ipv6_str_to_addr(const char *a, ipv6_addr* ip);
 
 /**
+ * @ingroup util_h[{
  * Converts the passed IPv6 address from network byte order to host byte order.
  * @param[in] src Pointer to a uint32_t array storing a ipv6 address in network byte order.
  * @param[out] dest Pointer a uint32_t array that will be used to store the ipv6 addr in host byte order.
+ * }
 */
 void ipv6_addr_to_host_byte_order(const uint32_t* src, uint32_t* dest);
 
