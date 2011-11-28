@@ -67,7 +67,7 @@ typedef void (*tr_close_fp)(void* socket);
 typedef int (*tr_open_fp)(void* socket);
 
 /** 
- * @brief A function pointer to a technology specific free function. All memory associated with tr_sock->socket will be freed.
+ * @brief A function pointer to a technology specific free function. All memory associated with the tr_socket will be freed.
  * \sa tr_free
  * */
 typedef void (*tr_free_fp)(struct tr_socket* tr_sock);
@@ -119,8 +119,8 @@ int tr_open(tr_socket* socket);
 void tr_close(tr_socket* socket);
 
 /**
- * @brief Deallocate all memory that socket uses.
- * @param[in] tr_sock tr_sock->socket that will be freed.
+ * @brief Deallocate all memory that the passed socket uses.
+ * @param[in,out] tr_socket which will be freed. After the function returns, *tr_socket is set to NULL.
  */
 void tr_free(tr_socket* tr_sock);
 

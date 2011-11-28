@@ -65,7 +65,7 @@ typedef struct tr_ssh_config{
  * @returns TR_SUCCESS on success
  * @returns TR_ERROR on error
  */
-int tr_ssh_init(const tr_ssh_config* config, tr_socket** socket);
+int tr_ssh_init(const tr_ssh_config* config, tr_socket* socket);
 
 #endif
 /* @} */

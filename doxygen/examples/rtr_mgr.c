@@ -3,7 +3,7 @@
 
 int main(){
     //create a SSH transport socket
-    tr_socket* tr_ssh;
+    tr_socket tr_ssh;
     tr_ssh_config config = {
         "123.231.123.221",          //IP
         22,                         //Port
@@ -15,7 +15,7 @@ int main(){
     tr_ssh_init(&config, &tr_ssh);
 
     //create a TCP transport socket
-    tr_socket* tr_tcp1;
+    tr_socket tr_tcp1;
     tr_tcp_config tcp_config1 = {
         "141.22.26.252",          //IP
         "8282"                      //Port
@@ -23,7 +23,7 @@ int main(){
     tr_tcp_init(&tcp_config1, &tr_tcp1);
 
     //create another TCP transport socket
-    tr_socket* tr_tcp2;
+    tr_socket tr_tcp2;
     tr_tcp_config tcp_config2 = {
         "141.22.26.252",          //IP
         "8282"                      //Port
@@ -32,9 +32,9 @@ int main(){
 
     //create 3 rtr_sockets and associate them with the transprort sockets
     rtr_socket rtr_ssh, rtr_tcp1, rtr_tcp2;
-    rtr_ssh.tr_socket = tr_ssh;
-    rtr_tcp1.tr_socket = tr_tcp1;
-    rtr_tcp2.tr_socket = tr_tcp2;
+    rtr_ssh.tr_socket = &tr_ssh;
+    rtr_tcp1.tr_socket = &tr_tcp1;
+    rtr_tcp2.tr_socket = &tr_tcp2;
 
     //create a rtr_mgr_group array with 2 elements
     rtr_mgr_group groups[2];
@@ -77,7 +77,4 @@ int main(){
     rtr_mgr_free(&conf);
     free(groups[0].sockets);
     free(groups[1].sockets);
-    tr_free(tr_ssh);
-    tr_free(tr_tcp1);
-    tr_free(tr_tcp2);
 }

@@ -51,6 +51,6 @@ typedef struct tr_tcp_config{
  * @returns TR_SUCCESS on success
  * @returns TR_ERROR on error
  */
-int tr_tcp_init(const tr_tcp_config* config, tr_socket** socket);
+int tr_tcp_init(const tr_tcp_config* config, tr_socket* socket);
 #endif
 /* @} */

@@ -47,18 +47,16 @@ static int tr_tcp_recv(const void* tr_tcp_sock, void* pdu, const size_t len, con
 static int tr_tcp_send(const void* tr_tcp_sock, const void* pdu, const size_t len, const time_t timeout);
 
 
-int tr_tcp_init(const tr_tcp_config* config, tr_socket** socket){
-    *socket = malloc(sizeof(tr_socket));
-    tr_socket* tr_socket = *socket;
+int tr_tcp_init(const tr_tcp_config* config, tr_socket* socket){
 
-    tr_socket->close_fp = &tr_tcp_close;
-    tr_socket->free_fp = &tr_tcp_free;
-    tr_socket->open_fp = &tr_tcp_open;
-    tr_socket->recv_fp = &tr_tcp_recv;
-    tr_socket->send_fp = &tr_tcp_send;;
+    socket->close_fp = &tr_tcp_close;
+    socket->free_fp = &tr_tcp_free;
+    socket->open_fp = &tr_tcp_open;
+    socket->recv_fp = &tr_tcp_recv;
+    socket->send_fp = &tr_tcp_send;;
 
-    tr_socket->socket = malloc(sizeof(tr_tcp_socket));
-    tr_tcp_socket* tcp_socket = tr_socket->socket;
+    socket->socket = malloc(sizeof(tr_tcp_socket));
+    tr_tcp_socket* tcp_socket = socket->socket;
     tcp_socket->socket = -1;
     tcp_socket->config = config;
 
@@ -105,16 +103,18 @@ void tr_tcp_close(void* tr_tcp_sock){
     tr_tcp_socket* tcp_socket = tr_tcp_sock;
     if(tcp_socket->socket != -1)
         close(tcp_socket->socket);
+    TCP_DBG1("Socket closed", tcp_socket);
+    tcp_socket->socket = -1;
 }
 
 void tr_tcp_free(tr_socket* tr_sock){
     tr_tcp_socket* tcp_sock = tr_sock->socket;
-    if(tr_sock->socket != NULL){
+    if(tcp_sock != NULL){
         tr_tcp_close(tcp_sock);
-        free(tr_sock->socket);
+        free(tcp_sock);
     }
     tr_sock->socket = NULL;
-        free(tr_sock);
+    TCP_DBG1("Socket freed", tcp_sock);
 }
 
 int tr_tcp_recv(const void* tr_tcp_sock, void* pdu, const size_t len, const time_t timeout){

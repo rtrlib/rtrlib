@@ -137,7 +137,7 @@ int main(int argc, char** argv){
         return(EXIT_FAILURE);
     }
 
-    tr_socket* tr_sock;
+    tr_socket tr_sock;
     if(mode == TCP){
         tr_tcp_config config = {
             host,
@@ -161,7 +161,7 @@ int main(int argc, char** argv){
 #endif
 
     rtr_socket rtr;
-    rtr.tr_socket = tr_sock;
+    rtr.tr_socket = &tr_sock;
 
     rtr_mgr_group groups[1];
     groups[0].sockets_len = 1;
@@ -180,7 +180,6 @@ int main(int argc, char** argv){
     rtr_mgr_stop(&conf);
     rtr_mgr_free(&conf);
     free(groups[0].sockets);
-    tr_free(tr_sock);
 
     return(EXIT_SUCCESS);
 }

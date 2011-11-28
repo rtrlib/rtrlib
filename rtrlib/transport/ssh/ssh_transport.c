@@ -46,18 +46,16 @@ static int tr_ssh_send(const void* tr_ssh_sock, const void* pdu, const size_t le
 static int tr_ssh_recv_async(const tr_ssh_socket* tr_ssh_sock, void* buf, const size_t buf_len);
 
 
-int tr_ssh_init(const tr_ssh_config* config, tr_socket** socket){
-    *socket = malloc(sizeof(tr_socket));
-    tr_socket* tr_socket = *socket;
+int tr_ssh_init(const tr_ssh_config* config, tr_socket* socket){
 
-    tr_socket->close_fp = &tr_ssh_close;
-    tr_socket->free_fp = &tr_ssh_free;
-    tr_socket->open_fp = &tr_ssh_open;
-    tr_socket->recv_fp = &tr_ssh_recv;
-    tr_socket->send_fp = &tr_ssh_send;;
+    socket->close_fp = &tr_ssh_close;
+    socket->free_fp = &tr_ssh_free;
+    socket->open_fp = &tr_ssh_open;
+    socket->recv_fp = &tr_ssh_recv;
+    socket->send_fp = &tr_ssh_send;;
 
-    tr_socket->socket = malloc(sizeof(tr_ssh_socket));
-    tr_ssh_socket* ssh_socket = tr_socket->socket;
+    socket->socket = malloc(sizeof(tr_ssh_socket));
+    tr_ssh_socket* ssh_socket = socket->socket;
     ssh_socket->channel = NULL;
     ssh_socket->session = NULL;
     ssh_socket->config = config;
@@ -148,6 +146,7 @@ void tr_ssh_close(void* tr_ssh_sock){
         ssh_free(socket->session);
         socket->session = NULL;
    }
+    SSH_DBG1("Socket closed", socket);
 }
 
 void tr_ssh_free(tr_socket* tr_sock){
@@ -158,7 +157,7 @@ void tr_ssh_free(tr_socket* tr_sock){
         free(tr_ssh_sock);
         tr_sock->socket = NULL;
     }
-    free(tr_sock);
+    SSH_DBG1("Socket freed", tr_ssh_sock);
 }
 
 /*
