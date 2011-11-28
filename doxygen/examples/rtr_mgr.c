@@ -9,8 +9,8 @@ int main(){
         22,                         //Port
         "rpki_user",
         "/etc/rpki-rtr/hostkey",    //Server hostkey
-        "/etc/rpki-rtr/client.priv", //Authentication private key
-        "/etc/rpki-rtr/client.pub"  //Authentication public key
+        "/etc/rpki-rtr/client.priv", //Private key
+        "/etc/rpki-rtr/client.pub"  //Public key
     };
     tr_ssh_init(&config, &tr_ssh);
 
@@ -64,10 +64,8 @@ int main(){
     rtr_mgr_start(&conf);
 
     //wait till at least one rtr_mgr_group is fully synchronized with the server
-    /*
     while(!rtr_mgr_conf_in_sync(&conf))
         sleep(1);
-    */
 
     //validate the BGP-Route 10.10.0.0/24, origin ASN: 12345
     ip_addr pref;
