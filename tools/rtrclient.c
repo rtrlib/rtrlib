@@ -36,7 +36,7 @@ static void print_usage(char** argv){
     printf(" %s ssh <host> <port> <username> <private_key> <public_key> \n", argv[0]);
 #endif
     printf("\nExamples:\n");
-    printf(" %s tcp 10.10.10.1 42420\n", argv[0]);
+    printf(" %s tcp rpki.realmv6.org 42420\n", argv[0]);
 #ifdef RTRLIB_HAVE_LIBSSH
     printf(" %s ssh 10.10.10.1 22 rtr_user ~/.ssh/id_rsa ~/.ssh/id_rsa.pub\n", argv[0]);
 #endif
