@@ -229,7 +229,7 @@ int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* record){
     }
 
     if(ndata->len == 0){
-        node = lpfst_remove(node, &(record->prefix), root->len, lvl);
+        node = lpfst_remove(node, &(record->prefix), record->min_len, lvl);
         assert(node != NULL);
 
         if(node == root){
