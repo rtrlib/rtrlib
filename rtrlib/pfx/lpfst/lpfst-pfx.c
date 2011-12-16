@@ -45,6 +45,8 @@ static data_elem* pfx_table_find_elem(const node_data* data, const pfx_record* r
 static bool pfx_table_elem_matches(node_data* data, const uint32_t asn, const uint8_t prefix_len);
 static void pfx_table_notify_clients(pfx_table* pfx_table, const pfx_record* record, const bool added);
 static int pfx_table_remove_id(pfx_table* pfx_table, lpfst_node** root, lpfst_node* node, const uintptr_t socket_id, const unsigned int level);
+static int pfx_table_node2pfx_record(lpfst_node* node, pfx_record records[], const unsigned int ary_len);
+static void pfx_table_free_reason(pfx_record** reason, unsigned int* reason_len);
 
 
 void pfx_table_notify_clients(pfx_table* pfx_table, const pfx_record* record, const bool added){
@@ -257,12 +259,40 @@ bool pfx_table_elem_matches(node_data* data, const uint32_t asn, const uint8_t p
     return false;
 }
 
-int pfx_table_validate(struct pfx_table* pfx_table, const uint32_t asn, const ip_addr *prefix, const uint8_t prefix_len, pfxv_state* result){
+int pfx_table_node2pfx_record(lpfst_node* node, pfx_record* records, const unsigned int ary_len){
+    node_data* data = node->data;
+    if(ary_len < data->len)
+        return PFX_ERROR;
+
+    for(unsigned int i = 0; i < data->len; i++){
+        records[i].asn =  data->ary[i].asn;
+        records[i].prefix = node->prefix;
+        records[i].min_len = node->len;
+        records[i].max_len = data->ary[i].max_len;
+        records[i].socket_id = data->ary[i].socket_id;
+    }
+    return data->len;
+}
+
+inline void pfx_table_free_reason(pfx_record** reason, unsigned int* reason_len){
+    if(reason != NULL){
+        free(*reason);
+        *reason = NULL;
+    }
+    if(reason_len != NULL)
+        *reason_len = 0;
+}
+
+int pfx_table_validate_r(struct pfx_table* pfx_table, pfx_record** reason, unsigned int* reason_len, const uint32_t asn, const ip_addr *prefix, const uint8_t prefix_len, pfxv_state* result){
+    //assert(reason_len == NULL || *reason_len  == 0);
+    //assert(reason == NULL || *reason == NULL);
+
     pthread_rwlock_rdlock(&(pfx_table->lock));
     lpfst_node* root = pfx_table_get_root(pfx_table, prefix->ver);
     if(root == NULL){
         pthread_rwlock_unlock(&pfx_table->lock);
         *result = BGP_PFXV_STATE_NOT_FOUND;
+        pfx_table_free_reason(reason, reason_len);
         return PFX_SUCCESS;
     }
 
@@ -271,7 +301,23 @@ int pfx_table_validate(struct pfx_table* pfx_table, const uint32_t asn, const ip
     if(node == NULL){
         pthread_rwlock_unlock(&pfx_table->lock);
         *result = BGP_PFXV_STATE_NOT_FOUND;
+        pfx_table_free_reason(reason, reason_len);
         return PFX_SUCCESS;
+    }
+
+    if(reason_len != NULL && reason != NULL){
+        *reason_len = ((node_data*) node->data)->len;
+        *reason = realloc(*reason, *reason_len * sizeof(pfx_record));
+        if(*reason == NULL){
+            pthread_rwlock_unlock(&pfx_table->lock);
+            pfx_table_free_reason(reason, reason_len);
+            return PFX_ERROR;
+        }
+        if(pfx_table_node2pfx_record(node, *reason, *reason_len) == PFX_ERROR){
+            pthread_rwlock_unlock(&pfx_table->lock);
+            pfx_table_free_reason(reason, reason_len);
+            return PFX_ERROR;
+        }
     }
 
     while(!pfx_table_elem_matches(node->data, asn, prefix_len)){
@@ -279,16 +325,38 @@ int pfx_table_validate(struct pfx_table* pfx_table, const uint32_t asn, const ip
             node = lpfst_lookup(node->lchild, prefix, prefix_len, &lvl);
         else
             node = lpfst_lookup(node->rchild, prefix, prefix_len, &lvl);
+
         if(node == NULL){
             pthread_rwlock_unlock(&pfx_table->lock);
             *result = BGP_PFXV_STATE_INVALID;
             return PFX_SUCCESS;
+        }
+
+        if(reason_len != NULL && reason != NULL){
+            unsigned int r_len_old = *reason_len;
+            *reason_len += ((node_data*) node->data)->len;
+            *reason = realloc(*reason, *reason_len * sizeof(pfx_record));
+            pfx_record* start = *reason + r_len_old;
+            if(*reason == NULL){
+                pthread_rwlock_unlock(&pfx_table->lock);
+                pfx_table_free_reason(reason, reason_len);
+                return PFX_ERROR;
+            }
+            if(pfx_table_node2pfx_record(node, start, ((node_data*) node->data)->len) == PFX_ERROR){
+                pthread_rwlock_unlock(&pfx_table->lock);
+                pfx_table_free_reason(reason, reason_len);
+                return PFX_ERROR;
+            }
         }
     }
 
     pthread_rwlock_unlock(&pfx_table->lock);
     *result = BGP_PFXV_STATE_VALID;
     return PFX_SUCCESS;
+}
+
+int pfx_table_validate(struct pfx_table* pfx_table, const uint32_t asn, const ip_addr *prefix, const uint8_t prefix_len, pfxv_state* result){
+    return pfx_table_validate_r(pfx_table, NULL, NULL, asn, prefix, prefix_len, result);
 }
 
 int pfx_table_src_remove(struct pfx_table* pfx_table, const uintptr_t socket_id){
