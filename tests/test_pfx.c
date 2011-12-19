@@ -333,6 +333,32 @@ int main(){
     assert(pfx_table_validate(&pfxt, 123, &(pfx.prefix), 16, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_INVALID);
 
+    assert(ip_str_to_addr("10.0.0.0", &(pfx.prefix)) == 0);
+    pfx.min_len=8;
+    pfx.max_len=15;
+    pfx.asn=6;
+    assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
+
+    assert(ip_str_to_addr("10.0.0.0", &(pfx.prefix)) == 0);
+    pfx.min_len=8;
+    pfx.max_len=15;
+    pfx.asn=5;
+    assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
+
+    assert(ip_str_to_addr("10.1.0.0", &(pfx.prefix)) == 0);
+    pfx.min_len=16;
+    pfx.max_len=16;
+    pfx.asn=5;
+    assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
+
+    pfx_record* r = NULL;
+    unsigned int r_len = 0;
+    assert(ip_str_to_addr("10.1.0.0", &(pfx.prefix)) == 0);
+    assert(pfx_table_validate_r(&pfxt, &r, &r_len, 123, &(pfx.prefix), 16, &res) == PFX_SUCCESS);
+    assert(res == BGP_PFXV_STATE_INVALID);
+    assert(r_len == 3);
+    free(r);
+
 
     pfx_table_free(&pfxt);
     remove_src_test();
