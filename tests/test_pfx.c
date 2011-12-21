@@ -130,8 +130,8 @@ void mass_test(){
         rec.min_len = 128;
         rec.max_len = 128;
         rec.prefix.ver = IPV6;
-        rec.prefix.u.addr6.addr[1] = min_i + 0xFFFFFFFF;
-        rec.prefix.u.addr6.addr[0] = htonl(i) + 0xFFFFFFFF;
+        ((uint64_t*) rec.prefix.u.addr6.addr)[1] = max_i;
+        ((uint64_t*) rec.prefix.u.addr6.addr)[0] = min_i+i;
         assert(pfx_table_add(&pfxt, &rec) == PFX_SUCCESS);
     }
 
@@ -150,8 +150,8 @@ void mass_test(){
         rec.min_len = 128;
         rec.max_len = 128;
         rec.prefix.ver = IPV6;
-        rec.prefix.u.addr6.addr[1] = min_i + 0xFFFFFFFF;
-        rec.prefix.u.addr6.addr[0] = htonl(i) + 0xFFFFFFFF;
+        ((uint64_t*) rec.prefix.u.addr6.addr)[1] = max_i;
+        ((uint64_t*) rec.prefix.u.addr6.addr)[0] = min_i + i;
 
         assert(pfx_table_validate(&pfxt, i + 1, &(rec.prefix), rec.min_len, &res) == PFX_SUCCESS);
         assert(res == BGP_PFXV_STATE_VALID);
@@ -173,8 +173,8 @@ void mass_test(){
         rec.prefix.ver = IPV6;
         rec.min_len = 128;
         rec.max_len = 128;
-        rec.prefix.u.addr6.addr[1] = min_i + 0xFFFFFFFF;
-        rec.prefix.u.addr6.addr[0] = htonl(i) + 0xFFFFFFFF;
+        ((uint64_t*) rec.prefix.u.addr6.addr)[1] = max_i;
+        ((uint64_t*) rec.prefix.u.addr6.addr)[0] = min_i + i;
         assert(pfx_table_remove(&pfxt, &rec) == PFX_SUCCESS);
     }
     pfx_table_free(&pfxt);
