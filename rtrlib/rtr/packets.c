@@ -448,7 +448,7 @@ int rtr_sync(rtr_socket* rtr_socket){
     rtr_socket->request_nonce = false;
     if (rtr_set_last_update(rtr_socket) == RTR_ERROR)
         return RTR_ERROR;
-    RTR_DBG("Sync successfull, No. of received Prefixes: %u, Nonce: %u, SN: %u", received_prefixes, rtr_socket->nonce, rtr_socket->serial_number);
+    RTR_DBG("Sync successfull, received %u Prefixes, Nonce: %u, SN: %u", received_prefixes, rtr_socket->nonce, rtr_socket->serial_number);
     return RTR_SUCCESS;
 }
 
