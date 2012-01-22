@@ -126,7 +126,7 @@ typedef struct pdu_error{
  */
 static const pdu_header pdu_reset_query =
 {
-    0, //sollte RTR_PROTOCOL_VERSION sein, aber gcc mag dat net:(
+    0, //should be RTR_PROTOCOL_VERSION but gcc gives error :/
     2,
     0,
     8
@@ -142,6 +142,16 @@ static int rtr_handle_error_pdu(rtr_socket* rtr_socket, const void* buf);
 static int rtr_send_pdu(const rtr_socket* rtr_socket, const void* pdu, const unsigned len);
 static int rtr_update_pfx_table(rtr_socket* rtr_socket, const void* pdu);
 static int rtr_set_last_update(rtr_socket* rtr_socket);
+void rtr_prefix_pdu_2_pfx_record(const rtr_socket* rtr_socket, const void* pdu, pfx_record* pfxr, const pdu_type type);
+/*
+ * @brief Appends the Prefix PDU pdu to ary.
+ */
+static int rtr_store_prefix_pdu(rtr_socket* rtr_socket, const void* pdu, const unsigned int pdu_size, void** ary, unsigned int* ind, unsigned int* size);
+/*
+ * @brief Removes all Prefix from the pfx_table with flag field == ADD, ADDs all Prefix PDU to the pfx_table with flag
+ * field == REMOVE.
+ */
+static int rtr_undo_update_pfx_table(rtr_socket* rtr_socket, void* pdu);
 
 
 void rtr_change_socket_state(rtr_socket* rtr_socket, const rtr_socket_state new_state){
@@ -346,6 +356,31 @@ int rtr_set_last_update(rtr_socket* rtr_socket){
     return RTR_SUCCESS;
 }
 
+int rtr_store_prefix_pdu(rtr_socket* rtr_socket, const void* pdu, const unsigned int pdu_size, void** ary, unsigned int* ind, unsigned int* size){
+    const pdu_type pdu_type = rtr_get_pdu_type(pdu);
+    assert(pdu_type  == IPV4_PREFIX || pdu_type == IPV6_PREFIX);
+    if((*ind) >= *size){
+        *size += 100;
+        void* tmp = realloc(*ary, *size * pdu_size);
+        if(tmp == NULL){
+            const char* txt = "Realloc failed";
+            RTR_DBG("%s", txt);
+            rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
+            rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+            free(ary);
+            ary = NULL;
+            return RTR_ERROR;
+        }
+        *ary = tmp;
+    }
+    if(pdu_type == IPV4_PREFIX)
+        memcpy((pdu_ipv4*) *ary + *ind, pdu, pdu_size);
+    else if(pdu_type == IPV6_PREFIX)
+        memcpy((pdu_ipv6*) *ary + *ind, pdu, pdu_size);
+    (*ind)++;
+    return RTR_SUCCESS;
+}
+
 int rtr_sync(rtr_socket* rtr_socket){
     char pdu[RTR_MAX_PDU_LEN];
 
@@ -402,8 +437,24 @@ int rtr_sync(rtr_socket* rtr_socket){
             }
         }
     }
+    else if(type == ERROR){
+        rtr_handle_error_pdu(rtr_socket, pdu);
+        return RTR_ERROR;
+    }
+    else{
+        RTR_DBG("Expected Cache Response PDU but received PDU Type (Type: %u)", ((pdu_header*) pdu)->type);
+        const char* txt = "Unexpected PDU received in data synchronisation";
+        rtr_send_error_pdu(rtr_socket, pdu, sizeof(pdu_header), CORRUPT_DATA, txt, sizeof(txt));
+        return RTR_ERROR;
+    }
 
-    unsigned int received_prefixes = 0; //only for debug builds
+    pdu_ipv6* ipv6_pdus = NULL;
+    unsigned int ipv6_pdus_nindex = 0; //next free index in ipv6_pdus
+    unsigned int ipv6_pdus_size = 0;
+
+    pdu_ipv4* ipv4_pdus = NULL;
+    unsigned int ipv4_pdus_size = 0; //next free index in ipv4_pdus
+    unsigned int ipv4_pdus_nindex = 0;
     //receive IPV4/IPV6 PDUs till EOD
     do {
         rtval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
@@ -414,9 +465,12 @@ int rtr_sync(rtr_socket* rtr_socket){
         else if(rtval < 0)
             return RTR_ERROR;
         type = rtr_get_pdu_type(pdu);
-        if(type == IPV4_PREFIX || type == IPV6_PREFIX){
-            received_prefixes++;
-            if(rtr_update_pfx_table(rtr_socket, pdu) == RTR_ERROR)
+        if(type == IPV4_PREFIX){
+            if(rtr_store_prefix_pdu(rtr_socket, pdu, sizeof(pdu_ipv4), (void**) &ipv4_pdus, &ipv4_pdus_nindex, &ipv4_pdus_size) == RTR_ERROR)
+                return RTR_ERROR;
+        }
+        else if(type == IPV6_PREFIX){
+            if(rtr_store_prefix_pdu(rtr_socket, pdu, sizeof(pdu_ipv6), (void**) &ipv6_pdus, &ipv6_pdus_nindex, &ipv6_pdus_size) == RTR_ERROR)
                 return RTR_ERROR;
         }
         else if(type == EOD){
@@ -427,12 +481,59 @@ int rtr_sync(rtr_socket* rtr_socket){
                 snprintf(txt, sizeof(txt),"Expected Nonce: %u, received Nonce. %u in EOD PDU", rtr_socket->nonce, eod_pdu->nonce);
                 rtr_send_error_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, CORRUPT_DATA, txt, strlen(txt) + 1);
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+                free(ipv4_pdus);
+                free(ipv6_pdus);
                 return RTR_ERROR;
             }
+
+            int rtval = RTR_SUCCESS;
+            //add all IPv4 prefix pdu to the pfx_table
+            for(unsigned int i = 0; i < ipv4_pdus_nindex; i++){
+                if(rtr_update_pfx_table(rtr_socket, &(ipv4_pdus[i])) == PFX_ERROR){
+                    //undo all record updates, except the last which produced the error
+                    RTR_DBG("Error during data synchronisation, recovering Serial Nr. %u state", rtr_socket->serial_number);
+                    for(unsigned int j = 0; (j < i) && (rtval == RTR_SUCCESS); j++)
+                        rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv4_pdus[j]));
+                    if(rtval == RTR_ERROR){
+                        RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all records");
+                        pfx_table_src_remove(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
+                        rtr_socket->request_nonce = true;
+                    }
+
+                    free(ipv6_pdus);
+                    free(ipv4_pdus);
+                    rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+                    return RTR_ERROR;
+                }
+            }
+            //add all IPv6 prefix pdu to the pfx_table
+            for(unsigned int i = 0; i < ipv6_pdus_nindex; i++){
+                if(rtr_update_pfx_table(rtr_socket, &(ipv6_pdus[i])) == PFX_ERROR){
+                    //undo all record updates if error occured
+                    RTR_DBG("Error during data synchronisation, recovering Serial Nr. %u state", rtr_socket->serial_number);
+                    for(unsigned int j = 0; j < ipv4_pdus_nindex; j++)
+                        rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv4_pdus[j]));
+                    for(unsigned int j = 0; (j < i) && (rtval == PFX_SUCCESS); j++)
+                        rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv6_pdus[j]));
+                    if(rtval == RTR_ERROR){
+                        RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all records");
+                        pfx_table_src_remove(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
+                        rtr_socket->request_nonce = true;
+                    }
+                    free(ipv6_pdus);
+                    free(ipv4_pdus);
+                    rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+                    return RTR_ERROR;
+                }
+            }
+            free(ipv6_pdus);
+            free(ipv4_pdus);
             rtr_socket->serial_number = eod_pdu->sn;
         }
         else if(type == ERROR){
             rtr_handle_error_pdu(rtr_socket, pdu);
+            free(ipv4_pdus);
+            free(ipv6_pdus);
             return RTR_ERROR;
         }
         else if(type == SERIAL_NOTIFY){
@@ -440,16 +541,57 @@ int rtr_sync(rtr_socket* rtr_socket){
         }
         else{
             RTR_DBG("Received unexpected PDU (Type: %u)", ((pdu_header*) pdu)->type);
-            const char* txt = "unexpected PDU received during data sync";
+            const char* txt = "Unexpected PDU received in data synchronisation";
             rtr_send_error_pdu(rtr_socket, pdu, sizeof(pdu_header), CORRUPT_DATA, txt, sizeof(txt));
+            free(ipv4_pdus);
+            free(ipv6_pdus);
             return RTR_ERROR;
         }
     } while(type != EOD);
     rtr_socket->request_nonce = false;
     if (rtr_set_last_update(rtr_socket) == RTR_ERROR)
         return RTR_ERROR;
-    RTR_DBG("Sync successfull, received %u Prefixes, Nonce: %u, SN: %u", received_prefixes, rtr_socket->nonce, rtr_socket->serial_number);
+    RTR_DBG("Sync successfull, received %u Prefixes, Nonce: %u, SN: %u", (ipv4_pdus_nindex + ipv6_pdus_nindex), rtr_socket->nonce, rtr_socket->serial_number);
     return RTR_SUCCESS;
+}
+
+int rtr_undo_update_pfx_table(rtr_socket* rtr_socket, void* pdu){
+    const pdu_type type = rtr_get_pdu_type(pdu);
+    assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
+
+    pfx_record pfxr;
+    rtr_prefix_pdu_2_pfx_record(rtr_socket, pdu, &pfxr, type);
+
+    int rtval;
+    //invert add/remove operation
+    if(((pdu_ipv4*) pdu)->flags == 1)
+        rtval = pfx_table_remove(rtr_socket->pfx_table, &pfxr);
+    else if(((pdu_ipv4*) pdu)->flags == 0)
+        rtval = pfx_table_add(rtr_socket->pfx_table, &pfxr);
+    return rtval;
+}
+
+void rtr_prefix_pdu_2_pfx_record(const rtr_socket* rtr_socket, const void* pdu, pfx_record* pfxr, const pdu_type type){
+    assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
+    if(type == IPV4_PREFIX){
+        const pdu_ipv4* ipv4 = pdu;
+        pfxr->prefix.u.addr4.addr = ipv4->prefix;
+        pfxr->asn = ipv4->asn;
+        pfxr->prefix.ver = IPV4;
+        pfxr->min_len = ipv4->prefix_len;
+        pfxr->max_len = ipv4->max_prefix_len;
+        pfxr->socket_id = (uintptr_t) rtr_socket;
+    }
+    else if(type == IPV6_PREFIX){
+        const pdu_ipv6* ipv6 = pdu;
+        pfxr->asn = ipv6->asn;
+        pfxr->prefix.ver = IPV6;
+        memcpy(pfxr->prefix.u.addr6.addr, ipv6->prefix, sizeof(pfxr->prefix.u.addr6.addr));
+        pfxr->min_len = ipv6->prefix_len;
+        pfxr->max_len = ipv6->max_prefix_len;
+        pfxr->socket_id = (uintptr_t) rtr_socket;
+
+    }
 }
 
 int rtr_update_pfx_table(rtr_socket* rtr_socket, const void* pdu){
@@ -457,28 +599,8 @@ int rtr_update_pfx_table(rtr_socket* rtr_socket, const void* pdu){
     assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
 
     pfx_record pfxr;
-    size_t pdu_size = 0;
-
-    if(type ==  IPV4_PREFIX){
-        pdu_size = sizeof(pdu_ipv4);
-        const pdu_ipv4* ipv4 = pdu;
-        pfxr.prefix.u.addr4.addr = ipv4->prefix;
-        pfxr.asn = ipv4->asn;
-        pfxr.prefix.ver = IPV4;
-        pfxr.min_len = ipv4->prefix_len;
-        pfxr.max_len = ipv4->max_prefix_len;
-        pfxr.socket_id = (uintptr_t) rtr_socket;
-    }
-    else if(type == IPV6_PREFIX){
-        pdu_size = sizeof(pdu_ipv6);
-        const pdu_ipv6* ipv6 = pdu;
-        pfxr.asn = ipv6->asn;
-        pfxr.prefix.ver = IPV6;
-        memcpy(pfxr.prefix.u.addr6.addr, ipv6->prefix, sizeof(pfxr.prefix.u.addr6.addr));
-        pfxr.min_len = ipv6->prefix_len;
-        pfxr.max_len = ipv6->max_prefix_len;
-        pfxr.socket_id = (uintptr_t) rtr_socket;
-    }
+    size_t pdu_size = (type == IPV4_PREFIX ? sizeof(pdu_ipv4) : sizeof(pdu_ipv6));
+    rtr_prefix_pdu_2_pfx_record(rtr_socket, pdu, &pfxr, type);
 
     int rtval;
     if(((pdu_ipv4*) pdu)->flags == 1)
@@ -507,7 +629,7 @@ int rtr_update_pfx_table(rtr_socket* rtr_socket, const void* pdu){
         return RTR_ERROR;
     }
     else if(rtval == PFX_ERROR){
-        const char* txt = "Error during PFX add or remove operation";
+        const char* txt = "PFX_TABLE Error";
         RTR_DBG("%s", txt);
         rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
@@ -551,7 +673,6 @@ int rtr_send_error_pdu(const rtr_socket* rtr_socket, const void* erroneous_pdu, 
 
     unsigned int msg_size = 16 + pdu_len + text_len;
     char msg[msg_size];
-    bzero(msg, sizeof(msg));
     pdu_header* header = (pdu_header*) msg;
     header->ver = RTR_PROTOCOL_VERSION;
     header->type = 10;
