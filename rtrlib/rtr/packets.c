@@ -541,7 +541,7 @@ int rtr_sync(rtr_socket* rtr_socket){
         }
         else{
             RTR_DBG("Received unexpected PDU (Type: %u)", ((pdu_header*) pdu)->type);
-            const char* txt = "Unexpected PDU received in data synchronisation";
+            const char* txt = "Unexpected PDU received during data synchronisation";
             rtr_send_error_pdu(rtr_socket, pdu, sizeof(pdu_header), CORRUPT_DATA, txt, sizeof(txt));
             free(ipv4_pdus);
             free(ipv6_pdus);
@@ -551,7 +551,7 @@ int rtr_sync(rtr_socket* rtr_socket){
     rtr_socket->request_nonce = false;
     if (rtr_set_last_update(rtr_socket) == RTR_ERROR)
         return RTR_ERROR;
-    RTR_DBG("Sync successfull, received %u Prefixes, Nonce: %u, SN: %u", (ipv4_pdus_nindex + ipv6_pdus_nindex), rtr_socket->nonce, rtr_socket->serial_number);
+    RTR_DBG("Sync successfull, received %u Prefix PDUs, Nonce: %u, SN: %u", (ipv4_pdus_nindex + ipv6_pdus_nindex), rtr_socket->nonce, rtr_socket->serial_number);
     return RTR_SUCCESS;
 }
 
