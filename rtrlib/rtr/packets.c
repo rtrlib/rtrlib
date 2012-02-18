@@ -292,6 +292,7 @@ int rtr_receive_pdu(rtr_socket* rtr_socket, void* pdu, const size_t pdu_len, con
         goto error;
     }
 
+
     //receive packet payload
     const unsigned int remaining_len = header.len - sizeof(pdu_header);
     if(remaining_len > 0){
@@ -305,6 +306,12 @@ int rtr_receive_pdu(rtr_socket* rtr_socket, void* pdu, const size_t pdu_len, con
     }
     memcpy(pdu, &header, sizeof(pdu_header)); //copy header in host_byte_order to pdu
     rtr_pdu_footer_to_host_byte_order(pdu);
+
+    if(header.type == IPV4_PREFIX || header.type == IPV6_PREFIX){
+        if (((pdu_ipv4*) pdu)->zero != 0){
+            RTR_DBG1("Warning: Zero field of received Prefix PDU doesn't contain 0");
+        }
+    }
 
     return RTR_SUCCESS;
 

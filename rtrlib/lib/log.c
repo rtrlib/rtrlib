@@ -28,6 +28,7 @@
 #include <time.h>
 #include "rtrlib/lib/log.h"
 
+
 void dbg(const char* frmt, ...) {
 #ifndef NDEBUG
     va_list argptr;
@@ -52,4 +53,3 @@ void dbg(const char* frmt, ...) {
 #endif
     return;
 }
-
