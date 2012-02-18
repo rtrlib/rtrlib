@@ -17,14 +17,14 @@ Release History:
 ----------------
 
 * Version 0.2.1
-    - Nonce variable renamed to session_id to be
-      draft-ietf-sidr-rpki-rtr-26 compatible
+    - Nonce variable renamed to session_id to conform with
+      draft-ietf-sidr-rpki-rtr-26
     - Warning message added if the Zero field of a prefix PDU doesn't
       contain 0
     - pfx_validate_r function added, returns list of prefixes which
       affected the validation state BGP route
     - Fixed bug in lpfst_remove that could cause that an pfx_record in the
-      pfx_table could'nt be found.
+      pfx_table could not be found.
     - Added state rollback to the prefix synchronization function to
       assure that the last correct state is recovered if an error occurs
       during synchronization
