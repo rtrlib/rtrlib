@@ -62,7 +62,7 @@ typedef struct pdu_header{
 typedef struct pdu_serial_notify{
     uint8_t ver;
     uint8_t type;
-    uint16_t nonce;
+    uint16_t session_id;
     uint32_t len;
     uint32_t sn;
 } pdu_serial_notify;
@@ -70,7 +70,7 @@ typedef struct pdu_serial_notify{
 typedef struct pdu_serial_query{
     uint8_t ver;
     uint8_t type;
-    uint16_t nonce;
+    uint16_t session_id;
     uint32_t len;
     uint32_t sn;
 } pdu_serial_query;
@@ -419,18 +419,18 @@ int rtr_sync(rtr_socket* rtr_socket){
     if(type == CACHE_RESPONSE){
         RTR_DBG1("Cache Response PDU received");
         pdu_header* cr_pdu = (pdu_header*) pdu;
-        //set connection nonce
-        if(rtr_socket->request_nonce){
+        //set connection session_id
+        if(rtr_socket->request_session_id){
             if(rtr_socket->last_update != 0){
                 //if this isnt the first sync, but we already received records, delete old records in the pfx_table
                 pfx_table_src_remove(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
                 rtr_socket->last_update = 0;
             }
-            rtr_socket->nonce = cr_pdu->reserved;
+            rtr_socket->session_id = cr_pdu->reserved;
         }
         else{
-            if(rtr_socket->nonce != cr_pdu->reserved){
-                const char* txt = "Wrong NONCE in Cache Response PDU"; //TODO: Append rtr_socket->nonce to string
+            if(rtr_socket->session_id != cr_pdu->reserved){
+                const char* txt = "Wrong session_id in Cache Response PDU"; //TODO: Append rtr_socket->session_id to string
                 rtr_send_error_pdu(rtr_socket, NULL, 0, CORRUPT_DATA, txt, sizeof(txt));
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
                 return RTR_ERROR;
@@ -476,9 +476,9 @@ int rtr_sync(rtr_socket* rtr_socket){
         else if(type == EOD){
             pdu_eod* eod_pdu = (pdu_eod*) pdu;
 
-            if(eod_pdu->nonce != rtr_socket->nonce){
+            if(eod_pdu->session_id != rtr_socket->session_id){
                 char txt[67];
-                snprintf(txt, sizeof(txt),"Expected Nonce: %u, received Nonce. %u in EOD PDU", rtr_socket->nonce, eod_pdu->nonce);
+                snprintf(txt, sizeof(txt),"Expected session_id: %u, received session_id. %u in EOD PDU", rtr_socket->session_id, eod_pdu->session_id);
                 rtr_send_error_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, CORRUPT_DATA, txt, strlen(txt) + 1);
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
                 free(ipv4_pdus);
@@ -497,7 +497,7 @@ int rtr_sync(rtr_socket* rtr_socket){
                     if(rtval == RTR_ERROR){
                         RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all records");
                         pfx_table_src_remove(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
-                        rtr_socket->request_nonce = true;
+                        rtr_socket->request_session_id = true;
                     }
 
                     free(ipv6_pdus);
@@ -518,7 +518,7 @@ int rtr_sync(rtr_socket* rtr_socket){
                     if(rtval == RTR_ERROR){
                         RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all records");
                         pfx_table_src_remove(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
-                        rtr_socket->request_nonce = true;
+                        rtr_socket->request_session_id = true;
                     }
                     free(ipv6_pdus);
                     free(ipv4_pdus);
@@ -548,10 +548,10 @@ int rtr_sync(rtr_socket* rtr_socket){
             return RTR_ERROR;
         }
     } while(type != EOD);
-    rtr_socket->request_nonce = false;
+    rtr_socket->request_session_id = false;
     if (rtr_set_last_update(rtr_socket) == RTR_ERROR)
         return RTR_ERROR;
-    RTR_DBG("Sync successfull, received %u Prefix PDUs, Nonce: %u, SN: %u", (ipv4_pdus_nindex + ipv6_pdus_nindex), rtr_socket->nonce, rtr_socket->serial_number);
+    RTR_DBG("Sync successfull, received %u Prefix PDUs, session_id: %u, SN: %u", (ipv4_pdus_nindex + ipv6_pdus_nindex), rtr_socket->session_id, rtr_socket->serial_number);
     return RTR_SUCCESS;
 }
 
@@ -763,7 +763,7 @@ int rtr_send_serial_query(rtr_socket* rtr_socket){
     pdu_serial_query pdu;
     pdu.ver = RTR_PROTOCOL_VERSION;
     pdu.type = SERIAL_QUERY;
-    pdu.nonce = rtr_socket->nonce;
+    pdu.session_id = rtr_socket->session_id;
     pdu.len = sizeof(pdu);
     pdu.sn = rtr_socket->serial_number;
 

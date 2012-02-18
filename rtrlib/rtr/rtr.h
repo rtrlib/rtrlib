@@ -93,8 +93,8 @@ typedef void (*rtr_connection_state_fp)(const struct rtr_socket* rtr_socket, con
  * @param cache_timout Time period in seconds. Received pfx_records are deleted if the client was unable to refresh data for this time period.
  * If 0 is specified, the cache_timeout will be half the polling_period.
  * @param state Current state of the socket.
- * @param nonce Nonce of the RTR session.
- * @param request_nonce True, if the rtr_client have to request a new none from the server.
+ * @param session_id session_id of the RTR session.
+ * @param request_session_id True, if the rtr_client have to request a new none from the server.
  * @param serial_number Last serial number of the obtained validation records.
  * @param pfx_table pfx_table that stores the validation records obtained from the connected rtr server.
  * @param connection_state_fp A callback function that is executed when the state of the socket changes.
@@ -106,8 +106,8 @@ typedef struct rtr_socket{
     time_t last_update;
     unsigned int cache_timeout;
     rtr_socket_state state;
-    uint32_t nonce;
-    bool request_nonce;
+    uint32_t session_id;
+    bool request_session_id;
     uint32_t serial_number;
     struct pfx_table* pfx_table;
     pthread_t thread_id;
