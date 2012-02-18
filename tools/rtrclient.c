@@ -88,7 +88,7 @@ static void update_cb(struct pfx_table* p  __attribute__((unused)), const pfx_re
     else
         printf("- ");
     ip_addr_to_str(&(rec.prefix), ip, sizeof(ip));
-    printf("%-18s %3u-%-3u %10u\n", ip, rec.min_len, rec.max_len, rec.asn);
+    printf("%-40s   %3u - %3u   %10u\n", ip, rec.min_len, rec.max_len, rec.asn);
 }
 
 
@@ -174,7 +174,7 @@ int main(int argc, char** argv){
 
     rtr_mgr_init(&conf, 240, 520, &update_cb);
     rtr_mgr_start(&conf);
-    printf("%-18s %3s %-3s %10s\n", "Prefix", "Prefix Length", "", "ASN");
+    printf("%-40s   %3s   %3s   %3s\n", "Prefix", "Prefix Length", "", "ASN");
     pause();
     rtr_mgr_stop(&conf);
     rtr_mgr_free(&conf);
