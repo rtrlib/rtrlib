@@ -157,7 +157,7 @@ int pfx_table_validate(struct pfx_table* pfx_table, const uint32_t asn, const ip
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR On error.
  */
-int pfx_table_validate_r(struct pfx_table* pfx_table, pfx_record** reason, unsigned int* reason_len,  const uint32_t asn, const ip_addr *prefix, const uint8_t prefix_len, pfxv_state* result);
+int pfx_table_validate_r(struct pfx_table* pfx_table, pfx_record** reason, unsigned int* reason_len,  const uint32_t asn, const ip_addr *prefix, const uint8_t mask_len, pfxv_state* result);
 
 #endif
 /* @} */
