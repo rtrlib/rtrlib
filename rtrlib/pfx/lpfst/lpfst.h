@@ -28,7 +28,7 @@
 /**
  * @brief lpfst_node
  * @param prefix
- * @param len
+ * @param len number of elements in data array
  * @param rchild
  * @param lchild
  * @param parent

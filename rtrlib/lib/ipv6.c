@@ -34,43 +34,47 @@ inline bool ipv6_addr_equal(const ipv6_addr* a, const ipv6_addr* b){
     return false;
 }
 
-ipv6_addr ipv6_get_bits(const ipv6_addr* val, const uint8_t from, const uint8_t number){
+ipv6_addr ipv6_get_bits(const ipv6_addr* val, const uint8_t first_bit, const uint8_t quantity){
+    assert(first_bit <= 127);
+    assert(quantity <= 128);
+    assert(first_bit + quantity <= 128);
+
+    // if no bytes get extracted the result has to be 0
     ipv6_addr result;
+    memset(&result, 0, sizeof(result));
 
-    //0-31
-    if(from < 32){
-        const uint8_t end = (from + number) > 32 ? (32 - from) : number;
-        result.addr[0] = rtr_get_bits(val->addr[0], from, end);
-    }
-    else
-        result.addr[0] = 0;
+    uint8_t bits_left = quantity;
 
-    //32-63
-    if(from < 64 && from + number > 33){
-        const uint8_t start = from < 32 ? 0 : (from - 63);
-        const uint8_t end = (from + number) > 63 ? (32 - start) : (64 - number);
-        result.addr[1] = rtr_get_bits(val->addr[1], start, end);
+    if(first_bit <= 31) {
+        const uint8_t q = quantity > 32 ? 32 : quantity;
+        assert(bits_left >= q);
+        bits_left -= q;
+        result.addr[0] = rtr_get_bits(val->addr[0], first_bit, q);
     }
-    else
-        result.addr[1] = 0;
 
-    //64-95
-    if(from < 96 && from + number > 65){
-        const uint8_t start = from < 65 ? 0 : (from - 95);
-        const uint8_t end = (from + number) > 95 ? (32 - start) : number;
-        result.addr[2] = rtr_get_bits(val->addr[2], start, end);
+    if((first_bit <= 63) && ((first_bit + quantity) > 32)) {
+        const uint8_t fr = first_bit < 32 ? 0 : first_bit - 32;
+        const uint8_t q = bits_left > 32 ? 32 : bits_left;
+        assert(bits_left >= q);
+        bits_left -= q;
+        result.addr[1] = rtr_get_bits(val->addr[1], fr, q);
     }
-    else
-        result.addr[2] = 0;
 
-    //96-127
-    if(from + number > 97){
-        const uint8_t start = from < 96 ? 0 : (from - 127);
-        const uint8_t end = (from + number) > 126 ? (32 - start) : number; //from63 - 64 klappt nicht
-        result.addr[3] = rtr_get_bits(val->addr[3], start, end);
+    if((first_bit <= 95) && ((first_bit + quantity) > 64)) {
+        const uint8_t fr = first_bit < 64 ? 0 : first_bit - 64;
+        const uint8_t q = bits_left > 32 ? 32 : bits_left;
+        assert(bits_left >= q);
+        bits_left -= q;
+        result.addr[2] = rtr_get_bits(val->addr[2], fr, q);
     }
-    else
-        result.addr[3] = 0;
+
+    if((first_bit <= 127) && ((first_bit + quantity) > 96)) {
+        const uint8_t fr = first_bit < 96 ? 0 : first_bit - 127;
+        const uint8_t q = bits_left > 32 ? 32 : bits_left;
+        assert(bits_left >= q);
+        bits_left -= q;
+        result.addr[3] = rtr_get_bits(val->addr[3], fr, q);
+    }
     return result;
 }
 
@@ -131,7 +135,7 @@ int ipv6_str_to_addr(const char *a, ipv6_addr* ip){
         words[i++] = j;
     }
 
-  /* Replace :: with an appropriate number of zeros */
+  /* Replace :: with an appropriate quantity of zeros */
     if (hfil >= 0){
         j = 8 - i;
         for(i=7; i-j >= hfil; i--)

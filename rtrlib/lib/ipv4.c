@@ -25,9 +25,9 @@
 #include <assert.h>
 #include <stdio.h>
 
-ipv4_addr ipv4_get_bits(const ipv4_addr* val, const uint8_t from, const uint8_t number){
+ipv4_addr ipv4_get_bits(const ipv4_addr* val, const uint8_t from, const uint8_t quantity){
     ipv4_addr result;
-    result.addr = rtr_get_bits(val->addr, from, number);
+    result.addr = rtr_get_bits(val->addr, from, quantity);
     return result;
 }
 

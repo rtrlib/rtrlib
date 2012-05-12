@@ -172,6 +172,10 @@ void get_bits_testv6(){
     assert(ip_str_cmp(&result, "0:db8::"));
     result = ip_addr_get_bits(&addr, 0, 1);
     assert(ip_str_cmp(&result, "::"));
+
+    result = ip_addr_get_bits(&addr, 126, 1);
+    assert(ip_addr_to_str(&result, buf, sizeof(buf)) == 0);
+    assert(ip_str_cmp(&result, "::"));
 }
 
 void lpfst_test(){

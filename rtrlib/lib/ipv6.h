@@ -45,14 +45,14 @@ typedef struct {
 bool ipv6_addr_equal(const ipv6_addr* a, const ipv6_addr* b);
 
 /**
- * @brief Extracts number bits from the passed ip_addr, starting at bit number from. The bit with the highest
+ * @brief Extracts quantity bits from a ip address. The bit with the highest
  * significance is bit 0. All bits that aren't in the specified range will be 0.
  * @param[in] val ipv6_addr
- * @param[in] from Position of the first bit that is extracted.
- * @param[in] number How many bits will be extracted.
+ * @param[in] first_bit Position of the first bit that is extracted, inclusive
+ * @param[in] quantity How many bits will be extracted.
  * @returns An ipv6_addr, where all bits that aren't in the specified range are set to 0.
 */
-ipv6_addr ipv6_get_bits(const ipv6_addr* val, const uint8_t from, const uint8_t to);
+ipv6_addr ipv6_get_bits(const ipv6_addr* val, const uint8_t first_bit, const uint8_t quantity);
 
 /**
  * Converts the passed ipv6_addr to string representation
@@ -74,7 +74,7 @@ int ipv6_str_to_addr(const char *a, ipv6_addr* ip);
 
 /**
  * @ingroup util_h[{
- * Converts the passed IPv6 address from network byte order to host byte order.
+ * Converts the passed IPv6 address first_bit network byte order to host byte order.
  * @param[in] src Pointer to a uint32_t array storing a ipv6 address in network byte order.
  * @param[out] dest Pointer a uint32_t array that will be used to store the ipv6 addr in host byte order.
  * }
