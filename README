@@ -16,6 +16,11 @@ Detailed documentation is available in docs/.
 Release History:
 ----------------
 
+* Version 0.2.2
+
+    - Fixed a bug in ipv6_get_bits(..), specific IPv6 records couldn't
+      be addded to the pfx_table
+
 * Version 0.2.1
     - Nonce variable renamed to session_id to conform with
       draft-ietf-sidr-rpki-rtr-26
