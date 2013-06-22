@@ -36,7 +36,7 @@
 /**
  * @brief Possible return values for pfx_ functions.
  */
-enum pfx_rtvals{
+enum pfx_rtvals {
     /** Operation was successfull. */
     PFX_SUCCESS = 0,
 
@@ -55,7 +55,7 @@ struct pfx_table;
 /**
  * @brief Validation states returned from  pfx_validate_origin.
  */
-typedef enum pfxv_state{
+typedef enum pfxv_state {
     /** A valid certificate for the pfx_record exists. */
     BGP_PFXV_STATE_VALID,
 
@@ -75,12 +75,12 @@ typedef enum pfxv_state{
  * @param max_len Maximum prefix length.
  * @param socket_id unique id of the rtr_socket that received this record.
  */
-typedef struct pfx_record{
-  uint32_t asn;
-  ip_addr prefix;
-  uint8_t min_len;
-  uint8_t max_len;
-  uintptr_t socket_id;
+typedef struct pfx_record {
+    uint32_t asn;
+    ip_addr prefix;
+    uint8_t min_len;
+    uint8_t max_len;
+    uintptr_t socket_id;
 } pfx_record;
 
 /**
@@ -89,20 +89,20 @@ typedef struct pfx_record{
  * @param record pfx_record that was modified.
  * @param added True if the record was added, false if the record was removed.
  */
-typedef void (*pfx_update_fp)(struct pfx_table* pfx_table, const pfx_record record, const bool added);
+typedef void (*pfx_update_fp)(struct pfx_table *pfx_table, const pfx_record record, const bool added);
 
 /**
  * @brief Initializes the pfx_table struct.
  * @param[in] pfx_table pfx_table that will be initialized.
  * @param[in] update_fp Afunction pointers that will be called if a record was added or removed.
  */
-void pfx_table_init(struct pfx_table* pfx_table, pfx_update_fp update_fp);
+void pfx_table_init(struct pfx_table *pfx_table, pfx_update_fp update_fp);
 
 /**
  * @brief Frees all memory associcated with the pfx_table.
  * @param[in] pfx_table pfx_table that will be freed.
  */
-void pfx_table_free(struct pfx_table* pfx_table);
+void pfx_table_free(struct pfx_table *pfx_table);
 
 /**
  * @brief Adds a pfx_record to a pfx_table.
@@ -112,7 +112,7 @@ void pfx_table_free(struct pfx_table* pfx_table);
  * @return PFX_ERROR On error.
  * @return PFX_DUPLICATE_RECORD If the pfx_record already exists.
  */
-int pfx_table_add(struct pfx_table* pfx_table, const pfx_record* pfx_record);
+int pfx_table_add(struct pfx_table *pfx_table, const pfx_record *pfx_record);
 
 /**
  * @brief Removes a pfx_record from a pfx_table.
@@ -122,7 +122,7 @@ int pfx_table_add(struct pfx_table* pfx_table, const pfx_record* pfx_record);
  * @return PFX_ERROR On error.
  * @return PFX_RECORD_NOT_FOUND If pfx_records could'nt be found.
  */
-int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* pfx_record);
+int pfx_table_remove(struct pfx_table *pfx_table, const pfx_record *pfx_record);
 
 /**
  * @brief Removes all entries in the pfx_table that match the passed socket_id value from a pfx_table.
@@ -131,7 +131,7 @@ int pfx_table_remove(struct pfx_table* pfx_table, const pfx_record* pfx_record);
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR On error.
  */
-int pfx_table_src_remove(struct pfx_table* pfx_table, const uintptr_t socket_id);
+int pfx_table_src_remove(struct pfx_table *pfx_table, const uintptr_t socket_id);
 
 /**
  * @brief Validates the origin of a BGP-Route.
@@ -143,7 +143,7 @@ int pfx_table_src_remove(struct pfx_table* pfx_table, const uintptr_t socket_id)
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR On error.
  */
-int pfx_table_validate(struct pfx_table* pfx_table, const uint32_t asn, const ip_addr* prefix, const uint8_t mask_len, pfxv_state* result);
+int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const ip_addr *prefix, const uint8_t mask_len, pfxv_state *result);
 
 /**
  * @brief Validates the origin of a BGP-Route and returns a list of pfx_record that decided the result.
@@ -157,7 +157,7 @@ int pfx_table_validate(struct pfx_table* pfx_table, const uint32_t asn, const ip
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR On error.
  */
-int pfx_table_validate_r(struct pfx_table* pfx_table, pfx_record** reason, unsigned int* reason_len,  const uint32_t asn, const ip_addr *prefix, const uint8_t mask_len, pfxv_state* result);
+int pfx_table_validate_r(struct pfx_table *pfx_table, pfx_record **reason, unsigned int *reason_len,  const uint32_t asn, const ip_addr *prefix, const uint8_t mask_len, pfxv_state *result);
 
 #endif
 /* @} */

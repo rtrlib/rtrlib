@@ -29,7 +29,7 @@
 #include "rtrlib/lib/log.h"
 
 
-void dbg(const char* frmt, ...) {
+void dbg(const char *frmt, ...) {
 #ifndef NDEBUG
     va_list argptr;
     va_start(argptr, frmt);
@@ -37,9 +37,9 @@ void dbg(const char* frmt, ...) {
     struct timezone tz;
 
     bool fail = true;
-    if(gettimeofday(&tv, &tz) == 0){
+    if(gettimeofday(&tv, &tz) == 0) {
         struct tm tm;
-        if(localtime_r(&tv.tv_sec, &tm) != NULL){
+        if(localtime_r(&tv.tv_sec, &tm) != NULL) {
             printf("(%04d/%02d/%02d %02d:%02d:%02d:%06ld): ", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, tv.tv_usec);
             fail = false;
         }

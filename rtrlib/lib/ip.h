@@ -44,7 +44,7 @@ typedef enum {
  */
 typedef struct {
     ip_version ver;
-    union{
+    union {
         ipv4_addr addr4;
         ipv6_addr addr6;
     } u;
@@ -66,7 +66,7 @@ bool ip_addr_is_zero(const ip_addr);
  * @param[in] number How many bits will be extracted.
  * @returns An ipv4_addr, where all bits that aren't in the specified range are set to 0.
 */
-ip_addr ip_addr_get_bits(const ip_addr* val, const uint8_t from, const uint8_t number);
+ip_addr ip_addr_get_bits(const ip_addr *val, const uint8_t from, const uint8_t number);
 
 /**
  * @defgroup util_h Utility functions
@@ -89,7 +89,7 @@ bool ip_addr_equal(const ip_addr a, const ip_addr b);
  * @result 0 On success.
  * @result -1 On error.
 */
-int ip_addr_to_str(const ip_addr* ip, char* str, const unsigned int len);
+int ip_addr_to_str(const ip_addr *ip, char *str, const unsigned int len);
 
 /**
  * Converts the passed IP address in string representation to an ip_addr.
@@ -98,7 +98,7 @@ int ip_addr_to_str(const ip_addr* ip, char* str, const unsigned int len);
  * @result 0 On success.
  * @result -1 On error.
 */
-int ip_str_to_addr(const char* str, ip_addr* ip);
+int ip_str_to_addr(const char *str, ip_addr *ip);
 
 /**
  * Compares addr1 in the ip_addr struct with addr2 in string representation.
@@ -107,7 +107,7 @@ int ip_str_to_addr(const char* str, ip_addr* ip);
  * @return true If a == b
  * @return false If a != b
 */
-bool ip_str_cmp(const ip_addr* addr1, const char* addr2);
+bool ip_str_cmp(const ip_addr *addr1, const char *addr2);
 
 #endif
 /* @} */

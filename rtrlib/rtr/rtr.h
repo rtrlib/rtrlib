@@ -39,7 +39,7 @@
 #define RTR_DBG(fmt, ...) dbg("RTR Socket: " fmt, ## __VA_ARGS__)
 #define RTR_DBG1(a) dbg("RTR Socket: " a)
 
-enum rtr_rtvals{
+enum rtr_rtvals {
     RTR_SUCCESS = 0,
     RTR_ERROR = -1
 };
@@ -48,32 +48,32 @@ enum rtr_rtvals{
  * @brief States of the RTR socket.
  */
 typedef enum {
-/** Socket is establishing the transport connection. */
+    /** Socket is establishing the transport connection. */
     RTR_CONNECTING,
 
-/** Connection is established, socket is waiting for a Serial Notify or expiration of the polling_period timer */
+    /** Connection is established, socket is waiting for a Serial Notify or expiration of the polling_period timer */
     RTR_ESTABLISHED,
 
-/** Resetting RTR connection. */
+    /** Resetting RTR connection. */
     RTR_RESET,
 
-/** Receiving validation records from the RTR server.  */
+    /** Receiving validation records from the RTR server.  */
     RTR_SYNC,
 
-/** No validation records are available on the RTR server. */
+    /** No validation records are available on the RTR server. */
     RTR_ERROR_NO_DATA_AVAIL,
 
-/** Server was unable to answer the last serial or reset query. */
+    /** Server was unable to answer the last serial or reset query. */
     RTR_ERROR_NO_INCR_UPDATE_AVAIL,
 
-/** Fatal protocol error occurred. */
+    /** Fatal protocol error occurred. */
     RTR_ERROR_FATAL,
 
-/** Error on the transport socket occurred. */
+    /** Error on the transport socket occurred. */
     RTR_ERROR_TRANSPORT,
 
-/** RTR Socket is stopped. */
-    RTR_SHUTDOWN 
+    /** RTR Socket is stopped. */
+    RTR_SHUTDOWN
 } rtr_socket_state;
 
 struct rtr_socket;
@@ -81,7 +81,7 @@ struct rtr_socket;
 /**
  * @brief A function pointer that is called if the state of the rtr socket has changed.
  */
-typedef void (*rtr_connection_state_fp)(const struct rtr_socket* rtr_socket, const rtr_socket_state state, void* connection_state_fp_param);
+typedef void (*rtr_connection_state_fp)(const struct rtr_socket *rtr_socket, const rtr_socket_state state, void *connection_state_fp_param);
 
 /**
  * @brief A RTR socket.
@@ -100,8 +100,8 @@ typedef void (*rtr_connection_state_fp)(const struct rtr_socket* rtr_socket, con
  * @param connection_state_fp A callback function that is executed when the state of the socket changes.
  * @param connection_state_fp_param Parameter that is passed to the connection_state_fp callback.
  */
-typedef struct rtr_socket{
-    tr_socket* tr_socket;
+typedef struct rtr_socket {
+    tr_socket *tr_socket;
     unsigned int polling_period;
     time_t last_update;
     unsigned int cache_timeout;
@@ -109,10 +109,10 @@ typedef struct rtr_socket{
     uint32_t session_id;
     bool request_session_id;
     uint32_t serial_number;
-    struct pfx_table* pfx_table;
+    struct pfx_table *pfx_table;
     pthread_t thread_id;
     rtr_connection_state_fp connection_state_fp;
-    void* connection_state_fp_param;
+    void *connection_state_fp_param;
 } rtr_socket;
 
 /**
@@ -127,7 +127,7 @@ typedef struct rtr_socket{
  * @param[in] fp A callback function that is executed when the state of the socket changes.
  * @param[in] fp_data Parameter that is passed to the connection_state_fp callback.
  */
-void rtr_init(rtr_socket* rtr_socket, tr_socket* tr_socket, struct pfx_table* pfx_table, const unsigned int polling_period, const unsigned int cache_timeout, rtr_connection_state_fp fp, void* fp_data);
+void rtr_init(rtr_socket *rtr_socket, tr_socket *tr_socket, struct pfx_table *pfx_table, const unsigned int polling_period, const unsigned int cache_timeout, rtr_connection_state_fp fp, void *fp_data);
 
 /**
  * @brief Starts the RTR protocol state machine in a pthread. Connection to the rtr_server will be established and the
@@ -136,13 +136,13 @@ void rtr_init(rtr_socket* rtr_socket, tr_socket* tr_socket, struct pfx_table* pf
  * @return RTR_ERROR On error.
  * @return RTR_SUCCESS On success.
  */
-int rtr_start(rtr_socket* rtr_socket);
+int rtr_start(rtr_socket *rtr_socket);
 
 /**
  * @brief Stops the RTR connection and terminate the transport connection.
  * @param[in] rtr_socket rtr_socket that will be used.
  */
-void rtr_stop(rtr_socket* rtr_socket);
+void rtr_stop(rtr_socket *rtr_socket);
 
 #endif
 /* @} */

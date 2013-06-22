@@ -24,9 +24,9 @@
 #include <string.h>
 #include "rtrlib/lib/ip.h"
 
-bool ip_addr_is_zero(const ip_addr prefix){
-    if(prefix.ver == IPV6){
-        if(prefix.u.addr6.addr[0] == 0 && prefix.u.addr6.addr[1] == 0 && prefix.u.addr6.addr[2] == 0 && prefix.u.addr6.addr[3] == 0 ){
+bool ip_addr_is_zero(const ip_addr prefix) {
+    if(prefix.ver == IPV6) {
+        if(prefix.u.addr6.addr[0] == 0 && prefix.u.addr6.addr[1] == 0 && prefix.u.addr6.addr[2] == 0 && prefix.u.addr6.addr[3] == 0 ) {
             return true;
         }
     }
@@ -36,36 +36,36 @@ bool ip_addr_is_zero(const ip_addr prefix){
     return false;
 }
 
-ip_addr ip_addr_get_bits(const ip_addr* val, const uint8_t from, const uint8_t number){
+ip_addr ip_addr_get_bits(const ip_addr *val, const uint8_t from, const uint8_t number) {
     ip_addr result;
-    if(val->ver == IPV6){
+    if(val->ver == IPV6) {
         result.ver = IPV6;
         result.u.addr6 = ipv6_get_bits(&(val->u.addr6), from, number);
     }
-    else{
+    else {
         result.ver = IPV4;
         result.u.addr4 = ipv4_get_bits(&(val->u.addr4), from, number);
     }
     return result;
 }
 
-bool ip_addr_equal(const ip_addr a, const ip_addr b ){
+bool ip_addr_equal(const ip_addr a, const ip_addr b ) {
     if(a.ver != b.ver)
         return false;
-    if(a.ver == IPV6){
+    if(a.ver == IPV6) {
         return ipv6_addr_equal(&(a.u.addr6), &(b.u.addr6));
     }
     return ipv4_addr_equal(&(a.u.addr4), &(b.u.addr4));
 }
 
-int ip_addr_to_str(const ip_addr* ip, char* str, const unsigned int len){
+int ip_addr_to_str(const ip_addr *ip, char *str, const unsigned int len) {
     if(ip->ver == IPV6)
         return ipv6_addr_to_str(&(ip->u.addr6), str, len);
     return ipv4_addr_to_str(&(ip->u.addr4), str, len);
 }
 
-int ip_str_to_addr(const char* str, ip_addr* ip){
-    if(strchr(str, ':') == NULL){
+int ip_str_to_addr(const char *str, ip_addr *ip) {
+    if(strchr(str, ':') == NULL) {
         ip->ver = IPV4;;
         return ipv4_str_to_addr(str, &(ip->u.addr4));
     }
@@ -73,7 +73,7 @@ int ip_str_to_addr(const char* str, ip_addr* ip){
     return ipv6_str_to_addr(str, &(ip->u.addr6));
 }
 
-bool ip_str_cmp(const ip_addr* addr1, const char* addr2){
+bool ip_str_cmp(const ip_addr *addr1, const char *addr2) {
     ip_addr tmp;
     if(ip_str_to_addr(addr2, &tmp) == -1)
         return false;

@@ -68,7 +68,7 @@ typedef enum {
  * @param status Status of the group.
  */
 typedef struct {
-    rtr_socket** sockets;
+    rtr_socket **sockets;
     unsigned int sockets_len;
     uint8_t preference;
     rtr_mgr_status status;
@@ -82,7 +82,7 @@ typedef struct {
  * @param mutex Pthread mutex, which is used internally by the rtr_mgr.
 */
 typedef struct rtr_mgr_config {
-    rtr_mgr_group* groups;
+    rtr_mgr_group *groups;
     unsigned int len;
     pthread_mutex_t mutex;
 } rtr_mgr_config;
@@ -101,31 +101,31 @@ typedef struct rtr_mgr_config {
  * If 0 is specified, the cache_timeout will be half the polling_period.
  * The default value is twice the polling_period.
  * @param[in] update_fp A Pointer to a pfx_update_fp callback, that is executed for every added and removed pfx_record.
- * @return RTR_SUCCESS On success 
- * @return RTR_ERROR On error 
+ * @return RTR_SUCCESS On success
+ * @return RTR_ERROR On error
  */
-int rtr_mgr_init(rtr_mgr_config* config, const unsigned int polling_period, const unsigned int cache_timeout, const pfx_update_fp update_fp);
+int rtr_mgr_init(rtr_mgr_config *config, const unsigned int polling_period, const unsigned int cache_timeout, const pfx_update_fp update_fp);
 
 /**
  * @brief Frees all resources that were allocated from the rtr_mgr.
  * rtr_mgr_stop(..) must be called before, to shutdown all RTR socket connections.
  * @param[in] config rtr_mgr_config.
  */
-void rtr_mgr_free(rtr_mgr_config* config);
+void rtr_mgr_free(rtr_mgr_config *config);
 
 /**
  * @brief Establishes the connection with the rtr_sockets of the group with the lowest preference value and handles errors as defined in the RPKI-RTR protocol.
  * @param[in] config Pointer to an initialized rtr_mgr_config.
- * @return RTR_SUCCESS On success 
- * @return RTR_ERROR On error 
+ * @return RTR_SUCCESS On success
+ * @return RTR_ERROR On error
  */
-int rtr_mgr_start(rtr_mgr_config* config);
+int rtr_mgr_start(rtr_mgr_config *config);
 
 /**
  * @brief Terminates all rtr_socket connections that are defined in the config. All pfx_records received from these sockets will be purged.
  * @param[in] config The rtr_mgr_config struct
  */
-void rtr_mgr_stop(rtr_mgr_config* config);
+void rtr_mgr_stop(rtr_mgr_config *config);
 
 /**
  * @brief Detects if the rtr_mgr_group is fully synchronized with at least one group.
@@ -133,7 +133,7 @@ void rtr_mgr_stop(rtr_mgr_config* config);
  * @return true If the pfx_table stores non-outdated pfx_records from at least one socket group.
  * @return false If the pfx_table isn't fully synchronized with at least one group.
  */
-bool rtr_mgr_conf_in_sync(rtr_mgr_config* config);
+bool rtr_mgr_conf_in_sync(rtr_mgr_config *config);
 
 /**
  * @brief Validates the origin of a BGP-Route.
@@ -145,7 +145,7 @@ bool rtr_mgr_conf_in_sync(rtr_mgr_config* config);
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR If an error occurred.
  */
-int rtr_mgr_validate(rtr_mgr_config* config, const uint32_t asn, const ip_addr* prefix, const uint8_t mask_len, pfxv_state* result);
+int rtr_mgr_validate(rtr_mgr_config *config, const uint32_t asn, const ip_addr *prefix, const uint8_t mask_len, pfxv_state *result);
 
 #endif
 /* @} */

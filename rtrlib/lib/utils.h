@@ -31,7 +31,7 @@
  * @return 0 on successs
  * @return -1 on error
  */
-int rtr_get_monotonic_time(time_t* seconds);
+int rtr_get_monotonic_time(time_t *seconds);
 
 /**
  * @brief Extracts number bits from the passed uint32_t, starting at bit number from. The bit with the highest
