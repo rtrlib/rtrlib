@@ -416,3 +416,46 @@ int pfx_table_remove_id(pfx_table *pfx_table, lpfst_node **root, lpfst_node *nod
         return pfx_table_remove_id(pfx_table, root, node->rchild, socket_id, level + 1);
     return PFX_SUCCESS;
 }
+
+static void pfx_table_for_each_rec(lpfst_node *n, void (fp)(const struct pfx_record *, void *),
+					  void *data)
+{
+	struct pfx_record pfxr;
+	node_data *nd;
+
+	assert(n != NULL);
+	assert(fp != NULL);
+
+	nd = (node_data *) n->data;
+	assert(nd != NULL);
+
+	for (unsigned int i = 0; i < nd->len; i++) {
+		pfxr.asn =  nd->ary[i].asn;
+		pfxr.prefix = n->prefix;
+		pfxr.min_len = n->len;
+		pfxr.max_len = nd->ary[i].max_len;
+		pfxr.socket_id = nd->ary[i].socket_id;
+		fp(&pfxr, nd);
+	}
+	if (n->lchild != NULL)
+		pfx_table_for_each_rec(n->lchild, fp, data);
+	if (n->rchild != NULL)
+		pfx_table_for_each_rec(n->rchild, fp, data);
+}
+
+void pfx_table_for_each_record(struct pfx_table *pfx_table, void (fp)(const struct pfx_record *, void *),
+			       void *data)
+{
+	assert(pfx_table != NULL);
+	assert(fp != NULL);
+
+        pthread_rwlock_rdlock(&(pfx_table->lock));
+
+	if (pfx_table->ipv4 != NULL)
+		pfx_table_for_each_rec(pfx_table->ipv4, fp, data);
+	if (pfx_table->ipv6 != NULL)
+		pfx_table_for_each_rec(pfx_table->ipv6, fp, data);
+
+        pthread_rwlock_unlock(&pfx_table->lock);
+}
+
