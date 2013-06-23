@@ -429,6 +429,9 @@ static void pfx_table_for_each_rec(lpfst_node *n, void (fp)(const struct pfx_rec
 	nd = (node_data *) n->data;
 	assert(nd != NULL);
 
+	if (n->lchild != NULL)
+		pfx_table_for_each_rec(n->lchild, fp, data);
+
 	for (unsigned int i = 0; i < nd->len; i++) {
 		pfxr.asn =  nd->ary[i].asn;
 		pfxr.prefix = n->prefix;
@@ -437,8 +440,7 @@ static void pfx_table_for_each_rec(lpfst_node *n, void (fp)(const struct pfx_rec
 		pfxr.socket_id = nd->ary[i].socket_id;
 		fp(&pfxr, nd);
 	}
-	if (n->lchild != NULL)
-		pfx_table_for_each_rec(n->lchild, fp, data);
+
 	if (n->rchild != NULL)
 		pfx_table_for_each_rec(n->rchild, fp, data);
 }
