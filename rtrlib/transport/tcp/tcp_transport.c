@@ -56,6 +56,8 @@ int tr_tcp_init(const tr_tcp_config *config, tr_socket *socket) {
     socket->send_fp = &tr_tcp_send;;
 
     socket->socket = malloc(sizeof(tr_tcp_socket));
+    if (socket->socket == NULL)
+	    return TR_ERROR;
     tr_tcp_socket *tcp_socket = socket->socket;
     tcp_socket->socket = -1;
     tcp_socket->config = *config;
