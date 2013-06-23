@@ -29,13 +29,13 @@
 #include "../../lib/utils.h"
 
 
-#define SSH_DBG(fmt, sock, ...) dbg("SSH Transport(%s@%s:%u): " fmt, sock->config->username, sock->config->host, sock->config->port, ## __VA_ARGS__)
-#define SSH_DBG1(a, sock) dbg("SSH Transport(%s@%s:%u): " a, sock->config->username, sock->config->host, sock->config->port)
+#define SSH_DBG(fmt, sock, ...) dbg("SSH Transport(%s@%s:%u): " fmt, sock->config.username, sock->config.host, sock->config.port, ## __VA_ARGS__)
+#define SSH_DBG1(a, sock) dbg("SSH Transport(%s@%s:%u): " a, sock->config.username, sock->config.host, sock->config.port)
 
 typedef struct tr_ssh_socket {
     ssh_session session;
     ssh_channel channel;
-    const tr_ssh_config *config;
+    tr_ssh_config config;
 } tr_ssh_socket;
 
 static int tr_ssh_open(void *tr_ssh_sock);
@@ -58,14 +58,14 @@ int tr_ssh_init(const tr_ssh_config *config, tr_socket *socket) {
     tr_ssh_socket *ssh_socket = socket->socket;
     ssh_socket->channel = NULL;
     ssh_socket->session = NULL;
-    ssh_socket->config = config;
+    ssh_socket->config = *config;
 
     return TR_SUCCESS;
 }
 
 int tr_ssh_open(void *socket) {
     tr_ssh_socket *ssh_socket = socket;
-    const tr_ssh_config *config = ssh_socket->config;
+    const tr_ssh_config *config = &ssh_socket->config;
 
     assert(ssh_socket->channel == NULL);
     assert(ssh_socket->session == NULL);
