@@ -168,7 +168,9 @@ int main(int argc, char** argv){
     groups[0].sockets[0] = &rtr;
     groups[0].preference = 1;
 
-    conf = rtr_mgr_init(groups, 1, 30, 520, &update_cb);
+    conf = rtr_mgr_init(groups, 1, 30, 520, &update_cb, NULL, NULL);
+    if (conf == NULL)
+	    return EXIT_FAILURE;
     rtr_mgr_start(conf);
     printf("%-40s   %3s   %3s   %3s\n", "Prefix", "Prefix Length", "", "ASN");
     pause();

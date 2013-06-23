@@ -31,26 +31,44 @@
 #define MGR_DBG(fmt, ...) dbg("RTR_MGR: " fmt, ## __VA_ARGS__)
 #define MGR_DBG1(a) dbg("RTR_MGR: " a)
 
+const char *str_status[] = {
+    [RTR_MGR_CLOSED] = "RTR_MGR_CLOSED",
+    [RTR_MGR_CONNECTING] = "RTR_MGR_CONNECTING",
+    [RTR_MGR_ESTABLISHED] = "RTR_MGR_ESTABLISHED",
+    [RTR_MGR_ERROR] = "RTR_MGR_ERROR"
+};
+
 struct rtr_mgr_config {
     rtr_mgr_group *groups;
     unsigned int len;
     pthread_mutex_t mutex;
+    rtr_mgr_status_fp status_fp;
+    void *status_fp_data;
 };
 
 static int rtr_mgr_find_group(const rtr_mgr_config *config, const const rtr_socket *sock, unsigned int *ind);
-static int rtr_mgr_start_sockets(rtr_mgr_group *config);
 static int rtr_mgr_config_cmp(const void *a, const void *b);
 static bool rtr_mgr_config_status_is_synced(const rtr_mgr_group *config);
 
-int rtr_mgr_start_sockets(rtr_mgr_group *config) {
-    for(unsigned int i = 0; i < config->sockets_len; i++) {
-        if(rtr_start(config->sockets[i]) != 0) {
+static void set_status(const rtr_mgr_config *conf, rtr_mgr_group *group,
+               rtr_mgr_status status)
+{
+    group->status = status;
+    if(conf->status_fp != NULL)
+        conf->status_fp(group, status, conf->status_fp_data);
+
+    MGR_DBG("Group(%u) status changed to: %s", group->preference,
+        str_status[status]);
+}
+
+int rtr_mgr_start_sockets(const rtr_mgr_config *conf, rtr_mgr_group *group) {
+    for(unsigned int i = 0; i < group->sockets_len; i++) {
+        if(rtr_start(group->sockets[i]) != 0) {
             MGR_DBG1("rtr_mgr: Error starting rtr_socket pthread");
             return RTR_ERROR;
         }
     }
-    config->status = RTR_MGR_CONNECTING;
-    MGR_DBG("Group(%u) status changed to: CONNECTING", config->preference);
+    set_status(conf, group, RTR_MGR_CONNECTING);
     return RTR_SUCCESS;
 }
 
@@ -77,35 +95,44 @@ bool rtr_mgr_config_status_is_synced(const rtr_mgr_group *group) {
 }
 
 void rtr_mgr_cb(const struct rtr_socket *sock, const rtr_socket_state state, void *data) {
-    if(state == RTR_SHUTDOWN)
-        return;
     rtr_mgr_config *config = data;
-
-    //return if group contains no other socket groups => nothing todo :-)
-    if(config->len == 1) {
-        return;
-    }
 
     //find the index in the rtr_mgr_config struct, for which this function was called
     unsigned int ind = 0;
     if(rtr_mgr_find_group(config, sock, &ind) == -1)
         return;
+
     pthread_mutex_lock(&(config->mutex));
+
+    if(config->len == 1) {
+        if (state == RTR_CONNECTING)
+            set_status(config, &config->groups[ind], RTR_MGR_CONNECTING);
+        else if (state == RTR_ESTABLISHED)
+            set_status(config, &config->groups[ind], RTR_MGR_ESTABLISHED);
+        else if(state == RTR_ERROR_FATAL || state == RTR_ERROR_TRANSPORT ||
+                state == RTR_ERROR_NO_DATA_AVAIL)
+            set_status(config, &config->groups[ind], RTR_MGR_ERROR);
+        else if (state == RTR_SHUTDOWN)
+            set_status(config, &config->groups[ind], RTR_MGR_CLOSED);
+        goto out;
+    }
+
+    if(state == RTR_SHUTDOWN)
+        goto out;
+
     if(state == RTR_ESTABLISHED) {
         //socket established successfull a connection to the rtr_server
         if(config->groups[ind].status == RTR_MGR_CONNECTING) {
             //if previous state was CONNECTING, check if all other sockets in the group also have a established connection,
             //if yes change group state to ESTABLISHED
             if(rtr_mgr_config_status_is_synced(&(config->groups[ind]))) {
-                config->groups[ind].status = RTR_MGR_ESTABLISHED;
-                MGR_DBG("Group(%u) status changed to: ESTABLISHED", config->groups[ind].preference);
+                set_status(config, &config->groups[ind], RTR_MGR_ESTABLISHED);
                 for(unsigned int i = 0; i < config->len; i++) {
                     if(config->groups[i].status != RTR_MGR_CLOSED && i != ind) {
                         for(unsigned int j = 0; j < config->groups[i].sockets_len; j++) {
                             rtr_stop(config->groups[i].sockets[j]);
                         }
-                        config->groups[i].status = RTR_MGR_CLOSED;
-                        MGR_DBG("Group(%u) status changed to: CLOSED", config->groups[i].preference);
+                        set_status(config, &config->groups[i], RTR_MGR_ESTABLISHED);
                     }
                 }
             }
@@ -118,23 +145,20 @@ void rtr_mgr_cb(const struct rtr_socket *sock, const rtr_socket_state state, voi
                     all_error = false;
             }
             if(all_error && rtr_mgr_config_status_is_synced(&(config->groups[ind]))) {
-                config->groups[ind].status = RTR_MGR_ESTABLISHED;
-                MGR_DBG("Group(%u) status changed to: ESTABLISHED", config->groups[ind].preference);
+                set_status(config, &config->groups[ind], RTR_MGR_ESTABLISHED);
                 for(unsigned int i = 0; i < config->len; i++) {
                     if(config->groups[i].status != RTR_MGR_CLOSED && i != ind) {
                         for(unsigned int j = 0; j < config->groups[i].sockets_len; j++) {
                             rtr_stop(config->groups[i].sockets[j]);
                         }
-                        config->groups[i].status = RTR_MGR_CLOSED;
-                        MGR_DBG("Group(%u) status changed to: CLOSED", config->groups[i].preference);
+                        set_status(config, &config->groups[i], RTR_MGR_CLOSED);
                     }
                 }
             }
         }
     }
     else if(state == RTR_ERROR_FATAL || state == RTR_ERROR_TRANSPORT || state == RTR_ERROR_NO_DATA_AVAIL) {
-        config->groups[ind].status = RTR_MGR_ERROR;
-        MGR_DBG("Group(%u) status changed to: ERROR", config->groups[ind].preference);
+        set_status(config, &config->groups[ind], RTR_MGR_ERROR);
 
         int next_config = ind + 1;
         bool found = false;
@@ -156,22 +180,24 @@ void rtr_mgr_cb(const struct rtr_socket *sock, const rtr_socket_state state, voi
         }
 
         if(found)
-            rtr_mgr_start_sockets(&(config->groups[next_config]));
+            rtr_mgr_start_sockets(config, &(config->groups[next_config]));
         else
             MGR_DBG1("No other inactive groups found");
     }
     else if(state == RTR_ERROR_NO_INCR_UPDATE_AVAIL) {
-        config->groups[ind].status = RTR_MGR_ERROR;
+        set_status(config, &config->groups[ind], RTR_MGR_ERROR);
         //find a group with a lower preference value, if no other group exists do nothing
         int next_config = ind - 1;
         while(next_config >= 0 && config->groups[next_config].status != RTR_MGR_CLOSED) {
             next_config--;
         }
         if(next_config >= 0)
-            rtr_mgr_start_sockets(&(config->groups[next_config]));
+            rtr_mgr_start_sockets(config, &(config->groups[next_config]));
     }
 
+out:
     pthread_mutex_unlock(&(config->mutex));
+    return;
 }
 
 int rtr_mgr_config_cmp(const void *a, const void *b) {
@@ -188,8 +214,9 @@ rtr_mgr_config *rtr_mgr_init(rtr_mgr_group groups[],
                              const unsigned int groups_len,
                              const unsigned int polling_period,
                              const unsigned int cache_timeout,
-                             const pfx_update_fp update_fp)
-{
+                             const pfx_update_fp update_fp,
+                             const rtr_mgr_status_fp status_fp,
+                             void *status_fp_data) {
     struct rtr_mgr_config *config = malloc(sizeof(*config));
     if (config == NULL)
         return NULL;
@@ -230,6 +257,8 @@ rtr_mgr_config *rtr_mgr_init(rtr_mgr_group groups[],
             rtr_init(config->groups[i].sockets[j], NULL, pfxt, polling_period, cache_timeout, rtr_mgr_cb, config);
         }
     }
+    config->status_fp_data = status_fp_data;
+    config->status_fp = status_fp;
     return config;
 
 err:
@@ -239,8 +268,9 @@ err:
 }
 
 int rtr_mgr_start(rtr_mgr_config *config) {
-    return rtr_mgr_start_sockets(&(config->groups[0]));
+    return rtr_mgr_start_sockets(config, &(config->groups[0]));
 }
+
 bool rtr_mgr_conf_in_sync(rtr_mgr_config *config) {
     for(unsigned int i = 0; i < config->len; i++) {
         bool all_sync = true;
@@ -273,8 +303,7 @@ void rtr_mgr_stop(rtr_mgr_config *config) {
             rtr_stop(config->groups[i].sockets[j]);
         }
         pthread_mutex_lock(&(config->mutex));
-        config->groups[i].status = RTR_MGR_CLOSED;
+        set_status(config, &config->groups[i], RTR_MGR_CLOSED);
         pthread_mutex_unlock(&(config->mutex));
-        MGR_DBG("Group(%u) status changed to: CLOSED", config->groups[i].preference);
     }
 }

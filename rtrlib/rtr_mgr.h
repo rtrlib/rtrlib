@@ -76,6 +76,8 @@ typedef struct {
 
 typedef struct rtr_mgr_config rtr_mgr_config;
 
+typedef void (*rtr_mgr_status_fp)(const rtr_mgr_group *, rtr_mgr_status, void *);
+
 /**
  * @brief Initializes a rtr_mgr_config.
  * @param[in] groups Array of rtr_mgr_group. Every RTR socket in an
@@ -91,12 +93,20 @@ typedef struct rtr_mgr_config rtr_mgr_config;
  * If 0 is specified, the cache_timeout will be half the polling_period.
  * The default value is twice the polling_period.
  * @param[in] update_fp A Pointer to a pfx_update_fp callback, that is executed for every added and removed pfx_record.
+ * @param[in] status_fp Pointer to a function that is called if the connection
+ *	                status from one of the socket groups is changed.
+ * @param[in] status_fp_data Pointer to a memory area that is passed to the
+ *			     status_fp function. Memory area can be freely used
+ *			     to pass user-defined data to the status_fp
+ *			     callback.
  * @return !NULL On success
  * @return NULL On error
  */
 rtr_mgr_config *rtr_mgr_init(rtr_mgr_group groups[], const unsigned int groups_len,
 		 const unsigned int polling_period, const unsigned int cache_timeout, 
-		 const pfx_update_fp update_fp);
+		 const pfx_update_fp update_fp,
+		 const rtr_mgr_status_fp status_fp,
+		 void *status_fp_data);
 
 /**
  * @brief Frees all resources that were allocated from the rtr_mgr.
