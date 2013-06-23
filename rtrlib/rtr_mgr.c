@@ -25,10 +25,17 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <string.h>
 #include "rtrlib/lib/log.h"
 
 #define MGR_DBG(fmt, ...) dbg("RTR_MGR: " fmt, ## __VA_ARGS__)
 #define MGR_DBG1(a) dbg("RTR_MGR: " a)
+
+struct rtr_mgr_config {
+    rtr_mgr_group *groups;
+    unsigned int len;
+    pthread_mutex_t mutex;
+};
 
 static int rtr_mgr_find_group(const rtr_mgr_config *config, const const rtr_socket *sock, unsigned int *ind);
 static int rtr_mgr_start_sockets(rtr_mgr_group *config);
@@ -177,9 +184,26 @@ int rtr_mgr_config_cmp(const void *a, const void *b) {
     return 0;
 }
 
-int rtr_mgr_init(rtr_mgr_config *config, const unsigned int polling_period, const unsigned int cache_timeout, const pfx_update_fp update_fp) {
-    if(pthread_mutex_init(&(config->mutex), NULL) != 0)
+rtr_mgr_config *rtr_mgr_init(rtr_mgr_group groups[],
+                             const unsigned int groups_len,
+                             const unsigned int polling_period,
+                             const unsigned int cache_timeout,
+                             const pfx_update_fp update_fp)
+{
+    struct rtr_mgr_config *config = malloc(sizeof(*config));
+    if (config == NULL)
+        return NULL;
+
+    if(pthread_mutex_init(&(config->mutex), NULL) != 0) {
         MGR_DBG1("Mutex initialization failed");
+        goto err;
+    }
+
+    config->len = groups_len;
+    config->groups = malloc(groups_len * sizeof(*groups));
+    if (config->groups == NULL)
+        goto err;
+    memcpy(config->groups, groups, groups_len * sizeof(*groups));
 
     //sort array in asc preference order
     qsort(config->groups, config->len, sizeof(rtr_mgr_group), &rtr_mgr_config_cmp);
@@ -187,17 +211,17 @@ int rtr_mgr_init(rtr_mgr_config *config, const unsigned int polling_period, cons
     for(unsigned int i = 0; i < config->len; i++) {
         if(config->groups[i].sockets_len == 0) {
             MGR_DBG1("Error Socket group contains an empty sockets array");
-            return RTR_ERROR;
+            goto err;
         }
         if(i > 0 && config->groups[i-1].preference == config->groups[i].preference) {
             MGR_DBG1("Error Socket group contains 2 members with the same preference value");
-            return RTR_ERROR;
+            goto err;
         }
     }
 
     pfx_table *pfxt = malloc(sizeof(pfx_table));
     if(pfxt == NULL)
-        return RTR_ERROR;
+            goto err;
     pfx_table_init(pfxt, update_fp);
 
     for(unsigned int i = 0; i < config->len; i++) {
@@ -206,7 +230,12 @@ int rtr_mgr_init(rtr_mgr_config *config, const unsigned int polling_period, cons
             rtr_init(config->groups[i].sockets[j], NULL, pfxt, polling_period, cache_timeout, rtr_mgr_cb, config);
         }
     }
-    return RTR_SUCCESS;
+    return config;
+
+err:
+    free(config->groups);
+    free(config);
+    return NULL;
 }
 
 int rtr_mgr_start(rtr_mgr_config *config) {
@@ -229,6 +258,7 @@ void rtr_mgr_free(rtr_mgr_config *config) {
     pthread_mutex_lock(&(config->mutex));
     pfx_table_free(config->groups[0].sockets[0]->pfx_table);
     free(config->groups[0].sockets[0]->pfx_table);
+    free(config);
     pthread_mutex_unlock(&(config->mutex));
     pthread_mutex_destroy(&(config->mutex));
 }

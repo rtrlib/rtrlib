@@ -74,37 +74,29 @@ typedef struct {
     rtr_mgr_status status;
 } rtr_mgr_group;
 
+typedef struct rtr_mgr_config rtr_mgr_config;
 
 /**
- * @brief rtr_mgr configuration structure.
- * @param A Pointer to an array of rtr_mgr_groups.
- * @param len Number of elements in the groups array.
- * @param mutex Pthread mutex, which is used internally by the rtr_mgr.
-*/
-typedef struct rtr_mgr_config {
-    rtr_mgr_group *groups;
-    unsigned int len;
-    pthread_mutex_t mutex;
-} rtr_mgr_config;
-
-/**
- * @brief Initializes the rtr_mgr_config.
- * The passed parameters will be associated with the rtr_sockets in the config.
- * @param[in] config A rtr_mgr_config struct. The config->sockets, config->sockets_len, config->preference elements must
- * be initialized.
- * Every RTR socket in an rtr_mgr_group must be assoziated with an initialized transport socket. A Transport socket is
- * only allowed to be associated with one rtr socket. The given preference values must be unique in the
- * rtr_mgr_config->sockets array. More than one rtr_mgr_group with the same preference value isn't allowed.
+ * @brief Initializes a rtr_mgr_config.
+ * @param[in] groups Array of rtr_mgr_group. Every RTR socket in an
+ *		     rtr_mgr_group must be assoziated with an initialized
+ *		     transport socket. A Transport socket is only allowed to be
+ *		     associated with one rtr socket. The preference values must
+ *		     be unique in the group array. More than one rtr_mgr_group
+ *		     with the same preference value isn't allowed.
+ * @param[in] groups_len Number of elements in the groups array.
  * @param[in] polling_period Interval in seconds between serial queries that are sent to the server. Must be <= 3600.
  * If 0 is specified the polling_period is set to 300 seconds.
  * @param[in] cache_timeout Time period in seconds. Received pfx_records are deleted if the client was unable to refresh data for this time period.
  * If 0 is specified, the cache_timeout will be half the polling_period.
  * The default value is twice the polling_period.
  * @param[in] update_fp A Pointer to a pfx_update_fp callback, that is executed for every added and removed pfx_record.
- * @return RTR_SUCCESS On success
- * @return RTR_ERROR On error
+ * @return !NULL On success
+ * @return NULL On error
  */
-int rtr_mgr_init(rtr_mgr_config *config, const unsigned int polling_period, const unsigned int cache_timeout, const pfx_update_fp update_fp);
+rtr_mgr_config *rtr_mgr_init(rtr_mgr_group groups[], const unsigned int groups_len,
+		 const unsigned int polling_period, const unsigned int cache_timeout, 
+		 const pfx_update_fp update_fp);
 
 /**
  * @brief Frees all resources that were allocated from the rtr_mgr.
