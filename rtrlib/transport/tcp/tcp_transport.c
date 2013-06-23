@@ -31,13 +31,13 @@
 #include "rtrlib/lib/log.h"
 #include "rtrlib/transport/tcp/tcp_transport.h"
 
-#define TCP_DBG(fmt, sock, ...) dbg("TCP Transport(%s:%s): " fmt, sock->config->host, sock->config->port, ## __VA_ARGS__)
-#define TCP_DBG1(a, sock) dbg("TCP Transport(%s:%s): " a,sock->config->host, sock->config->port)
+#define TCP_DBG(fmt, sock, ...) dbg("TCP Transport(%s:%s): " fmt, sock->config.host, sock->config.port, ## __VA_ARGS__)
+#define TCP_DBG1(a, sock) dbg("TCP Transport(%s:%s): " a,sock->config.host, sock->config.port)
 
 
 typedef struct tr_tcp_socket {
     int socket;
-    const tr_tcp_config *config;
+    tr_tcp_config config;
 } tr_tcp_socket;
 
 static int tr_tcp_open(void *tr_tcp_sock);
@@ -58,7 +58,7 @@ int tr_tcp_init(const tr_tcp_config *config, tr_socket *socket) {
     socket->socket = malloc(sizeof(tr_tcp_socket));
     tr_tcp_socket *tcp_socket = socket->socket;
     tcp_socket->socket = -1;
-    tcp_socket->config = config;
+    tcp_socket->config = *config;
 
     return TR_SUCCESS;
 }
@@ -75,7 +75,7 @@ int tr_tcp_open(void *tr_socket) {
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_ADDRCONFIG;
-    if(getaddrinfo(tcp_socket->config->host, tcp_socket->config->port, &hints, &res) != 0) {
+    if(getaddrinfo(tcp_socket->config.host, tcp_socket->config.port, &hints, &res) != 0) {
         TCP_DBG("getaddrinfo error, %s", tcp_socket, gai_strerror(errno));
         return TR_ERROR;
     }
