@@ -172,7 +172,7 @@ int main(int argc, char** argv){
     conf.groups = groups;
     conf.len = 1;
 
-    rtr_mgr_init(&conf, 1, 520, &update_cb);
+    rtr_mgr_init(&conf, 30, 520, &update_cb);
     rtr_mgr_start(&conf);
     printf("%-40s   %3s   %3s   %3s\n", "Prefix", "Prefix Length", "", "ASN");
     pause();
