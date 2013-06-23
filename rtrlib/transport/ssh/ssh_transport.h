@@ -50,12 +50,12 @@
  * @param client_pubkey_path Path to the public key of the authentication keypair.
  */
 typedef struct tr_ssh_config {
-    const char *host;
-    const unsigned int port;
-    const char *username;
-    const char *server_hostkey_path;
-    const char *client_privkey_path;
-    const char *client_pubkey_path;
+    char *host;
+    unsigned int port;
+    char *username;
+    char *server_hostkey_path;
+    char *client_privkey_path;
+    char *client_pubkey_path;
 } tr_ssh_config;
 
 /**

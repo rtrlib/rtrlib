@@ -39,8 +39,8 @@
  * @param port Port to connect to.
  */
 typedef struct tr_tcp_config {
-    const char *host;
-    const char *port;
+    char *host;
+    char *port;
 } tr_tcp_config;
 
 
