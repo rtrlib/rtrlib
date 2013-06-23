@@ -55,6 +55,8 @@ int tr_ssh_init(const tr_ssh_config *config, tr_socket *socket) {
     socket->send_fp = &tr_ssh_send;;
 
     socket->socket = malloc(sizeof(tr_ssh_socket));
+    if (socket->socket == NULL)
+	    return TR_ERROR;
     tr_ssh_socket *ssh_socket = socket->socket;
     ssh_socket->channel = NULL;
     ssh_socket->session = NULL;
