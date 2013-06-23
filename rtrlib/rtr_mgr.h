@@ -158,5 +158,15 @@ int rtr_mgr_validate(rtr_mgr_config *config, const uint32_t asn, const ip_addr *
  */
 const char *rtr_mgr_status_to_str(rtr_mgr_status status);
 
+/**
+ * @brief Iterates over all records in the pfx_table.
+ * @details For every pfx_record the function cb is called. The pfx_record and
+ * the data pointer is passed to the cb.
+ * @param[in] config rtr_mgr_config
+ * @param[in] fp A pointer to a callback function that is called for every pfx_record in the pfx_table.
+ * @param[in] data This parameter is forwarded to the callback function.
+ */
+void rtr_mgr_for_each_record(rtr_mgr_config *config, void (fp)(const struct pfx_record *, void *data), void *data);
+
 #endif
 /* @} */
