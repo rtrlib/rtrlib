@@ -160,14 +160,24 @@ int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const ip
 int pfx_table_validate_r(struct pfx_table *pfx_table, pfx_record **reason, unsigned int *reason_len,  const uint32_t asn, const ip_addr *prefix, const uint8_t mask_len, pfxv_state *result);
 
 /**
- * @brief Iterates over all records in the pfx_table.
+ * @brief Iterates over all IPv4 records in the pfx_table.
  * @details For every pfx_record the function cb is called. The pfx_record and
  * the data pointer is passed to the cb.
  * @param[in] pfx_table
  * @param[in] fp A pointer to a callback function that is called for every pfx_record in the pfx_table.
  * @param[in] data This parameter is forwarded to the callback function.
  */
-void pfx_table_for_each_record(struct pfx_table *pfx_table, void (fp)(const struct pfx_record *, void *data), void *data);
+void pfx_table_for_each_ipv4_record(struct pfx_table *pfx_table, void (fp)(const struct pfx_record *, void *data), void *data);
+
+/*
+ * @brief Iterates over all IPv6 records in the pfx_table.
+ * @details For every pfx_record the function cb is called. The pfx_record and
+ * the data pointer is passed to the cb.
+ * @param[in] pfx_table
+ * @param[in] fp A pointer to a callback function that is called for every pfx_record in the pfx_table.
+ * @param[in] data This parameter is forwarded to the callback function.
+ */
+void pfx_table_for_each_ipv6_record(struct pfx_table *pfx_table, void (fp)(const struct pfx_record *, void *data), void *data);
 
 #endif
 /* @} */

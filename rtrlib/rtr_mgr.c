@@ -317,6 +317,10 @@ const char *rtr_mgr_status_to_str(rtr_mgr_status status)
     return mgr_str_status[status];
 }
 
-inline void rtr_mgr_for_each_record(rtr_mgr_config *config, void (fp)(const struct pfx_record *, void *data), void *data) {
-	pfx_table_for_each_record(config->groups[0].sockets[0]->pfx_table, fp, data);
+inline void rtr_mgr_for_each_ipv4_record(rtr_mgr_config *config, void (fp)(const struct pfx_record *, void *data), void *data) {
+	pfx_table_for_each_ipv4_record(config->groups[0].sockets[0]->pfx_table, fp, data);
+}
+
+inline void rtr_mgr_for_each_ipv6_record(rtr_mgr_config *config, void (fp)(const struct pfx_record *, void *data), void *data) {
+	pfx_table_for_each_ipv6_record(config->groups[0].sockets[0]->pfx_table, fp, data);
 }

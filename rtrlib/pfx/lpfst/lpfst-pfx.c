@@ -418,8 +418,7 @@ int pfx_table_remove_id(pfx_table *pfx_table, lpfst_node **root, lpfst_node *nod
 }
 
 static void pfx_table_for_each_rec(lpfst_node *n, void (fp)(const struct pfx_record *, void *),
-					  void *data)
-{
+					  void *data) {
 	struct pfx_record pfxr;
 	node_data *nd;
 
@@ -445,19 +444,29 @@ static void pfx_table_for_each_rec(lpfst_node *n, void (fp)(const struct pfx_rec
 		pfx_table_for_each_rec(n->rchild, fp, data);
 }
 
-void pfx_table_for_each_record(struct pfx_table *pfx_table, void (fp)(const struct pfx_record *, void *),
-			       void *data)
-{
+void pfx_table_for_each_ipv4_record(struct pfx_table *pfx_table, void (fp)(const struct pfx_record *, void *),
+				    void *data) {
 	assert(pfx_table != NULL);
 	assert(fp != NULL);
 
-        pthread_rwlock_rdlock(&(pfx_table->lock));
+	if (pfx_table->ipv4 == NULL)
+		return;
 
-	if (pfx_table->ipv4 != NULL)
-		pfx_table_for_each_rec(pfx_table->ipv4, fp, data);
-	if (pfx_table->ipv6 != NULL)
-		pfx_table_for_each_rec(pfx_table->ipv6, fp, data);
-
-        pthread_rwlock_unlock(&pfx_table->lock);
+    pthread_rwlock_rdlock(&(pfx_table->lock));
+    pfx_table_for_each_rec(pfx_table->ipv4, fp, data);
+    pthread_rwlock_unlock(&pfx_table->lock);
 }
 
+void pfx_table_for_each_ipv6_record(struct pfx_table *pfx_table, void (fp)(const struct pfx_record *, void *),
+				    void *data) {
+
+	assert(pfx_table != NULL);
+	assert(fp != NULL);
+
+	if (pfx_table->ipv6 == NULL)
+		return;
+
+    pthread_rwlock_rdlock(&(pfx_table->lock));
+	pfx_table_for_each_rec(pfx_table->ipv6, fp, data);
+    pthread_rwlock_unlock(&pfx_table->lock);
+}
