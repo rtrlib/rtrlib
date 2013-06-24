@@ -447,7 +447,6 @@ static void pfx_table_for_each_rec(lpfst_node *n, void (fp)(const struct pfx_rec
 void pfx_table_for_each_ipv4_record(struct pfx_table *pfx_table, void (fp)(const struct pfx_record *, void *),
 				    void *data) {
 	assert(pfx_table != NULL);
-	assert(fp != NULL);
 
 	if (pfx_table->ipv4 == NULL)
 		return;
@@ -459,9 +458,7 @@ void pfx_table_for_each_ipv4_record(struct pfx_table *pfx_table, void (fp)(const
 
 void pfx_table_for_each_ipv6_record(struct pfx_table *pfx_table, void (fp)(const struct pfx_record *, void *),
 				    void *data) {
-
 	assert(pfx_table != NULL);
-	assert(fp != NULL);
 
 	if (pfx_table->ipv6 == NULL)
 		return;
