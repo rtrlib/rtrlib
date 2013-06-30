@@ -20,14 +20,15 @@
  * Website: http://rpki.realmv6.org/
  */
 
-#include <stdlib.h>
-#include "ssh_transport.h"
 #include <assert.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
 #include "../../lib/log.h"
 #include "../../lib/utils.h"
-
+#include "ssh_transport.h"
 
 #define SSH_DBG(fmt, sock, ...) dbg("SSH Transport(%s@%s:%u): " fmt, sock->config.username, sock->config.host, sock->config.port, ## __VA_ARGS__)
 #define SSH_DBG1(a, sock) dbg("SSH Transport(%s@%s:%u): " a, sock->config.username, sock->config.host, sock->config.port)
@@ -36,6 +37,7 @@ typedef struct tr_ssh_socket {
     ssh_session session;
     ssh_channel channel;
     tr_ssh_config config;
+    char *ident;
 } tr_ssh_socket;
 
 static int tr_ssh_open(void *tr_ssh_sock);
@@ -44,26 +46,7 @@ static void tr_ssh_free(tr_socket *tr_sock);
 static int tr_ssh_recv(const void *tr_ssh_sock, void *buf, const size_t buf_len, const time_t timeout);
 static int tr_ssh_send(const void *tr_ssh_sock, const void *pdu, const size_t len, const time_t timeout);
 static int tr_ssh_recv_async(const tr_ssh_socket *tr_ssh_sock, void *buf, const size_t buf_len);
-
-
-int tr_ssh_init(const tr_ssh_config *config, tr_socket *socket) {
-
-    socket->close_fp = &tr_ssh_close;
-    socket->free_fp = &tr_ssh_free;
-    socket->open_fp = &tr_ssh_open;
-    socket->recv_fp = &tr_ssh_recv;
-    socket->send_fp = &tr_ssh_send;;
-
-    socket->socket = malloc(sizeof(tr_ssh_socket));
-    if (socket->socket == NULL)
-	    return TR_ERROR;
-    tr_ssh_socket *ssh_socket = socket->socket;
-    ssh_socket->channel = NULL;
-    ssh_socket->session = NULL;
-    ssh_socket->config = *config;
-
-    return TR_SUCCESS;
-}
+static const char *tr_ssh_ident(void *tr_ssh_sock);
 
 int tr_ssh_open(void *socket) {
     tr_ssh_socket *ssh_socket = socket;
@@ -155,6 +138,8 @@ void tr_ssh_free(tr_socket *tr_sock) {
     tr_ssh_socket *tr_ssh_sock = tr_sock->socket;
     assert(tr_ssh_sock->channel == NULL);
     assert(tr_ssh_sock->session == NULL);
+    if (tr_ssh_sock->ident != NULL)
+        free(tr_ssh_sock->ident);
     free(tr_ssh_sock);
     tr_sock->socket = NULL;
     SSH_DBG1("Socket freed", tr_ssh_sock);
@@ -247,4 +232,42 @@ int tr_ssh_recv(const void* tr_ssh_sock, void* buf, const size_t buf_len, const 
 
 int tr_ssh_send(const void *tr_ssh_sock, const void *pdu, const size_t len, const time_t timeout __attribute__((unused))) {
     return channel_write(((tr_ssh_socket *) tr_ssh_sock)->channel, pdu, len);
+}
+
+const char *tr_ssh_ident(void *tr_ssh_sock) {
+    size_t len;
+    tr_ssh_socket *sock = tr_ssh_sock;
+
+    assert(sock != NULL);
+
+    if (sock->ident != NULL)
+        return sock->ident;
+
+    len = strlen(sock->config.username) + 1 + strlen(sock->config.host) + 1 +
+          5 + 1;
+    sock->ident = malloc(len);
+    if (sock->ident == NULL)
+        return NULL;
+    snprintf(sock->ident, len, "%s@%s:%u", sock->config.username,
+             sock->config.host, sock->config.port);
+    return sock->ident;
+}
+
+int tr_ssh_init(const tr_ssh_config *config, tr_socket *socket) {
+
+    socket->close_fp = &tr_ssh_close;
+    socket->free_fp = &tr_ssh_free;
+    socket->open_fp = &tr_ssh_open;
+    socket->recv_fp = &tr_ssh_recv;
+    socket->send_fp = &tr_ssh_send;;
+    socket->ident_fp = &tr_ssh_ident;
+
+    socket->socket = malloc(sizeof(tr_ssh_socket));
+    tr_ssh_socket *ssh_socket = socket->socket;
+    ssh_socket->channel = NULL;
+    ssh_socket->session = NULL;
+    ssh_socket->config = *config;
+    ssh_socket->ident = NULL;;
+
+    return TR_SUCCESS;
 }

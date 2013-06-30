@@ -23,6 +23,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <netdb.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -34,10 +35,10 @@
 #define TCP_DBG(fmt, sock, ...) dbg("TCP Transport(%s:%s): " fmt, sock->config.host, sock->config.port, ## __VA_ARGS__)
 #define TCP_DBG1(a, sock) dbg("TCP Transport(%s:%s): " a,sock->config.host, sock->config.port)
 
-
 typedef struct tr_tcp_socket {
     int socket;
     tr_tcp_config config;
+    char *ident;
 } tr_tcp_socket;
 
 static int tr_tcp_open(void *tr_tcp_sock);
@@ -45,25 +46,7 @@ static void tr_tcp_close(void *tr_tcp_sock);
 static void tr_tcp_free(tr_socket *tr_sock);
 static int tr_tcp_recv(const void *tr_tcp_sock, void *pdu, const size_t len, const time_t timeout);
 static int tr_tcp_send(const void *tr_tcp_sock, const void *pdu, const size_t len, const time_t timeout);
-
-
-int tr_tcp_init(const tr_tcp_config *config, tr_socket *socket) {
-
-    socket->close_fp = &tr_tcp_close;
-    socket->free_fp = &tr_tcp_free;
-    socket->open_fp = &tr_tcp_open;
-    socket->recv_fp = &tr_tcp_recv;
-    socket->send_fp = &tr_tcp_send;;
-
-    socket->socket = malloc(sizeof(tr_tcp_socket));
-    if (socket->socket == NULL)
-	    return TR_ERROR;
-    tr_tcp_socket *tcp_socket = socket->socket;
-    tcp_socket->socket = -1;
-    tcp_socket->config = *config;
-
-    return TR_SUCCESS;
-}
+static const char *tr_tcp_ident(void *socket);
 
 int tr_tcp_open(void *tr_socket) {
 
@@ -114,6 +97,9 @@ void tr_tcp_free(tr_socket *tr_sock) {
     tr_tcp_socket *tcp_sock = tr_sock->socket;
     assert(tcp_sock != NULL);
     assert(tcp_sock->socket == -1);
+
+    if (tcp_sock->ident != NULL)
+        free(tcp_sock->ident);
     free(tcp_sock);
     tr_sock->socket = NULL;
     TCP_DBG1("Socket freed", tcp_sock);
@@ -171,4 +157,40 @@ int tr_tcp_send(const void *tr_tcp_sock, const void *pdu, const size_t len, cons
     if(rtval == 0)
         return TR_ERROR;
     return rtval;
+}
+
+const char *tr_tcp_ident(void *socket) {
+    size_t len;
+    tr_tcp_socket *sock = socket;
+
+    assert(socket != NULL);
+
+    if (sock->ident != NULL)
+        return sock->ident;
+
+    len = strlen(sock->config.port) + strlen(sock->config.host) + 2;
+    sock->ident = malloc(len);
+    if (sock->ident== NULL)
+        return NULL;
+    snprintf(sock->ident, len, "%s:%s", sock->config.host, sock->config.port);
+
+    return sock->ident;
+}
+
+int tr_tcp_init(const tr_tcp_config *config, tr_socket *socket) {
+
+    socket->close_fp = &tr_tcp_close;
+    socket->free_fp = &tr_tcp_free;
+    socket->open_fp = &tr_tcp_open;
+    socket->recv_fp = &tr_tcp_recv;
+    socket->send_fp = &tr_tcp_send;
+    socket->ident_fp = &tr_tcp_ident;
+
+    socket->socket = malloc(sizeof(tr_tcp_socket));
+    tr_tcp_socket *tcp_socket = socket->socket;
+    tcp_socket->socket = -1;
+    tcp_socket->config = *config;
+    tcp_socket->ident = NULL;
+
+    return TR_SUCCESS;
 }

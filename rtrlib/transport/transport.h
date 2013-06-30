@@ -87,6 +87,12 @@ typedef int (*tr_recv_fp)(const void *socket, void *pdu, const size_t len, const
 typedef int (*tr_send_fp)(const void *socket, const void *pdu, const size_t len, const time_t timeout);
 
 /**
+ * @brief A function pointer to a technology specific info function.
+ * \sa tr_send
+ * */
+typedef const char *(*tr_ident_fp)(void *socket);
+
+/**
  * @brief A transport socket datastructure.
  *
  * @param socket A pointer to a technology specific socket.
@@ -103,6 +109,7 @@ typedef struct tr_socket {
     tr_free_fp free_fp;
     tr_send_fp send_fp;
     tr_recv_fp recv_fp;
+    tr_ident_fp ident_fp;
 } tr_socket;
 
 
@@ -173,6 +180,14 @@ int tr_send_all(const tr_socket *socket, const void *pdu, const size_t len, cons
  * @return TR_WOULDBLOCK If send would block.
  */
 int tr_recv_all(const tr_socket *socket, const void *buf, const size_t len, const time_t timeout);
+
+/**
+ * Returns an identifier for the socket endpoint, eg host:port.
+ * @param[in] socket
+ * return Pointer to a \0 terminated String
+ * return NULL on error
+ */
+const char *tr_ident(tr_socket *socket);
 
 #endif
 /* @} */

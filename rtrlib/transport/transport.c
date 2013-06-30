@@ -38,8 +38,13 @@ inline void tr_free(tr_socket *socket) {
 inline int tr_send(const tr_socket *socket, const void *pdu, const size_t len, const time_t timeout) {
     return socket->send_fp(socket->socket, pdu, len, timeout);
 }
+
 inline int tr_recv(const tr_socket *socket, void *buf, const size_t len, const time_t timeout) {
     return socket->recv_fp(socket->socket, buf, len, timeout);
+}
+
+inline const char *tr_ident(tr_socket *sock) {
+	return sock->ident_fp(sock->socket);
 }
 
 int tr_send_all(const tr_socket *socket, const void *pdu, const size_t len, const time_t timeout) {
