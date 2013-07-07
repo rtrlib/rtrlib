@@ -97,7 +97,7 @@ void rtr_purge_outdated_records(rtr_socket *rtr_socket) {
     if(rtval == -1 || (rtr_socket->last_update + rtr_socket->cache_timeout) > cur_time) {
         if(rtval == -1)
             RTR_DBG1("get_monotic_time(..) failed");
-        pfx_table_src_remove(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
+        pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
         RTR_DBG1("Removed outdated records from pfx_table");
         rtr_socket->request_session_id = true;
         rtr_socket->serial_number = 0;
@@ -191,7 +191,7 @@ void rtr_fsm_start(rtr_socket *rtr_socket) {
             rtr_socket->request_session_id = true;
             rtr_socket->serial_number = 0;
             rtr_socket->last_update = 0;
-            pfx_table_src_remove(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
+            pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
             pthread_exit(NULL);
         }
     }

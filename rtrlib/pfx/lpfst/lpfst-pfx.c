@@ -29,7 +29,7 @@
 typedef struct data_elem_t {
     uint32_t asn;
     uint8_t max_len;
-    uintptr_t socket_id;
+    const rtr_socket *socket;
 } data_elem;
 
 typedef struct node_data_t {
@@ -44,7 +44,7 @@ static int pfx_table_append_elem(node_data *data, const pfx_record *record);
 static data_elem *pfx_table_find_elem(const node_data *data, const pfx_record *record, unsigned int *index);
 static bool pfx_table_elem_matches(node_data *data, const uint32_t asn, const uint8_t prefix_len);
 static void pfx_table_notify_clients(pfx_table *pfx_table, const pfx_record *record, const bool added);
-static int pfx_table_remove_id(pfx_table *pfx_table, lpfst_node **root, lpfst_node *node, const uintptr_t socket_id, const unsigned int level);
+static int pfx_table_remove_id(pfx_table *pfx_table, lpfst_node **root, lpfst_node *node, const rtr_socket *socket, const unsigned int level);
 static int pfx_table_node2pfx_record(lpfst_node *node, pfx_record records[], const unsigned int ary_len);
 static void pfx_table_free_reason(pfx_record **reason, unsigned int *reason_len);
 
@@ -70,7 +70,7 @@ void pfx_table_free(struct pfx_table *pfx_table) {
             do {
                 node_data *data = (node_data *) (root->data);
                 for(unsigned int i = 0; i < data->len; i++) {
-                    pfx_record record = { data->ary[i].asn, (root->prefix), root->len, data->ary[i].max_len, data->ary[i].socket_id};
+                    pfx_record record = { data->ary[i].asn, (root->prefix), root->len, data->ary[i].max_len, data->ary[i].socket};
                     pfx_table_notify_clients(pfx_table, &record, false);
                 }
                 rm_node = (lpfst_remove(root, &(root->prefix), root->len, 0));
@@ -98,7 +98,7 @@ int pfx_table_append_elem(node_data *data, const pfx_record *record) {
         return PFX_ERROR;
     data->ary[data->len - 1].asn = record->asn;
     data->ary[data->len - 1].max_len = record->max_len;
-    data->ary[data->len - 1].socket_id = record->socket_id;
+    data->ary[data->len - 1].socket = record->socket;
     return PFX_SUCCESS;
 }
 
@@ -123,7 +123,7 @@ int pfx_table_create_node(lpfst_node **node, const pfx_record *record) {
 
 data_elem *pfx_table_find_elem(const node_data *data, const pfx_record *record, unsigned int *index) {
     for(unsigned int i = 0; i < data->len; i++) {
-        if(data->ary[i].asn == record->asn && data->ary[i].max_len == record->max_len && data->ary[i].socket_id == record->socket_id) {
+        if(data->ary[i].asn == record->asn && data->ary[i].max_len == record->max_len && data->ary[i].socket == record->socket) {
             if(index != NULL)
                 *index = i;
             return &(data->ary[i]);
@@ -269,7 +269,7 @@ int pfx_table_node2pfx_record(lpfst_node *node, pfx_record *records, const unsig
         records[i].prefix = node->prefix;
         records[i].min_len = node->len;
         records[i].max_len = data->ary[i].max_len;
-        records[i].socket_id = data->ary[i].socket_id;
+        records[i].socket = data->ary[i].socket;
     }
     return data->len;
 }
@@ -359,12 +359,12 @@ int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const ip
     return pfx_table_validate_r(pfx_table, NULL, NULL, asn, prefix, prefix_len, result);
 }
 
-int pfx_table_src_remove(struct pfx_table *pfx_table, const uintptr_t socket_id) {
+int pfx_table_src_remove(struct pfx_table *pfx_table, const rtr_socket *socket) {
     for(unsigned int i = 0; i < 2; i++) {
         lpfst_node **root = (i == 0 ? &(pfx_table->ipv4) : &(pfx_table->ipv6));
         pthread_rwlock_wrlock(&(pfx_table->lock));
         if(*root != NULL) {
-            int rtval = pfx_table_remove_id(pfx_table, root, *root, socket_id, 0);
+            int rtval = pfx_table_remove_id(pfx_table, root, *root, socket, 0);
             if(rtval == PFX_ERROR)
                 return PFX_ERROR;
         }
@@ -373,7 +373,7 @@ int pfx_table_src_remove(struct pfx_table *pfx_table, const uintptr_t socket_id)
     return PFX_SUCCESS;
 }
 
-int pfx_table_remove_id(pfx_table *pfx_table, lpfst_node **root, lpfst_node *node, const uintptr_t socket_id, const unsigned int level) {
+int pfx_table_remove_id(pfx_table *pfx_table, lpfst_node **root, lpfst_node *node, const rtr_socket *socket, const unsigned int level) {
     assert(node != NULL);
     assert(root != NULL);
     assert(*root != NULL);
@@ -382,8 +382,8 @@ int pfx_table_remove_id(pfx_table *pfx_table, lpfst_node **root, lpfst_node *nod
     while(check_node) { //data from removed node are replaced from data from child nodes (if children exists), same node must be checked again if it was replaced with previous child node data
         node_data *data = node->data;
         for(unsigned int i = 0; i < data->len; i++) {
-            while(data->len > i && data->ary[i].socket_id == socket_id) {
-                pfx_record record = { data->ary[i].asn, node->prefix, node->len, data->ary[i].max_len, data->ary[i].socket_id };
+            while(data->len > i && data->ary[i].socket == socket) {
+                pfx_record record = { data->ary[i].asn, node->prefix, node->len, data->ary[i].max_len, data->ary[i].socket };
                 if(pfx_table_del_elem(data, i) == PFX_ERROR) {
                     return PFX_ERROR;
                 }
@@ -409,11 +409,11 @@ int pfx_table_remove_id(pfx_table *pfx_table, lpfst_node **root, lpfst_node *nod
     }
 
     if(node->lchild != NULL) {
-        if(pfx_table_remove_id(pfx_table, root, node->lchild, socket_id, level + 1) == PFX_ERROR)
+        if(pfx_table_remove_id(pfx_table, root, node->lchild, socket, level + 1) == PFX_ERROR)
             return PFX_ERROR;
     }
     if(node->rchild != NULL)
-        return pfx_table_remove_id(pfx_table, root, node->rchild, socket_id, level + 1);
+        return pfx_table_remove_id(pfx_table, root, node->rchild, socket, level + 1);
     return PFX_SUCCESS;
 }
 
@@ -436,7 +436,7 @@ static void pfx_table_for_each_rec(lpfst_node *n, void (fp)(const struct pfx_rec
 		pfxr.prefix = n->prefix;
 		pfxr.min_len = n->len;
 		pfxr.max_len = nd->ary[i].max_len;
-		pfxr.socket_id = nd->ary[i].socket_id;
+		pfxr.socket = nd->ary[i].socket;
 		fp(&pfxr, nd);
 	}
 

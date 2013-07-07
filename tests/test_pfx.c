@@ -34,27 +34,28 @@
 static void remove_src_test(){
     pfx_table pfxt;
     pfx_table_init(&pfxt, NULL);
+   rtr_socket tr1;
 
     pfx_record pfx;
     pfx.min_len = 32;
     pfx.max_len = 32;
 
     pfx.asn = 80;
-    pfx.socket_id = 1;
+    pfx.socket = &tr1;
     ip_str_to_addr("10.11.10.0", &(pfx.prefix));
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
     pfx.asn = 90;
-    pfx.socket_id = 2;
+    pfx.socket = NULL;
     ip_str_to_addr("10.11.10.0", &(pfx.prefix));
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
-    pfx.socket_id = 2;
+    pfx.socket = NULL;
     pfx.min_len = 24;
     ip_str_to_addr("192.168.0.0", &(pfx.prefix));
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
-    pfx.socket_id = 1;
+    pfx.socket = &tr1;
     pfx.min_len = 8;
     ip_str_to_addr("10.0.0.0", &(pfx.prefix));
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
@@ -66,7 +67,7 @@ static void remove_src_test(){
     array = NULL;
     assert((len + 1) == 3);
 
-    pfx_table_src_remove(&pfxt, 1);
+    pfx_table_src_remove(&pfxt, &tr1);
     len=0;
     assert(lpfst_get_children(pfxt.ipv4, &array, &len) != -1);
 
@@ -101,7 +102,7 @@ static void mass_test(){
     for(uint32_t i = max_i; i >= min_i; i--){
         rec.min_len = 32;
         rec.max_len = 32;
-        rec.socket_id = i;
+        rec.socket = NULL;
         rec.asn = i;
         rec.prefix.u.addr4.addr = htonl(i);
         rec.prefix.ver = IPV4;
@@ -141,7 +142,7 @@ static void mass_test(){
 
     printf("removing records\n");
     for(uint32_t i = max_i; i >= min_i; i--){
-        rec.socket_id = i;
+        rec.socket = NULL;
         rec.min_len = 32;
         rec.max_len = 32;
         rec.asn = i;

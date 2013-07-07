@@ -430,7 +430,7 @@ int rtr_sync(rtr_socket *rtr_socket) {
         if(rtr_socket->request_session_id) {
             if(rtr_socket->last_update != 0) {
                 //if this isnt the first sync, but we already received records, delete old records in the pfx_table
-                pfx_table_src_remove(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
+                pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
                 rtr_socket->last_update = 0;
             }
             rtr_socket->session_id = cr_pdu->reserved;
@@ -503,7 +503,7 @@ int rtr_sync(rtr_socket *rtr_socket) {
                         rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv4_pdus[j]));
                     if(rtval == RTR_ERROR) {
                         RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all records");
-                        pfx_table_src_remove(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
+                        pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
                         rtr_socket->request_session_id = true;
                     }
 
@@ -524,7 +524,7 @@ int rtr_sync(rtr_socket *rtr_socket) {
                         rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv6_pdus[j]));
                     if(rtval == RTR_ERROR) {
                         RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all records");
-                        pfx_table_src_remove(rtr_socket->pfx_table, (uintptr_t) rtr_socket);
+                        pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
                         rtr_socket->request_session_id = true;
                     }
                     free(ipv6_pdus);
@@ -587,7 +587,7 @@ void rtr_prefix_pdu_2_pfx_record(const rtr_socket *rtr_socket, const void *pdu, 
         pfxr->prefix.ver = IPV4;
         pfxr->min_len = ipv4->prefix_len;
         pfxr->max_len = ipv4->max_prefix_len;
-        pfxr->socket_id = (uintptr_t) rtr_socket;
+        pfxr->socket = rtr_socket;
     }
     else if(type == IPV6_PREFIX) {
         const pdu_ipv6 *ipv6 = pdu;
@@ -596,7 +596,7 @@ void rtr_prefix_pdu_2_pfx_record(const rtr_socket *rtr_socket, const void *pdu, 
         memcpy(pfxr->prefix.u.addr6.addr, ipv6->prefix, sizeof(pfxr->prefix.u.addr6.addr));
         pfxr->min_len = ipv6->prefix_len;
         pfxr->max_len = ipv6->max_prefix_len;
-        pfxr->socket_id = (uintptr_t) rtr_socket;
+        pfxr->socket = rtr_socket;
 
     }
 }

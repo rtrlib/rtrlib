@@ -32,6 +32,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include "rtrlib/lib/ip.h"
+#include "rtrlib/rtr/rtr.h"
 
 /**
  * @brief Possible return values for pfx_ functions.
@@ -80,7 +81,7 @@ typedef struct pfx_record {
     ip_addr prefix;
     uint8_t min_len;
     uint8_t max_len;
-    uintptr_t socket_id;
+    const struct rtr_socket *socket;
 } pfx_record;
 
 /**
@@ -131,7 +132,7 @@ int pfx_table_remove(struct pfx_table *pfx_table, const pfx_record *pfx_record);
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR On error.
  */
-int pfx_table_src_remove(struct pfx_table *pfx_table, const uintptr_t socket_id);
+int pfx_table_src_remove(struct pfx_table *pfx_table, const struct rtr_socket *socket);
 
 /**
  * @brief Validates the origin of a BGP-Route.

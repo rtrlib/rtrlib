@@ -49,7 +49,7 @@ static void rec_insert(pfx_table* pfxt){
 
         rec.min_len = 32;
         rec.max_len = 32;
-        rec.socket_id = i;
+        rec.socket = NULL;
         rec.asn = tid % 2;
         rec.prefix.u.addr4.addr = htonl(i);
         rec.prefix.ver = IPV4;
@@ -112,7 +112,7 @@ static void rec_remove(pfx_table* pfxt){
     rec.prefix.u.addr4.addr = 0;
     printf("removing records\n");
     for(uint32_t i = max_i; i >= min_i; i--){
-        rec.socket_id = i;
+        rec.socket = NULL;
         rec.min_len = 32;
         rec.max_len = 32;
         rec.asn = tid %2;
