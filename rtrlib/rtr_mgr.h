@@ -150,5 +150,13 @@ bool rtr_mgr_conf_in_sync(rtr_mgr_config *config);
  */
 int rtr_mgr_validate(rtr_mgr_config *config, const uint32_t asn, const ip_addr *prefix, const uint8_t mask_len, pfxv_state *result);
 
+/**
+ * @brief Converts a rtr_mgr_status to a String.
+ * @param[in] status state to convert to a string.
+ * @return NULL If status isn't a valid rtr_mgr_status.
+ * @return !=NULL The rtr_rtr_mgr_status as String.
+ */
+const char *rtr_mgr_status_to_str(rtr_mgr_status status);
+
 #endif
 /* @} */

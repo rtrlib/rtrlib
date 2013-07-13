@@ -31,11 +31,11 @@
 #define MGR_DBG(fmt, ...) dbg("RTR_MGR: " fmt, ## __VA_ARGS__)
 #define MGR_DBG1(a) dbg("RTR_MGR: " a)
 
-const char *str_status[] = {
+static const char *mgr_str_status[] = {
     [RTR_MGR_CLOSED] = "RTR_MGR_CLOSED",
-    [RTR_MGR_CONNECTING] = "RTR_MGR_CONNECTING",
+    [RTR_MGR_CONNECTING] = "RTR_MGR_CLOSED",
     [RTR_MGR_ESTABLISHED] = "RTR_MGR_ESTABLISHED",
-    [RTR_MGR_ERROR] = "RTR_MGR_ERROR"
+    [RTR_MGR_ERROR] = "RTR_MGR_ERROR",
 };
 
 struct rtr_mgr_config {
@@ -54,7 +54,7 @@ static void set_status(const struct rtr_mgr_config *conf, rtr_mgr_group *group,
 			   rtr_mgr_status mgr_status, const rtr_socket *rtr_sock)
 {
 	MGR_DBG("Group(%u) status changed to: %s", group->preference,
-			str_status[status]);
+			rtr_mgr_status_to_str(mgr_status));
 
     group->status = mgr_status;
     if(conf->status_fp != NULL)
@@ -308,4 +308,11 @@ void rtr_mgr_stop(rtr_mgr_config *config) {
             rtr_stop(config->groups[i].sockets[j]);
         }
     }
+}
+
+const char *rtr_mgr_status_to_str(rtr_mgr_status status)
+{
+    if (status >= sizeof(mgr_str_status))
+	return NULL;
+    return mgr_str_status[status];
 }
