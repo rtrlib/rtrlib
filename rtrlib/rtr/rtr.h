@@ -33,6 +33,7 @@
 #include <time.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <pthread.h>
 #include "rtrlib/pfx/pfx.h"
 #include "rtrlib/transport/transport.h"
 
