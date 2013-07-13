@@ -53,28 +53,25 @@ int main(){
     groups[1].preference = 2;
 
     //create a rtr_mgr_config struct that stores the group
-    rtr_mgr_config conf;
-    conf.groups = groups;
-    conf.len = 2;                   //2 elements in the groups array
 
     //initialize all rtr_sockets in the server pool with the same settings
-    rtr_mgr_init(&conf, 240, 520, NULL);
+    rtr_mgr_config *conf = rtr_mgr_init(groups, 2, 240, 520, NULL, NULL, NULL);
 
     //start the connection manager
-    rtr_mgr_start(&conf);
+    rtr_mgr_start(conf);
 
     //wait till at least one rtr_mgr_group is fully synchronized with the server
-    while(!rtr_mgr_conf_in_sync(&conf))
+    while(!rtr_mgr_conf_in_sync(conf))
         sleep(1);
 
     //validate the BGP-Route 10.10.0.0/24, origin ASN: 12345
     ip_addr pref;
     ip_str_to_addr("10.10.0.0", &pref);
     pfxv_state result;
-    rtr_mgr_validate(&conf, 12345, &pref, 24, &result);
+    rtr_mgr_validate(conf, 12345, &pref, 24, &result);
 
-    rtr_mgr_stop(&conf);
-    rtr_mgr_free(&conf);
+    rtr_mgr_stop(conf);
+    rtr_mgr_free(conf);
     free(groups[0].sockets);
     free(groups[1].sockets);
 }
