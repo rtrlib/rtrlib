@@ -50,7 +50,7 @@ static void status_fp(const rtr_mgr_group *group __attribute__((unused)), rtr_mg
 	       rtr_state_to_str(rtr_sock->state), rtr_mgr_status_to_str(mgr_status));
 }
 
-static void update_cb(struct pfx_table* p __attribute__((unused)), const pfx_record rec, const bool added){
+static void update_cb(struct pfx_table* p  __attribute__((unused)), const pfx_record rec, const bool added){
     char ip[INET6_ADDRSTRLEN];
     if(added)
         printf("+ ");

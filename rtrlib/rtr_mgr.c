@@ -61,7 +61,7 @@ static void set_status(const struct rtr_mgr_config *conf, rtr_mgr_group *group,
 	conf->status_fp(group, mgr_status, rtr_sock, conf->status_fp_data);
 }
 
-int rtr_mgr_start_sockets(rtr_mgr_group *group) {
+static int rtr_mgr_start_sockets(rtr_mgr_group *group) {
     for(unsigned int i = 0; i < group->sockets_len; i++) {
         if(rtr_start(group->sockets[i]) != 0) {
             MGR_DBG1("rtr_mgr: Error starting rtr_socket pthread");
@@ -93,7 +93,7 @@ bool rtr_mgr_config_status_is_synced(const rtr_mgr_group *group) {
     return true;
 }
 
-void rtr_mgr_cb(const struct rtr_socket *sock, const rtr_socket_state state, void *data) {
+static void rtr_mgr_cb(const struct rtr_socket *sock, const rtr_socket_state state, void *data) {
     rtr_mgr_config *config = data;
 
     //find the index in the rtr_mgr_config struct, for which this function was called

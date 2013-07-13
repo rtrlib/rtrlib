@@ -32,7 +32,7 @@
 #include "rtrlib/lib/ip.h"
 #include "rtrlib/pfx/lpfst/lpfst-pfx.h"
 
-void print_state(const pfxv_state s){
+static void print_state(const pfxv_state s){
     if(s == BGP_PFXV_STATE_VALID)
         printf("VALID\n");
     else if(s == BGP_PFXV_STATE_NOT_FOUND)
@@ -41,7 +41,7 @@ void print_state(const pfxv_state s){
         printf("INVALID\n");
 }
 
-void print_pfx_rtval(const int rtval){
+static void print_pfx_rtval(const int rtval){
     if(rtval == PFX_SUCCESS)
         printf("PXF_SUCCESS\n");
     else if(rtval == PFX_ERROR)
@@ -56,7 +56,7 @@ void print_pfx_rtval(const int rtval){
 uint32_t min_i = 0xFF000000;
 uint32_t max_i = 0xFFFFFFF0;
 
-void rec_insert(pfx_table* pfxt){
+static void rec_insert(pfx_table* pfxt){
     const int tid = getpid();
     pfx_record rec;
     rec.min_len = 32;
@@ -90,7 +90,7 @@ void rec_insert(pfx_table* pfxt){
         //printf("%i: Record inserted\n", tid);
     }
 }
-void rec_validate(pfx_table* pfxt){
+static void rec_validate(pfx_table* pfxt){
     const int tid = getpid();
     pfx_record rec;
     rec.min_len = 32;
@@ -124,7 +124,7 @@ void rec_validate(pfx_table* pfxt){
         usleep(rand() / (RAND_MAX / 20));
     }
 }
-void rec_remove(pfx_table* pfxt){
+static void rec_remove(pfx_table* pfxt){
     const int tid = getpid();
     pfx_record rec;
     rec.min_len = 32;

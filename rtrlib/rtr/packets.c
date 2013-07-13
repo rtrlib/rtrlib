@@ -217,7 +217,7 @@ void rtr_pdu_footer_to_host_byte_order(void *pdu) {
     }
 }
 
-void rtr_pdu_to_network_byte_order(void *pdu) {
+static void rtr_pdu_to_network_byte_order(void *pdu) {
     pdu_header *header = pdu;
 
     uint16_t int16_tmp =  htons(header->reserved);

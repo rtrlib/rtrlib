@@ -32,7 +32,7 @@
 #include "rtrlib/pfx/lpfst/lpfst.c"
 
 
-void get_bits_testv4(){
+static void get_bits_testv4(){
     ip_addr addr;
     addr.ver = IPV4;
 
@@ -105,7 +105,7 @@ void get_bits_testv4(){
 
 }
 
-void get_bits_testv6(){
+static void get_bits_testv6(){
     ip_addr addr;
     addr.ver = IPV6;
     addr.u.addr6.addr[0] = 0x22AABBCC;
@@ -178,7 +178,7 @@ void get_bits_testv6(){
     assert(ip_str_cmp(&result, "::"));
 }
 
-void lpfst_test(){
+static void lpfst_test(){
     ip_addr addr;
     addr.ver = IPV4;
     lpfst_node* result;

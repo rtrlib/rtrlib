@@ -52,7 +52,7 @@ void sighandler(int b __attribute__((unused)) ) {
     return;
 }
 
-int install_sig_handler() {
+static int install_sig_handler() {
     struct sigaction sa;
     sa.sa_handler = &sighandler;
     sigset_t mask;

@@ -31,7 +31,7 @@
 #include "rtrlib/lib/utils.h"
 #include "rtrlib/pfx/lpfst/lpfst-pfx.h"
 
-void print_bytes(void* buf, size_t len){
+static void print_bytes(void* buf, size_t len){
     for(unsigned int i = 0;i < len; i++){
         if(len != 0)
             printf(":");
@@ -40,7 +40,7 @@ void print_bytes(void* buf, size_t len){
     printf("\n");
 }
 
-void print_state(const pfxv_state s){
+static void print_state(const pfxv_state s){
     if(s == BGP_PFXV_STATE_VALID)
         printf("VALID\n");
     else if(s == BGP_PFXV_STATE_NOT_FOUND)
@@ -49,7 +49,7 @@ void print_state(const pfxv_state s){
         printf("INVALID\n");
 }
 
-void remove_src_test(){
+static void remove_src_test(){
     pfx_table pfxt;
     pfx_table_init(&pfxt, NULL);
 
@@ -106,7 +106,7 @@ void remove_src_test(){
     pfx_table_free(&pfxt);
 }
 
-void mass_test(){
+static void mass_test(){
     pfx_table pfxt;
     pfx_table_init(&pfxt, NULL);
 
