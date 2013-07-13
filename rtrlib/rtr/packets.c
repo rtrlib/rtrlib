@@ -569,7 +569,7 @@ int rtr_undo_update_pfx_table(rtr_socket *rtr_socket, void *pdu) {
     pfx_record pfxr;
     rtr_prefix_pdu_2_pfx_record(rtr_socket, pdu, &pfxr, type);
 
-    int rtval;
+    int rtval = RTR_ERROR;
     //invert add/remove operation
     if(((pdu_ipv4 *) pdu)->flags == 1)
         rtval = pfx_table_remove(rtr_socket->pfx_table, &pfxr);
