@@ -76,7 +76,8 @@ typedef struct {
 
 typedef struct rtr_mgr_config rtr_mgr_config;
 
-typedef void (*rtr_mgr_status_fp)(const rtr_mgr_group *, rtr_mgr_status, void *);
+typedef void (*rtr_mgr_status_fp)(const rtr_mgr_group *, rtr_mgr_status, const rtr_socket *,
+				  void *);
 
 /**
  * @brief Initializes a rtr_mgr_config.
