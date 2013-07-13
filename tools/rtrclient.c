@@ -43,45 +43,14 @@ static void print_usage(char** argv){
 
 }
 
-/*
-static void state_cb(const rtr_socket* sock  __attribute__((unused)), const rtr_socket_state state, void* cb_data  __attribute__((unused))){
-#ifdef NDEBUG
-    printf("Socket State: ");
-    switch(state)
-    {
-        case RTR_CONNECTING:
-            printf("RTR_CONNECTING\n");
-            break;
-        case RTR_ESTABLISHED:
-            printf("RTR_ESTABLISHED\n");
-            break;
-        case RTR_RESET:
-            printf("RTR_RESET\n");
-            break;
-        case RTR_SYNC:
-            printf("RTR_SYNC\n");
-            break;
-        case RTR_ERROR_NO_DATA_AVAIL:
-            printf("RTR_ERROR_NO_DATA_AVAIL\n");
-            break;
-        case RTR_ERROR_NO_INCR_UPDATE_AVAIL:
-            printf("RTR_ERROR_NO_INCR_UPDATE_AVAIL\n");
-            break;
-        case RTR_ERROR_FATAL:
-            printf("RTR_ERROR_FATAL\n");
-            break;
-        case RTR_ERROR_TRANSPORT:
-            printf("RTR_ERROR_TRANSPORT\n");
-            break;
-        case RTR_SHUTDOWN:
-            printf("RTR_SHUTDOWN\n");
-            break;
-    }
-#endif
+static void status_fp(const rtr_mgr_group *group __attribute__((unused)), rtr_mgr_status mgr_status,
+		      const rtr_socket *rtr_sock, void *data __attribute__((unused)))
+{
+	printf("RTR-Socket changed connection status to: %s, Mgr Status: %s \n",
+	       rtr_state_to_str(rtr_sock->state), rtr_mgr_status_to_str(mgr_status));
 }
-*/
 
-static void update_cb(struct pfx_table* p  __attribute__((unused)), const pfx_record rec, const bool added){
+static void update_cb(struct pfx_table* p __attribute__((unused)), const pfx_record rec, const bool added){
     char ip[INET6_ADDRSTRLEN];
     if(added)
         printf("+ ");
@@ -168,7 +137,7 @@ int main(int argc, char** argv){
     groups[0].sockets[0] = &rtr;
     groups[0].preference = 1;
 
-    conf = rtr_mgr_init(groups, 1, 30, 520, &update_cb, NULL, NULL);
+    conf = rtr_mgr_init(groups, 1, 30, 520, &update_cb, status_fp, NULL);
     if (conf == NULL)
 	    return EXIT_FAILURE;
     rtr_mgr_start(conf);
