@@ -32,27 +32,6 @@
 #include "rtrlib/lib/ip.h"
 #include "rtrlib/pfx/lpfst/lpfst-pfx.h"
 
-static void print_state(const pfxv_state s){
-    if(s == BGP_PFXV_STATE_VALID)
-        printf("VALID\n");
-    else if(s == BGP_PFXV_STATE_NOT_FOUND)
-        printf("NOT FOUND\n");
-    else if(s == BGP_PFXV_STATE_INVALID)
-        printf("INVALID\n");
-}
-
-static void print_pfx_rtval(const int rtval){
-    if(rtval == PFX_SUCCESS)
-        printf("PXF_SUCCESS\n");
-    else if(rtval == PFX_ERROR)
-        printf("PXF_ERROR\n");
-    else if(rtval == PFX_DUPLICATE_RECORD)
-        printf("PXF_DUPLICATE_RECORD\n");
-    else if(rtval == PFX_RECORD_NOT_FOUND)
-        printf("PXF_RECORD_NOT_FOUND\n");
-}
-
-
 uint32_t min_i = 0xFF000000;
 uint32_t max_i = 0xFFFFFFF0;
 

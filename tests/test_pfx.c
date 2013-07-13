@@ -31,24 +31,6 @@
 #include "rtrlib/lib/utils.h"
 #include "rtrlib/pfx/lpfst/lpfst-pfx.h"
 
-static void print_bytes(void* buf, size_t len){
-    for(unsigned int i = 0;i < len; i++){
-        if(len != 0)
-            printf(":");
-        printf("%02x", *((uint8_t*) ((char*) buf + i)));
-    }
-    printf("\n");
-}
-
-static void print_state(const pfxv_state s){
-    if(s == BGP_PFXV_STATE_VALID)
-        printf("VALID\n");
-    else if(s == BGP_PFXV_STATE_NOT_FOUND)
-        printf("NOT FOUND\n");
-    else if(s == BGP_PFXV_STATE_INVALID)
-        printf("INVALID\n");
-}
-
 static void remove_src_test(){
     pfx_table pfxt;
     pfx_table_init(&pfxt, NULL);
