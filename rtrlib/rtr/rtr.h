@@ -73,7 +73,7 @@ typedef enum {
     RTR_ERROR_TRANSPORT,
 
     /** RTR Socket is stopped. */
-    RTR_SHUTDOWN
+    RTR_SHUTDOWN,
 } rtr_socket_state;
 
 struct rtr_socket;
@@ -143,6 +143,14 @@ int rtr_start(rtr_socket *rtr_socket);
  * @param[in] rtr_socket rtr_socket that will be used.
  */
 void rtr_stop(rtr_socket *rtr_socket);
+
+/**
+ * @brief Converts a rtr_socket_state to a String.
+ * @param[in] state state to convert to a string
+ * @return NULL If state isn't a valid rtr_socket_state
+ * @return !=NULL The rtr_socket_state as String.
+ */
+const char *rtr_state_to_str(rtr_socket_state state);
 
 #endif
 /* @} */

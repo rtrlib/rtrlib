@@ -36,6 +36,18 @@ static void rtr_fsm_start(rtr_socket *rtr_socket);
 static void sighandler(int b);
 static int install_sig_handler();
 
+static const char *socket_str_states[] = {
+    [RTR_CONNECTING] = "RTR_CONNECTING",
+    [RTR_ESTABLISHED] = "RTR_ESTABLISHED",
+    [RTR_RESET] = "RTR_RESET",
+    [RTR_SYNC] = "RTR_SYNC",
+    [RTR_ERROR_NO_DATA_AVAIL] = "RTR_ERROR_NO_DATA_AVAIL",
+    [RTR_ERROR_NO_INCR_UPDATE_AVAIL] = "RTR_ERROR_NO_INCR_UPDATE_AVAIL",
+    [RTR_ERROR_FATAL] = "RTR_ERROR_FATAL",
+    [RTR_ERROR_TRANSPORT] = "RTR_ERROR_TRANSPORT",
+    [RTR_SHUTDOWN] = "RTR_SHUTDOWN"
+};
+
 void sighandler(int b __attribute__((unused)) ) {
     return;
 }
@@ -192,4 +204,11 @@ void rtr_stop(rtr_socket *rtr_socket) {
         pthread_join(rtr_socket->thread_id, NULL);
     }
     RTR_DBG1("Socket shut down");
+}
+
+const char *rtr_state_to_str(rtr_socket_state state)
+{
+	if (state >= sizeof(socket_str_states))
+		return NULL;
+	return socket_str_states[state];
 }
