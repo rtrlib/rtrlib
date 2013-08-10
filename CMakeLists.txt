@@ -37,6 +37,7 @@ find_package(Doxygen)
 if(DOXYGEN_FOUND)
 	add_custom_target(doc ALL ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/doxygen/Doxyfile
 	    COMMENT "Generating doxygen API documentation" VERBATIM)
+    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/docs DESTINATION share/doc/rtrlib)
 endif(DOXYGEN_FOUND)
 
 add_library(rtrlib SHARED ${RTRLIB_SRC})
