@@ -35,8 +35,8 @@ endif(LIBSSH_FOUND)
 #doxygen target
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
-    add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxygen/Doxyfile
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMENT "Generating doxygen API documentation" VERBATIM)
+	add_custom_target(doc ALL ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/doxygen/Doxyfile
+	    COMMENT "Generating doxygen API documentation" VERBATIM)
 endif(DOXYGEN_FOUND)
 
 add_library(rtrlib SHARED ${RTRLIB_SRC})
