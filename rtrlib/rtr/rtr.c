@@ -208,7 +208,5 @@ void rtr_stop(rtr_socket *rtr_socket) {
 
 const char *rtr_state_to_str(rtr_socket_state state)
 {
-	if (state >= sizeof(socket_str_states))
-		return NULL;
 	return socket_str_states[state];
 }
