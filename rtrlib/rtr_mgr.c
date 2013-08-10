@@ -312,8 +312,6 @@ void rtr_mgr_stop(rtr_mgr_config *config) {
 
 const char *rtr_mgr_status_to_str(rtr_mgr_status status)
 {
-    if (status >= sizeof(mgr_str_status))
-	return NULL;
     return mgr_str_status[status];
 }
 
