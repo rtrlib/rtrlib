@@ -66,8 +66,6 @@ install(TARGETS rtrlib LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/)
 install(DIRECTORY rtrlib/ DESTINATION include/rtrlib 
     FILES_MATCHING PATTERN "*.h"
     PATTERN rtrlib/rtr_mgr. EXCLUDE)
-install(PROGRAMS tools/rtrclient DESTINATION bin)
-
 
 #add uninstall target
 configure_file(
