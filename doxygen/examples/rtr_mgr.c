@@ -3,30 +3,40 @@
 
 int main(){
     //create a SSH transport socket
+    char ssh_host[]		= "123.231.123.221";
+    char ssh_user[]		= "rpki_user";
+    char ssh_hostkey[]	= "/etc/rpki-rtr/hostkey";
+    char ssh_privkey[]	= "/etc/rpki-rtr/client.priv";
+    char ssh_pubkey[]	= "/etc/rpki-rtr/client.pub";
     tr_socket tr_ssh;
     tr_ssh_config config = {
-        "123.231.123.221",          //IP
-        22,                         //Port
-        "rpki_user",
-        "/etc/rpki-rtr/hostkey",    //Server hostkey
-        "/etc/rpki-rtr/client.priv", //Private key
-        "/etc/rpki-rtr/client.pub"  //Public key
+        ssh_host,					//IP
+        22,							//Port
+        ssh_user,
+        ssh_hostkey,				//Server hostkey
+        ssh_privkey,				//Private key
+        ssh_pubkey,					//Public key
     };
     tr_ssh_init(&config, &tr_ssh);
 
     //create a TCP transport socket
     tr_socket tr_tcp1;
+	char tcp1_host[]	= "rpki.realmv6.org";
+	char tcp1_port[]	= "42420";
+
     tr_tcp_config tcp_config1 = {
-        "rpki.realmv6.org",          //IP
-        "42420"                      //Port
+        tcp1_host,          //IP
+        tcp1_port           //Port
     };
     tr_tcp_init(&tcp_config1, &tr_tcp1);
 
     //create another TCP transport socket
     tr_socket tr_tcp2;
+	char tcp2_host[]	= "localhost";
+	char tcp2_port[]	= "8282";
     tr_tcp_config tcp_config2 = {
-        "localhost",                //IP
-        "8282"                      //Port
+        tcp2_host,                //IP
+        tcp2_port,                //Port
     };
     tr_tcp_init(&tcp_config2, &tr_tcp2);
 
