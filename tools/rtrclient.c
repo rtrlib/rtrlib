@@ -38,7 +38,7 @@ static void print_usage(char** argv){
     printf("\nExamples:\n");
     printf(" %s tcp rpki.realmv6.org 42420\n", argv[0]);
 #ifdef RTRLIB_HAVE_LIBSSH
-    printf(" %s ssh rpki.realmv6.org rtr-ssh ~/.ssh/id_rsa ~/.ssh/id_rsa.pub\n", argv[0]);
+    printf(" %s ssh rpki.realmv6.org 22 rtr-ssh ~/.ssh/id_rsa ~/.ssh/id_rsa.pub\n", argv[0]);
 #endif
 
 }
