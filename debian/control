@@ -1,0 +1,88 @@
+Source: librtr0
+Section: libs
+Priority: optional
+Maintainer: Fabian Holler <deb@fholler.de>
+Build-Depends: cmake, dpkg-dev (>= 1.16.1~), debhelper (>= 9), libssh-dev, doxygen
+Standards-Version: 3.9.4
+Vcs-Git: git://github.com/rtrlib/rtrlib.git
+Vcs-Browser: https://github.com/rtrlib/rtrlib
+Homepage: http://rpki.realmv6.org/
+
+Package: librtr0
+Architecture: any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, libssh-4
+Description: Small extensible RPKI-RTR-Client C library.
+ RTRlib is an open-source C implementation of the  RPKI/Router Protocol
+ client. The library allows one to fetch and store validated prefix origin data
+ from a RTR-cache and performs origin verification of prefixes. It supports
+ different types of transport sessions (e.g., SSH, unprotected TCP) and is
+ easily extendable. 
+
+Package: librtr-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends: librtr0 (= ${binary:Version}), ${misc:Depends}
+Suggests: librtr-doc
+Description: Small extensible RPKI-RTR-Client C library. Development files
+ RTRlib is an open-source C implementation of the  RPKI/Router Protocol
+ client. The library allows one to fetch and store validated prefix origin data
+ from a RTR-cache and performs origin verification of prefixes. It supports
+ different types of transport sessions (e.g., SSH, unprotected TCP) and is
+ easily extendable. 
+ .
+ This package contains development files.
+
+Package: librtr-dbg
+Priority: extra
+Section: debug
+Architecture: any
+Multi-Arch: same
+Depends: librtr0 (= ${binary:Version}), ${misc:Depends}
+Description: Small extensible RPKI-RTR-Client C library. Debug Symbols
+ RTRlib is an open-source C implementation of the  RPKI/Router Protocol
+ client. The library allows one to fetch and store validated prefix origin data
+ from a RTR-cache and performs origin verification of prefixes. It supports
+ different types of transport sessions (e.g., SSH, unprotected TCP) and is
+ easily extendable. 
+ .
+ This package contains debug symbols.
+
+
+Package: librtr-doc
+Section: doc
+Architecture: any
+Depends: ${misc:Depends}
+Suggests: doc-base
+Description: Small extensible RPKI-RTR-Client C library. Documentation files
+ RTRlib is an open-source C implementation of the  RPKI/Router Protocol
+ client. The library allows one to fetch and store validated prefix origin data
+ from a RTR-cache and performs origin verification of prefixes. It supports
+ different types of transport sessions (e.g., SSH, unprotected TCP) and is
+ easily extendable. 
+ .
+ This package contains documentation files.
+
+Package: rtrclient
+Section: utils
+Architecture: any
+Depends: librtr0 (= ${binary:Version}), ${misc:Depends}, ${shlibs:Depends}, libssh-4
+Description: RPKI-RTR command line tool
+ Rtrclient is command line that connects to an RPKI-RTR server and prints
+ protocol information and information about the fetched ROAs to the console.
+
+
+Package: rtrclient-dbg
+Priority: extra
+Section: debug
+Architecture: any
+Depends: rtrclient (= ${binary:Version}), ${misc:Depends}, ${shlibs:Depends}
+Description: RPKI-RTR command line tool
+ Rtrclient is command line that connects to an RPKI-RTR server and prints
+ protocol information and information about the fetched ROAs to the
+ console.
+ .
+ This package contains debug symbols.
