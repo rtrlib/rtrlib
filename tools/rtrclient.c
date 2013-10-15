@@ -137,17 +137,16 @@ int main(int argc, char** argv){
     }
 
     tr_socket tr_sock;
+    tr_tcp_config tcp_config;
+    tr_ssh_config ssh_config;
     if(mode == TCP){
-        tr_tcp_config config = {
-            host,
-            port,
-        };
-        tr_tcp_init(&config, &tr_sock);
+        tcp_config = (tr_tcp_config) { host, port };
+        tr_tcp_init(&tcp_config, &tr_sock);
     }
 #ifdef RTRLIB_HAVE_LIBSSH
     else{
         unsigned int iport = atoi(port);
-        tr_ssh_config config = {
+        ssh_config = (tr_ssh_config) {
             host,
             iport,
             user,
@@ -155,7 +154,7 @@ int main(int argc, char** argv){
             privkey,
             pubkey
         };
-    tr_ssh_init(&config, &tr_sock);
+    tr_ssh_init(&ssh_config, &tr_sock);
     }
 #endif
 
