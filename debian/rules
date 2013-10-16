@@ -12,6 +12,7 @@ override_dh_auto_configure:
 override_dh_strip:
 	dh_strip -prtrclient --dbg-package=rtrclient-dbg
 	dh_strip -plibrtr0 --dbg-package=librtr-dbg
+override_dh_auto_test:
 
 %:
 	dh $@ 
