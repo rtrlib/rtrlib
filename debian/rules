@@ -15,4 +15,3 @@ override_dh_strip:
 
 %:
 	dh $@ 
-DEB_DBG_PACKAGE_libssh-4 = libssh-dbg
