@@ -42,8 +42,10 @@ interface for users of the library.
 @section RfcDrafts RFCs and Drafts
 The functionality of this library is described by the following IETF RFCs
 and drafts:
-\li <a href="http://tools.ietf.org/html/draft-ietf-sidr-rpki-rtr">draft-ietf-sidr-rpki-rtr</A>
-\li <a href="http://tools.ietf.org/html/draft-ietf-sidr-pfx-validate">draft-ietf-sidr-pfx-validate</a>
+\li <a href="http://tools.ietf.org/html/rfc6810">The Resource Public Key
+Infrastructure (RPKI) to Router Protocol (RFC 6810)</A>
+\li <a href="http://tools.ietf.org/html/rfc6811"> BGP Prefix Origin
+Validation (RFC 6811)</a>
 
 For a general overview of the topic have look at the homepage of the <a
 href="http://datatracker.ietf.org/wg/sidr/charter/">IETF SIDR working

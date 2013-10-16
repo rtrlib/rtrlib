@@ -1,9 +1,8 @@
 Introduction
 ------------
 The RTRlib implements the client-side part of the RPKI-RTR protocol and
-BGP Prefix Origin Validation. This release supports the IETF drafts
-draft-ietf-sidr-rpki-rtr-26 and draft-ietf-sidr-pfx-validate-03. It was
-successfully tested on Linux and FreeBSD.
+BGP Prefix Origin Validation. This release supports the IETF RFCs RFC
+6810 and RFC 6811. It was successfully tested on Linux and FreeBSD.
 
 This package contains also the rtrclient program. It connects to an
 RTR-Server over TCP or SSH and shows on STDOUT the validation state of
