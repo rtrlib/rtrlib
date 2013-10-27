@@ -11,8 +11,9 @@ else()
 endif(CMAKE_BUILD_TYPE STREQUAL Debug)
 
 include_directories(.)
-find_package (Threads REQUIRED)
-find_library (RT_LIB rt)
+find_package(Threads REQUIRED)
+find_library(RT_LIB rt)
+include(UseMultiArch) # needed for debian packaging
 
 set(RTRLIB_SRC rtrlib/rtr_mgr.c rtrlib/lib/utils.c rtrlib/lib/ip.c rtrlib/lib/ipv4.c rtrlib/lib/ipv6.c rtrlib/lib/log.c
     rtrlib/pfx/lpfst/lpfst.c rtrlib/pfx/lpfst/lpfst-pfx.c rtrlib/transport/transport.c
@@ -34,8 +35,9 @@ endif(LIBSSH_FOUND)
 #doxygen target
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
-    add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxygen/Doxyfile
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMENT "Generating doxygen API documentation" VERBATIM)
+	add_custom_target(doc ALL ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/doxygen/Doxyfile
+	    COMMENT "Generating doxygen API documentation" VERBATIM)
+    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/docs DESTINATION share/doc/rtrlib)
 endif(DOXYGEN_FOUND)
 
 add_library(rtrlib SHARED ${RTRLIB_SRC})
@@ -58,14 +60,12 @@ CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/rtrlib/rtrlib.h.cmake ${CMAKE_SOURCE_DIR}/rtr
 set(LIBRARY_VERSION ${RTRLIB_VERSION_MAJOR}.${RTRLIB_VERSION_MINOR}.${RTRLIB_VERSION_PATCH})
 set(LIBRARY_SOVERSION ${RTRLIB_VERSION_MAJOR})
 set_target_properties(rtrlib PROPERTIES SOVERSION ${LIBRARY_SOVERSION} VERSION ${LIBRARY_VERSION} OUTPUT_NAME rtr)
-install(TARGETS rtrlib LIBRARY DESTINATION lib)
+install(TARGETS rtrlib LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/)
 
 #install includes
 install(DIRECTORY rtrlib/ DESTINATION include/rtrlib 
     FILES_MATCHING PATTERN "*.h"
     PATTERN rtrlib/rtr_mgr. EXCLUDE)
-install(PROGRAMS tools/rtrclient DESTINATION bin)
-
 
 #add uninstall target
 configure_file(

@@ -21,7 +21,7 @@
  */
 
 /**
- * @defgroup mod_lpfst_pfx_h Longest prefix first tree
+ * @defgroup mod_lpfst_pfx_h Longest prefix first search tree
  * @ingroup mod_pfx_h
  * @brief An implementation of a \ref mod_pfx_h "pfx_table" data structure
  * using longest prefix first trees (lpfst) for storing @ref pfx_record "pfx_records".

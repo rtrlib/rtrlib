@@ -1,0 +1,9 @@
+Document: librtr
+Title: librtr public API Manual
+Author: Fabian Holler <deb@fholler.de>
+Abstract: This manual describes the librtr API.
+Section: Programming/C
+
+Format: HTML
+Index: /usr/share/doc/librtr-doc/html/index.html
+Files: /usr/share/doc/librtr-doc/html/*.html

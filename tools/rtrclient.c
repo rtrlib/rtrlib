@@ -38,16 +38,18 @@ static void print_usage(char** argv){
     printf("\nExamples:\n");
     printf(" %s tcp rpki.realmv6.org 42420\n", argv[0]);
 #ifdef RTRLIB_HAVE_LIBSSH
-    printf(" %s ssh rpki.realmv6.org rtr-ssh ~/.ssh/id_rsa ~/.ssh/id_rsa.pub\n", argv[0]);
+    printf(" %s ssh rpki.realmv6.org 22 rtr-ssh ~/.ssh/id_rsa ~/.ssh/id_rsa.pub\n", argv[0]);
 #endif
 
 }
 
-static void status_fp(const rtr_mgr_group *group __attribute__((unused)), rtr_mgr_status mgr_status,
-		      const rtr_socket *rtr_sock, void *data __attribute__((unused)))
+static void status_fp(const rtr_mgr_group *group __attribute__((unused)),
+			   rtr_mgr_status mgr_status, const rtr_socket *rtr_sock,
+			   void *data __attribute__((unused)))
 {
-	printf("RTR-Socket changed connection status to: %s, Mgr Status: %s \n",
-	       rtr_state_to_str(rtr_sock->state), rtr_mgr_status_to_str(mgr_status));
+	printf("RTR-Socket changed connection status to: %s, Mgr Status: %s\n",
+		   rtr_state_to_str(rtr_sock->state),
+		   rtr_mgr_status_to_str(mgr_status));
 }
 
 static void update_cb(struct pfx_table* p  __attribute__((unused)), const pfx_record rec, const bool added){
@@ -105,17 +107,16 @@ int main(int argc, char** argv){
     }
 
     tr_socket tr_sock;
+    tr_tcp_config tcp_config;
+    tr_ssh_config ssh_config;
     if(mode == TCP){
-        tr_tcp_config config = {
-            host,
-            port,
-        };
-        tr_tcp_init(&config, &tr_sock);
+        tcp_config = (tr_tcp_config) { host, port };
+        tr_tcp_init(&tcp_config, &tr_sock);
     }
 #ifdef RTRLIB_HAVE_LIBSSH
     else{
         unsigned int iport = atoi(port);
-        tr_ssh_config config = {
+        ssh_config = (tr_ssh_config) {
             host,
             iport,
             user,
@@ -123,7 +124,7 @@ int main(int argc, char** argv){
             privkey,
             pubkey
         };
-    tr_ssh_init(&config, &tr_sock);
+    tr_ssh_init(&ssh_config, &tr_sock);
     }
 #endif
 
