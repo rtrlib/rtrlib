@@ -96,9 +96,11 @@ int main(int argc, char** argv){
     enum mode_t { TCP, SSH } mode;
     char* host;
     char* port;
+#ifdef RTRLIB_HAVE_LIBSSH
     char* user;
     char* privkey;
     char* pubkey;
+#endif
     if(argc == 1){
         print_usage(argv);
         return(EXIT_FAILURE);
@@ -114,11 +116,8 @@ int main(int argc, char** argv){
         port = argv[3];
 
     }
+#ifdef RTRLIB_HAVE_LIBSSH
     else if(strncasecmp(argv[1], "ssh", strlen(argv[1])) == 0){
-#ifndef RTRLIB_HAVE_LIBSSH
-        print_usage(argv);
-        return(EXIT_FAILURE);
-#endif
         if(argc != 7){
             print_usage(argv);
             return(EXIT_FAILURE);
@@ -131,6 +130,7 @@ int main(int argc, char** argv){
         privkey = argv[5];
         pubkey = argv[6];
     }
+#endif
     else{
         print_usage(argv);
         return(EXIT_FAILURE);
@@ -138,7 +138,9 @@ int main(int argc, char** argv){
 
     tr_socket tr_sock;
     tr_tcp_config tcp_config;
+#ifdef RTRLIB_HAVE_LIBSSH
     tr_ssh_config ssh_config;
+#endif
     if(mode == TCP){
         tcp_config = (tr_tcp_config) { host, port };
         tr_tcp_init(&tcp_config, &tr_sock);
