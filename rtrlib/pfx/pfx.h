@@ -128,7 +128,6 @@ int pfx_table_remove(struct pfx_table *pfx_table, const struct pfx_record *pfx_r
 /**
  * @brief Removes all entries in the pfx_table that match the passed socket_id value from a pfx_table.
  * @param[in] pfx_table pfx_table to use.
- * @param[in] socket_id ID of the rtr_socket.
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR On error.
  */
