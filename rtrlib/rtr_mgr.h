@@ -67,7 +67,7 @@ typedef enum {
  * @param preference The preference value of this group. Groups with lower preference values are preferred.
  * @param status Status of the group.
  */
-typedef struct {
+typedef struct rtr_mgr_group {
     rtr_socket **sockets;
     unsigned int sockets_len;
     uint8_t preference;
