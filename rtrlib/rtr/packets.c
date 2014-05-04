@@ -569,13 +569,13 @@ int rtr_undo_update_pfx_table(rtr_socket* rtr_socket, void* pdu){
     pfx_record pfxr;
     rtr_prefix_pdu_2_pfx_record(rtr_socket, pdu, &pfxr, type);
 
-    int rtval;
     //invert add/remove operation
     if(((pdu_ipv4*) pdu)->flags == 1)
-        rtval = pfx_table_remove(rtr_socket->pfx_table, &pfxr);
+        return pfx_table_remove(rtr_socket->pfx_table, &pfxr);
     else if(((pdu_ipv4*) pdu)->flags == 0)
-        rtval = pfx_table_add(rtr_socket->pfx_table, &pfxr);
-    return rtval;
+        return pfx_table_add(rtr_socket->pfx_table, &pfxr);
+    else
+        return RTR_ERROR;
 }
 
 void rtr_prefix_pdu_2_pfx_record(const rtr_socket* rtr_socket, const void* pdu, pfx_record* pfxr, const pdu_type type){
