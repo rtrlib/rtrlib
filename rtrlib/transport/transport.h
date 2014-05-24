@@ -102,7 +102,7 @@ typedef const char *(*tr_ident_fp)(void *socket);
  * @param send_fp Pointer to a function that sends data through this socket.
  * @param recv_fp Pointer to a function that receives data from this socket.
  */
-typedef struct tr_socket {
+struct tr_socket {
     void *socket;
     tr_open_fp open_fp;
     tr_close_fp close_fp;
@@ -110,7 +110,7 @@ typedef struct tr_socket {
     tr_send_fp send_fp;
     tr_recv_fp recv_fp;
     tr_ident_fp ident_fp;
-} tr_socket;
+};
 
 
 /**
@@ -119,20 +119,20 @@ typedef struct tr_socket {
  * @return TR_SUCCESS On success.
  * @return TR_ERROR On error.
  */
-int tr_open(tr_socket *socket);
+int tr_open(struct tr_socket *socket);
 
 /**
  * @brief Close the socket connection.
  * @param[in] socket Socket that will be closed.
  */
-void tr_close(tr_socket *socket);
+void tr_close(struct tr_socket *socket);
 
 /**
  * @brief Deallocates all memory that the passed socket uses.
  * Socket have to be closed before.
  * @param[in] socket which will be freed.
  */
-void tr_free(tr_socket *socket);
+void tr_free(struct tr_socket *socket);
 
 /**
  * @brief Receives <= len Bytes data from the socket.
@@ -144,7 +144,7 @@ void tr_free(tr_socket *socket);
  * @return TR_ERROR On error.
  * @return TR_WOULDBLOCK If no data was available at the socket before the timeout expired.
  */
-int tr_recv(const tr_socket *socket, void *buf, const size_t len, const time_t timeout);
+int tr_recv(const struct tr_socket *socket, void *buf, const size_t len, const time_t timeout);
 
 /**
  * @brief Send <= len Bytes data over the socket.
@@ -155,7 +155,7 @@ int tr_recv(const tr_socket *socket, void *buf, const size_t len, const time_t t
  * @return >0 Number of Bytes sent.
  * @return TR_ERROR On error.
  */
-int tr_send(const tr_socket *socket, const void *pdu, const size_t len, const time_t timeout);
+int tr_send(const struct tr_socket *socket, const void *pdu, const size_t len, const time_t timeout);
 
 /**
  * Repeatly calls tr_send(..) till len Bytes were sent, the timeout expired or an error occured.
@@ -167,7 +167,7 @@ int tr_send(const tr_socket *socket, const void *pdu, const size_t len, const ti
  * @return TR_ERROR On Error.
  * @return TR_WOULDBLOCK If send would block.
  */
-int tr_send_all(const tr_socket *socket, const void *pdu, const size_t len, const time_t timeout);
+int tr_send_all(const struct tr_socket *socket, const void *pdu, const size_t len, const time_t timeout);
 
 /**
  * Repeatly calls tr_recv(..) till len Bytes were received, the timeout expired or an error occured.
@@ -179,7 +179,7 @@ int tr_send_all(const tr_socket *socket, const void *pdu, const size_t len, cons
  * @return TR_ERROR On error.
  * @return TR_WOULDBLOCK If send would block.
  */
-int tr_recv_all(const tr_socket *socket, const void *buf, const size_t len, const time_t timeout);
+int tr_recv_all(const struct tr_socket *socket, const void *buf, const size_t len, const time_t timeout);
 
 /**
  * Returns an identifier for the socket endpoint, eg host:port.
@@ -187,7 +187,7 @@ int tr_recv_all(const tr_socket *socket, const void *buf, const size_t len, cons
  * return Pointer to a \0 terminated String
  * return NULL on error
  */
-const char *tr_ident(tr_socket *socket);
+const char *tr_ident(struct tr_socket *socket);
 
 #endif
 /* @} */

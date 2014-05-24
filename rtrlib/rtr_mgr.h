@@ -67,17 +67,22 @@ typedef enum {
  * @param preference The preference value of this group. Groups with lower preference values are preferred.
  * @param status Status of the group.
  */
-typedef struct rtr_mgr_group {
-    rtr_socket **sockets;
+struct rtr_mgr_group {
+    struct rtr_socket **sockets;
     unsigned int sockets_len;
     uint8_t preference;
     rtr_mgr_status status;
-} rtr_mgr_group;
+};
 
-typedef struct rtr_mgr_config rtr_mgr_config;
+typedef void (*rtr_mgr_status_fp)(const struct rtr_mgr_group *, rtr_mgr_status, const struct rtr_socket *, void *);
 
-typedef void (*rtr_mgr_status_fp)(const rtr_mgr_group *, rtr_mgr_status, const rtr_socket *,
-				  void *);
+struct rtr_mgr_config {
+    struct rtr_mgr_group *groups;
+    unsigned int len;
+    pthread_mutex_t mutex;
+    rtr_mgr_status_fp status_fp;
+    void *status_fp_data;
+};
 
 /**
  * @brief Initializes a rtr_mgr_config.
@@ -103,8 +108,8 @@ typedef void (*rtr_mgr_status_fp)(const rtr_mgr_group *, rtr_mgr_status, const r
  * @return !NULL On success
  * @return NULL On error
  */
-rtr_mgr_config *rtr_mgr_init(rtr_mgr_group groups[], const unsigned int groups_len,
-		 const unsigned int polling_period, const unsigned int cache_timeout, 
+struct rtr_mgr_config *rtr_mgr_init(struct rtr_mgr_group groups[], const unsigned int groups_len,
+		 const unsigned int polling_period, const unsigned int cache_timeout,
 		 const pfx_update_fp update_fp,
 		 const rtr_mgr_status_fp status_fp,
 		 void *status_fp_data);
@@ -114,7 +119,7 @@ rtr_mgr_config *rtr_mgr_init(rtr_mgr_group groups[], const unsigned int groups_l
  * rtr_mgr_stop(..) must be called before, to shutdown all RTR socket connections.
  * @param[in] config rtr_mgr_config.
  */
-void rtr_mgr_free(rtr_mgr_config *config);
+void rtr_mgr_free(struct rtr_mgr_config *config);
 
 /**
  * @brief Establishes the connection with the rtr_sockets of the group with the lowest preference value and handles errors as defined in the RPKI-RTR protocol.
@@ -122,13 +127,13 @@ void rtr_mgr_free(rtr_mgr_config *config);
  * @return RTR_SUCCESS On success
  * @return RTR_ERROR On error
  */
-int rtr_mgr_start(rtr_mgr_config *config);
+int rtr_mgr_start(struct rtr_mgr_config *config);
 
 /**
  * @brief Terminates all rtr_socket connections that are defined in the config. All pfx_records received from these sockets will be purged.
  * @param[in] config The rtr_mgr_config struct
  */
-void rtr_mgr_stop(rtr_mgr_config *config);
+void rtr_mgr_stop(struct rtr_mgr_config *config);
 
 /**
  * @brief Detects if the rtr_mgr_group is fully synchronized with at least one group.
@@ -136,7 +141,7 @@ void rtr_mgr_stop(rtr_mgr_config *config);
  * @return true If the pfx_table stores non-outdated pfx_records from at least one socket group.
  * @return false If the pfx_table isn't fully synchronized with at least one group.
  */
-bool rtr_mgr_conf_in_sync(rtr_mgr_config *config);
+bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config);
 
 /**
  * @brief Validates the origin of a BGP-Route.
@@ -148,7 +153,7 @@ bool rtr_mgr_conf_in_sync(rtr_mgr_config *config);
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR If an error occurred.
  */
-int rtr_mgr_validate(rtr_mgr_config *config, const uint32_t asn, const ip_addr *prefix, const uint8_t mask_len, pfxv_state *result);
+int rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn, const struct ip_addr *prefix, const uint8_t mask_len, pfxv_state *result);
 
 /**
  * @brief Converts a rtr_mgr_status to a String.
@@ -166,7 +171,7 @@ const char *rtr_mgr_status_to_str(rtr_mgr_status status);
  * @param[in] fp A pointer to a callback function that is called for every pfx_record in the pfx_table.
  * @param[in] data This parameter is forwarded to the callback function.
  */
-void rtr_mgr_for_each_ipv4_record(rtr_mgr_config *config, void (fp)(const struct pfx_record *, void *data), void *data);
+void rtr_mgr_for_each_ipv4_record(struct rtr_mgr_config *config, void (fp)(const struct pfx_record *, void *data), void *data);
 
 /**
  * @brief Iterates over all IPv6 records in the pfx_table.
@@ -176,7 +181,7 @@ void rtr_mgr_for_each_ipv4_record(rtr_mgr_config *config, void (fp)(const struct
  * @param[in] fp A pointer to a callback function that is called for every pfx_record in the pfx_table.
  * @param[in] data This parameter is forwarded to the callback function.
  */
-void rtr_mgr_for_each_ipv6_record(rtr_mgr_config *config, void (fp)(const struct pfx_record *, void *data), void *data);
+void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config, void (fp)(const struct pfx_record *, void *data), void *data);
 
 #endif
 /* @} */

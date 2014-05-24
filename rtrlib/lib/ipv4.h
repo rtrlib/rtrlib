@@ -29,9 +29,9 @@
  * @brief Struct storing an IPv4 address in host byte order.
  * @param addr The IPv4 address.
  */
-typedef struct {
+struct ipv4_addr {
     uint32_t addr;
-} ipv4_addr;
+};
 
 /**
  * @brief Extracts number bits from the passed ipv4_addr, starting at bit number from. The bit with the highest
@@ -41,7 +41,7 @@ typedef struct {
  * @param[in] number How many bits will be extracted.
  * @returns An ipv4_addr, where all bits that aren't in the specified range are set to 0.
 */
-ipv4_addr ipv4_get_bits(const ipv4_addr *val, const uint8_t from, const uint8_t number);
+struct ipv4_addr ipv4_get_bits(const struct ipv4_addr *val, const uint8_t from, const uint8_t number);
 
 /**
  * Converts the passed IPv4 address in string representation to an ipv4_addr struct.
@@ -50,7 +50,7 @@ ipv4_addr ipv4_get_bits(const ipv4_addr *val, const uint8_t from, const uint8_t 
  * @result 0 on success
  * @result -1 on error
 */
-int ipv4_str_to_addr(const char *str, ipv4_addr *ip);
+int ipv4_str_to_addr(const char *str, struct ipv4_addr *ip);
 
 /**
  * Converts the passed ipv4_addr to string representation.
@@ -59,7 +59,7 @@ int ipv4_str_to_addr(const char *str, ipv4_addr *ip);
  * @result 0 on success
  * @result -1 on error
 */
-int ipv4_addr_to_str(const ipv4_addr *ip, char *str, const unsigned int len);
+int ipv4_addr_to_str(const struct ipv4_addr *ip, char *str, const unsigned int len);
 
 /**
  * Compares two ipv4_addr structs.
@@ -68,6 +68,6 @@ int ipv4_addr_to_str(const ipv4_addr *ip, char *str, const unsigned int len);
  * @return true if a == b
  * @return false if a != b
 */
-bool ipv4_addr_equal(const ipv4_addr *a, const ipv4_addr *b);
+bool ipv4_addr_equal(const struct ipv4_addr *a, const struct ipv4_addr *b);
 
 #endif

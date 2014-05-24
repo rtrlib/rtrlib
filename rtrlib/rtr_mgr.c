@@ -38,20 +38,12 @@ static const char *mgr_str_status[] = {
     [RTR_MGR_ERROR] = "RTR_MGR_ERROR",
 };
 
-struct rtr_mgr_config {
-    rtr_mgr_group *groups;
-    unsigned int len;
-    pthread_mutex_t mutex;
-    rtr_mgr_status_fp status_fp;
-    void *status_fp_data;
-};
-
-static int rtr_mgr_find_group(const rtr_mgr_config *config, const rtr_socket *sock, unsigned int *ind);
+static int rtr_mgr_find_group(const struct rtr_mgr_config *config, const struct rtr_socket *sock, unsigned int *ind);
 static int rtr_mgr_config_cmp(const void *a, const void *b);
-static bool rtr_mgr_config_status_is_synced(const rtr_mgr_group *config);
+static bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *config);
 
-static void set_status(const struct rtr_mgr_config *conf, rtr_mgr_group *group,
-			   rtr_mgr_status mgr_status, const rtr_socket *rtr_sock)
+static void set_status(const struct rtr_mgr_config *conf, struct rtr_mgr_group *group,
+			   rtr_mgr_status mgr_status, const struct rtr_socket *rtr_sock)
 {
 	MGR_DBG("Group(%u) status changed to: %s", group->preference,
 			rtr_mgr_status_to_str(mgr_status));
@@ -61,7 +53,7 @@ static void set_status(const struct rtr_mgr_config *conf, rtr_mgr_group *group,
 	conf->status_fp(group, mgr_status, rtr_sock, conf->status_fp_data);
 }
 
-static int rtr_mgr_start_sockets(rtr_mgr_group *group) {
+static int rtr_mgr_start_sockets(struct rtr_mgr_group *group) {
     for(unsigned int i = 0; i < group->sockets_len; i++) {
         if(rtr_start(group->sockets[i]) != 0) {
             MGR_DBG1("rtr_mgr: Error starting rtr_socket pthread");
@@ -71,7 +63,7 @@ static int rtr_mgr_start_sockets(rtr_mgr_group *group) {
     return RTR_SUCCESS;
 }
 
-int rtr_mgr_find_group(const rtr_mgr_config *config, const rtr_socket *sock, unsigned int *ind) {
+int rtr_mgr_find_group(const struct rtr_mgr_config *config, const struct rtr_socket *sock, unsigned int *ind) {
     for(unsigned int i = 0; i < config->len; i++) {
         for(unsigned int j = 0; j < config->groups[i].sockets_len; j++) {
             if(config->groups[i].sockets[j] == sock) {
@@ -84,7 +76,7 @@ int rtr_mgr_find_group(const rtr_mgr_config *config, const rtr_socket *sock, uns
     return RTR_ERROR;
 }
 
-bool rtr_mgr_config_status_is_synced(const rtr_mgr_group *group) {
+bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *group) {
     for(unsigned int i = 0; i < group->sockets_len; i++) {
         rtr_socket_state state = group->sockets[i]->state;
         if((group->sockets[i]->last_update == 0) || (state != RTR_ESTABLISHED && state != RTR_RESET && state != RTR_SYNC))
@@ -94,7 +86,7 @@ bool rtr_mgr_config_status_is_synced(const rtr_mgr_group *group) {
 }
 
 static void rtr_mgr_cb(const struct rtr_socket *sock, const rtr_socket_state state, void *data) {
-    rtr_mgr_config *config = data;
+    struct rtr_mgr_config *config = data;
 
     //find the index in the rtr_mgr_config struct, for which this function was called
     unsigned int ind = 0;
@@ -206,8 +198,8 @@ out:
 }
 
 int rtr_mgr_config_cmp(const void *a, const void *b) {
-    const rtr_mgr_group *ar = a;
-    const rtr_mgr_group *br = b;
+    const struct rtr_mgr_group *ar = a;
+    const struct rtr_mgr_group *br = b;
     if(ar->preference > br->preference)
         return 1;
     else if(ar->preference < br->preference)
@@ -215,7 +207,7 @@ int rtr_mgr_config_cmp(const void *a, const void *b) {
     return 0;
 }
 
-rtr_mgr_config *rtr_mgr_init(rtr_mgr_group groups[],
+struct rtr_mgr_config *rtr_mgr_init(struct rtr_mgr_group groups[],
                              const unsigned int groups_len,
                              const unsigned int polling_period,
                              const unsigned int cache_timeout,
@@ -238,7 +230,7 @@ rtr_mgr_config *rtr_mgr_init(rtr_mgr_group groups[],
     memcpy(config->groups, groups, groups_len * sizeof(*groups));
 
     //sort array in asc preference order
-    qsort(config->groups, config->len, sizeof(rtr_mgr_group), &rtr_mgr_config_cmp);
+    qsort(config->groups, config->len, sizeof(struct rtr_mgr_group), &rtr_mgr_config_cmp);
 
     for(unsigned int i = 0; i < config->len; i++) {
         if(config->groups[i].sockets_len == 0) {
@@ -251,7 +243,7 @@ rtr_mgr_config *rtr_mgr_init(rtr_mgr_group groups[],
         }
     }
 
-    pfx_table *pfxt = malloc(sizeof(pfx_table));
+    struct pfx_table *pfxt = malloc(sizeof(*pfxt));
     if(pfxt == NULL)
             goto err;
     pfx_table_init(pfxt, update_fp);
@@ -272,11 +264,11 @@ err:
     return NULL;
 }
 
-int rtr_mgr_start(rtr_mgr_config *config) {
+int rtr_mgr_start(struct rtr_mgr_config *config) {
     return rtr_mgr_start_sockets(&(config->groups[0]));
 }
 
-bool rtr_mgr_conf_in_sync(rtr_mgr_config *config) {
+bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config) {
     for(unsigned int i = 0; i < config->len; i++) {
         bool all_sync = true;
         for(unsigned int j = 0; all_sync && (j < config->groups[i].sockets_len); j++) {
@@ -289,7 +281,7 @@ bool rtr_mgr_conf_in_sync(rtr_mgr_config *config) {
     return false;
 }
 
-void rtr_mgr_free(rtr_mgr_config *config) {
+void rtr_mgr_free(struct rtr_mgr_config *config) {
     pthread_mutex_lock(&(config->mutex));
     pfx_table_free(config->groups[0].sockets[0]->pfx_table);
     free(config->groups[0].sockets[0]->pfx_table);
@@ -298,11 +290,11 @@ void rtr_mgr_free(rtr_mgr_config *config) {
     pthread_mutex_destroy(&(config->mutex));
 }
 
-inline int rtr_mgr_validate(rtr_mgr_config *config, const uint32_t asn, const ip_addr *prefix, const uint8_t mask_len, pfxv_state *result) {
+inline int rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn, const struct ip_addr *prefix, const uint8_t mask_len, pfxv_state *result) {
     return pfx_table_validate(config->groups[0].sockets[0]->pfx_table, asn, prefix, mask_len, result);
 }
 
-void rtr_mgr_stop(rtr_mgr_config *config) {
+void rtr_mgr_stop(struct rtr_mgr_config *config) {
     for(unsigned int i = 0; i < config->len; i++) {
         for(unsigned int j = 0; j < config->groups[i].sockets_len; j++) {
             rtr_stop(config->groups[i].sockets[j]);
@@ -315,10 +307,10 @@ const char *rtr_mgr_status_to_str(rtr_mgr_status status)
     return mgr_str_status[status];
 }
 
-inline void rtr_mgr_for_each_ipv4_record(rtr_mgr_config *config, void (fp)(const struct pfx_record *, void *data), void *data) {
+inline void rtr_mgr_for_each_ipv4_record(struct rtr_mgr_config *config, void (fp)(const struct pfx_record *, void *data), void *data) {
 	pfx_table_for_each_ipv4_record(config->groups[0].sockets[0]->pfx_table, fp, data);
 }
 
-inline void rtr_mgr_for_each_ipv6_record(rtr_mgr_config *config, void (fp)(const struct pfx_record *, void *data), void *data) {
+inline void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config, void (fp)(const struct pfx_record *, void *data), void *data) {
 	pfx_table_for_each_ipv6_record(config->groups[0].sockets[0]->pfx_table, fp, data);
 }

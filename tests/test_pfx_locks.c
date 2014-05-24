@@ -35,9 +35,9 @@
 uint32_t min_i = 0xFF000000;
 uint32_t max_i = 0xFFFFFFF0;
 
-static void rec_insert(pfx_table* pfxt){
+static void rec_insert(struct pfx_table* pfxt){
     const int tid = getpid();
-    pfx_record rec;
+    struct pfx_record rec;
     rec.min_len = 32;
     rec.max_len = 32;
     rec.prefix.ver = IPV4;
@@ -69,9 +69,9 @@ static void rec_insert(pfx_table* pfxt){
         //printf("%i: Record inserted\n", tid);
     }
 }
-static void rec_validate(pfx_table* pfxt){
+static void rec_validate(struct pfx_table* pfxt){
     const int tid = getpid();
-    pfx_record rec;
+    struct pfx_record rec;
     rec.min_len = 32;
     rec.max_len = 32;
     rec.prefix.ver = IPV4;
@@ -103,9 +103,9 @@ static void rec_validate(pfx_table* pfxt){
         usleep(rand() / (RAND_MAX / 20));
     }
 }
-static void rec_remove(pfx_table* pfxt){
+static void rec_remove(struct pfx_table* pfxt){
     const int tid = getpid();
-    pfx_record rec;
+    struct pfx_record rec;
     rec.min_len = 32;
     rec.max_len = 32;
     rec.prefix.ver = IPV4;
@@ -142,7 +142,7 @@ static void rec_remove(pfx_table* pfxt){
 
 int main(){
     unsigned int max_threads = 15;
-    pfx_table pfxt;
+    struct pfx_table pfxt;
     pfx_table_init(&pfxt, NULL);
     pthread_t threads[max_threads];
     srand(time(NULL));

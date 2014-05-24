@@ -31,8 +31,8 @@
 
 const unsigned int ERR_TIMEOUT = 20;
 
-static void rtr_purge_outdated_records(rtr_socket *rtr_socket);
-static void rtr_fsm_start(rtr_socket *rtr_socket);
+static void rtr_purge_outdated_records(struct rtr_socket *rtr_socket);
+static void rtr_fsm_start(struct rtr_socket *rtr_socket);
 static void sighandler(int b);
 static int install_sig_handler();
 
@@ -63,7 +63,7 @@ static int install_sig_handler() {
     return sigaction(SIGUSR1, &sa, NULL);
 }
 
-void rtr_init(rtr_socket *rtr_socket, tr_socket *tr, struct pfx_table *pfx_table, const unsigned int polling_period, const unsigned int cache_timeout, rtr_connection_state_fp fp, void *fp_param) {
+void rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_table *pfx_table, const unsigned int polling_period, const unsigned int cache_timeout, rtr_connection_state_fp fp, void *fp_param) {
     if(tr != NULL)
         rtr_socket->tr_socket = tr;
     assert(polling_period <= 3600);
@@ -82,14 +82,14 @@ void rtr_init(rtr_socket *rtr_socket, tr_socket *tr, struct pfx_table *pfx_table
     rtr_socket->thread_id = 0;
 }
 
-int rtr_start(rtr_socket *rtr_socket) {
+int rtr_start(struct rtr_socket *rtr_socket) {
     int rtval = pthread_create(&(rtr_socket->thread_id), NULL, (void* ( *)(void *)) &rtr_fsm_start, rtr_socket);
     if(rtval == 0)
         return RTR_SUCCESS;
     return RTR_ERROR;
 }
 
-void rtr_purge_outdated_records(rtr_socket *rtr_socket) {
+void rtr_purge_outdated_records(struct rtr_socket *rtr_socket) {
     if(rtr_socket->last_update == 0)
         return;
     time_t cur_time;
@@ -105,7 +105,7 @@ void rtr_purge_outdated_records(rtr_socket *rtr_socket) {
     }
 }
 
-void rtr_fsm_start(rtr_socket *rtr_socket) {
+void rtr_fsm_start(struct rtr_socket *rtr_socket) {
     rtr_socket->state = RTR_CONNECTING;
     install_sig_handler();
     while(1) {
@@ -197,7 +197,7 @@ void rtr_fsm_start(rtr_socket *rtr_socket) {
     }
 }
 
-void rtr_stop(rtr_socket *rtr_socket) {
+void rtr_stop(struct rtr_socket *rtr_socket) {
     rtr_change_socket_state(rtr_socket, RTR_SHUTDOWN);
     if(rtr_socket->thread_id != 0) {
         pthread_kill(rtr_socket->thread_id, SIGUSR1);

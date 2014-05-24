@@ -28,19 +28,19 @@
 #include <string.h>
 #include <stdio.h>
 
-inline bool ipv6_addr_equal(const ipv6_addr *a, const ipv6_addr *b) {
+inline bool ipv6_addr_equal(const struct ipv6_addr *a, const struct ipv6_addr *b) {
     if(a->addr[0] == b->addr[0] && a->addr[1] == b->addr[1] && a->addr[2] == b->addr[2] && a->addr[3] == b->addr[3])
         return true;
     return false;
 }
 
-ipv6_addr ipv6_get_bits(const ipv6_addr *val, const uint8_t first_bit, const uint8_t quantity) {
+struct ipv6_addr ipv6_get_bits(const struct ipv6_addr *val, const uint8_t first_bit, const uint8_t quantity) {
     assert(first_bit <= 127);
     assert(quantity <= 128);
     assert(first_bit + quantity <= 128);
 
     // if no bytes get extracted the result has to be 0
-    ipv6_addr result;
+    struct ipv6_addr result;
     memset(&result, 0, sizeof(result));
 
     uint8_t bits_left = quantity;
@@ -81,7 +81,7 @@ ipv6_addr ipv6_get_bits(const ipv6_addr *val, const uint8_t first_bit, const uin
 /*
  * This function was copied from the bird routing daemon's ip_pton(..) function.
  */
-int ipv6_str_to_addr(const char *a, ipv6_addr *ip) {
+int ipv6_str_to_addr(const char *a, struct ipv6_addr *ip) {
     uint32_t *o = ip->addr;
     uint16_t words[8];
     int i, j, k, l, hfil;
@@ -121,7 +121,7 @@ int ipv6_str_to_addr(const char *a, ipv6_addr *ip) {
         if (*a == ':' && a[1])
             a++;
         else if (*a == '.' && (i == 6 || (i < 6 && hfil >= 0))) {             /* Embedded IPv4 address */
-            ipv4_addr addr4;
+            struct ipv4_addr addr4;
             if (ipv4_str_to_addr(start, &addr4) == -1)
                 return -1;
             words[i++] = addr4.addr >> 16;
@@ -153,7 +153,7 @@ int ipv6_str_to_addr(const char *a, ipv6_addr *ip) {
 /*
  * This function was copied from the bird routing daemon's ip_ntop(..) function.
 */
-int ipv6_addr_to_str(const ipv6_addr *ip_addr, char *b, const unsigned int len) {
+int ipv6_addr_to_str(const struct ipv6_addr *ip_addr, char *b, const unsigned int len) {
     if(len < INET6_ADDRSTRLEN)
         return -1;
     const uint32_t *a = ip_addr->addr;

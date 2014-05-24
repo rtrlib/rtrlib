@@ -101,8 +101,8 @@ typedef void (*rtr_connection_state_fp)(const struct rtr_socket *rtr_socket, con
  * @param connection_state_fp A callback function that is executed when the state of the socket changes.
  * @param connection_state_fp_param Parameter that is passed to the connection_state_fp callback.
  */
-typedef struct rtr_socket {
-    tr_socket *tr_socket;
+struct rtr_socket {
+    struct tr_socket *tr_socket;
     unsigned int polling_period;
     time_t last_update;
     unsigned int cache_timeout;
@@ -114,7 +114,7 @@ typedef struct rtr_socket {
     pthread_t thread_id;
     rtr_connection_state_fp connection_state_fp;
     void *connection_state_fp_param;
-} rtr_socket;
+};
 
 /**
  * @brief Initializes a rtr_socket.
@@ -128,7 +128,7 @@ typedef struct rtr_socket {
  * @param[in] fp A callback function that is executed when the state of the socket changes.
  * @param[in] fp_data Parameter that is passed to the connection_state_fp callback.
  */
-void rtr_init(rtr_socket *rtr_socket, tr_socket *tr_socket, struct pfx_table *pfx_table, const unsigned int polling_period, const unsigned int cache_timeout, rtr_connection_state_fp fp, void *fp_data);
+void rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr_socket, struct pfx_table *pfx_table, const unsigned int polling_period, const unsigned int cache_timeout, rtr_connection_state_fp fp, void *fp_data);
 
 /**
  * @brief Starts the RTR protocol state machine in a pthread. Connection to the rtr_server will be established and the
@@ -137,13 +137,13 @@ void rtr_init(rtr_socket *rtr_socket, tr_socket *tr_socket, struct pfx_table *pf
  * @return RTR_ERROR On error.
  * @return RTR_SUCCESS On success.
  */
-int rtr_start(rtr_socket *rtr_socket);
+int rtr_start(struct rtr_socket *rtr_socket);
 
 /**
  * @brief Stops the RTR connection and terminate the transport connection.
  * @param[in] rtr_socket rtr_socket that will be used.
  */
-void rtr_stop(rtr_socket *rtr_socket);
+void rtr_stop(struct rtr_socket *rtr_socket);
 
 /**
  * @brief Converts a rtr_socket_state to a String.
