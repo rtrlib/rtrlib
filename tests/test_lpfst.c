@@ -33,10 +33,10 @@
 
 
 static void get_bits_testv4(){
-    ip_addr addr;
+    struct ip_addr addr;
     addr.ver = IPV4;
 
-    ip_addr result;
+    struct ip_addr result;
     addr.u.addr4.addr=0xAABBCC22;
 
     result = ip_addr_get_bits(&addr, 0, 32);
@@ -106,14 +106,14 @@ static void get_bits_testv4(){
 }
 
 static void get_bits_testv6(){
-    ip_addr addr;
+    struct ip_addr addr;
     addr.ver = IPV6;
     addr.u.addr6.addr[0] = 0x22AABBCC;
     addr.u.addr6.addr[1] = 0xDDEEFF99;
     addr.u.addr6.addr[2] = 0x33001122;
     addr.u.addr6.addr[3] = 0x33445566;
 
-    ip_addr result;
+    struct ip_addr result;
 
     result = ip_addr_get_bits(&addr, 0, 128);
     assert(result.u.addr6.addr[0] == addr.u.addr6.addr[0] && result.u.addr6.addr[1] == addr.u.addr6.addr[1] && result.u.addr6.addr[2] == addr.u.addr6.addr[2] && result.u.addr6.addr[3] == addr.u.addr6.addr[3]);
@@ -179,12 +179,12 @@ static void get_bits_testv6(){
 }
 
 static void lpfst_test(){
-    ip_addr addr;
+    struct ip_addr addr;
     addr.ver = IPV4;
-    lpfst_node* result;
+    struct lpfst_node* result;
     unsigned int lvl = 0;
     //n1
-    lpfst_node n1;
+    struct lpfst_node n1;
     n1.len = 16;
     n1.lchild = NULL;
     n1.rchild = NULL;
@@ -192,13 +192,13 @@ static void lpfst_test(){
     n1.data = NULL;
     ip_str_to_addr( "100.200.0.0", &(n1.prefix));
 
-    ip_str_to_addr( "100.200.0.0", &(addr)); 
+    ip_str_to_addr( "100.200.0.0", &(addr));
     lvl = 0;
     result = lpfst_lookup(&n1, &addr, 16, &lvl);
     assert(result != NULL);
     assert(ip_str_cmp(&(result->prefix), "100.200.0.0"));
 
-    ip_str_to_addr( "100.200.30.0", &(addr)); 
+    ip_str_to_addr( "100.200.30.0", &(addr));
     lvl = 0;
     result = lpfst_lookup(&n1, &addr, 16, &lvl);
     assert(result != NULL);
@@ -206,16 +206,16 @@ static void lpfst_test(){
 
 
     //n2
-    lpfst_node n2;
+    struct lpfst_node n2;
     n2.len = 16;
     n2.lchild = NULL;
     n2.rchild = NULL;
     n2.parent = NULL;
     n2.data = NULL;
-    ip_str_to_addr("132.200.0.0", &(n2.prefix)); 
+    ip_str_to_addr("132.200.0.0", &(n2.prefix));
     lpfst_insert(&n1, &n2, 0);
 
-    ip_str_to_addr("132.200.0.0", &(addr)); 
+    ip_str_to_addr("132.200.0.0", &(addr));
     lvl = 0;
     result = lpfst_lookup(&n1, &addr, 16, &lvl);
     assert(result != NULL);
@@ -224,16 +224,16 @@ static void lpfst_test(){
 
 
     //n3
-    lpfst_node n3;
+    struct lpfst_node n3;
     n3.len = 16;
     n3.lchild = NULL;
     n3.rchild = NULL;
     n3.parent = NULL;
     n3.data = NULL;
-    ip_str_to_addr("101.200.0.0", &(n3.prefix)); 
+    ip_str_to_addr("101.200.0.0", &(n3.prefix));
     lpfst_insert(&n1, &n3, 0);
 
-    ip_str_to_addr("101.200.0.0", &(addr)); 
+    ip_str_to_addr("101.200.0.0", &(addr));
     lvl = 0;
     result = lpfst_lookup(&n1, &addr, 16, &lvl);
     assert(result != NULL);
@@ -241,16 +241,16 @@ static void lpfst_test(){
     assert(n1.lchild == &n3);
 
     //n4
-    lpfst_node n4;
+    struct lpfst_node n4;
     n4.len = 24;
     n4.lchild = NULL;
     n4.rchild = NULL;
     n4.parent = NULL;
     n4.data = NULL;
-    ip_str_to_addr("132.200.3.0", &(n4.prefix)); 
+    ip_str_to_addr("132.200.3.0", &(n4.prefix));
     lpfst_insert(&n1, &n4, 0);
 
-    ip_str_to_addr("132.200.3.0", &(addr)); 
+    ip_str_to_addr("132.200.3.0", &(addr));
     lvl = 0;
     result = lpfst_lookup(&n1, &addr, 24, &lvl);
     assert(result != NULL);
@@ -264,13 +264,13 @@ static void lpfst_test(){
     assert(ip_str_cmp(&(n1.lchild->rchild->prefix), "100.200.0.0"));
     assert(n1.lchild->rchild->len == 16);
 
-    ip_str_to_addr("132.200.0.0", &(addr)); 
+    ip_str_to_addr("132.200.0.0", &(addr));
     lvl = 0;
     result = lpfst_lookup(&n1, &addr, 16, &lvl);
     assert(result != NULL);
     assert(ip_str_cmp(&(result->prefix), "132.200.0.0"));
 
-    ip_str_to_addr("132.200.3.0", &(addr)); 
+    ip_str_to_addr("132.200.3.0", &(addr));
     lvl = 0;
     result = lpfst_lookup(&n1, &addr, 16, &lvl);
     assert(result != NULL);
@@ -278,13 +278,13 @@ static void lpfst_test(){
 
 
     lvl = 0;
-    ip_str_to_addr("132.0.0.0", &(addr)); 
+    ip_str_to_addr("132.0.0.0", &(addr));
     bool found;
     result = lpfst_lookup_exact(&n1, &addr, 16, &lvl, &found);
     assert(!found);
 
     lvl = 0;
-    ip_str_to_addr("132.200.3.0", &(addr)); 
+    ip_str_to_addr("132.200.3.0", &(addr));
     result = lpfst_lookup_exact(&n1, &addr, 24, &lvl, &found);
     assert(found);
     assert(ip_str_cmp(&(result->prefix), "132.200.3.0"));
@@ -296,13 +296,13 @@ static void lpfst_test(){
     assert(ip_str_cmp(&(n1.lchild->rchild->prefix), "100.200.0.0"));
     assert(n1.rchild == NULL);
 
-    ip_str_to_addr("101.200.0.0", &(addr)); 
+    ip_str_to_addr("101.200.0.0", &(addr));
     result = lpfst_remove(&n1, &addr, 16, 0);
     assert(result != NULL);
     assert(ip_str_cmp(&(n1.lchild->prefix), "100.200.0.0"));
     assert(n1.rchild == NULL);
 
-    ip_str_to_addr("100.200.0.0", &(addr)); 
+    ip_str_to_addr("100.200.0.0", &(addr));
     result = lpfst_remove(&n1, &addr, 16, 0);
     assert(result != NULL);
     assert(n1.lchild == NULL);

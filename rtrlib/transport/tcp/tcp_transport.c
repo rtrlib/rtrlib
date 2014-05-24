@@ -35,15 +35,15 @@
 #define TCP_DBG(fmt, sock, ...) dbg("TCP Transport(%s:%s): " fmt, sock->config.host, sock->config.port, ## __VA_ARGS__)
 #define TCP_DBG1(a, sock) dbg("TCP Transport(%s:%s): " a,sock->config.host, sock->config.port)
 
-typedef struct tr_tcp_socket {
+struct tr_tcp_socket {
     int socket;
-    tr_tcp_config config;
+    struct tr_tcp_config config;
     char *ident;
-} tr_tcp_socket;
+};
 
 static int tr_tcp_open(void *tr_tcp_sock);
 static void tr_tcp_close(void *tr_tcp_sock);
-static void tr_tcp_free(tr_socket *tr_sock);
+static void tr_tcp_free(struct tr_socket *tr_sock);
 static int tr_tcp_recv(const void *tr_tcp_sock, void *pdu, const size_t len, const time_t timeout);
 static int tr_tcp_send(const void *tr_tcp_sock, const void *pdu, const size_t len, const time_t timeout);
 static const char *tr_tcp_ident(void *socket);
@@ -51,7 +51,7 @@ static const char *tr_tcp_ident(void *socket);
 int tr_tcp_open(void *tr_socket) {
 
     int rtval = TR_ERROR;
-    tr_tcp_socket *tcp_socket = tr_socket;
+    struct tr_tcp_socket *tcp_socket = tr_socket;
     assert(tcp_socket->socket == -1);
 
     struct addrinfo hints;
@@ -86,15 +86,15 @@ end:
 }
 
 void tr_tcp_close(void *tr_tcp_sock) {
-    tr_tcp_socket *tcp_socket = tr_tcp_sock;
+    struct tr_tcp_socket *tcp_socket = tr_tcp_sock;
     if(tcp_socket->socket != -1)
         close(tcp_socket->socket);
     TCP_DBG1("Socket closed", tcp_socket);
     tcp_socket->socket = -1;
 }
 
-void tr_tcp_free(tr_socket *tr_sock) {
-    tr_tcp_socket *tcp_sock = tr_sock->socket;
+void tr_tcp_free(struct tr_socket *tr_sock) {
+    struct tr_tcp_socket *tcp_sock = tr_sock->socket;
     assert(tcp_sock != NULL);
     assert(tcp_sock->socket == -1);
 
@@ -106,7 +106,7 @@ void tr_tcp_free(tr_socket *tr_sock) {
 }
 
 int tr_tcp_recv(const void *tr_tcp_sock, void *pdu, const size_t len, const time_t timeout) {
-    const tr_tcp_socket *tcp_socket = tr_tcp_sock;
+    const struct tr_tcp_socket *tcp_socket = tr_tcp_sock;
     int rtval;
     if(timeout == 0)
         rtval = recv(tcp_socket->socket, pdu, len, MSG_DONTWAIT);
@@ -133,7 +133,7 @@ int tr_tcp_recv(const void *tr_tcp_sock, void *pdu, const size_t len, const time
 }
 
 int tr_tcp_send(const void *tr_tcp_sock, const void *pdu, const size_t len, const time_t timeout) {
-    const tr_tcp_socket *tcp_socket = tr_tcp_sock;
+    const struct tr_tcp_socket *tcp_socket = tr_tcp_sock;
     int rtval;
     if(timeout == 0)
         rtval = send(tcp_socket->socket, pdu, len, MSG_DONTWAIT);
@@ -161,7 +161,7 @@ int tr_tcp_send(const void *tr_tcp_sock, const void *pdu, const size_t len, cons
 
 const char *tr_tcp_ident(void *socket) {
     size_t len;
-    tr_tcp_socket *sock = socket;
+    struct tr_tcp_socket *sock = socket;
 
     assert(socket != NULL);
 
@@ -177,7 +177,7 @@ const char *tr_tcp_ident(void *socket) {
     return sock->ident;
 }
 
-int tr_tcp_init(const tr_tcp_config *config, tr_socket *socket) {
+int tr_tcp_init(const struct tr_tcp_config *config, struct tr_socket *socket) {
 
     socket->close_fp = &tr_tcp_close;
     socket->free_fp = &tr_tcp_free;
@@ -186,8 +186,8 @@ int tr_tcp_init(const tr_tcp_config *config, tr_socket *socket) {
     socket->send_fp = &tr_tcp_send;
     socket->ident_fp = &tr_tcp_ident;
 
-    socket->socket = malloc(sizeof(tr_tcp_socket));
-    tr_tcp_socket *tcp_socket = socket->socket;
+    socket->socket = malloc(sizeof(struct tr_tcp_socket));
+    struct tr_tcp_socket *tcp_socket = socket->socket;
     tcp_socket->socket = -1;
     tcp_socket->config = *config;
     tcp_socket->ident = NULL;

@@ -31,9 +31,9 @@
  * @brief Struct holding an IPv6 address in host byte order.
  * @param addr The IPv6 address.
  */
-typedef struct {
+struct ipv6_addr {
     uint32_t addr[4];
-} ipv6_addr;
+};
 
 /**
  * Compares two ipv6_addr structs
@@ -42,7 +42,7 @@ typedef struct {
  * @return true if a == b
  * @return false if a != b
 */
-bool ipv6_addr_equal(const ipv6_addr *a, const ipv6_addr *b);
+bool ipv6_addr_equal(const struct ipv6_addr *a, const struct ipv6_addr *b);
 
 /**
  * @brief Extracts quantity bits from a ip address. The bit with the highest
@@ -52,7 +52,7 @@ bool ipv6_addr_equal(const ipv6_addr *a, const ipv6_addr *b);
  * @param[in] quantity How many bits will be extracted.
  * @returns An ipv6_addr, where all bits that aren't in the specified range are set to 0.
 */
-ipv6_addr ipv6_get_bits(const ipv6_addr *val, const uint8_t first_bit, const uint8_t quantity);
+struct ipv6_addr ipv6_get_bits(const struct ipv6_addr *val, const uint8_t first_bit, const uint8_t quantity);
 
 /**
  * Converts the passed ipv6_addr to string representation
@@ -61,7 +61,7 @@ ipv6_addr ipv6_get_bits(const ipv6_addr *val, const uint8_t first_bit, const uin
  * @result 0 on success
  * @result -1 on error
 */
-int ipv6_addr_to_str(const ipv6_addr *ip_addr, char *b, const unsigned int len);
+int ipv6_addr_to_str(const struct ipv6_addr *ip_addr, char *b, const unsigned int len);
 
 /**
  * Converts the passed IPv6 address in string representation to an ipv6_addr struct.
@@ -70,7 +70,7 @@ int ipv6_addr_to_str(const ipv6_addr *ip_addr, char *b, const unsigned int len);
  * @result 0 on success
  * @result -1 on error
 */
-int ipv6_str_to_addr(const char *a, ipv6_addr *ip);
+int ipv6_str_to_addr(const char *a, struct ipv6_addr *ip);
 
 /**
  * @ingroup util_h[{

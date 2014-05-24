@@ -23,11 +23,11 @@
 #include <stdlib.h>
 #include "rtrlib/pfx/lpfst/lpfst.h"
 
-void lpfst_insert(lpfst_node *root_node, lpfst_node *new_node, const unsigned int level) {
+void lpfst_insert(struct lpfst_node *root_node, struct lpfst_node *new_node, const unsigned int level) {
     if(new_node->len > root_node->len)
     {
         //switch node data
-        lpfst_node tmp;
+        struct lpfst_node tmp;
         tmp.prefix = root_node->prefix;
         tmp.len = root_node->len;
         tmp.data = root_node->data;
@@ -56,11 +56,11 @@ void lpfst_insert(lpfst_node *root_node, lpfst_node *new_node, const unsigned in
     }
 }
 
-lpfst_node *lpfst_lookup(const lpfst_node *root_node, const ip_addr *prefix, const uint8_t mask_len, unsigned int *level) {
+struct lpfst_node *lpfst_lookup(const struct lpfst_node *root_node, const struct ip_addr *prefix, const uint8_t mask_len, unsigned int *level) {
     while(root_node != NULL)
     {
         if(root_node->len <= mask_len && ip_addr_equal(ip_addr_get_bits(&(root_node->prefix), 0, root_node->len), ip_addr_get_bits(prefix, 0, root_node->len)))
-            return (lpfst_node *) root_node;
+            return (struct lpfst_node *) root_node;
 
         if(ip_addr_is_zero(ip_addr_get_bits(prefix, *level, 1)))
             root_node = root_node->lchild;
@@ -72,7 +72,7 @@ lpfst_node *lpfst_lookup(const lpfst_node *root_node, const ip_addr *prefix, con
     return NULL;
 }
 
-lpfst_node *lpfst_lookup_exact(lpfst_node *root_node, const ip_addr *prefix, const uint8_t mask_len, unsigned int *level, bool *found) {
+struct lpfst_node *lpfst_lookup_exact(struct lpfst_node *root_node, const struct ip_addr *prefix, const uint8_t mask_len, unsigned int *level, bool *found) {
     *found = false;
     while(root_node != NULL)
     {
@@ -82,7 +82,7 @@ lpfst_node *lpfst_lookup_exact(lpfst_node *root_node, const ip_addr *prefix, con
         }
         if(root_node->len == mask_len && ip_addr_equal(root_node->prefix, *prefix)) {
             *found = true;
-            return (lpfst_node *) root_node;
+            return (struct lpfst_node *) root_node;
         }
 
         if(ip_addr_is_zero(ip_addr_get_bits(prefix, *level, 1))) {
@@ -104,7 +104,7 @@ lpfst_node *lpfst_lookup_exact(lpfst_node *root_node, const ip_addr *prefix, con
 }
 
 //returns node that isnt used anymore in the tree
-lpfst_node *lpfst_remove(lpfst_node *root_node, const ip_addr *prefix, const uint8_t mask_len, const unsigned int level) {
+struct lpfst_node *lpfst_remove(struct lpfst_node *root_node, const struct ip_addr *prefix, const uint8_t mask_len, const unsigned int level) {
     if(root_node->len == mask_len && ip_addr_equal(root_node->prefix, *prefix)) {
         if(lpfst_is_leaf(root_node)) {
             if(level != 0) {
@@ -147,10 +147,10 @@ lpfst_node *lpfst_remove(lpfst_node *root_node, const ip_addr *prefix, const uin
     }
 }
 
-int lpfst_get_children(const lpfst_node *root_node, lpfst_node ***array, unsigned int *len) {
+int lpfst_get_children(const struct lpfst_node *root_node, struct lpfst_node ***array, unsigned int *len) {
     if(root_node->lchild != NULL) {
         *len += 1;
-        *array = realloc(*array, (*len) * sizeof(lpfst_node *));
+        *array = realloc(*array, (*len) * sizeof(struct lpfst_node *));
         if(*array == NULL)
             return -1;
         (*array)[(*len) - 1] = root_node->lchild;
@@ -160,7 +160,7 @@ int lpfst_get_children(const lpfst_node *root_node, lpfst_node ***array, unsigne
 
     if(root_node->rchild != NULL) {
         *len += 1;
-        *array = realloc(*array, (*len) * sizeof(lpfst_node *));
+        *array = realloc(*array, (*len) * sizeof(struct lpfst_node *));
         if(*array == NULL)
             return -1;
         (*array)[(*len) - 1] = root_node->rchild;
@@ -170,6 +170,6 @@ int lpfst_get_children(const lpfst_node *root_node, lpfst_node ***array, unsigne
     return 0;
 }
 
-inline int lpfst_is_leaf(const lpfst_node *node) {
+inline int lpfst_is_leaf(const struct lpfst_node *node) {
     return node->lchild == NULL && node->rchild == NULL;
 }

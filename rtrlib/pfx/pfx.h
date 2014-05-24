@@ -76,13 +76,13 @@ typedef enum pfxv_state {
  * @param max_len Maximum prefix length.
  * @param socket_id unique id of the rtr_socket that received this record.
  */
-typedef struct pfx_record {
+struct pfx_record {
     uint32_t asn;
-    ip_addr prefix;
+    struct ip_addr prefix;
     uint8_t min_len;
     uint8_t max_len;
     const struct rtr_socket *socket;
-} pfx_record;
+};
 
 /**
  * @brief A function pointer that is called if an record was added to the pfx_table or was removed from the pfx_table.
@@ -90,7 +90,7 @@ typedef struct pfx_record {
  * @param record pfx_record that was modified.
  * @param added True if the record was added, false if the record was removed.
  */
-typedef void (*pfx_update_fp)(struct pfx_table *pfx_table, const pfx_record record, const bool added);
+typedef void (*pfx_update_fp)(struct pfx_table *pfx_table, const struct pfx_record record, const bool added);
 
 /**
  * @brief Initializes the pfx_table struct.
@@ -113,7 +113,7 @@ void pfx_table_free(struct pfx_table *pfx_table);
  * @return PFX_ERROR On error.
  * @return PFX_DUPLICATE_RECORD If the pfx_record already exists.
  */
-int pfx_table_add(struct pfx_table *pfx_table, const pfx_record *pfx_record);
+int pfx_table_add(struct pfx_table *pfx_table, const struct pfx_record *pfx_record);
 
 /**
  * @brief Removes a pfx_record from a pfx_table.
@@ -123,7 +123,7 @@ int pfx_table_add(struct pfx_table *pfx_table, const pfx_record *pfx_record);
  * @return PFX_ERROR On error.
  * @return PFX_RECORD_NOT_FOUND If pfx_records could'nt be found.
  */
-int pfx_table_remove(struct pfx_table *pfx_table, const pfx_record *pfx_record);
+int pfx_table_remove(struct pfx_table *pfx_table, const struct pfx_record *pfx_record);
 
 /**
  * @brief Removes all entries in the pfx_table that match the passed socket_id value from a pfx_table.
@@ -144,7 +144,7 @@ int pfx_table_src_remove(struct pfx_table *pfx_table, const struct rtr_socket *s
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR On error.
  */
-int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const ip_addr *prefix, const uint8_t mask_len, pfxv_state *result);
+int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const struct ip_addr *prefix, const uint8_t mask_len, pfxv_state *result);
 
 /**
  * @brief Validates the origin of a BGP-Route and returns a list of pfx_record that decided the result.
@@ -158,7 +158,7 @@ int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const ip
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR On error.
  */
-int pfx_table_validate_r(struct pfx_table *pfx_table, pfx_record **reason, unsigned int *reason_len,  const uint32_t asn, const ip_addr *prefix, const uint8_t mask_len, pfxv_state *result);
+int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason, unsigned int *reason_len,  const uint32_t asn, const struct ip_addr *prefix, const uint8_t mask_len, pfxv_state *result);
 
 /**
  * @brief Iterates over all IPv4 records in the pfx_table.

@@ -32,10 +32,10 @@ static const unsigned int RTR_MAX_PDU_LEN = 3248; //error pdu: header(8) + len(4
 static const unsigned int RTR_RECV_TIMEOUT = 60;
 static const unsigned int RTR_SEND_TIMEOUT = 60;
 
-void rtr_change_socket_state(rtr_socket *rtr_socket, const rtr_socket_state new_state);
-int rtr_sync(rtr_socket *rtr_socket);
-int rtr_wait_for_sync(rtr_socket *rtr_socket);
-int rtr_send_serial_query(rtr_socket *rtr_socket);
-int rtr_send_reset_query(rtr_socket *rtr_socket);
+void rtr_change_socket_state(struct rtr_socket *rtr_socket, const rtr_socket_state new_state);
+int rtr_sync(struct rtr_socket *rtr_socket);
+int rtr_wait_for_sync(struct rtr_socket *rtr_socket);
+int rtr_send_serial_query(struct rtr_socket *rtr_socket);
+int rtr_send_reset_query(struct rtr_socket *rtr_socket);
 
 #endif

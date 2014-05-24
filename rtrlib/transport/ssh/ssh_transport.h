@@ -49,14 +49,14 @@
  * @param client_privkey_path Path to the private key of the authentication keypair.
  * @param client_pubkey_path Path to the public key of the authentication keypair.
  */
-typedef struct tr_ssh_config {
+struct tr_ssh_config {
     char *host;
     unsigned int port;
     char *username;
     char *server_hostkey_path;
     char *client_privkey_path;
     char *client_pubkey_path;
-} tr_ssh_config;
+};
 
 /**
  * @brief Initializes the tr_socket struct for a SSH connection.
@@ -65,7 +65,7 @@ typedef struct tr_ssh_config {
  * @returns TR_SUCCESS On success.
  * @returns TR_ERROR On error.
  */
-int tr_ssh_init(const tr_ssh_config *config, tr_socket *socket);
+int tr_ssh_init(const struct tr_ssh_config *config, struct tr_socket *socket);
 
 #endif
 /* @} */

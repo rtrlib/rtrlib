@@ -43,8 +43,8 @@ static void print_usage(char** argv){
 
 }
 
-static void status_fp(const rtr_mgr_group *group __attribute__((unused)),
-			   rtr_mgr_status mgr_status, const rtr_socket *rtr_sock,
+static void status_fp(const struct rtr_mgr_group *group __attribute__((unused)),
+			   rtr_mgr_status mgr_status, const struct rtr_socket *rtr_sock,
 			   void *data __attribute__((unused)))
 {
 	printf("RTR-Socket changed connection status to: %s, Mgr Status: %s\n",
@@ -52,7 +52,7 @@ static void status_fp(const rtr_mgr_group *group __attribute__((unused)),
 		   rtr_mgr_status_to_str(mgr_status));
 }
 
-static void update_cb(struct pfx_table* p  __attribute__((unused)), const pfx_record rec, const bool added){
+static void update_cb(struct pfx_table* p  __attribute__((unused)), const struct pfx_record rec, const bool added){
     char ip[INET6_ADDRSTRLEN];
     if(added)
         printf("+ ");
@@ -106,19 +106,19 @@ int main(int argc, char** argv){
         return(EXIT_FAILURE);
     }
 
-    tr_socket tr_sock;
-    tr_tcp_config tcp_config;
+    struct tr_socket tr_sock;
+    struct tr_tcp_config tcp_config;
 #ifdef RTRLIB_HAVE_LIBSSH
-    tr_ssh_config ssh_config;
+    struct tr_ssh_config ssh_config;
 #endif
     if(mode == TCP){
-        tcp_config = (tr_tcp_config) { host, port };
+        tcp_config = (struct tr_tcp_config) { host, port };
         tr_tcp_init(&tcp_config, &tr_sock);
     }
 #ifdef RTRLIB_HAVE_LIBSSH
     else{
         unsigned int iport = atoi(port);
-        ssh_config = (tr_ssh_config) {
+        ssh_config = (struct tr_ssh_config) {
             host,
             iport,
             user,
@@ -130,13 +130,13 @@ int main(int argc, char** argv){
     }
 #endif
 
-    rtr_socket rtr;
+    struct rtr_socket rtr;
     rtr.tr_socket = &tr_sock;
-    rtr_mgr_config *conf;
+    struct rtr_mgr_config *conf;
 
-    rtr_mgr_group groups[1];
+    struct rtr_mgr_group groups[1];
     groups[0].sockets_len = 1;
-    groups[0].sockets = malloc(1 * sizeof(rtr_socket*));
+    groups[0].sockets = malloc(1 * sizeof(rtr));
     groups[0].sockets[0] = &rtr;
     groups[0].preference = 1;
 

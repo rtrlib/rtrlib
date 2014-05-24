@@ -38,10 +38,10 @@
  * @param host Hostname or IP address to connect to.
  * @param port Port to connect to.
  */
-typedef struct tr_tcp_config {
+struct tr_tcp_config {
     char *host;
     char *port;
-} tr_tcp_config;
+};
 
 
 /**
@@ -51,6 +51,6 @@ typedef struct tr_tcp_config {
  * @returns TR_SUCCESS On success.
  * @returns TR_ERROR On error.
  */
-int tr_tcp_init(const tr_tcp_config *config, tr_socket *socket);
+int tr_tcp_init(const struct tr_tcp_config *config, struct tr_socket *socket);
 #endif
 /* @} */

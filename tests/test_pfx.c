@@ -32,11 +32,11 @@
 #include "rtrlib/pfx/lpfst/lpfst-pfx.h"
 
 static void remove_src_test(){
-    pfx_table pfxt;
+    struct pfx_table pfxt;
     pfx_table_init(&pfxt, NULL);
-   rtr_socket tr1;
+    struct rtr_socket tr1;
 
-    pfx_record pfx;
+    struct pfx_record pfx;
     pfx.min_len = 32;
     pfx.max_len = 32;
 
@@ -61,7 +61,7 @@ static void remove_src_test(){
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
     unsigned int len = 0;
-    lpfst_node** array = NULL;
+    struct lpfst_node** array = NULL;
     assert(lpfst_get_children(pfxt.ipv4, &array, &len) != -1);
     free(array);
     array = NULL;
@@ -90,10 +90,10 @@ static void remove_src_test(){
 }
 
 static void mass_test(){
-    pfx_table pfxt;
+    struct pfx_table pfxt;
     pfx_table_init(&pfxt, NULL);
 
-    pfx_record rec;
+    struct pfx_record rec;
     pfxv_state res;
     const uint32_t min_i = 0xFFFF0000;
     const uint32_t max_i = 0xFFFFFFF0;
@@ -165,10 +165,10 @@ static void mass_test(){
 }
 
 int main(){
-    pfx_table pfxt;
+    struct pfx_table pfxt;
     pfx_table_init(&pfxt, NULL);
 
-    pfx_record pfx;
+    struct pfx_record pfx;
     pfx.asn = 123;
     pfx.prefix.ver = IPV4;
     ip_str_to_addr("10.10.0.0", &(pfx.prefix));
@@ -334,7 +334,7 @@ int main(){
     pfx.asn=5;
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
-    pfx_record* r = NULL;
+    struct pfx_record* r = NULL;
     unsigned int r_len = 0;
     assert(ip_str_to_addr("10.1.0.0", &(pfx.prefix)) == 0);
     assert(pfx_table_validate_r(&pfxt, &r, &r_len, 123, &(pfx.prefix), 16, &res) == PFX_SUCCESS);

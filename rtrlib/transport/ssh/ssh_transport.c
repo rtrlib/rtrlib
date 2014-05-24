@@ -33,24 +33,24 @@
 #define SSH_DBG(fmt, sock, ...) dbg("SSH Transport(%s@%s:%u): " fmt, sock->config.username, sock->config.host, sock->config.port, ## __VA_ARGS__)
 #define SSH_DBG1(a, sock) dbg("SSH Transport(%s@%s:%u): " a, sock->config.username, sock->config.host, sock->config.port)
 
-typedef struct tr_ssh_socket {
+struct tr_ssh_socket {
     ssh_session session;
     ssh_channel channel;
-    tr_ssh_config config;
+    struct tr_ssh_config config;
     char *ident;
-} tr_ssh_socket;
+};
 
 static int tr_ssh_open(void *tr_ssh_sock);
 static void tr_ssh_close(void *tr_ssh_sock);
-static void tr_ssh_free(tr_socket *tr_sock);
+static void tr_ssh_free(struct tr_socket *tr_sock);
 static int tr_ssh_recv(const void *tr_ssh_sock, void *buf, const size_t buf_len, const time_t timeout);
 static int tr_ssh_send(const void *tr_ssh_sock, const void *pdu, const size_t len, const time_t timeout);
-static int tr_ssh_recv_async(const tr_ssh_socket *tr_ssh_sock, void *buf, const size_t buf_len);
+static int tr_ssh_recv_async(const struct tr_ssh_socket *tr_ssh_sock, void *buf, const size_t buf_len);
 static const char *tr_ssh_ident(void *tr_ssh_sock);
 
 int tr_ssh_open(void *socket) {
-    tr_ssh_socket *ssh_socket = socket;
-    const tr_ssh_config *config = &ssh_socket->config;
+    struct tr_ssh_socket *ssh_socket = socket;
+    const struct tr_ssh_config *config = &ssh_socket->config;
 
     assert(ssh_socket->channel == NULL);
     assert(ssh_socket->session == NULL);
@@ -118,7 +118,7 @@ error:
 }
 
 void tr_ssh_close(void *tr_ssh_sock) {
-    tr_ssh_socket *socket = tr_ssh_sock;
+    struct tr_ssh_socket *socket = tr_ssh_sock;
 
     if(socket->channel != NULL) {
         if(channel_is_open(socket->channel))
@@ -134,8 +134,8 @@ void tr_ssh_close(void *tr_ssh_sock) {
     SSH_DBG1("Socket closed", socket);
 }
 
-void tr_ssh_free(tr_socket *tr_sock) {
-    tr_ssh_socket *tr_ssh_sock = tr_sock->socket;
+void tr_ssh_free(struct tr_socket *tr_sock) {
+    struct tr_ssh_socket *tr_ssh_sock = tr_sock->socket;
     assert(tr_ssh_sock->channel == NULL);
     assert(tr_ssh_sock->session == NULL);
     if (tr_ssh_sock->ident != NULL)
@@ -166,7 +166,7 @@ int tr_ssh_recv(const void* tr_ssh_sock, void* buf, unsigned int buf_len, const 
     return channel_read_nonblocking(((tr_ssh_socket*) tr_ssh_sock)->channel, buf, buf_len, false);
 }
 */
-int tr_ssh_recv_async(const tr_ssh_socket *tr_ssh_sock, void *buf, const size_t buf_len) {
+int tr_ssh_recv_async(const struct tr_ssh_socket *tr_ssh_sock, void *buf, const size_t buf_len) {
     const int rtval = channel_read_nonblocking(tr_ssh_sock->channel, buf, buf_len, false);
     if(rtval == 0) {
         if(channel_is_eof(tr_ssh_sock->channel) != 0) {
@@ -193,7 +193,7 @@ int tr_ssh_recv(const void *tr_ssh_sock, void *buf, const size_t buf_len, const 
     end_time += timeout;
     time_t cur_time;
     do {
-        int rtval = channel_poll(((tr_ssh_socket *) tr_ssh_sock)->channel, false);
+        int rtval = channel_poll(((struct tr_ssh_socket *) tr_ssh_sock)->channel, false);
         if(rtval > 0)
             return tr_ssh_recv_async(tr_ssh_sock, buf, buf_len);
         else if(rtval == SSH_ERROR) {
@@ -231,12 +231,12 @@ int tr_ssh_recv(const void* tr_ssh_sock, void* buf, const size_t buf_len, const 
 */
 
 int tr_ssh_send(const void *tr_ssh_sock, const void *pdu, const size_t len, const time_t timeout __attribute__((unused))) {
-    return channel_write(((tr_ssh_socket *) tr_ssh_sock)->channel, pdu, len);
+    return channel_write(((struct tr_ssh_socket *) tr_ssh_sock)->channel, pdu, len);
 }
 
 const char *tr_ssh_ident(void *tr_ssh_sock) {
     size_t len;
-    tr_ssh_socket *sock = tr_ssh_sock;
+    struct tr_ssh_socket *sock = tr_ssh_sock;
 
     assert(sock != NULL);
 
@@ -253,7 +253,7 @@ const char *tr_ssh_ident(void *tr_ssh_sock) {
     return sock->ident;
 }
 
-int tr_ssh_init(const tr_ssh_config *config, tr_socket *socket) {
+int tr_ssh_init(const struct tr_ssh_config *config, struct tr_socket *socket) {
 
     socket->close_fp = &tr_ssh_close;
     socket->free_fp = &tr_ssh_free;
@@ -262,8 +262,8 @@ int tr_ssh_init(const tr_ssh_config *config, tr_socket *socket) {
     socket->send_fp = &tr_ssh_send;;
     socket->ident_fp = &tr_ssh_ident;
 
-    socket->socket = malloc(sizeof(tr_ssh_socket));
-    tr_ssh_socket *ssh_socket = socket->socket;
+    socket->socket = malloc(sizeof(struct tr_ssh_socket));
+    struct tr_ssh_socket *ssh_socket = socket->socket;
     ssh_socket->channel = NULL;
     ssh_socket->session = NULL;
     ssh_socket->config = *config;
