@@ -48,7 +48,7 @@ enum rtr_rtvals {
 /**
  * @brief States of the RTR socket.
  */
-typedef enum {
+enum rtr_socket_state{
     /** Socket is establishing the transport connection. */
     RTR_CONNECTING,
 
@@ -75,14 +75,14 @@ typedef enum {
 
     /** RTR Socket is stopped. */
     RTR_SHUTDOWN,
-} rtr_socket_state;
+};
 
 struct rtr_socket;
 
 /**
  * @brief A function pointer that is called if the state of the rtr socket has changed.
  */
-typedef void (*rtr_connection_state_fp)(const struct rtr_socket *rtr_socket, const rtr_socket_state state, void *connection_state_fp_param);
+typedef void (*rtr_connection_state_fp)(const struct rtr_socket *rtr_socket, const enum rtr_socket_state state, void *connection_state_fp_param);
 
 /**
  * @brief A RTR socket.
@@ -106,7 +106,7 @@ struct rtr_socket {
     unsigned int polling_period;
     time_t last_update;
     unsigned int cache_timeout;
-    rtr_socket_state state;
+    enum rtr_socket_state state;
     uint32_t session_id;
     bool request_session_id;
     uint32_t serial_number;
@@ -151,7 +151,7 @@ void rtr_stop(struct rtr_socket *rtr_socket);
  * @return NULL If state isn't a valid rtr_socket_state
  * @return !=NULL The rtr_socket_state as String.
  */
-const char *rtr_state_to_str(rtr_socket_state state);
+const char *rtr_state_to_str(enum rtr_socket_state state);
 
 #endif
 /* @} */

@@ -46,7 +46,7 @@
 /**
  * @brief Status of a rtr_mgr_group.
  */
-typedef enum {
+enum rtr_mgr_status {
     /** RTR sockets are disconnected */
     RTR_MGR_CLOSED,
 
@@ -58,7 +58,7 @@ typedef enum {
 
     /** Error occured on at least one RTR socket. */
     RTR_MGR_ERROR,
-} rtr_mgr_status;
+};
 
 /**
  * @brief A set of RTR sockets.
@@ -71,10 +71,10 @@ struct rtr_mgr_group {
     struct rtr_socket **sockets;
     unsigned int sockets_len;
     uint8_t preference;
-    rtr_mgr_status status;
+    enum rtr_mgr_status status;
 };
 
-typedef void (*rtr_mgr_status_fp)(const struct rtr_mgr_group *, rtr_mgr_status, const struct rtr_socket *, void *);
+typedef void (*rtr_mgr_status_fp)(const struct rtr_mgr_group *, enum rtr_mgr_status, const struct rtr_socket *, void *);
 
 struct rtr_mgr_config {
     struct rtr_mgr_group *groups;
@@ -153,7 +153,7 @@ bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config);
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR If an error occurred.
  */
-int rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn, const struct ip_addr *prefix, const uint8_t mask_len, pfxv_state *result);
+int rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn, const struct ip_addr *prefix, const uint8_t mask_len, enum pfxv_state *result);
 
 /**
  * @brief Converts a rtr_mgr_status to a String.
@@ -161,7 +161,7 @@ int rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn, const st
  * @return NULL If status isn't a valid rtr_mgr_status.
  * @return !=NULL The rtr_rtr_mgr_status as String.
  */
-const char *rtr_mgr_status_to_str(rtr_mgr_status status);
+const char *rtr_mgr_status_to_str(enum rtr_mgr_status status);
 
 /**
  * @brief Iterates over all IPv4 records in the pfx_table.

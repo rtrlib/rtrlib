@@ -76,7 +76,7 @@ static void rec_validate(struct pfx_table* pfxt){
     rec.max_len = 32;
     rec.prefix.ver = IPV4;
     rec.prefix.u.addr4.addr = 0;
-    pfxv_state res;
+    enum pfxv_state res;
     printf("validating..\n");
     for(uint32_t i = max_i; i >= min_i; i--){
         rec.min_len = 32;

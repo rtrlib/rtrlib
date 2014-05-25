@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
 		//validate the BGP-Route ip/mask, origin ASN: asn
 		ip_addr pref;
 		ip_str_to_addr(ip, &pref);
-		pfxv_state result;
+		enum pfxv_state result;
 		pfx_record* reason = NULL;
 		unsigned int reason_len = 0;
 		//rtr_mgr_validate(&conf, asn, &pref, mask, &result);

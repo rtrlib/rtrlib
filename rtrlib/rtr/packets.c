@@ -29,7 +29,7 @@
 #include "rtrlib/lib/utils.h"
 #include "rtrlib/lib/log.h"
 
-typedef enum pdu_error_type {
+enum pdu_error_type {
     CORRUPT_DATA = 0,
     INTERNAL_ERROR = 1,
     NO_DATA_AVAIL = 2,
@@ -38,9 +38,9 @@ typedef enum pdu_error_type {
     UNSUPPORTED_PDU_TYPE = 5,
     WITHDRAWAL_OF_UNKNOWN_RECORD = 6,
     DUPLICATE_ANNOUNCEMENT = 7
-} pdu_error_type;
+};
 
-typedef enum pdu_type {
+enum pdu_type {
     SERIAL_NOTIFY = 0,
     SERIAL_QUERY = 1,
     RESET_QUERY = 2,
@@ -50,7 +50,7 @@ typedef enum pdu_type {
     EOD = 7,
     CACHE_RESET = 8,
     ERROR = 10
-} pdu_type;
+};
 
 struct pdu_header {
     uint8_t ver;
@@ -131,15 +131,15 @@ static const struct pdu_header pdu_reset_query = {
 
 
 static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_t pdu_len, const time_t timeout);
-static int rtr_send_error_pdu(const struct rtr_socket *rtr_socket, const void *erroneous_pdu, const uint32_t pdu_len, const pdu_error_type error, const char *text, const uint32_t text_len);
+static int rtr_send_error_pdu(const struct rtr_socket *rtr_socket, const void *erroneous_pdu, const uint32_t pdu_len, const enum pdu_error_type error, const char *text, const uint32_t text_len);
 static void rtr_pdu_header_to_host_byte_order(void *pdu);
 static void rtr_pdu_footer_to_host_byte_order(void *pdu);
-static pdu_type rtr_get_pdu_type(const void *pdu);
+static enum pdu_type rtr_get_pdu_type(const void *pdu);
 static int rtr_handle_error_pdu(struct rtr_socket *rtr_socket, const void *buf);
 static int rtr_send_pdu(const struct rtr_socket *rtr_socket, const void *pdu, const unsigned len);
 static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, const void *pdu);
 static int rtr_set_last_update(struct rtr_socket *rtr_socket);
-void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, const void *pdu, struct pfx_record *pfxr, const pdu_type type);
+void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, const void *pdu, struct pfx_record *pfxr, const enum pdu_type type);
 /*
  * @brief Appends the Prefix PDU pdu to ary.
  */
@@ -151,7 +151,7 @@ static int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, 
 static int rtr_undo_update_pfx_table(struct rtr_socket *rtr_socket, void *pdu);
 
 
-void rtr_change_socket_state(struct rtr_socket *rtr_socket, const rtr_socket_state new_state) {
+void rtr_change_socket_state(struct rtr_socket *rtr_socket, const enum rtr_socket_state new_state) {
     if(rtr_socket->state == new_state)
         return;
 
@@ -173,13 +173,13 @@ void rtr_pdu_header_to_host_byte_order(void *pdu) {
     header->len = len_tmp;
 }
 
-inline pdu_type rtr_get_pdu_type(const void *pdu) {
+inline enum pdu_type rtr_get_pdu_type(const void *pdu) {
     return *((char *) pdu + 1);
 }
 
 
 void rtr_pdu_footer_to_host_byte_order(void *pdu) {
-    const pdu_type type = rtr_get_pdu_type(pdu);
+    const enum pdu_type type = rtr_get_pdu_type(pdu);
 
     uint32_t int32_tmp;
     uint32_t addr6[4];
@@ -223,7 +223,7 @@ static void rtr_pdu_to_network_byte_order(void *pdu) {
     uint32_t int32_tmp = htonl(header->len);
     header->len = int32_tmp;
 
-    const pdu_type type = rtr_get_pdu_type(pdu);
+    const enum pdu_type type = rtr_get_pdu_type(pdu);
     switch(type) {
     case SERIAL_QUERY:
         int32_tmp = htonl(((struct pdu_serial_query *) pdu)->sn);
@@ -361,7 +361,7 @@ int rtr_set_last_update(struct rtr_socket *rtr_socket) {
 }
 
 int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, const unsigned int pdu_size, void **ary, unsigned int *ind, unsigned int *size) {
-    const pdu_type pdu_type = rtr_get_pdu_type(pdu);
+    const enum pdu_type pdu_type = rtr_get_pdu_type(pdu);
     assert(pdu_type  == IPV4_PREFIX || pdu_type == IPV6_PREFIX);
     if((*ind) >= *size) {
         *size += 100;
@@ -395,7 +395,7 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
     }
     else if(rtval < 0)
         return RTR_ERROR;
-    pdu_type type = rtr_get_pdu_type(pdu);
+    enum pdu_type type = rtr_get_pdu_type(pdu);
 
     //ignore serial_notify PDUs, we already sent a serial_query, must be old messages
     while(type == SERIAL_NOTIFY) {
@@ -560,7 +560,7 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
 }
 
 int rtr_undo_update_pfx_table(struct rtr_socket *rtr_socket, void *pdu) {
-    const pdu_type type = rtr_get_pdu_type(pdu);
+    const enum pdu_type type = rtr_get_pdu_type(pdu);
     assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
 
     struct pfx_record pfxr;
@@ -575,7 +575,7 @@ int rtr_undo_update_pfx_table(struct rtr_socket *rtr_socket, void *pdu) {
     return rtval;
 }
 
-void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, const void *pdu, struct pfx_record *pfxr, const pdu_type type) {
+void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, const void *pdu, struct pfx_record *pfxr, const enum pdu_type type) {
     assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
     if(type == IPV4_PREFIX) {
         const struct pdu_ipv4 *ipv4 = pdu;
@@ -599,7 +599,7 @@ void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, const void
 }
 
 int rtr_update_pfx_table(struct rtr_socket *rtr_socket, const void *pdu) {
-    const pdu_type type = rtr_get_pdu_type(pdu);
+    const enum pdu_type type = rtr_get_pdu_type(pdu);
     assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
 
     struct pfx_record pfxr;
@@ -655,7 +655,7 @@ int rtr_wait_for_sync(struct rtr_socket *rtr_socket) {
     RTR_DBG("waiting %jd sec. till next sync", (intmax_t) wait);
     const int rtval = rtr_receive_pdu(rtr_socket, pdu, sizeof(pdu), wait);
     if(rtval >= 0) {
-        pdu_type type = rtr_get_pdu_type(pdu);
+        enum pdu_type type = rtr_get_pdu_type(pdu);
         if(type == SERIAL_NOTIFY) {
             RTR_DBG1("Serial Notify received");
             return RTR_SUCCESS;
@@ -668,7 +668,7 @@ int rtr_wait_for_sync(struct rtr_socket *rtr_socket) {
     return RTR_ERROR;
 }
 
-int rtr_send_error_pdu(const struct rtr_socket *rtr_socket, const void *erroneous_pdu, const uint32_t pdu_len, const pdu_error_type error, const char *text, const uint32_t text_len) {
+int rtr_send_error_pdu(const struct rtr_socket *rtr_socket, const void *erroneous_pdu, const uint32_t pdu_len, const enum pdu_error_type error, const char *text, const uint32_t text_len) {
     //dont send errors for erroneous error PDUs
     if(pdu_len >= 2) {
         if(rtr_get_pdu_type(erroneous_pdu) == ERROR )

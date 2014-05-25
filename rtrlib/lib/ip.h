@@ -29,13 +29,13 @@
 /**
  * @brief Version of the IP protocol.
  */
-typedef enum {
+enum ip_version {
     /** IPV4 */
     IPV4,
 
     /** IPV6 */
     IPV6
-} ip_version;
+};
 
 /**
  * @brief The ip_addr struct stores a IPv4 or IPv6 address in host byte order.
@@ -43,7 +43,7 @@ typedef enum {
  * @param u Union holding a ipv4_addr or ipv6_addr.
  */
 struct ip_addr {
-    ip_version ver;
+    enum ip_version ver;
     union {
         struct ipv4_addr addr4;
         struct ipv6_addr addr6;

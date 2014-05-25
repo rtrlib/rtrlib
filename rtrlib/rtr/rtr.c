@@ -206,7 +206,7 @@ void rtr_stop(struct rtr_socket *rtr_socket) {
     RTR_DBG1("Socket shut down");
 }
 
-const char *rtr_state_to_str(rtr_socket_state state)
+const char *rtr_state_to_str(enum rtr_socket_state state)
 {
 	return socket_str_states[state];
 }
