@@ -56,7 +56,7 @@ struct pfx_table;
 /**
  * @brief Validation states returned from  pfx_validate_origin.
  */
-typedef enum pfxv_state {
+enum pfxv_state {
     /** A valid certificate for the pfx_record exists. */
     BGP_PFXV_STATE_VALID,
 
@@ -65,7 +65,7 @@ typedef enum pfxv_state {
 
     /** @brief One or more records that match the input prefix exists in the pfx_table but the prefix max_len or ASN does'nt match. */
     BGP_PFXV_STATE_INVALID
-} pfxv_state;
+};
 
 
 /**
@@ -128,7 +128,7 @@ int pfx_table_remove(struct pfx_table *pfx_table, const struct pfx_record *pfx_r
 /**
  * @brief Removes all entries in the pfx_table that match the passed socket_id value from a pfx_table.
  * @param[in] pfx_table pfx_table to use.
- * @param[in] socket_id ID of the rtr_socket.
+ * @param[in] socket origin socket of the record
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR On error.
  */
@@ -144,7 +144,7 @@ int pfx_table_src_remove(struct pfx_table *pfx_table, const struct rtr_socket *s
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR On error.
  */
-int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const struct ip_addr *prefix, const uint8_t mask_len, pfxv_state *result);
+int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const struct ip_addr *prefix, const uint8_t mask_len, enum pfxv_state *result);
 
 /**
  * @brief Validates the origin of a BGP-Route and returns a list of pfx_record that decided the result.
@@ -158,7 +158,7 @@ int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const st
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR On error.
  */
-int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason, unsigned int *reason_len,  const uint32_t asn, const struct ip_addr *prefix, const uint8_t mask_len, pfxv_state *result);
+int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason, unsigned int *reason_len,  const uint32_t asn, const struct ip_addr *prefix, const uint8_t mask_len, enum pfxv_state *result);
 
 /**
  * @brief Iterates over all IPv4 records in the pfx_table.

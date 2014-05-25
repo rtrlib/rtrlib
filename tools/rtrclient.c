@@ -44,7 +44,7 @@ static void print_usage(char** argv){
 }
 
 static void status_fp(const struct rtr_mgr_group *group __attribute__((unused)),
-			   rtr_mgr_status mgr_status, const struct rtr_socket *rtr_sock,
+			   enum rtr_mgr_status mgr_status, const struct rtr_socket *rtr_sock,
 			   void *data __attribute__((unused)))
 {
 	printf("RTR-Socket changed connection status to: %s, Mgr Status: %s\n",

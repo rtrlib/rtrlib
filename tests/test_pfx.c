@@ -74,7 +74,7 @@ static void remove_src_test(){
     free(array);
     assert((len + 1) == 2);
 
-    pfxv_state res;
+    enum pfxv_state res;
     assert(pfx_table_validate(&pfxt, 90, &(pfx.prefix), 8, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_NOT_FOUND);
     ip_str_to_addr("10.11.10.0", &(pfx.prefix));
@@ -94,7 +94,7 @@ static void mass_test(){
     pfx_table_init(&pfxt, NULL);
 
     struct pfx_record rec;
-    pfxv_state res;
+    enum pfxv_state res;
     const uint32_t min_i = 0xFFFF0000;
     const uint32_t max_i = 0xFFFFFFF0;
 
@@ -176,7 +176,7 @@ int main(){
     pfx.max_len = 24;
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
-    pfxv_state res;
+    enum pfxv_state res;
     assert(pfx_table_validate(&pfxt, 123, &(pfx.prefix), 16, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_VALID);
     assert(pfx_table_validate(&pfxt, 124, &(pfx.prefix), 16, &res) == PFX_SUCCESS);

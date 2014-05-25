@@ -43,7 +43,7 @@ static int rtr_mgr_config_cmp(const void *a, const void *b);
 static bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *config);
 
 static void set_status(const struct rtr_mgr_config *conf, struct rtr_mgr_group *group,
-			   rtr_mgr_status mgr_status, const struct rtr_socket *rtr_sock)
+			   enum rtr_mgr_status mgr_status, const struct rtr_socket *rtr_sock)
 {
 	MGR_DBG("Group(%u) status changed to: %s", group->preference,
 			rtr_mgr_status_to_str(mgr_status));
@@ -78,14 +78,14 @@ int rtr_mgr_find_group(const struct rtr_mgr_config *config, const struct rtr_soc
 
 bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *group) {
     for(unsigned int i = 0; i < group->sockets_len; i++) {
-        rtr_socket_state state = group->sockets[i]->state;
+        enum rtr_socket_state state = group->sockets[i]->state;
         if((group->sockets[i]->last_update == 0) || (state != RTR_ESTABLISHED && state != RTR_RESET && state != RTR_SYNC))
             return false;
     }
     return true;
 }
 
-static void rtr_mgr_cb(const struct rtr_socket *sock, const rtr_socket_state state, void *data) {
+static void rtr_mgr_cb(const struct rtr_socket *sock, const enum rtr_socket_state state, void *data) {
     struct rtr_mgr_config *config = data;
 
     //find the index in the rtr_mgr_config struct, for which this function was called
@@ -290,7 +290,7 @@ void rtr_mgr_free(struct rtr_mgr_config *config) {
     pthread_mutex_destroy(&(config->mutex));
 }
 
-inline int rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn, const struct ip_addr *prefix, const uint8_t mask_len, pfxv_state *result) {
+inline int rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn, const struct ip_addr *prefix, const uint8_t mask_len, enum pfxv_state *result) {
     return pfx_table_validate(config->groups[0].sockets[0]->pfx_table, asn, prefix, mask_len, result);
 }
 
@@ -302,7 +302,7 @@ void rtr_mgr_stop(struct rtr_mgr_config *config) {
     }
 }
 
-const char *rtr_mgr_status_to_str(rtr_mgr_status status)
+const char *rtr_mgr_status_to_str(enum rtr_mgr_status status)
 {
     return mgr_str_status[status];
 }

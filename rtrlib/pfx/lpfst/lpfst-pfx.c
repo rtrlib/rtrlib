@@ -37,7 +37,7 @@ struct node_data {
     struct data_elem *ary;
 };
 
-static struct lpfst_node *pfx_table_get_root(const struct pfx_table *pfx_table, const ip_version ver);
+static struct lpfst_node *pfx_table_get_root(const struct pfx_table *pfx_table, const enum ip_version ver);
 static int pfx_table_del_elem(struct node_data *data, const unsigned int index);
 static int pfx_table_create_node(struct lpfst_node **node, const struct pfx_record *record);
 static int pfx_table_append_elem(struct node_data *data, const struct pfx_record *record);
@@ -133,7 +133,7 @@ struct data_elem *pfx_table_find_elem(const struct node_data *data, const struct
 }
 
 //returns pfx_table->ipv4 if record version is IPV4 else pfx_table->ipv6
-inline struct lpfst_node *pfx_table_get_root(const struct pfx_table *pfx_table, const ip_version ver) {
+inline struct lpfst_node *pfx_table_get_root(const struct pfx_table *pfx_table, const enum ip_version ver) {
     return ver == IPV4 ? pfx_table->ipv4 : pfx_table->ipv6;
 }
 
@@ -283,7 +283,7 @@ inline void pfx_table_free_reason(struct pfx_record **reason, unsigned int *reas
         *reason_len = 0;
 }
 
-int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason, unsigned int *reason_len, const uint32_t asn, const struct ip_addr *prefix, const uint8_t prefix_len, pfxv_state *result) {
+int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason, unsigned int *reason_len, const uint32_t asn, const struct ip_addr *prefix, const uint8_t prefix_len, enum pfxv_state *result) {
     //assert(reason_len == NULL || *reason_len  == 0);
     //assert(reason == NULL || *reason == NULL);
 
@@ -355,7 +355,7 @@ int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason
     return PFX_SUCCESS;
 }
 
-int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const struct ip_addr *prefix, const uint8_t prefix_len, pfxv_state *result) {
+int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const struct ip_addr *prefix, const uint8_t prefix_len, enum pfxv_state *result) {
     return pfx_table_validate_r(pfx_table, NULL, NULL, asn, prefix, prefix_len, result);
 }
 
