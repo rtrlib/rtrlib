@@ -20,7 +20,7 @@ set(RTRLIB_SRC rtrlib/rtr_mgr.c rtrlib/lib/utils.c rtrlib/lib/ip.c rtrlib/lib/ip
     rtrlib/transport/tcp/tcp_transport.c rtrlib/rtr/rtr.c rtrlib/rtr/packets.c)
 set(RTRLIB_LINK ${RT_LIB} ${CMAKE_THREAD_LIBS_INIT})
 
-find_package(LibSSH 0.4.0)
+find_package(LibSSH 0.6.0)
 if(LIBSSH_FOUND)
     set(RTRLIB_HAVE_LIBSSH 1)
     message(STATUS "libssh found, building librtr with SSH support")
@@ -63,7 +63,7 @@ set_target_properties(rtrlib PROPERTIES SOVERSION ${LIBRARY_SOVERSION} VERSION $
 install(TARGETS rtrlib LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/)
 
 #install includes
-install(DIRECTORY rtrlib/ DESTINATION include/rtrlib 
+install(DIRECTORY rtrlib/ DESTINATION include/rtrlib
     FILES_MATCHING PATTERN "*.h"
     PATTERN rtrlib/rtr_mgr. EXCLUDE)
 

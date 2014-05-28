@@ -45,9 +45,8 @@
  * @param host Hostname or IP address to connect to.
  * @param port Port to connect to.
  * @param username Username for authentication.
- * @param server_hostkey_path Path to the public SSH key of the server.
- * @param client_privkey_path Path to the private key of the authentication keypair.
- * @param client_pubkey_path Path to the public key of the authentication keypair.
+ * @param server_hostkey_path Path to the public SSH key of the server or `NULL` for the LibSSH default.
+ * @param client_privkey_path Path to the private key of the authentication keypair or `NULL` for the LibSSH default.
  */
 struct tr_ssh_config {
     char *host;
@@ -55,7 +54,6 @@ struct tr_ssh_config {
     char *username;
     char *server_hostkey_path;
     char *client_privkey_path;
-    char *client_pubkey_path;
 };
 
 /**

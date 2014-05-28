@@ -61,10 +61,17 @@ int tr_ssh_open(void *socket) {
     }
 
     const int verbosity = SSH_LOG_NOLOG;
-    ssh_options_set(ssh_socket->session, SSH_OPTIONS_HOST, config->host);
     ssh_options_set(ssh_socket->session, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
+
+    ssh_options_set(ssh_socket->session, SSH_OPTIONS_HOST, config->host);
     ssh_options_set(ssh_socket->session, SSH_OPTIONS_PORT, &(config->port));
-    ssh_options_set(ssh_socket->session, SSH_OPTIONS_KNOWNHOSTS, (config->server_hostkey_path));
+    ssh_options_set(ssh_socket->session, SSH_OPTIONS_USER, config->username);
+
+    if (config->server_hostkey_path != NULL)
+        ssh_options_set(ssh_socket->session, SSH_OPTIONS_KNOWNHOSTS, config->server_hostkey_path);
+
+    if (config->client_privkey_path != NULL)
+        ssh_options_set(ssh_socket->session, SSH_OPTIONS_IDENTITY, config->client_privkey_path);
 
     if(ssh_connect(ssh_socket->session) == SSH_ERROR) {
         SSH_DBG1("tr_ssh_init: opening SSH connection failed", ssh_socket);
@@ -77,21 +84,7 @@ int tr_ssh_open(void *socket) {
         goto error;
     }
 
-    //authenticate
-    ssh_string pubkey = publickey_from_file(ssh_socket->session, config->client_pubkey_path, NULL);
-    if(pubkey == NULL) {
-        SSH_DBG1("tr_ssh_init: Loading public key failed", ssh_socket);
-        goto error;
-    }
-    ssh_private_key privkey = privatekey_from_file(ssh_socket->session, config->client_privkey_path, 0, NULL);
-    if(privkey == NULL) {
-        SSH_DBG1("tr_ssh_init: Loading private key failed", ssh_socket);
-        string_free(pubkey);
-        goto error;
-    }
-    const int rtval = ssh_userauth_pubkey(ssh_socket->session, config->username, pubkey, privkey);
-    string_free(pubkey);
-    privatekey_free(privkey);
+    const int rtval = ssh_userauth_publickey_auto(ssh_socket->session, NULL, NULL);
     if(rtval != SSH_AUTH_SUCCESS) {
         SSH_DBG1("tr_ssh_init: Authentication failed", ssh_socket);
         goto error;
