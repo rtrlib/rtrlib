@@ -33,12 +33,12 @@ static void print_usage(char** argv){
     printf("Usage:\n");
     printf(" %s tcp <host> <port>\n", argv[0]);
 #ifdef RTRLIB_HAVE_LIBSSH
-    printf(" %s ssh <host> <port> <username> <private_key> <public_key> \n", argv[0]);
+    printf(" %s ssh <host> <port> <username> <private_key> [<host_key>] \n", argv[0]);
 #endif
     printf("\nExamples:\n");
     printf(" %s tcp rpki.realmv6.org 42420\n", argv[0]);
 #ifdef RTRLIB_HAVE_LIBSSH
-    printf(" %s ssh rpki.realmv6.org 22 rtr-ssh ~/.ssh/id_rsa ~/.ssh/id_rsa.pub\n", argv[0]);
+    printf(" %s ssh rpki.realmv6.org 22 rtr-ssh ~/.ssh/id_rsa ~/.ssh/known_hosts\n", argv[0]);
 #endif
 
 }
@@ -69,7 +69,7 @@ int main(int argc, char** argv){
 #ifdef RTRLIB_HAVE_LIBSSH
     char* user;
     char* privkey;
-    char* pubkey;
+    char* hostkey;
 #endif
     if(argc == 1){
         print_usage(argv);
@@ -88,7 +88,7 @@ int main(int argc, char** argv){
     }
 #ifdef RTRLIB_HAVE_LIBSSH
     else if(strncasecmp(argv[1], "ssh", strlen(argv[1])) == 0){
-        if(argc != 7){
+        if(argc < 6){
             print_usage(argv);
             return(EXIT_FAILURE);
         }
@@ -98,7 +98,10 @@ int main(int argc, char** argv){
         port = argv[3];
         user = argv[4];
         privkey = argv[5];
-        pubkey = argv[6];
+	if (argc == 7)
+		hostkey = argv[6];
+	else
+		hostkey = NULL;
     }
 #endif
     else{
@@ -122,9 +125,8 @@ int main(int argc, char** argv){
             host,
             iport,
             user,
-            NULL,
+            hostkey,
             privkey,
-            pubkey
         };
     tr_ssh_init(&ssh_config, &tr_sock);
     }
