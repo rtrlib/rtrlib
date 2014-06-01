@@ -46,9 +46,10 @@
  * @param port Port to connect to.
  * @param username Username for authentication.
  * @param server_hostkey_path Path to public SSH key of the server or NULL to
-                              don't verify host authenticity.
+                              use the system default (e.g. ~/.ssh/known_hosts).
  * @param client_privkey_path Path to private key of the authentication keypair
- *                            or NULL to use ~/.ssh/id_rsa.
+ *                            or NULL to use the system default (e.g.
+ *                            ~/.ssh/id_rsa).
  */
 struct tr_ssh_config {
     char *host;
