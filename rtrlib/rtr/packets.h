@@ -27,7 +27,7 @@
 #include "rtrlib/lib/ipv4.h"
 #include "rtrlib/rtr/rtr.h"
 
-static const uint8_t RTR_PROTOCOL_VERSION = 0;
+
 static const unsigned int RTR_MAX_PDU_LEN = 3248; //error pdu: header(8) + len(4) + ipv6_pdu(32) + len(4) + 400*8 (400 char text)
 static const unsigned int RTR_RECV_TIMEOUT = 60;
 static const unsigned int RTR_SEND_TIMEOUT = 60;

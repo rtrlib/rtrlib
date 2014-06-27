@@ -122,11 +122,11 @@ struct pdu_error {
    |                                           |
    `-------------------------------------------'
  */
-static const struct pdu_header pdu_reset_query = {
-    0, //should be RTR_PROTOCOL_VERSION but gcc gives error :/
-    2,
-    0,
-    8
+struct pdu_reset_query {
+    uint8_t ver;
+    uint8_t type;
+    uint16_t flags;
+    uint32_t len;
 };
 
 
@@ -270,7 +270,7 @@ int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_t pdu_l
     memcpy(&header, pdu, sizeof(header));
     rtr_pdu_header_to_host_byte_order(&header);
 
-    if(header.ver != RTR_PROTOCOL_VERSION) {
+    if(header.ver != rtr_socket->version) {
         error = 16;
         goto error;
     }
@@ -344,7 +344,12 @@ error:
     }
     else if(error == 16) {
         RTR_DBG1("PDU with unsupported Protocol version received");
+        if(header.ver >= RTR_PROTOCOL_MIN_SUPPORTED_VERSION && header.ver <= RTR_PROTOCOL_MAX_SUPPORTED_VERSION){
+            RTR_DBG("Cache server only supports RTR version %i. Downgrading to %i", header.ver, header.ver);
+            rtr_socket->version = header.ver;
+        }
         rtr_send_error_pdu(rtr_socket, pdu, header.len, UNSUPPORTED_PROTOCOL_VER, NULL, 0);
+        return RTR_ERROR;
     }
 
     rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
@@ -735,6 +740,12 @@ int rtr_handle_error_pdu(struct rtr_socket *rtr_socket, const void *buf) {
         break;
     case UNSUPPORTED_PROTOCOL_VER:
         RTR_DBG1("Client uses unsupported protocol version");
+        if(rtr_socket->version > RTR_PROTOCOL_MIN_SUPPORTED_VERSION){
+            RTR_DBG("Downgrading to version %i", rtr_socket->version - 1);
+            rtr_socket->version--;
+        }
+        //Allways change state to ERROR_FATAL, because then the next configuration (server)
+        //get sheduled by the rtr_manager which might support a higher version.
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
         break;
     case UNSUPPORTED_PDU_TYPE:
@@ -765,11 +776,12 @@ int rtr_handle_error_pdu(struct rtr_socket *rtr_socket, const void *buf) {
 
 int rtr_send_serial_query(struct rtr_socket *rtr_socket) {
     struct pdu_serial_query pdu;
-    pdu.ver = RTR_PROTOCOL_VERSION;
+    pdu.ver = rtr_socket->version;
     pdu.type = SERIAL_QUERY;
     pdu.session_id =rtr_socket->session_id;
     pdu.len = sizeof(pdu);
     pdu.sn =rtr_socket->serial_number;
+
 
     RTR_DBG("sending serial query, SN: %u",rtr_socket->serial_number);
     if(rtr_send_pdu(rtr_socket, &pdu, sizeof(pdu)) != RTR_SUCCESS) {
@@ -780,7 +792,14 @@ int rtr_send_serial_query(struct rtr_socket *rtr_socket) {
 }
 
 int rtr_send_reset_query(struct rtr_socket *rtr_socket) {
-    if(rtr_send_pdu(rtr_socket, &pdu_reset_query, sizeof(pdu_reset_query)) != RTR_SUCCESS) {
+    RTR_DBG1("Sending reset quary");
+    struct pdu_reset_query pdu;
+    pdu.ver = rtr_socket->version;
+    pdu.type = 2;
+    pdu.flags = 0;
+    pdu.len = 8;
+
+    if(rtr_send_pdu(rtr_socket, &pdu, sizeof(pdu)) != RTR_SUCCESS) {
         rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
         return RTR_ERROR;
     }

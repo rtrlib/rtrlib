@@ -80,6 +80,7 @@ void rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_ta
     rtr_socket->connection_state_fp = fp;
     rtr_socket->connection_state_fp_param = fp_param;
     rtr_socket->thread_id = 0;
+    rtr_socket->version = RTR_PROTOCOL_MAX_SUPPORTED_VERSION;
 }
 
 int rtr_start(struct rtr_socket *rtr_socket) {
