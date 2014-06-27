@@ -792,7 +792,7 @@ int rtr_send_serial_query(struct rtr_socket *rtr_socket) {
 }
 
 int rtr_send_reset_query(struct rtr_socket *rtr_socket) {
-    RTR_DBG1("Sending reset quary");
+    RTR_DBG1("Sending reset query");
     struct pdu_reset_query pdu;
     pdu.ver = rtr_socket->version;
     pdu.type = 2;
