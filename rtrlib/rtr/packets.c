@@ -683,7 +683,7 @@ int rtr_send_error_pdu(const struct rtr_socket *rtr_socket, const void *erroneou
     unsigned int msg_size = 16 + pdu_len + text_len;
     char msg[msg_size];
     struct pdu_header *header = (struct pdu_header *) msg;
-    header->ver = RTR_PROTOCOL_VERSION;
+    header->ver = rtr_socket->version;
     header->type = 10;
     header->reserved = error;
     header->len = msg_size;
