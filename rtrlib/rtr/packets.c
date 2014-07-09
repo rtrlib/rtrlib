@@ -365,7 +365,8 @@ int rtr_set_last_update(struct rtr_socket *rtr_socket) {
     return RTR_SUCCESS;
 }
 
-int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, const unsigned int pdu_size, void **ary, unsigned int *ind, unsigned int *size) {
+int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, const unsigned int pdu_size, void **ary,
+                         unsigned int *ind, unsigned int *size) {
     const enum pdu_type pdu_type = rtr_get_pdu_type(pdu);
     assert(pdu_type  == IPV4_PREFIX || pdu_type == IPV6_PREFIX);
     if((*ind) >= *size) {
@@ -745,7 +746,7 @@ int rtr_handle_error_pdu(struct rtr_socket *rtr_socket, const void *buf) {
             rtr_socket->version--;
         }
         //Allways change state to ERROR_FATAL, because then the next configuration (server)
-        //get sheduled by the rtr_manager which might support a higher version.
+        //get scheduled by the rtr_manager which might support a higher version.
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
         break;
     case UNSUPPORTED_PDU_TYPE:

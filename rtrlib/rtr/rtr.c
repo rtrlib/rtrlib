@@ -136,14 +136,14 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket) {
             RTR_DBG1("State: RTR_RESET");
             if (rtr_send_reset_query(rtr_socket) == 0) {
                 RTR_DBG1("rtr_start: reset pdu sent");
-                rtr_change_socket_state(rtr_socket, RTR_SYNC); //send reset query after connection established
+                rtr_change_socket_state(rtr_socket, RTR_SYNC); //start to sync after connection is established
             }
         }
 
         else if(rtr_socket->state == RTR_SYNC) {
             RTR_DBG1("State: RTR_SYNC");
             if(rtr_sync(rtr_socket) == 0)
-                rtr_change_socket_state(rtr_socket, RTR_ESTABLISHED); //send reset query after connection established
+                rtr_change_socket_state(rtr_socket, RTR_ESTABLISHED); //wait for next sync after first successful sync
         }
 
         else if(rtr_socket->state == RTR_ESTABLISHED) {
