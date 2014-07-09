@@ -49,6 +49,7 @@ enum pdu_type {
     IPV6_PREFIX = 6,
     EOD = 7,
     CACHE_RESET = 8,
+    ROUTER_KEY = 9,
     ERROR = 10
 };
 
@@ -108,6 +109,16 @@ struct pdu_error {
     uint32_t len;
     uint32_t len_enc_pdu;
     uint8_t rest[];
+};
+
+struct pdu_router_key{
+    uint8_t ver;
+    uint8_t type;
+    uint8_t flags;
+    uint8_t zero;
+    uint8_t ski[20];
+    uint32_t asn;
+    //uint8_t spki; //TODO Cant find the size of the subjectPublicKeyInfo
 };
 
 /*
@@ -391,6 +402,31 @@ int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, const u
     return RTR_SUCCESS;
 }
 
+int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *pdu, const unsigned int pdu_size, void **ary,
+                             unsigned int *ind, unsigned int *size) {
+    const enum pdu_type pdu_type = rtr_get_pdu_type(pdu);
+    assert(pdu_type == ROUTER_KEY);
+
+    if((*ind) >= *size) {
+        *size += 100;
+        void *tmp = realloc(*ary, *size * pdu_size);
+        if(tmp == NULL) {
+            const char *txt = "Realloc failed";
+            RTR_DBG("%s", txt);
+            rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
+            rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+            free(ary);
+            ary = NULL;
+            return RTR_ERROR;
+        }
+        *ary = tmp;
+    }
+    memcpy((struct pdu_router_key *) *ary + *ind, pdu, pdu_size);
+    (*ind)++;
+    return RTR_SUCCESS;
+}
+
+
 int rtr_sync(struct rtr_socket *rtr_socket) {
     char pdu[RTR_MAX_PDU_LEN];
 
@@ -465,6 +501,11 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
     struct pdu_ipv4 *ipv4_pdus = NULL;
     unsigned int ipv4_pdus_size = 0; //next free index in ipv4_pdus
     unsigned int ipv4_pdus_nindex = 0;
+
+    struct pdu_router_key *router_key_pdus = NULL;
+    unsigned int router_key_pdus_size = 0;
+    unsigned int router_key_pdus_nindex = 0;
+
     //receive IPV4/IPV6 PDUs till EOD
     do {
         rtval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
@@ -481,6 +522,10 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
         }
         else if(type == IPV6_PREFIX) {
             if(rtr_store_prefix_pdu(rtr_socket, pdu, sizeof(struct pdu_ipv6), (void **) &ipv6_pdus, &ipv6_pdus_nindex, &ipv6_pdus_size) == RTR_ERROR)
+                return RTR_ERROR;
+        }
+        else if(type == ROUTER_KEY){
+            if(rtr_store_prefix_pdu(rtr_socket, pdu, sizeof(struct pdu_router_key), (void **) &router_key_pdus, &router_key_pdus_nindex, &router_key_pdus_size) == RTR_ERROR)
                 return RTR_ERROR;
         }
         else if(type == EOD) {
@@ -536,6 +581,8 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
                     return RTR_ERROR;
                 }
             }
+            //add all router_key pdu to the spki table
+            //TODO first we need the table implementation
             free(ipv6_pdus);
             free(ipv4_pdus);
            rtr_socket->serial_number = eod_pdu->sn;
