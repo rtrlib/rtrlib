@@ -116,9 +116,10 @@ struct pdu_router_key{
     uint8_t type;
     uint8_t flags;
     uint8_t zero;
+    uint32_t len;
     uint8_t ski[20];
     uint32_t asn;
-    //uint8_t spki; //TODO Cant find the size of the subjectPublicKeyInfo
+    uint8_t spki[200]; //TODO Cant find the size of the subjectPublicKeyInfo. This is a dummy value !!!
 };
 
 /*
@@ -155,6 +156,10 @@ void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, const void
  * @brief Appends the Prefix PDU pdu to ary.
  */
 static int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, const unsigned int pdu_size, void **ary, unsigned int *ind, unsigned int *size);
+
+int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *pdu, const unsigned int pdu_size, void **ary,
+                             unsigned int *ind, unsigned int *size);
+
 /*
  * @brief Removes all Prefix from the pfx_table with flag field == ADD, ADDs all Prefix PDU to the pfx_table with flag
  * field == REMOVE.
@@ -421,6 +426,7 @@ int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *pdu, con
         }
         *ary = tmp;
     }
+
     memcpy((struct pdu_router_key *) *ary + *ind, pdu, pdu_size);
     (*ind)++;
     return RTR_SUCCESS;
@@ -525,7 +531,7 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
                 return RTR_ERROR;
         }
         else if(type == ROUTER_KEY){
-            if(rtr_store_prefix_pdu(rtr_socket, pdu, sizeof(struct pdu_router_key), (void **) &router_key_pdus, &router_key_pdus_nindex, &router_key_pdus_size) == RTR_ERROR)
+            if(rtr_store_router_key_pdu(rtr_socket, pdu, sizeof(struct pdu_router_key), (void **) &router_key_pdus, &router_key_pdus_nindex, &router_key_pdus_size) == RTR_ERROR)
                 return RTR_ERROR;
         }
         else if(type == EOD) {
@@ -583,6 +589,7 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
             }
             //add all router_key pdu to the spki table
             //TODO first we need the table implementation
+            free(router_key_pdus);
             free(ipv6_pdus);
             free(ipv4_pdus);
            rtr_socket->serial_number = eod_pdu->sn;
