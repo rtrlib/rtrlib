@@ -35,10 +35,9 @@ typedef int (*hash_cmp_fp)(const void *arg, const void *obj);
  */
 
 struct key_table {
-	tommy_hashlin *hashtable;
-	hash_cmp_fp cmp_fp;
-    pthread_rwlock_t lock;
-};
+    tommy_hashlin *hashtable;
+    hash_cmp_fp cmp_fp;
+    pthread_rwlock_t lock;};
 
 
 /**
@@ -50,7 +49,7 @@ struct key_table {
  */
 
 struct key_entry {
-	uint8_t ski[20];
+    uint8_t ski[20];
     uint32_t asn;
     uint8_t spki[200];
     const struct rtr_socket *socket;

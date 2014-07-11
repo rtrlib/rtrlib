@@ -118,6 +118,7 @@ struct rtr_socket {
     rtr_connection_state_fp connection_state_fp;
     void *connection_state_fp_param;
     unsigned int version;
+    struct key_table *key_table;
 };
 
 /**
