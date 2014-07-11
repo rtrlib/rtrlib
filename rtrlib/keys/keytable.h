@@ -18,6 +18,8 @@
 
 #include "rtrlib/keys/tommyds-1.8/tommy.h"
 #include <pthread.h>
+#include <stdlib.h>
+#include "rtrlib/rtrlib.h"
 /**
  * @brief A function pointer that is called by the key_table to find elements.
  * @param arg Pointer at the value to search, in our case a uint32_t asn.
@@ -41,18 +43,21 @@ struct key_table {
 
 /**
  * @brief key_entry.
- * @param key_pdu The complete pdu_router_key struct, see packets.c
+ * @param router_key The router key struct with the {ASN, SKI, Public Key} triple
  * @param asn Origin AS number, used as the hash index (I use index to not confuse it with the crypto keys).
  * @param next In case this key_entry returns from key_table_get(..), this points to the next found key_entry.
  * @param node Required by the tommyDS hashtable implementation we are using. Stores info about the hashed object.
  */
 
 struct key_entry {
-	struct pdu_router_key *key_pdu;
+	uint8_t ski[20];
     uint32_t asn;
+    uint8_t spki[200];
+    const struct rtr_socket *socket;
     struct key_entry *next;
     tommy_node node;
 };
+
 
 
 /**
@@ -97,7 +102,8 @@ void key_table_init(struct key_table *key_table);
  * @return KEY_ERROR On error.
  * @return KEY_DUPLICATE_RECORD // TODO
  */
-int key_table_add(struct key_table *key_table, struct key_entry *key_entry);
+int key_table_add_entry(struct key_table *key_table, struct key_entry *key_entry);
+
 
 
 /**
@@ -107,3 +113,11 @@ int key_table_add(struct key_table *key_table, struct key_entry *key_entry);
  * @param asn Hash index to look for
  */
 struct key_entry* key_table_get(struct key_table *key_table, uint32_t asn);
+
+
+/**
+ * @brief Removes key_entry from key_table
+ * @param key_table key_table to use
+ * @param key_entry key_entry to remove;
+ */
+int key_table_remove(struct key_table *key_table, struct key_entry *key_entry);

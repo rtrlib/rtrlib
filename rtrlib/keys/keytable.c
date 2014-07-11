@@ -17,6 +17,8 @@
 
 #include "rtrlib/keys/keytable.h"
 
+
+//****NOTE****
 //All of the following code needs more error handling and of course testing, will come back to later
 
 void key_table_init(struct key_table *key_table) {
@@ -33,7 +35,7 @@ int asn_cmp(const void *arg, const void *obj) {
 }
 
 
-int key_table_add(struct key_table *key_table, struct key_entry *key_entry) {
+int key_table_add_entry(struct key_table *key_table, struct key_entry *key_entry) {
 	pthread_rwlock_wrlock(&key_table->lock);
 	tommy_hashlin_insert(key_table->hashtable, &key_entry->node, key_entry, tommy_inthash_u32(key_entry->asn));
 	pthread_rwlock_unlock(&key_table->lock);
@@ -62,4 +64,14 @@ struct key_entry* key_table_get(struct key_table *key_table, uint32_t asn) {
 	}
 	return head;
 
+}
+
+
+//Barebones still..
+int key_table_remove(struct key_table *key_table, struct key_entry *key_entry) {
+
+	pthread_rwlock_wrlock(&key_table->lock);
+	tommy_hashlin_remove_existing(key_table->hashtable,&key_entry->node);
+	pthread_rwlock_unlock(&key_table->lock);
+	return KEY_SUCCESS;
 }
