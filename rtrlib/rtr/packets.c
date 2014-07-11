@@ -703,6 +703,62 @@ int rtr_update_pfx_table(struct rtr_socket *rtr_socket, const void *pdu) {
     return RTR_SUCCESS;
 }
 
+int rtr_update_key_table(rtr_socket* rtr_socket, const void* pdu){
+    const pdu_type type = rtr_get_pdu_type(pdu);
+    assert(type == ROUTER_KEY);
+
+    struct key_entry entry;
+
+    size_t pdu_size = sizeof(pdu_router_key);
+    rtr_key_pdu_2_key_entry(rtr_socket, pdu,&entry);
+
+    int rtval;
+    if(((pdu_router_key*) pdu)->flags == 1)
+        rtval = key_table_add_entry(rtr_socket->key_table, &entry);
+    else if(((pdu_router_key*) pdu)->flags == 0)
+        rtval = key_table_remove(rtr_socket->key_table, &entry);
+    else{
+        const char* txt = "Router Key PDU with invalid flags value received";
+        RTR_DBG("%s", txt);
+        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, CORRUPT_DATA, txt, sizeof(txt));
+        return RTR_ERROR;
+    }
+
+    // if(rtval == PFX_DUPLICATE_RECORD){
+    //     char ip[INET6_ADDRSTRLEN];
+    //     ip_addr_to_str(&(pfxr.prefix), ip, INET6_ADDRSTRLEN);
+    //     RTR_DBG("Duplicate Announcement for record: %s/%u-%u, ASN: %u, received", ip, pfxr.min_len, pfxr.max_len, pfxr.asn);
+    //     rtr_send_error_pdu(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT , NULL, 0);
+    //     rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+    //     return RTR_ERROR;
+    // }
+    // else if(rtval == PFX_RECORD_NOT_FOUND){
+    //     RTR_DBG1("Withdrawal of unknown record");
+    //     rtr_send_error_pdu(rtr_socket, pdu, pdu_size, WITHDRAWAL_OF_UNKNOWN_RECORD, NULL, 0);
+    //     rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+    //     return RTR_ERROR;
+    // }
+    // else if(rtval == PFX_ERROR){
+    //     const char* txt = "PFX_TABLE Error";
+    //     RTR_DBG("%s", txt);
+    //     rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
+    //     rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+    //     return RTR_ERROR;
+    // }
+
+    return RTR_SUCCESS;
+}
+
+void rtr_key_pdu_2_key_entry(const struct rtr_socket *rtr_socket, const void *pdu, struct key_entry *entry, const enum pdu_type type) {
+    assert(type == ROUTER_KEY);
+    const struct pdu_router_key *rt_key = pdu;
+
+    entry->asn = rt_key->asn;
+    memcpy(entry->ski,rt_key->ski,sizeof(rt_key->ski));
+    memcpy(entry->spki,rt_key->spki,sizeof(rt_key->spki));
+    entry->socket = rtr_socket;
+}
+
 int rtr_wait_for_sync(struct rtr_socket *rtr_socket) {
     char pdu[RTR_MAX_PDU_LEN];
 
