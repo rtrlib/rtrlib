@@ -127,13 +127,14 @@ struct rtr_socket {
  * @param[in] tr_socket Pointer to a tr_socket that will be used for the transport connection. If NULL the tr_socket element of
  * the rtr_socket won't be changed.
  * @param[in] pfx_table pfx_table that stores the validation records obtained from the connected rtr server.
+ * @param[in] key_table key_table that stores the router keys obtained from the connected rtr server.
  * @param[in] polling_period Interval in seconds between serial queries that are sent to the server. Must be <= 3600
  * @param[in] cache_timeout Stored validation records will be deleted if cache was unable to refresh data for this period.\n
  * The default value is twice the polling_period.
  * @param[in] fp A callback function that is executed when the state of the socket changes.
  * @param[in] fp_data Parameter that is passed to the connection_state_fp callback.
  */
-void rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr_socket, struct pfx_table *pfx_table, const unsigned int polling_period, const unsigned int cache_timeout, rtr_connection_state_fp fp, void *fp_data);
+void rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr_socket, struct pfx_table *pfx_table, struct key_table *key_table, const unsigned int polling_period, const unsigned int cache_timeout, rtr_connection_state_fp fp, void *fp_data);
 
 /**
  * @brief Starts the RTR protocol state machine in a pthread. Connection to the rtr_server will be established and the
