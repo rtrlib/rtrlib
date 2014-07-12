@@ -248,6 +248,11 @@ struct rtr_mgr_config *rtr_mgr_init(struct rtr_mgr_group groups[],
             goto err;
     pfx_table_init(pfxt, update_fp);
 
+    struct key_table *key_table = malloc(sizeof(*key_table));
+    if(key_tabe == NULL)
+            goto err;
+    key_table_init(key_table);
+
     for(unsigned int i = 0; i < config->len; i++) {
         config->groups[i].status = RTR_MGR_CLOSED;
         for(unsigned int j = 0; j < config->groups[i].sockets_len; j++) {
