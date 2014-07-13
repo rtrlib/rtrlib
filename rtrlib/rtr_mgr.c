@@ -22,6 +22,7 @@
 
 #include "rtrlib/rtr_mgr.h"
 #include "rtrlib/pfx/lpfst/lpfst-pfx.h"
+#include "rtrlib/keys/keytable.h"
 #include <stdlib.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -249,7 +250,7 @@ struct rtr_mgr_config *rtr_mgr_init(struct rtr_mgr_group groups[],
     pfx_table_init(pfxt, update_fp);
 
     struct key_table *key_table = malloc(sizeof(*key_table));
-    if(key_tabe == NULL)
+    if(key_table == NULL)
             goto err;
     key_table_init(key_table);
 

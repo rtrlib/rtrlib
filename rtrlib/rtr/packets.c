@@ -565,7 +565,7 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
                         pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
                        rtr_socket->request_session_id = true;
                     }
-
+                    free(router_key_pdus);
                     free(ipv6_pdus);
                     free(ipv4_pdus);
                     rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
@@ -586,18 +586,40 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
                         pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
                        rtr_socket->request_session_id = true;
                     }
+                    free(router_key_pdus);
                     free(ipv6_pdus);
                     free(ipv4_pdus);
                     rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
                     return RTR_ERROR;
                 }
             }
-            //add all router_key pdu to the spki table
-            //TODO first we need the table implementation
+
+            //add all router key pdu to the key_table
+            for(unsigned int i = 0; i < router_key_pdus_nindex; i++) {
+                if(rtr_update_key_table(rtr_socket, &(router_key_pdus[i])) == KEY_ERROR) {
+                    //undo all record updates if error occured
+                    RTR_DBG("Error during data synchronisation, recovering Serial Nr. %u state",rtr_socket->serial_number);
+                    for(unsigned int j = 0; j < ipv4_pdus_nindex; j++)
+                        rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv4_pdus[j]));
+                    for(unsigned int j = 0; (j < i) && (rtval == PFX_SUCCESS); j++)
+                        rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv6_pdus[j]));
+                    if(rtval == RTR_ERROR) {
+                        RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all records");
+                        pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
+                       rtr_socket->request_session_id = true;
+                    }
+                    free(router_key_pdus);
+                    free(ipv6_pdus);
+                    free(ipv4_pdus);
+                    rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+                    return RTR_ERROR;
+                }
+            }
+
             free(router_key_pdus);
             free(ipv6_pdus);
             free(ipv4_pdus);
-           rtr_socket->serial_number = eod_pdu->sn;
+            rtr_socket->serial_number = eod_pdu->sn;
         }
         else if(type == ERROR) {
             rtr_handle_error_pdu(rtr_socket, pdu);
@@ -721,7 +743,7 @@ int rtr_update_key_table(struct rtr_socket* rtr_socket, const void* pdu){
     if(((struct pdu_router_key*) pdu)->flags == 1)
         rtval = key_table_add_entry(rtr_socket->key_table, &entry);
     else if(((struct pdu_router_key*) pdu)->flags == 0)
-        rtval = key_table_remove(rtr_socket->key_table, &entry);
+        rtval = key_table_remove_entry(rtr_socket->key_table, &entry);
     else{
         const char* txt = "Router Key PDU with invalid flags value received";
         RTR_DBG("%s", txt);
@@ -729,26 +751,25 @@ int rtr_update_key_table(struct rtr_socket* rtr_socket, const void* pdu){
         return RTR_ERROR;
     }
 
-    if(rtval == PFX_DUPLICATE_RECORD){
-        // char ip[INET6_ADDRSTRLEN];
-        // ip_addr_to_str(&(pfxr.prefix), ip, INET6_ADDRSTRLEN);
-        // RTR_DBG("Duplicate Announcement for record: %s/%u-%u, ASN: %u, received", ip, pfxr.min_len, pfxr.max_len, pfxr.asn);
-        // rtr_send_error_pdu(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT , NULL, 0);
-        // rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-        // return RTR_ERROR;
+    if(rtval == KEY_DUPLICATE_RECORD){
+        //TODO: This debug message isn't working yet, probably because my format is wrong. Will come back to later
+        // RTR_DBG("Duplicate Announcement for router key: ASN: %u, SKI: %x, SPKI: %x, received", entry->asn, entry->ski, entry->spki);
+        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT , NULL, 0);
+        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+        return RTR_ERROR;
     }
-    else if(rtval == PFX_RECORD_NOT_FOUND){
-        // RTR_DBG1("Withdrawal of unknown record");
-        // rtr_send_error_pdu(rtr_socket, pdu, pdu_size, WITHDRAWAL_OF_UNKNOWN_RECORD, NULL, 0);
-        // rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-        // return RTR_ERROR;
+    else if(rtval == KEY_RECORD_NOT_FOUND){
+        RTR_DBG1("Withdrawal of unknown record");
+        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, WITHDRAWAL_OF_UNKNOWN_RECORD, NULL, 0);
+        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+        return RTR_ERROR;
     }
     else if(rtval == PFX_ERROR){
-        // const char* txt = "PFX_TABLE Error";
-        // RTR_DBG("%s", txt);
-        // rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
-        // rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-        // return RTR_ERROR;
+        const char* txt = "PFX_TABLE Error";
+        RTR_DBG("%s", txt);
+        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
+        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+        return RTR_ERROR;
     }
 
     return RTR_SUCCESS;
@@ -759,8 +780,8 @@ void rtr_key_pdu_2_key_entry(const struct rtr_socket *rtr_socket, const void *pd
     const struct pdu_router_key *rt_key = pdu;
 
     entry->asn = rt_key->asn;
-    memcpy(entry->ski,rt_key->ski,sizeof(rt_key->ski));
-    memcpy(entry->spki,rt_key->spki,sizeof(rt_key->spki));
+    memcpy(entry->ski,rt_key->ski,SKI_SIZE);
+    memcpy(entry->spki,rt_key->spki,SPKI_SIZE);
     entry->socket = rtr_socket;
 }
 
