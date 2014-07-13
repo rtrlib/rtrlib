@@ -597,22 +597,24 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
             //add all router key pdu to the key_table
             for(unsigned int i = 0; i < router_key_pdus_nindex; i++) {
                 if(rtr_update_key_table(rtr_socket, &(router_key_pdus[i])) == KEY_ERROR) {
+
+                    //TODO: Should a KEY_ERROR lead to pfx_table being rolled back?
                     //undo all record updates if error occured
-                    RTR_DBG("Error during data synchronisation, recovering Serial Nr. %u state",rtr_socket->serial_number);
-                    for(unsigned int j = 0; j < ipv4_pdus_nindex; j++)
-                        rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv4_pdus[j]));
-                    for(unsigned int j = 0; (j < i) && (rtval == PFX_SUCCESS); j++)
-                        rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv6_pdus[j]));
-                    if(rtval == RTR_ERROR) {
-                        RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all records");
-                        pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
-                       rtr_socket->request_session_id = true;
-                    }
-                    free(router_key_pdus);
-                    free(ipv6_pdus);
-                    free(ipv4_pdus);
-                    rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-                    return RTR_ERROR;
+                    // RTR_DBG("Error during data synchronisation, recovering Serial Nr. %u state",rtr_socket->serial_number);
+                    // for(unsigned int j = 0; j < ipv4_pdus_nindex; j++)
+                    //     rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv4_pdus[j]));
+                    // for(unsigned int j = 0; (j < i) && (rtval == PFX_SUCCESS); j++)
+                    //     rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv6_pdus[j]));
+                    // if(rtval == RTR_ERROR) {
+                    //     RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all records");
+                    //     pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
+                    //    rtr_socket->request_session_id = true;
+                    // }
+                    // free(router_key_pdus);
+                    // free(ipv6_pdus);
+                    // free(ipv4_pdus);
+                    // rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+                    // return RTR_ERROR;
                 }
             }
 
@@ -764,8 +766,8 @@ int rtr_update_key_table(struct rtr_socket* rtr_socket, const void* pdu){
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
         return RTR_ERROR;
     }
-    else if(rtval == PFX_ERROR){
-        const char* txt = "PFX_TABLE Error";
+    else if(rtval == KEY_ERROR){
+        const char* txt = "KEY_TABLE Error";
         RTR_DBG("%s", txt);
         rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
