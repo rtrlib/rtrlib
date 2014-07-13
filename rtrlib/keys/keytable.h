@@ -48,10 +48,13 @@ struct key_table {
  * @param node Required by the tommyDS hashtable implementation we are using. Stores info about the hashed object.
  */
 
+#define SKI_SIZE 20
+#define SPKI_SIZE 200
+
 struct key_entry {
-    uint8_t ski[20];
+    uint8_t ski[SKI_SIZE];
     uint32_t asn;
-    uint8_t spki[200];
+    uint8_t spki[SPKI_SIZE];
     const struct rtr_socket *socket;
     struct key_entry *next;
     tommy_node node;
@@ -69,18 +72,27 @@ enum key_rtvals {
     /** Error occured. */
     KEY_ERROR = -1,
 
-    //TODO:
-    // /** The supplied key_entry already exists in the key_table. */
-    // KEY_DUPLICATE_RECORD = -2,
+    /** The supplied key_entry already exists in the key_table. */
+    KEY_DUPLICATE_RECORD = -2,
 
     // /** key_entry wasn't found in the key_table. */
-    // KEY_RECORD_NOT_FOUND = -3
+    KEY_RECORD_NOT_FOUND = -3
 };
 
 /**
  * @brief Function that compares arg to the ASN value of obj
+ * @details IMPORTANT: Only use this function with object of type uint32
  */
 int asn_cmp(const void *arg, const void *obj);
+
+
+/**
+ * @brief Function that compares the asn,ski and spki of the two key_entry arg and obj
+ * @details IMPORTANT: Only use this function with object of type key_entry
+ * @return 0 if arg and obj are equal
+ * @return 1 if not equal
+ */
+int key_entry_cmp(const void *arg, const void *obj);
 
 
 /**
@@ -111,7 +123,7 @@ int key_table_add_entry(struct key_table *key_table, struct key_entry *key_entry
  * @param key_table key_table to use
  * @param asn Hash index to look for
  */
-struct key_entry* key_table_get(struct key_table *key_table, uint32_t asn);
+struct key_entry* key_table_get_all(struct key_table *key_table, uint32_t asn);
 
 
 /**
@@ -119,4 +131,4 @@ struct key_entry* key_table_get(struct key_table *key_table, uint32_t asn);
  * @param key_table key_table to use
  * @param key_entry key_entry to remove;
  */
-int key_table_remove(struct key_table *key_table, struct key_entry *key_entry);
+int key_table_remove_entry(struct key_table *key_table, struct key_entry *key_entry);

@@ -16,6 +16,7 @@
  */
 
 #include "rtrlib/keys/keytable.h"
+#include <string.h>
 
 
 //****NOTE****
@@ -26,7 +27,7 @@ void key_table_init(struct key_table *key_table) {
 	key_table->hashtable = &hashlin;
 	tommy_hashlin_init(key_table->hashtable);
 	pthread_rwlock_init(&key_table->lock, NULL);
-	key_table->cmp_fp = asn_cmp;
+	key_table->cmp_fp = key_entry_cmp;
 }
 
 
@@ -35,24 +36,53 @@ int asn_cmp(const void *arg, const void *obj) {
 }
 
 
+int key_entry_cmp(const void *arg, const void *obj) {
+	struct key_entry *param = (struct key_entry*)arg;
+	struct key_entry *entry = (struct key_entry*)obj;
+
+	if(param->asn != entry->asn)
+		return 1;
+	if(memcmp(param->ski,entry->ski,SKI_SIZE))
+		return 1;
+	if(memcmp(param->spki,entry->spki,SPKI_SIZE))
+		return 1;
+
+	return 0;
+}
+
+//TODO: Handle KEY_ERROR case
 int key_table_add_entry(struct key_table *key_table, struct key_entry *key_entry) {
+	uint32_t hash = tommy_inthash_u32(key_entry->asn);
+	int rtval;
+
 	pthread_rwlock_wrlock(&key_table->lock);
-	tommy_hashlin_insert(key_table->hashtable, &key_entry->node, key_entry, tommy_inthash_u32(key_entry->asn));
+	if(tommy_hashlin_search(key_table->hashtable, key_table->cmp_fp, key_entry, hash)){
+		rtval = KEY_DUPLICATE_RECORD;
+	} else{
+		tommy_hashlin_insert(key_table->hashtable, &key_entry->node, key_entry, hash);
+		rtval = KEY_SUCCESS;
+	}
 	pthread_rwlock_unlock(&key_table->lock);
-	return KEY_SUCCESS;
+	return rtval;
 }
 
 
 
-struct key_entry* key_table_get(struct key_table *key_table, uint32_t asn) {
+struct key_entry* key_table_get_all(struct key_table *key_table, uint32_t asn) {
+
+
+	uint32_t hash = tommy_inthash_u32(asn);
 
 	pthread_rwlock_wrlock(&key_table->lock);
-
 	//A tommy node contains its storing key_entry (->data) as well as next and prev pointer
 	//to accomodate multiple results
-	tommy_node *result = tommy_hashlin_bucket(key_table->hashtable,tommy_inthash_u32(asn));
-
+	tommy_node *result = tommy_hashlin_bucket(key_table->hashtable, hash);
 	pthread_rwlock_unlock(&key_table->lock);
+
+	if(!result){
+		return NULL;
+	}
+
 
 	//We link up the key_entry structs so we don't end up using tommy nodes outside of the keys files.
 	struct key_entry *head = result->data;
@@ -67,11 +97,23 @@ struct key_entry* key_table_get(struct key_table *key_table, uint32_t asn) {
 }
 
 
-//Barebones still..
-int key_table_remove(struct key_table *key_table, struct key_entry *key_entry) {
+//TODO: Handle KEY_ERROR case
+int key_table_remove_entry(struct key_table *key_table, struct key_entry *key_entry) {
+
+	uint32_t hash = tommy_inthash_u32(key_entry->asn);
+	int rtval;
 
 	pthread_rwlock_wrlock(&key_table->lock);
-	tommy_hashlin_remove_existing(key_table->hashtable,&key_entry->node);
+
+	struct key_entry *rmv_elem = tommy_hashlin_remove(key_table->hashtable, key_table->cmp_fp, key_entry, hash);
+
+	if(rmv_elem){
+		rtval = KEY_SUCCESS;
+		free(rmv_elem);
+	} else {
+		rtval = KEY_RECORD_NOT_FOUND;
+	}
 	pthread_rwlock_unlock(&key_table->lock);
-	return KEY_SUCCESS;
+
+	return rtval;
 }
