@@ -552,6 +552,7 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
                 snprintf(txt, sizeof(txt),"Expected session_id: %u, received session_id. %u in EOD PDU",rtr_socket->session_id, eod_pdu->session_id);
                 rtr_send_error_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, CORRUPT_DATA, txt, strlen(txt) + 1);
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+                free(router_key_pdus);
                 free(ipv4_pdus);
                 free(ipv6_pdus);
                 return RTR_ERROR;
@@ -603,7 +604,8 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
             for(unsigned int i = 0; i < router_key_pdus_nindex; i++) {
                 if(rtr_update_key_table(rtr_socket, &(router_key_pdus[i])) == KEY_ERROR) {
 
-                    //TODO: Should a KEY_ERROR lead to pfx_table being rolled back?
+                    //TODO: Should a KEY_ERROR lead to pfx_table, key_table being rolled back?
+                    //TODO: Should a failed undo lead to dropping of all router_keys/pfx records?
                     // undo all record updates if error occured
                     RTR_DBG("Error during data synchronisation, recovering Serial Nr. %u state",rtr_socket->serial_number);
                     for(unsigned int j = 0; j < router_key_pdus_nindex; j++)
@@ -618,11 +620,11 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
                     //     pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
                     //    rtr_socket->request_session_id = true;
                     // }
-                    // free(router_key_pdus);
-                    // free(ipv6_pdus);
-                    // free(ipv4_pdus);
-                    // rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-                    // return RTR_ERROR;
+                    free(router_key_pdus);
+                    free(ipv6_pdus);
+                    free(ipv4_pdus);
+                    rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+                    return RTR_ERROR;
                 }
             }
 
@@ -633,6 +635,7 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
         }
         else if(type == ERROR) {
             rtr_handle_error_pdu(rtr_socket, pdu);
+            free(router_key_pdus);
             free(ipv4_pdus);
             free(ipv6_pdus);
             return RTR_ERROR;
@@ -644,6 +647,7 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
             RTR_DBG("Received unexpected PDU (Type: %u)", ((struct pdu_header *) pdu)->type);
             const char *txt = "Unexpected PDU received during data synchronisation";
             rtr_send_error_pdu(rtr_socket, pdu, sizeof(struct pdu_header), CORRUPT_DATA, txt, sizeof(txt));
+            free(router_key_pdus);
             free(ipv4_pdus);
             free(ipv6_pdus);
             return RTR_ERROR;
