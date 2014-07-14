@@ -117,3 +117,5 @@ int key_table_remove_entry(struct key_table *key_table, struct key_entry *key_en
 
 	return rtval;
 }
+
+//TODO: Add validate_router_key function

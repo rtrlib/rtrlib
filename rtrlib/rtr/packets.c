@@ -171,6 +171,11 @@ int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *pdu, con
  */
 static int rtr_undo_update_pfx_table(struct rtr_socket *rtr_socket, void *pdu);
 
+/*
+ * @brief Removes router_key from the key_table with flag field == ADD, ADDs router_key PDU to the key_table with flag
+ * field == REMOVE.
+ */
+static int rtr_undo_update_key_table(struct rtr_socket *rtr_socket, void *pdu);
 
 void rtr_change_socket_state(struct rtr_socket *rtr_socket, const enum rtr_socket_state new_state) {
     if(rtr_socket->state == new_state)
@@ -599,8 +604,11 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
                 if(rtr_update_key_table(rtr_socket, &(router_key_pdus[i])) == KEY_ERROR) {
 
                     //TODO: Should a KEY_ERROR lead to pfx_table being rolled back?
-                    //undo all record updates if error occured
-                    // RTR_DBG("Error during data synchronisation, recovering Serial Nr. %u state",rtr_socket->serial_number);
+                    // undo all record updates if error occured
+                    RTR_DBG("Error during data synchronisation, recovering Serial Nr. %u state",rtr_socket->serial_number);
+                    for(unsigned int j = 0; j < router_key_pdus_nindex; j++)
+                        rtval = rtr_undo_update_key_table(rtr_socket, &(router_key_pdus[j]));
+
                     // for(unsigned int j = 0; j < ipv4_pdus_nindex; j++)
                     //     rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv4_pdus[j]));
                     // for(unsigned int j = 0; (j < i) && (rtval == PFX_SUCCESS); j++)
@@ -754,7 +762,7 @@ int rtr_update_key_table(struct rtr_socket* rtr_socket, const void* pdu){
     }
 
     if(rtval == KEY_DUPLICATE_RECORD){
-        //TODO: This debug message isn't working yet, probably because my format is wrong. Will come back to later
+        //TODO: This debug message isn't working yet.
         // RTR_DBG("Duplicate Announcement for router key: ASN: %u, SKI: %x, SPKI: %x, received", entry->asn, entry->ski, entry->spki);
         rtr_send_error_pdu(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT , NULL, 0);
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
@@ -785,6 +793,22 @@ void rtr_key_pdu_2_key_entry(const struct rtr_socket *rtr_socket, const void *pd
     memcpy(entry->ski,rt_key->ski,SKI_SIZE);
     memcpy(entry->spki,rt_key->spki,SPKI_SIZE);
     entry->socket = rtr_socket;
+}
+
+int rtr_undo_update_key_table(struct rtr_socket *rtr_socket, void *pdu) {
+    const enum pdu_type type = rtr_get_pdu_type(pdu);
+    assert(type == ROUTER_KEY);
+
+    struct key_entry entry;
+    rtr_key_pdu_2_key_entry(rtr_socket, pdu, &entry, type);
+
+    int rtval = RTR_ERROR;
+    //invert add/remove operation
+    if(((struct pdu_router_key*) pdu)->flags == 1)
+        rtval = key_table_remove_entry(rtr_socket->key_table, &entry);
+    else if(((struct pdu_router_key*) pdu)->flags == 0)
+        rtval = key_table_add_entry(rtr_socket->key_table, &entry);
+    return rtval;
 }
 
 int rtr_wait_for_sync(struct rtr_socket *rtr_socket) {
