@@ -248,6 +248,9 @@ void rtr_pdu_footer_to_host_byte_order(void *pdu) {
 
             int32_tmp = ntohl(((struct pdu_end_of_data_v1 *) pdu)->retry_interval);
             ((struct pdu_end_of_data_v1 *) pdu)->retry_interval = int32_tmp;
+
+            int32_tmp = ntohl(((struct pdu_end_of_data_v1 *) pdu)->sn);
+            ((struct pdu_end_of_data_v1 *) pdu)->sn = int32_tmp;
         } else {
             int32_tmp = ntohl(((struct pdu_end_of_data_v0 *) pdu)->sn);
             ((struct pdu_end_of_data_v0 *) pdu)->sn = int32_tmp;
@@ -349,7 +352,7 @@ int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_t pdu_l
         }
     }
 
-    if(header.type > 10) {
+    if((header.type > 10) || (header.ver == RTR_PROTOCOL_VERSION_0 && header.type == ROUTER_KEY)) {
         error = 2;
         goto error;
     }
