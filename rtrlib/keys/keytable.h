@@ -35,7 +35,7 @@ typedef int (*hash_cmp_fp)(const void *arg, const void *obj);
  */
 
 struct key_table {
-    tommy_hashlin *hashtable;
+    tommy_hashlin hashtable;
     hash_cmp_fp cmp_fp;
     pthread_rwlock_t lock;};
 
