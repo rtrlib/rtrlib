@@ -867,15 +867,15 @@ int rtr_undo_update_key_table(struct rtr_socket *rtr_socket, void *pdu) {
     const enum pdu_type type = rtr_get_pdu_type(pdu);
     assert(type == ROUTER_KEY);
 
-    struct key_entry entry;
-    rtr_key_pdu_2_key_entry(rtr_socket, pdu, &entry, type);
+    struct key_entry *entry = malloc(sizeof(struct key_entry));
+    rtr_key_pdu_2_key_entry(rtr_socket, pdu, entry, type);
 
     int rtval = RTR_ERROR;
     //invert add/remove operation
     if(((struct pdu_router_key*) pdu)->flags == 1)
-        rtval = key_table_remove_entry(rtr_socket->key_table, &entry);
+        rtval = key_table_remove_entry(rtr_socket->key_table, entry);
     else if(((struct pdu_router_key*) pdu)->flags == 0)
-        rtval = key_table_add_entry(rtr_socket->key_table, &entry);
+        rtval = key_table_add_entry(rtr_socket->key_table, entry);
     return rtval;
 }
 

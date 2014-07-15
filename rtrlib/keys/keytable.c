@@ -35,7 +35,7 @@ int asn_cmp(const void *arg, const void *obj) {
 	return *(const uint32_t*)arg != ((const struct key_entry*)obj)->asn;
 }
 
-
+//TODO Add enum for rtvals?
 int key_entry_cmp(const void *arg, const void *obj) {
 	struct key_entry *param = (struct key_entry*)arg;
 	struct key_entry *entry = (struct key_entry*)obj;
@@ -50,7 +50,7 @@ int key_entry_cmp(const void *arg, const void *obj) {
 	return 0;
 }
 
-//TODO: Handle KEY_ERROR case
+//TODO: Remove printf statements and do real output (notify clients?)
 int key_table_add_entry(struct key_table *key_table, struct key_entry *key_entry) {
 	uint32_t hash = tommy_inthash_u32(key_entry->asn);
 	int rtval = KEY_ERROR;
@@ -100,7 +100,7 @@ struct key_entry* key_table_get_all(struct key_table *key_table, uint32_t asn) {
 }
 
 
-//TODO: Handle KEY_ERROR case
+//TODO: Remove printf statements and do real output (notify clients?)
 int key_table_remove_entry(struct key_table *key_table, struct key_entry *key_entry) {
 
 	uint32_t hash = tommy_inthash_u32(key_entry->asn);
@@ -113,19 +113,15 @@ int key_table_remove_entry(struct key_table *key_table, struct key_entry *key_en
 		printf("Could not remove Router Key: ASN: %u (key not found)\n",key_entry->asn);
 	} else {
 
-		//Remove from hashtable and list, needs more error handling
+		//Remove from hashtable and list
 		struct key_entry *rmv_elem = tommy_hashlin_remove(&key_table->hashtable, key_table->cmp_fp, key_entry, hash);
-		rmv_elem = tommy_list_remove_existing(&key_table->list, &rmv_elem->list_node);
-
-		if(!rmv_elem){
-			rtval = KEY_ERROR;
-		}
-		else{
+		if(rmv_elem && tommy_list_remove_existing(&key_table->list, &rmv_elem->list_node)){
 			rtval = KEY_SUCCESS;
 			printf("Removed Router Key: ASN: %u\n",rmv_elem->asn);
 			free(rmv_elem);
+		} else{
+			rtval = KEY_ERROR;
 		}
-
 	}
 
 	pthread_rwlock_unlock(&key_table->lock);
