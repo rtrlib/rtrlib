@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include "rtrlib/lib/log.h"
 #include "rtrlib/rtr/packets.h"
+#include "rtrlib/keys/keytable.h"
 #include "rtrlib/rtr/rtr.h"
 #include "rtrlib/lib/utils.h"
 
@@ -100,6 +101,8 @@ void rtr_purge_outdated_records(struct rtr_socket *rtr_socket) {
             RTR_DBG1("get_monotic_time(..) failed");
         pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
         RTR_DBG1("Removed outdated records from pfx_table");
+        key_table_src_remove(rtr_socket->key_table, rtr_socket);
+        RTR_DBG1("Removed outdated router keys from key_table");
         rtr_socket->request_session_id = true;
         rtr_socket->serial_number = 0;
         rtr_socket->last_update = 0;
@@ -113,6 +116,7 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket) {
         if(rtr_socket->state == RTR_CONNECTING) {
             RTR_DBG1("State: RTR_CONNECTING");
             //old pfx_record could exists in the pfx_table, check if they are too old and must be removed
+            //old key_entry could exists in the key_table, check if they are too old and must be removed
             rtr_purge_outdated_records(rtr_socket);
 
             if(tr_open(rtr_socket->tr_socket) == TR_ERROR) {
@@ -193,6 +197,7 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket) {
             rtr_socket->serial_number = 0;
             rtr_socket->last_update = 0;
             pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
+            key_table_src_remove(rtr_socket->key_table, rtr_socket);
             pthread_exit(NULL);
         }
     }

@@ -537,6 +537,8 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
             if(rtr_socket->last_update != 0) {
                 //if this isnt the first sync, but we already received records, delete old records in the pfx_table
                 pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
+                key_table_src_remove(rtr_socket->key_table, rtr_socket);
+
                rtr_socket->last_update = 0;
             }
            rtr_socket->session_id = cr_pdu->reserved;
@@ -667,7 +669,7 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
                     //TODO: Should a KEY_ERROR lead to pfx_table, key_table being rolled back?
                     //TODO: Should a failed undo lead to dropping of all router_keys/pfx records?
                     // undo all record updates if error occured
-                    RTR_DBG("Error during data synchronisation, recovering Serial Nr. %u state",rtr_socket->serial_number);
+                    RTR_DBG("Error during router key data synchronisation, recovering Serial Nr. %u state",rtr_socket->serial_number);
                     for(unsigned int j = 0; j < router_key_pdus_nindex; j++)
                         rtval = rtr_undo_update_key_table(rtr_socket, &(router_key_pdus[j]));
 
@@ -675,11 +677,11 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
                     //     rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv4_pdus[j]));
                     // for(unsigned int j = 0; (j < i) && (rtval == PFX_SUCCESS); j++)
                     //     rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv6_pdus[j]));
-                    // if(rtval == RTR_ERROR) {
-                    //     RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all records");
-                    //     pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
-                    //    rtr_socket->request_session_id = true;
-                    // }
+                    if(rtval == RTR_ERROR) {
+                        RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all key entries");
+                        key_table_src_remove(rtr_socket->key_table, rtr_socket);
+                       rtr_socket->request_session_id = true;
+                    }
                     free(router_key_pdus);
                     free(ipv6_pdus);
                     free(ipv4_pdus);
@@ -829,13 +831,13 @@ int rtr_update_key_table(struct rtr_socket* rtr_socket, const void* pdu){
 
     if(rtval == KEY_DUPLICATE_RECORD){
         //TODO: This debug message isn't working yet.
-        // RTR_DBG("Duplicate Announcement for router key: ASN: %u, SKI: %x, SPKI: %x, received", entry->asn, entry->ski, entry->spki);
+        RTR_DBG("Duplicate Announcement for router key: ASN: %u, SKI: %s, SPKI: %s, received", entry->asn, entry->ski, entry->spki);
         rtr_send_error_pdu(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT , NULL, 0);
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
         return RTR_ERROR;
     }
     else if(rtval == KEY_RECORD_NOT_FOUND){
-        RTR_DBG1("Withdrawal of unknown record");
+        RTR_DBG1("Withdrawal of unknown router key");
         rtr_send_error_pdu(rtr_socket, pdu, pdu_size, WITHDRAWAL_OF_UNKNOWN_RECORD, NULL, 0);
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
         return RTR_ERROR;
