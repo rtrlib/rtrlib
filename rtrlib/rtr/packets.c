@@ -593,7 +593,16 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
                 return RTR_ERROR;
         }
         else if(type == EOD) {
-            struct pdu_serial_query *eod_pdu = (struct pdu_serial_query *) pdu;
+            RTR_DBG1("EOD PDU received.");
+            struct pdu_end_of_data_v0 *eod_pdu = (struct pdu_end_of_data_v0 *) pdu;
+
+            if(eod_pdu->ver == RTR_PROTOCOL_VERSION_1){
+               rtr_socket->expire_interval = ((struct pdu_end_of_data_v1 *) pdu)->expire_interval;
+               rtr_socket->refresh_interval = ((struct pdu_end_of_data_v1 *) pdu)->refresh_interval;
+               rtr_socket->retry_interval = ((struct pdu_end_of_data_v1 *) pdu)->retry_interval;
+               RTR_DBG("New interval values: expire_interval:%u, refresh_interval:%u, retry_interval:%u",
+                       rtr_socket->expire_interval, rtr_socket->refresh_interval, rtr_socket->retry_interval);
+            }
 
             if(eod_pdu->session_id !=rtr_socket->session_id) {
                 char txt[67];
@@ -868,7 +877,7 @@ int rtr_wait_for_sync(struct rtr_socket *rtr_socket) {
 
     time_t cur_time;
     rtr_get_monotonic_time(&cur_time);
-    time_t wait = (rtr_socket->last_update +rtr_socket->polling_period) - cur_time;
+    time_t wait = (rtr_socket->last_update +rtr_socket->refresh_interval) - cur_time;
     if(wait < 0)
         wait = 0;
 
@@ -882,7 +891,7 @@ int rtr_wait_for_sync(struct rtr_socket *rtr_socket) {
         }
     }
     else if(rtval == TR_WOULDBLOCK) {
-        RTR_DBG1("Polling period expired");
+        RTR_DBG1("Refresh interval expired");
         return RTR_SUCCESS;
     }
     return RTR_ERROR;

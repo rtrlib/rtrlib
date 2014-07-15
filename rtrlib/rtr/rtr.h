@@ -58,7 +58,7 @@ enum rtr_socket_state{
     /** Socket is establishing the transport connection. */
     RTR_CONNECTING,
 
-    /** Connection is established, socket is waiting for a Serial Notify or expiration of the polling_period timer */
+    /** Connection is established, socket is waiting for a Serial Notify or expiration of the refresh_interval timer */
     RTR_ESTABLISHED,
 
     /** Resetting RTR connection. */
@@ -93,12 +93,13 @@ typedef void (*rtr_connection_state_fp)(const struct rtr_socket *rtr_socket, con
 /**
  * @brief A RTR socket.
  * @param tr_socket Pointer to an initialized tr_socket that will be used to communicate with the RTR server.
- * @param polling_period Interval in seconds between serial queries that are sent to the server. Must be <= 3600. If 0
- * is specified the polling_period is set to 300 seconds.
+ * @param refresh_interval Time period in seconds. Tells the router how long to wait before next attempting to poll the cache, using a Serial Query or
+ * Reset Query PDU.
  * @param last_update Timestamp of the last validation record update. Is 0 if the pfx_table doesn't stores any
  * validation reords from this rtr_socket.
- * @param cache_timout Time period in seconds. Received pfx_records are deleted if the client was unable to refresh data for this time period.
- * If 0 is specified, the cache_timeout will be half the polling_period.
+ * @param expire_interval Time period in seconds. Received records are deleted if the client was unable to refresh data for this time period.
+ * If 0 is specified, the expire_interval is twice the refresh_interval.
+ * @param retry_interval Time period in seconds between a faild quary and the next attempt.
  * @param state Current state of the socket.
  * @param session_id session_id of the RTR session.
  * @param request_session_id True, if the rtr_client have to request a new none from the server.
@@ -109,9 +110,10 @@ typedef void (*rtr_connection_state_fp)(const struct rtr_socket *rtr_socket, con
  */
 struct rtr_socket {
     struct tr_socket *tr_socket;
-    unsigned int polling_period;
+    unsigned int refresh_interval;
     time_t last_update;
-    unsigned int cache_timeout;
+    unsigned int expire_interval;
+    unsigned int retry_interval;
     enum rtr_socket_state state;
     uint32_t session_id;
     bool request_session_id;
@@ -131,13 +133,13 @@ struct rtr_socket {
  * the rtr_socket won't be changed.
  * @param[in] pfx_table pfx_table that stores the validation records obtained from the connected rtr server.
  * @param[in] key_table key_table that stores the router keys obtained from the connected rtr server.
- * @param[in] polling_period Interval in seconds between serial queries that are sent to the server. Must be <= 3600
- * @param[in] cache_timeout Stored validation records will be deleted if cache was unable to refresh data for this period.\n
- * The default value is twice the polling_period.
+ * @param[in] refresh_interval Interval in seconds between serial queries that are sent to the server. Must be <= 3600
+ * @param[in] expire_interval Stored validation records will be deleted if cache was unable to refresh data for this period.\n
+ * The default value is twice the refresh_interval.
  * @param[in] fp A callback function that is executed when the state of the socket changes.
  * @param[in] fp_data Parameter that is passed to the connection_state_fp callback.
  */
-void rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr_socket, struct pfx_table *pfx_table, struct key_table *key_table, const unsigned int polling_period, const unsigned int cache_timeout, rtr_connection_state_fp fp, void *fp_data);
+void rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr_socket, struct pfx_table *pfx_table, struct key_table *key_table, const unsigned int refresh_interval, const unsigned int expire_interval, rtr_connection_state_fp fp, void *fp_data);
 
 /**
  * @brief Starts the RTR protocol state machine in a pthread. Connection to the rtr_server will be established and the

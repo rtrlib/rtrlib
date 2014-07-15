@@ -93,11 +93,11 @@ struct rtr_mgr_config {
  *		     be unique in the group array. More than one rtr_mgr_group
  *		     with the same preference value isn't allowed.
  * @param[in] groups_len Number of elements in the groups array.
- * @param[in] polling_period Interval in seconds between serial queries that are sent to the server. Must be <= 3600.
- * If 0 is specified the polling_period is set to 300 seconds.
- * @param[in] cache_timeout Time period in seconds. Received pfx_records are deleted if the client was unable to refresh data for this time period.
- * If 0 is specified, the cache_timeout will be half the polling_period.
- * The default value is twice the polling_period.
+ * @param[in] refresh_interval Interval in seconds between serial queries that are sent to the server. Must be <= 3600.
+ * If 0 is specified the refresh_interval is set to 300 seconds.
+ * @param[in] expire_interval Time period in seconds. Received pfx_records are deleted if the client was unable to refresh data for this time period.
+ * If 0 is specified, the expire_interval will be half the refresh_interval.
+ * The default value is twice the refresh_interval.
  * @param[in] update_fp A Pointer to a pfx_update_fp callback, that is executed for every added and removed pfx_record.
  * @param[in] status_fp Pointer to a function that is called if the connection
  *	                status from one of the socket groups is changed.
@@ -109,7 +109,7 @@ struct rtr_mgr_config {
  * @return NULL On error
  */
 struct rtr_mgr_config *rtr_mgr_init(struct rtr_mgr_group groups[], const unsigned int groups_len,
-		 const unsigned int polling_period, const unsigned int cache_timeout,
+         const unsigned int refresh_interval, const unsigned int expire_interval,
 		 const pfx_update_fp update_fp,
 		 const rtr_mgr_status_fp status_fp,
 		 void *status_fp_data);
