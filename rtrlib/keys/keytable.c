@@ -52,7 +52,7 @@ int key_entry_cmp(const void *arg, const void *obj) {
 //TODO: Handle KEY_ERROR case
 int key_table_add_entry(struct key_table *key_table, struct key_entry *key_entry) {
 	uint32_t hash = tommy_inthash_u32(key_entry->asn);
-	int rtval;
+	int rtval = KEY_ERROR;
 
 	pthread_rwlock_wrlock(&key_table->lock);
 	if(tommy_hashlin_search(&key_table->hashtable, key_table->cmp_fp, key_entry, hash)){
@@ -108,11 +108,19 @@ int key_table_remove_entry(struct key_table *key_table, struct key_entry *key_en
 		rtval = KEY_RECORD_NOT_FOUND;
 	} else {
 		struct key_entry *rmv_elem = tommy_hashlin_remove(&key_table->hashtable, key_table->cmp_fp, key_entry, hash);
-		free(rmv_elem);
-		rtval = KEY_SUCCESS;	
+
+		if(!rmv_elem){
+			rtval = KEY_ERROR;
+		}
+		else{
+			rtval = KEY_SUCCESS;
+			free(rmv_elem);
+		}
+
 	}
 
 	pthread_rwlock_unlock(&key_table->lock);
+	free(key_entry);
 	return rtval;
 }
 
