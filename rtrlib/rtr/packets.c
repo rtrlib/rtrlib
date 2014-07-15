@@ -142,7 +142,7 @@ struct pdu_reset_query {
     uint32_t len;
 };
 
-struct pdu_end_of_v0 {
+struct pdu_end_of_data_v0 {
     uint8_t ver;
     uint8_t type;
     uint16_t session_id;
@@ -249,8 +249,8 @@ void rtr_pdu_footer_to_host_byte_order(void *pdu) {
             int32_tmp = ntohl(((struct pdu_end_of_data_v1 *) pdu)->retry_interval);
             ((struct pdu_end_of_data_v1 *) pdu)->retry_interval = int32_tmp;
         } else {
-            int32_tmp = ntohl(((struct pdu_end_of_v0 *) pdu)->sn);
-            ((struct pdu_end_of_v0 *) pdu)->sn = int32_tmp;
+            int32_tmp = ntohl(((struct pdu_end_of_data_v0 *) pdu)->sn);
+            ((struct pdu_end_of_data_v0 *) pdu)->sn = int32_tmp;
         }
         break;
     case IPV4_PREFIX:
@@ -713,7 +713,7 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
    rtr_socket->request_session_id = false;
     if (rtr_set_last_update(rtr_socket) == RTR_ERROR)
         return RTR_ERROR;
-    RTR_DBG("Sync successfull, received %u Prefix PDUs, session_id: %u, SN: %u", (ipv4_pdus_nindex + ipv6_pdus_nindex),rtr_socket->session_id,rtr_socket->serial_number);
+    RTR_DBG("Sync successfull, received %u Prefix PDUs, %u Router Key PDUs, session_id: %u, SN: %u", (ipv4_pdus_nindex + ipv6_pdus_nindex), router_key_pdus_nindex,rtr_socket->session_id,rtr_socket->serial_number);
     return RTR_SUCCESS;
 }
 
