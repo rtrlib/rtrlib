@@ -29,8 +29,6 @@
 #include "rtrlib/rtr/rtr.h"
 #include "rtrlib/lib/utils.h"
 
-const unsigned int ERR_TIMEOUT = 20;
-
 static void rtr_purge_outdated_records(struct rtr_socket *rtr_socket);
 static void rtr_fsm_start(struct rtr_socket *rtr_socket);
 static void sighandler(int b);
@@ -151,7 +149,7 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket) {
         else if(rtr_socket->state == RTR_ESTABLISHED) {
             RTR_DBG1("State: RTR_ESTABLISHED");
             if(rtr_wait_for_sync(rtr_socket) == RTR_SUCCESS) { //blocks till expire_interval is expired or PDU was received
-                //serial query senden
+                //send serial query
                 if(rtr_send_serial_query(rtr_socket) == RTR_SUCCESS)
                     rtr_change_socket_state(rtr_socket, RTR_SYNC);
             }
@@ -162,7 +160,7 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket) {
             rtr_socket->request_session_id = true;
             rtr_socket->serial_number = 0;
             rtr_change_socket_state(rtr_socket, RTR_RESET);
-            sleep(ERR_TIMEOUT);
+            sleep(rtr_socket->retry_interval);
             rtr_purge_outdated_records(rtr_socket);
         }
 
@@ -178,14 +176,14 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket) {
             RTR_DBG1("State: RTR_ERROR_TRANSPORT");
             tr_close(rtr_socket->tr_socket);
             rtr_change_socket_state(rtr_socket, RTR_CONNECTING);
-            sleep(ERR_TIMEOUT);
+            sleep(rtr_socket->retry_interval);
         }
 
         else if(rtr_socket->state == RTR_ERROR_FATAL) {
             RTR_DBG1("State: RTR_ERROR_FATAL");
             tr_close(rtr_socket->tr_socket);
             rtr_change_socket_state(rtr_socket, RTR_CONNECTING);
-            sleep(ERR_TIMEOUT);
+            sleep(rtr_socket->retry_interval);
         }
 
         else if(rtr_socket->state == RTR_SHUTDOWN) {

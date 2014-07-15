@@ -248,6 +248,9 @@ void rtr_pdu_footer_to_host_byte_order(void *pdu) {
 
             int32_tmp = ntohl(((struct pdu_end_of_data_v1 *) pdu)->retry_interval);
             ((struct pdu_end_of_data_v1 *) pdu)->retry_interval = int32_tmp;
+
+            int32_tmp = ntohl(((struct pdu_end_of_data_v1 *) pdu)->sn);
+            ((struct pdu_end_of_data_v1 *) pdu)->sn = int32_tmp;
         } else {
             int32_tmp = ntohl(((struct pdu_end_of_data_v0 *) pdu)->sn);
             ((struct pdu_end_of_data_v0 *) pdu)->sn = int32_tmp;
