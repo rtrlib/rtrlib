@@ -337,9 +337,18 @@ int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_t pdu_l
     rtr_pdu_header_to_host_byte_order(&header);
 
     if(header.ver != rtr_socket->version) {
-        error = 16;
-        goto error;
+        //If this is the first PDU we have received -> Downgrade.
+        if(rtr_socket->request_session_id == true && rtr_socket->last_update == 0
+                                                  && header.ver >= RTR_PROTOCOL_MIN_SUPPORTED_VERSION
+                                                  && header.ver <= RTR_PROTOCOL_MAX_SUPPORTED_VERSION){
+            RTR_DBG("Downgrading current session from %i to %i", rtr_socket->version, header.ver);
+            rtr_socket->version = header.ver;
+        } else {
+            error = 16;
+            goto error;
+        }
     }
+
     if(header.type > 10) {
         error = 2;
         goto error;
@@ -374,6 +383,9 @@ int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_t pdu_l
         if (((struct pdu_ipv4 *) pdu)->zero != 0) {
             RTR_DBG1("Warning: Zero field of received Prefix PDU doesn't contain 0");
         }
+    }
+    if(header.type == ROUTER_KEY && ((struct pdu_router_key *) pdu)->zero != 0){
+        RTR_DBG1("Warning: ROUTER_KEY_PDU zero field is != 0");
     }
 
     return RTR_SUCCESS;
@@ -410,10 +422,6 @@ error:
     }
     else if(error == 16) {
         RTR_DBG1("PDU with unsupported Protocol version received");
-        if(header.ver >= RTR_PROTOCOL_MIN_SUPPORTED_VERSION && header.ver <= RTR_PROTOCOL_MAX_SUPPORTED_VERSION){
-            RTR_DBG("Cache server only supports RTR version %i. Downgrading to %i", header.ver, header.ver);
-            rtr_socket->version = header.ver;
-        }
         rtr_send_error_pdu(rtr_socket, pdu, header.len, UNSUPPORTED_PROTOCOL_VER, NULL, 0);
         return RTR_ERROR;
     }
