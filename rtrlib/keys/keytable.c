@@ -25,6 +25,7 @@
 
 void key_table_init(struct key_table *key_table) {
 	tommy_hashlin_init(&key_table->hashtable);
+	tommy_list_init(&key_table->list);
 	pthread_rwlock_init(&key_table->lock, NULL);
 	key_table->cmp_fp = key_entry_cmp;
 }
@@ -58,7 +59,10 @@ int key_table_add_entry(struct key_table *key_table, struct key_entry *key_entry
 	if(tommy_hashlin_search(&key_table->hashtable, key_table->cmp_fp, key_entry, hash)){
 		rtval = KEY_DUPLICATE_RECORD;
 	} else{
-		tommy_hashlin_insert(&key_table->hashtable, &key_entry->node, key_entry, hash);
+		//Insert into hashtable and list
+		tommy_hashlin_insert(&key_table->hashtable, &key_entry->hash_node, key_entry, hash);
+		tommy_list_insert_tail(&key_table->list, &key_entry->list_node, key_entry);
+		printf("Add Router Key: ASN: %u\n",key_entry->asn);
 		rtval = KEY_SUCCESS;
 	}
 	pthread_rwlock_unlock(&key_table->lock);
@@ -104,16 +108,21 @@ int key_table_remove_entry(struct key_table *key_table, struct key_entry *key_en
 
 	pthread_rwlock_wrlock(&key_table->lock);
 
-	if(tommy_hashlin_search(&key_table->hashtable, key_table->cmp_fp, key_entry, hash)){
+	if(!tommy_hashlin_search(&key_table->hashtable, key_table->cmp_fp, key_entry, hash)){
 		rtval = KEY_RECORD_NOT_FOUND;
+		printf("Could not remove Router Key: ASN: %u (key not found)\n",key_entry->asn);
 	} else {
+
+		//Remove from hashtable and list, needs more error handling
 		struct key_entry *rmv_elem = tommy_hashlin_remove(&key_table->hashtable, key_table->cmp_fp, key_entry, hash);
+		rmv_elem = tommy_list_remove_existing(&key_table->list, &rmv_elem->list_node);
 
 		if(!rmv_elem){
 			rtval = KEY_ERROR;
 		}
 		else{
 			rtval = KEY_SUCCESS;
+			printf("Removed Router Key: ASN: %u\n",rmv_elem->asn);
 			free(rmv_elem);
 		}
 
@@ -126,3 +135,59 @@ int key_table_remove_entry(struct key_table *key_table, struct key_entry *key_en
 
 //TODO: Add validate_router_key function
 //TODO: Add notify_clients function
+
+//Needs error handling and testing
+int key_table_src_remove(struct key_table *key_table, const struct rtr_socket *socket) {
+
+	//Find all key_entry that have key_entry->socket == socket, link them together
+	tommy_node *current_node = tommy_list_head(&key_table->list);
+
+	struct key_entry *del_head = NULL;
+	struct key_entry *del_tail = NULL;
+	struct key_entry *current_entry = NULL;
+
+
+	while(current_node){
+		current_entry = (struct key_entry *)current_node->data;
+
+		if(current_entry->socket == socket){
+			if(del_head){
+				//Attach current_entry to the end, make it the new tail
+				del_tail->next = current_entry;
+				del_tail = current_entry;
+				del_tail->next = NULL;
+			} else {
+				//If this is the first elem that maches the socket
+				//Init head and tail
+				del_head = current_entry;
+				del_tail = current_entry;
+				del_head->next = del_tail;
+			}
+		}
+		//Iterate over key_table->list
+		current_node = current_node->next;
+	}
+
+	current_entry = del_head;
+
+	struct key_entry *temp;
+
+	//Remove all elements we found from hashtable and list, free them
+	pthread_rwlock_wrlock(&key_table->lock);
+	while(current_entry){
+		tommy_hashlin_remove_existing(&key_table->hashtable, &current_entry->hash_node);
+		tommy_list_remove_existing(&key_table->list, &current_entry->list_node);
+		temp = current_entry;
+		current_entry = current_entry->next;
+		free(temp);
+	}
+	pthread_rwlock_unlock(&key_table->lock);
+	return KEY_SUCCESS;
+
+}
+
+
+
+
+
+

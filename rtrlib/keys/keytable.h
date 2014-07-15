@@ -36,6 +36,7 @@ typedef int (*hash_cmp_fp)(const void *arg, const void *obj);
 
 struct key_table {
     tommy_hashlin hashtable;
+    tommy_list list;
     hash_cmp_fp cmp_fp;
     pthread_rwlock_t lock;};
 
@@ -45,7 +46,8 @@ struct key_table {
  * @param router_key The router key struct with the {ASN, SKI, Public Key} triple
  * @param asn Origin AS number, used as the hash index (I use index to not confuse it with the crypto keys).
  * @param next In case this key_entry returns from key_table_get(..), this points to the next found key_entry.
- * @param node Required by the tommyDS hashtable implementation we are using. Stores info about the hashed object.
+ * @param hash_node Used to store the key_entry in key_table->hashtable, for fast insert/remove/validate operations
+ * @param list_node Used to store the key_entry in key_table->list, to make them iterable (used for purging)
  */
 
 #define SKI_SIZE 20
@@ -57,7 +59,8 @@ struct key_entry {
     uint8_t spki[SPKI_SIZE];
     const struct rtr_socket *socket;
     struct key_entry *next;
-    tommy_node node;
+    tommy_node hash_node;
+    tommy_node list_node;
 };
 
 
@@ -132,3 +135,13 @@ struct key_entry* key_table_get_all(struct key_table *key_table, uint32_t asn);
  * @param key_entry key_entry to remove;
  */
 int key_table_remove_entry(struct key_table *key_table, struct key_entry *key_entry);
+
+
+/**
+ * @brief Removes all entries in the key_table that match the passed socket_id value from a pfx_table.
+ * @param[in] key_table key_table to use.
+ * @param[in] socket origin socket of the record
+ * @return KEY_SUCCESS On success.
+ * @return KEY_ERROR On error.
+ */
+int key_table_src_remove(struct key_table *key_table, const struct rtr_socket *socket);
