@@ -17,15 +17,14 @@
 
 #include "rtrlib/keys/keytable.h"
 #include <string.h>
+#include <stdio.h>
 
 
 //****NOTE****
 //All of the following code needs more error handling and of course testing, will come back to later
 
 void key_table_init(struct key_table *key_table) {
-	tommy_hashlin hashlin;
-	key_table->hashtable = &hashlin;
-	tommy_hashlin_init(key_table->hashtable);
+	tommy_hashlin_init(&key_table->hashtable);
 	pthread_rwlock_init(&key_table->lock, NULL);
 	key_table->cmp_fp = key_entry_cmp;
 }
@@ -56,10 +55,10 @@ int key_table_add_entry(struct key_table *key_table, struct key_entry *key_entry
 	int rtval;
 
 	pthread_rwlock_wrlock(&key_table->lock);
-	if(tommy_hashlin_search(key_table->hashtable, key_table->cmp_fp, key_entry, hash)){
+	if(tommy_hashlin_search(&key_table->hashtable, key_table->cmp_fp, key_entry, hash)){
 		rtval = KEY_DUPLICATE_RECORD;
 	} else{
-		tommy_hashlin_insert(key_table->hashtable, &key_entry->node, key_entry, hash);
+		tommy_hashlin_insert(&key_table->hashtable, &key_entry->node, key_entry, hash);
 		rtval = KEY_SUCCESS;
 	}
 	pthread_rwlock_unlock(&key_table->lock);
@@ -76,7 +75,7 @@ struct key_entry* key_table_get_all(struct key_table *key_table, uint32_t asn) {
 	pthread_rwlock_wrlock(&key_table->lock);
 	//A tommy node contains its storing key_entry (->data) as well as next and prev pointer
 	//to accomodate multiple results
-	tommy_node *result = tommy_hashlin_bucket(key_table->hashtable, hash);
+	tommy_node *result = tommy_hashlin_bucket(&key_table->hashtable, hash);
 	pthread_rwlock_unlock(&key_table->lock);
 
 	if(!result){
@@ -105,17 +104,17 @@ int key_table_remove_entry(struct key_table *key_table, struct key_entry *key_en
 
 	pthread_rwlock_wrlock(&key_table->lock);
 
-	struct key_entry *rmv_elem = tommy_hashlin_remove(key_table->hashtable, key_table->cmp_fp, key_entry, hash);
-
-	if(rmv_elem){
-		rtval = KEY_SUCCESS;
-		free(rmv_elem);
-	} else {
+	if(tommy_hashlin_search(&key_table->hashtable, key_table->cmp_fp, key_entry, hash)){
 		rtval = KEY_RECORD_NOT_FOUND;
+	} else {
+		struct key_entry *rmv_elem = tommy_hashlin_remove(&key_table->hashtable, key_table->cmp_fp, key_entry, hash);
+		free(rmv_elem);
+		rtval = KEY_SUCCESS;	
 	}
-	pthread_rwlock_unlock(&key_table->lock);
 
+	pthread_rwlock_unlock(&key_table->lock);
 	return rtval;
 }
 
 //TODO: Add validate_router_key function
+//TODO: Add notify_clients function
