@@ -120,7 +120,7 @@ struct pdu_router_key{
     uint32_t len;
     uint8_t ski[20];
     uint32_t asn;
-    uint8_t spki[200]; //TODO Cant find the size of the subjectPublicKeyInfo. This is a dummy value !!!
+    uint8_t spki[91];
 };
 
 /*

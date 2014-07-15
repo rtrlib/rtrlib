@@ -49,7 +49,7 @@ struct key_table {
  */
 
 #define SKI_SIZE 20
-#define SPKI_SIZE 200
+#define SPKI_SIZE 91
 
 struct key_entry {
     uint8_t ski[SKI_SIZE];
