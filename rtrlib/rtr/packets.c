@@ -716,11 +716,7 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
    rtr_socket->request_session_id = false;
     if (rtr_set_last_update(rtr_socket) == RTR_ERROR)
         return RTR_ERROR;
-<<<<<<< HEAD
-    RTR_DBG("Sync successfull, received %u Prefix PDUs and %u Router key PDUs  ,session_id: %u, SN: %u", (ipv4_pdus_nindex + ipv6_pdus_nindex),router_key_pdus_nindex, rtr_socket->session_id,rtr_socket->serial_number);
-=======
     RTR_DBG("Sync successfull, received %u Prefix PDUs, %u Router Key PDUs, session_id: %u, SN: %u", (ipv4_pdus_nindex + ipv6_pdus_nindex), router_key_pdus_nindex,rtr_socket->session_id,rtr_socket->serial_number);
->>>>>>> 573faf173ca61f836bba05b29d5a65f42c65aae9
     return RTR_SUCCESS;
 }
 
