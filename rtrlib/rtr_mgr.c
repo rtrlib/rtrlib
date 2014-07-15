@@ -210,8 +210,8 @@ int rtr_mgr_config_cmp(const void *a, const void *b) {
 
 struct rtr_mgr_config *rtr_mgr_init(struct rtr_mgr_group groups[],
                              const unsigned int groups_len,
-                             const unsigned int polling_period,
-                             const unsigned int cache_timeout,
+                             const unsigned int refresh_interval,
+                             const unsigned int expire_interval,
                              const pfx_update_fp update_fp,
                              const rtr_mgr_status_fp status_fp,
                              void *status_fp_data) {
@@ -257,7 +257,7 @@ struct rtr_mgr_config *rtr_mgr_init(struct rtr_mgr_group groups[],
     for(unsigned int i = 0; i < config->len; i++) {
         config->groups[i].status = RTR_MGR_CLOSED;
         for(unsigned int j = 0; j < config->groups[i].sockets_len; j++) {
-            rtr_init(config->groups[i].sockets[j], NULL, pfxt, key_table, polling_period, cache_timeout, rtr_mgr_cb, config);
+            rtr_init(config->groups[i].sockets[j], NULL, pfxt, key_table, refresh_interval, expire_interval, rtr_mgr_cb, config);
         }
     }
     config->status_fp_data = status_fp_data;

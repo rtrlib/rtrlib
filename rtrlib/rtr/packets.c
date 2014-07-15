@@ -120,7 +120,7 @@ struct pdu_router_key{
     uint32_t len;
     uint8_t ski[20];
     uint32_t asn;
-    uint8_t spki[200]; //TODO Cant find the size of the subjectPublicKeyInfo. This is a dummy value !!!
+    uint8_t spki[91];
 };
 
 /*
@@ -142,6 +142,24 @@ struct pdu_reset_query {
     uint32_t len;
 };
 
+struct pdu_end_of_v0 {
+    uint8_t ver;
+    uint8_t type;
+    uint16_t session_id;
+    uint32_t len;
+    uint32_t sn;
+};
+
+struct pdu_end_of_data_v1 {
+    uint8_t ver;
+    uint8_t type;
+    uint16_t session_id;
+    uint32_t len;
+    uint32_t sn;
+    uint32_t refresh_interval;
+    uint32_t retry_interval;
+    uint32_t expire_interval;
+};
 
 static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_t pdu_len, const time_t timeout);
 static int rtr_send_error_pdu(const struct rtr_socket *rtr_socket, const void *erroneous_pdu, const uint32_t pdu_len, const enum pdu_error_type error, const char *text, const uint32_t text_len);
@@ -192,8 +210,12 @@ void rtr_change_socket_state(struct rtr_socket *rtr_socket, const enum rtr_socke
 
 void rtr_pdu_header_to_host_byte_order(void *pdu) {
     struct pdu_header *header = pdu;
-    uint16_t reserved_tmp =  ntohs(header->reserved);
-    header->reserved = reserved_tmp;
+
+    //The ROUTER_KEY PDU has two 1 Byte fields instead of the 2 Byte reserved field.
+    if(header->type != ROUTER_KEY){
+        uint16_t reserved_tmp =  ntohs(header->reserved);
+        header->reserved = reserved_tmp;
+    }
 
     uint32_t len_tmp = ntohl(header->len);
     header->len = len_tmp;
@@ -206,16 +228,30 @@ inline enum pdu_type rtr_get_pdu_type(const void *pdu) {
 
 void rtr_pdu_footer_to_host_byte_order(void *pdu) {
     const enum pdu_type type = rtr_get_pdu_type(pdu);
+    struct pdu_header *header = pdu;
 
     uint32_t int32_tmp;
     uint32_t addr6[4];
 
     switch(type) {
     case SERIAL_NOTIFY:
-        //same as EOD
-    case EOD:
         int32_tmp = ntohl(((struct pdu_serial_notify *) pdu)->sn);
         ((struct pdu_serial_notify *) pdu)->sn = int32_tmp;
+        break;
+    case EOD:
+        if(header->ver == RTR_PROTOCOL_VERSION_1){
+            int32_tmp = ntohl(((struct pdu_end_of_data_v1 *) pdu)->expire_interval);
+            ((struct pdu_end_of_data_v1 *) pdu)->expire_interval = int32_tmp;
+
+            int32_tmp = ntohl(((struct pdu_end_of_data_v1 *) pdu)->refresh_interval);
+            ((struct pdu_end_of_data_v1 *) pdu)->refresh_interval = int32_tmp;
+
+            int32_tmp = ntohl(((struct pdu_end_of_data_v1 *) pdu)->retry_interval);
+            ((struct pdu_end_of_data_v1 *) pdu)->retry_interval = int32_tmp;
+        } else {
+            int32_tmp = ntohl(((struct pdu_end_of_v0 *) pdu)->sn);
+            ((struct pdu_end_of_v0 *) pdu)->sn = int32_tmp;
+        }
         break;
     case IPV4_PREFIX:
         int32_tmp = ntohl(((struct pdu_ipv4 *) pdu)->prefix);
@@ -230,6 +266,10 @@ void rtr_pdu_footer_to_host_byte_order(void *pdu) {
 
         int32_tmp = ntohl(((struct pdu_ipv6 *) pdu)->asn);
         ((struct pdu_ipv6 *) pdu)->asn = int32_tmp;
+        break;
+    case ROUTER_KEY:
+        int32_tmp = ntohl(((struct pdu_router_key *) pdu)->asn);
+        ((struct pdu_router_key *) pdu)->asn = int32_tmp;
         break;
     case ERROR:
         int32_tmp = ntohl(((struct pdu_error *) pdu)->len_enc_pdu);
@@ -297,9 +337,18 @@ int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_t pdu_l
     rtr_pdu_header_to_host_byte_order(&header);
 
     if(header.ver != rtr_socket->version) {
-        error = 16;
-        goto error;
+        //If this is the first PDU we have received -> Downgrade.
+        if(rtr_socket->request_session_id == true && rtr_socket->last_update == 0
+                                                  && header.ver >= RTR_PROTOCOL_MIN_SUPPORTED_VERSION
+                                                  && header.ver <= RTR_PROTOCOL_MAX_SUPPORTED_VERSION){
+            RTR_DBG("Downgrading current session from %i to %i", rtr_socket->version, header.ver);
+            rtr_socket->version = header.ver;
+        } else {
+            error = 16;
+            goto error;
+        }
     }
+
     if(header.type > 10) {
         error = 2;
         goto error;
@@ -334,6 +383,9 @@ int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_t pdu_l
         if (((struct pdu_ipv4 *) pdu)->zero != 0) {
             RTR_DBG1("Warning: Zero field of received Prefix PDU doesn't contain 0");
         }
+    }
+    if(header.type == ROUTER_KEY && ((struct pdu_router_key *) pdu)->zero != 0){
+        RTR_DBG1("Warning: ROUTER_KEY_PDU zero field is != 0");
     }
 
     return RTR_SUCCESS;
@@ -370,10 +422,6 @@ error:
     }
     else if(error == 16) {
         RTR_DBG1("PDU with unsupported Protocol version received");
-        if(header.ver >= RTR_PROTOCOL_MIN_SUPPORTED_VERSION && header.ver <= RTR_PROTOCOL_MAX_SUPPORTED_VERSION){
-            RTR_DBG("Cache server only supports RTR version %i. Downgrading to %i", header.ver, header.ver);
-            rtr_socket->version = header.ver;
-        }
         rtr_send_error_pdu(rtr_socket, pdu, header.len, UNSUPPORTED_PROTOCOL_VER, NULL, 0);
         return RTR_ERROR;
     }
@@ -545,7 +593,16 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
                 return RTR_ERROR;
         }
         else if(type == EOD) {
-            struct pdu_serial_query *eod_pdu = (struct pdu_serial_query *) pdu;
+            RTR_DBG1("EOD PDU received.");
+            struct pdu_end_of_data_v0 *eod_pdu = (struct pdu_end_of_data_v0 *) pdu;
+
+            if(eod_pdu->ver == RTR_PROTOCOL_VERSION_1){
+               rtr_socket->expire_interval = ((struct pdu_end_of_data_v1 *) pdu)->expire_interval;
+               rtr_socket->refresh_interval = ((struct pdu_end_of_data_v1 *) pdu)->refresh_interval;
+               rtr_socket->retry_interval = ((struct pdu_end_of_data_v1 *) pdu)->retry_interval;
+               RTR_DBG("New interval values: expire_interval:%u, refresh_interval:%u, retry_interval:%u",
+                       rtr_socket->expire_interval, rtr_socket->refresh_interval, rtr_socket->retry_interval);
+            }
 
             if(eod_pdu->session_id !=rtr_socket->session_id) {
                 char txt[67];
@@ -820,7 +877,7 @@ int rtr_wait_for_sync(struct rtr_socket *rtr_socket) {
 
     time_t cur_time;
     rtr_get_monotonic_time(&cur_time);
-    time_t wait = (rtr_socket->last_update +rtr_socket->polling_period) - cur_time;
+    time_t wait = (rtr_socket->last_update +rtr_socket->refresh_interval) - cur_time;
     if(wait < 0)
         wait = 0;
 
@@ -834,7 +891,7 @@ int rtr_wait_for_sync(struct rtr_socket *rtr_socket) {
         }
     }
     else if(rtval == TR_WOULDBLOCK) {
-        RTR_DBG1("Polling period expired");
+        RTR_DBG1("Refresh interval expired");
         return RTR_SUCCESS;
     }
     return RTR_ERROR;

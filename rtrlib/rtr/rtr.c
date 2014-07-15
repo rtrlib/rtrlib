@@ -63,15 +63,16 @@ static int install_sig_handler() {
     return sigaction(SIGUSR1, &sa, NULL);
 }
 
-void rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_table *pfx_table, struct key_table *key_table, const unsigned int polling_period, const unsigned int cache_timeout, rtr_connection_state_fp fp, void *fp_param) {
+void rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_table *pfx_table, struct key_table *key_table, const unsigned int refresh_interval, const unsigned int expire_interval, rtr_connection_state_fp fp, void *fp_param) {
     if(tr != NULL)
         rtr_socket->tr_socket = tr;
-    assert(polling_period <= 3600);
-    if(polling_period == 0)
-        rtr_socket->polling_period = 300;
+    assert(refresh_interval <= 3600);
+    if(refresh_interval == 0)
+        rtr_socket->refresh_interval = 300;
     else
-        rtr_socket->polling_period = (polling_period > (3600 - RTR_RECV_TIMEOUT) ? (3600 - RTR_RECV_TIMEOUT) : polling_period);
-    rtr_socket->cache_timeout = (cache_timeout == 0 ? (rtr_socket->polling_period / 2) : cache_timeout);
+        rtr_socket->refresh_interval = (refresh_interval > (3600 - RTR_RECV_TIMEOUT) ? (3600 - RTR_RECV_TIMEOUT) : refresh_interval);
+    rtr_socket->expire_interval = (expire_interval == 0 ? (rtr_socket->refresh_interval / 2) : expire_interval);
+    rtr_socket->retry_interval = 600;
     rtr_socket->state = RTR_SHUTDOWN;
     rtr_socket->request_session_id = true;
     rtr_socket->serial_number = 0;
@@ -96,7 +97,7 @@ void rtr_purge_outdated_records(struct rtr_socket *rtr_socket) {
         return;
     time_t cur_time;
     int rtval = rtr_get_monotonic_time(&cur_time);
-    if(rtval == -1 || (rtr_socket->last_update + rtr_socket->cache_timeout) > cur_time) {
+    if(rtval == -1 || (rtr_socket->last_update + rtr_socket->expire_interval) > cur_time) {
         if(rtval == -1)
             RTR_DBG1("get_monotic_time(..) failed");
         pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
@@ -149,7 +150,7 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket) {
 
         else if(rtr_socket->state == RTR_ESTABLISHED) {
             RTR_DBG1("State: RTR_ESTABLISHED");
-            if(rtr_wait_for_sync(rtr_socket) == RTR_SUCCESS) { //blocks till cache_timeout is expired or PDU was received
+            if(rtr_wait_for_sync(rtr_socket) == RTR_SUCCESS) { //blocks till expire_interval is expired or PDU was received
                 //serial query senden
                 if(rtr_send_serial_query(rtr_socket) == RTR_SUCCESS)
                     rtr_change_socket_state(rtr_socket, RTR_SYNC);
