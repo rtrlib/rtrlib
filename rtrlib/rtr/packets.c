@@ -142,6 +142,24 @@ struct pdu_reset_query {
     uint32_t len;
 };
 
+struct pdu_end_of_v0 {
+    uint8_t ver;
+    uint8_t type;
+    uint16_t session_id;
+    uint32_t len;
+    uint32_t sn;
+};
+
+struct pdu_end_of_data_v1 {
+    uint8_t ver;
+    uint8_t type;
+    uint16_t session_id;
+    uint32_t len;
+    uint32_t sn;
+    uint32_t refresh_interval;
+    uint32_t retry_interval;
+    uint32_t expire_interval;
+};
 
 static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_t pdu_len, const time_t timeout);
 static int rtr_send_error_pdu(const struct rtr_socket *rtr_socket, const void *erroneous_pdu, const uint32_t pdu_len, const enum pdu_error_type error, const char *text, const uint32_t text_len);
@@ -192,8 +210,12 @@ void rtr_change_socket_state(struct rtr_socket *rtr_socket, const enum rtr_socke
 
 void rtr_pdu_header_to_host_byte_order(void *pdu) {
     struct pdu_header *header = pdu;
-    uint16_t reserved_tmp =  ntohs(header->reserved);
-    header->reserved = reserved_tmp;
+
+    //The ROUTER_KEY PDU has two 1 Byte fields instead of the 2 Byte reserved field.
+    if(header->type != ROUTER_KEY){
+        uint16_t reserved_tmp =  ntohs(header->reserved);
+        header->reserved = reserved_tmp;
+    }
 
     uint32_t len_tmp = ntohl(header->len);
     header->len = len_tmp;
@@ -206,16 +228,30 @@ inline enum pdu_type rtr_get_pdu_type(const void *pdu) {
 
 void rtr_pdu_footer_to_host_byte_order(void *pdu) {
     const enum pdu_type type = rtr_get_pdu_type(pdu);
+    struct pdu_header *header = pdu;
 
     uint32_t int32_tmp;
     uint32_t addr6[4];
 
     switch(type) {
     case SERIAL_NOTIFY:
-        //same as EOD
-    case EOD:
         int32_tmp = ntohl(((struct pdu_serial_notify *) pdu)->sn);
         ((struct pdu_serial_notify *) pdu)->sn = int32_tmp;
+        break;
+    case EOD:
+        if(header->ver == RTR_PROTOCOL_VERSION_1){
+            int32_tmp = ntohl(((struct pdu_end_of_data_v1 *) pdu)->expire_interval);
+            ((struct pdu_end_of_data_v1 *) pdu)->expire_interval = int32_tmp;
+
+            int32_tmp = ntohl(((struct pdu_end_of_data_v1 *) pdu)->refresh_interval);
+            ((struct pdu_end_of_data_v1 *) pdu)->refresh_interval = int32_tmp;
+
+            int32_tmp = ntohl(((struct pdu_end_of_data_v1 *) pdu)->retry_interval);
+            ((struct pdu_end_of_data_v1 *) pdu)->retry_interval = int32_tmp;
+        } else {
+            int32_tmp = ntohl(((struct pdu_end_of_v0 *) pdu)->sn);
+            ((struct pdu_end_of_v0 *) pdu)->sn = int32_tmp;
+        }
         break;
     case IPV4_PREFIX:
         int32_tmp = ntohl(((struct pdu_ipv4 *) pdu)->prefix);
@@ -230,6 +266,10 @@ void rtr_pdu_footer_to_host_byte_order(void *pdu) {
 
         int32_tmp = ntohl(((struct pdu_ipv6 *) pdu)->asn);
         ((struct pdu_ipv6 *) pdu)->asn = int32_tmp;
+        break;
+    case ROUTER_KEY:
+        int32_tmp = ntohl(((struct pdu_router_key *) pdu)->asn);
+        ((struct pdu_router_key *) pdu)->asn = int32_tmp;
         break;
     case ERROR:
         int32_tmp = ntohl(((struct pdu_error *) pdu)->len_enc_pdu);

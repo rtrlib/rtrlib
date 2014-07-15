@@ -40,6 +40,9 @@
 #define RTR_DBG(fmt, ...) dbg("RTR Socket: " fmt, ## __VA_ARGS__)
 #define RTR_DBG1(a) dbg("RTR Socket: " a)
 
+static const uint8_t RTR_PROTOCOL_VERSION_0 = 0;
+static const uint8_t RTR_PROTOCOL_VERSION_1 = 1;
+
 static const uint8_t RTR_PROTOCOL_MIN_SUPPORTED_VERSION = 0;
 static const uint8_t RTR_PROTOCOL_MAX_SUPPORTED_VERSION = 1;
 
