@@ -249,15 +249,15 @@ struct rtr_mgr_config *rtr_mgr_init(struct rtr_mgr_group groups[],
             goto err;
     pfx_table_init(pfxt, update_fp);
 
-    struct key_table *key_table = malloc(sizeof(*key_table));
-    if(key_table == NULL)
+    struct spki_table *spki_table = malloc(sizeof(spki_table));
+    if(spki_table == NULL)
             goto err;
-    key_table_init(key_table);
+    spki_table_init(spki_table);
 
     for(unsigned int i = 0; i < config->len; i++) {
         config->groups[i].status = RTR_MGR_CLOSED;
         for(unsigned int j = 0; j < config->groups[i].sockets_len; j++) {
-            rtr_init(config->groups[i].sockets[j], NULL, pfxt, key_table, refresh_interval, expire_interval, rtr_mgr_cb, config);
+            rtr_init(config->groups[i].sockets[j], NULL, pfxt, spki_table, refresh_interval, expire_interval, rtr_mgr_cb, config);
         }
     }
     config->status_fp_data = status_fp_data;

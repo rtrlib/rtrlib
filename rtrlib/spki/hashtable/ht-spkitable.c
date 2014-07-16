@@ -193,8 +193,8 @@ int spki_table_src_remove(struct spki_table *spki_table, const struct rtr_socket
 
 //TODO Add enum for rtvals?
 static int spki_record_cmp(const void *arg, const void *obj) {
-    struct spki_record *param = (struct spki_record*)arg;
-    struct spki_record *entry = (struct spki_record*)obj;
+    struct key_entry *param = (struct key_entry*)arg;
+    struct key_entry *entry = (struct key_entry*)obj;
 
 	if(param->asn != entry->asn)
 		return 1;
@@ -207,7 +207,7 @@ static int spki_record_cmp(const void *arg, const void *obj) {
 }
 
 static int asn_cmp(const void *arg, const void *obj) {
-    return *(const uint32_t*)arg != ((const struct spki_record*)obj)->asn;
+    return *(const uint32_t*)arg != ((const struct key_entry*)obj)->asn;
 }
 
 
