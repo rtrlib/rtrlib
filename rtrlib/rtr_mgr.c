@@ -290,6 +290,8 @@ bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config) {
 void rtr_mgr_free(struct rtr_mgr_config *config) {
     pthread_mutex_lock(&(config->mutex));
     pfx_table_free(config->groups[0].sockets[0]->pfx_table);
+    spki_table_free(config->groups[0].sockets[0]->spki_table);
+    free(config->groups[0].sockets[0]->spki_table);
     free(config->groups[0].sockets[0]->pfx_table);
     free(config);
     pthread_mutex_unlock(&(config->mutex));

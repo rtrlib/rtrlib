@@ -51,6 +51,35 @@ void spki_table_init(struct spki_table *spki_table) {
 
 void spki_table_free(struct spki_table *spki_table){
 
+    tommy_node* elem = tommy_list_head(&spki_table->list);
+    pthread_rwlock_wrlock(&spki_table->lock);
+    while(elem){
+
+        //Save next elem of list
+        tommy_node* elem_next = elem->next;
+
+        //Remove from hashtable
+        struct key_entry *elem_entry = tommy_hashlin_remove_existing(&spki_table->hashtable,elem);
+
+        /* elem_entry contains elem and has been removed from the hashtable
+         * We don't need to explicitly remove it from the list, as the list
+         * is completely inplace and it doesn't allocate memory.*/
+        free(elem_entry);
+
+        elem = elem_next;
+    }
+
+    uint32_t count = tommy_hashlin_count(&spki_table->hashtable);
+
+    //TODO: This needs to be changed
+    if(count){
+        printf("spki_table_free MEMORY LEAK: %u key_entry not freed\n",count);
+    }
+    pthread_rwlock_unlock(&spki_table->lock);
+    pthread_rwlock_destroy(&spki_table->lock);
+
+    //Deinitialize the hashtable
+    tommy_hashlin_done(&spki_table->hashtable);
 }
 
 //TODO: Remove printf statements and do real output (notify clients?)
@@ -113,18 +142,28 @@ struct spki_record* spki_table_get_all(struct spki_table *spki_table, uint32_t a
 //TODO: Remove printf statements and do real output (notify clients?)
 int spki_table_remove_entry(struct spki_table *spki_table, struct spki_record *spki_record) {
 
+    struct key_entry *entry = malloc(sizeof(struct key_entry));
+    if(entry == NULL){
+        return SPKI_ERROR;
+    }
+    entry->asn = spki_record->asn;
+    entry->socket = spki_record->socket;
+    entry->next = NULL;
+    memcpy(entry->ski, spki_record->ski, SKI_SIZE);
+    memcpy(entry->spki, spki_record->spki, SPKI_SIZE);
+
     uint32_t hash = tommy_inthash_u32(spki_record->asn);
     int rtval;
 
     pthread_rwlock_wrlock(&spki_table->lock);
 
-    if(!tommy_hashlin_search(&spki_table->hashtable, spki_table->cmp_fp, spki_record, hash)){
+    if(!tommy_hashlin_search(&spki_table->hashtable, spki_table->cmp_fp, entry, hash)){
         rtval = SPKI_RECORD_NOT_FOUND;
         printf("Could not remove Router Key: ASN: %u (key not found)\n",spki_record->asn);
     } else {
 
         //Remove from hashtable and list
-        struct key_entry *rmv_elem = tommy_hashlin_remove(&spki_table->hashtable, spki_table->cmp_fp, spki_record, hash);
+        struct key_entry *rmv_elem = tommy_hashlin_remove(&spki_table->hashtable, spki_table->cmp_fp, entry, hash);
         if(rmv_elem && tommy_list_remove_existing(&spki_table->list, &rmv_elem->list_node)){
             rtval = SPKI_SUCCESS;
             printf("Removed Router Key: ASN: %u\n",rmv_elem->asn);
@@ -135,6 +174,7 @@ int spki_table_remove_entry(struct spki_table *spki_table, struct spki_record *s
     }
 
     pthread_rwlock_unlock(&spki_table->lock);
+    free(entry);
     free(spki_record);
     return rtval;
 }
@@ -154,6 +194,7 @@ int spki_table_src_remove(struct spki_table *spki_table, const struct rtr_socket
     while(current_node){
         current_entry = (struct key_entry *)current_node->data;
 
+        //If socket matches, mark for deletion by linking
         if(current_entry->socket == socket){
             if(del_head){
                 //Attach current_entry to the end, make it the new tail
@@ -171,17 +212,26 @@ int spki_table_src_remove(struct spki_table *spki_table, const struct rtr_socket
         //Iterate over spki_table->list
         current_node = current_node->next;
     }
-
+    //Now we have a singly linked list of key_entry to delete, starting at del_head 
     current_entry = del_head;
 
-    struct spki_record *temp;
+    struct key_entry *temp;
 
-    //Remove all elements we found from hashtable and list, free them
     pthread_rwlock_wrlock(&spki_table->lock);
+    
+    //Remove all elements we found from hashtable and list, free them
     while(current_entry){
-        tommy_hashlin_remove_existing(&spki_table->hashtable, &current_entry->hash_node);
-        tommy_list_remove_existing(&spki_table->list, &current_entry->list_node);
+
         temp = current_entry;
+        //Remove from list
+        if(!tommy_list_remove_existing(&spki_table->list, &current_entry->list_node)){
+            return SPKI_ERROR;
+        }
+
+        //Remove from hashtable
+        if(!tommy_hashlin_remove_existing(&spki_table->hashtable, &current_entry->hash_node)){
+            return SPKI_ERROR;
+        }
         current_entry = current_entry->next;
         free(temp);
     }
