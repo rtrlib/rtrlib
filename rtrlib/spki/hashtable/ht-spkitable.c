@@ -80,6 +80,7 @@ int spki_table_add_entry(struct spki_table *spki_table, struct spki_record *spki
         rtval = SPKI_SUCCESS;
 	}
     pthread_rwlock_unlock(&spki_table->lock);
+    free(spki_record);
 	return rtval;
 }
 

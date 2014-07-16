@@ -22,7 +22,7 @@
 
 #include "rtrlib/rtr_mgr.h"
 #include "rtrlib/pfx/lpfst/lpfst-pfx.h"
-#include "rtrlib/keys/keytable.h"
+#include "rtrlib/spki/hashtable/ht-spkitable.h"
 #include <stdlib.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -249,7 +249,7 @@ struct rtr_mgr_config *rtr_mgr_init(struct rtr_mgr_group groups[],
             goto err;
     pfx_table_init(pfxt, update_fp);
 
-    struct spki_table *spki_table = malloc(sizeof(spki_table));
+    struct spki_table *spki_table = malloc(sizeof(*spki_table));
     if(spki_table == NULL)
             goto err;
     spki_table_init(spki_table);
