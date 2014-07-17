@@ -213,6 +213,7 @@ struct rtr_mgr_config *rtr_mgr_init(struct rtr_mgr_group groups[],
                              const unsigned int refresh_interval,
                              const unsigned int expire_interval,
                              const pfx_update_fp update_fp,
+                             const spki_update_fp spki_update_fp,
                              const rtr_mgr_status_fp status_fp,
                              void *status_fp_data) {
     struct rtr_mgr_config *config = malloc(sizeof(*config));
@@ -252,7 +253,7 @@ struct rtr_mgr_config *rtr_mgr_init(struct rtr_mgr_group groups[],
     struct spki_table *spki_table = malloc(sizeof(*spki_table));
     if(spki_table == NULL)
             goto err;
-    spki_table_init(spki_table);
+    spki_table_init(spki_table, spki_update_fp);
 
     for(unsigned int i = 0; i < config->len; i++) {
         config->groups[i].status = RTR_MGR_CLOSED;

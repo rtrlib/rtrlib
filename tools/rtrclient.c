@@ -62,6 +62,39 @@ static void update_cb(struct pfx_table* p  __attribute__((unused)), const struct
     printf("%-40s   %3u - %3u   %10u\n", ip, rec.min_len, rec.max_len, rec.asn);
 }
 
+static void update_spki(struct spki_table* s __attribute__((unused)), const struct spki_record record, const bool added){
+    char c;
+    if(added)
+        c = '+';
+    else
+        c = '-';
+
+    printf("%c ",c);
+    printf("ASN: %u\n  ",record.asn);
+
+    int i;
+    int size = sizeof(record.ski);
+    printf("SKI: ");
+    for(i = 0;i<size;i++){
+        printf("%02x",record.ski[i]);
+        if(i < size-1)
+            printf(":");
+    }
+    printf("\n  ");
+
+    i = 0; size = sizeof(record.spki);
+    printf("SPKI: ");
+    for(i = 0;i<size;i++){
+        if(i % 40 == 0)
+            printf("\n  ");
+
+        printf("%02x",record.spki[i]);
+        if(i < size-1)
+            printf(":");
+    }
+    printf("\n");
+}
+
 int main(int argc, char** argv){
     enum mode_t { TCP, SSH } mode;
     char* host;
@@ -142,7 +175,7 @@ int main(int argc, char** argv){
     groups[0].sockets[0] = &rtr;
     groups[0].preference = 1;
 
-    conf = rtr_mgr_init(groups, 1, 30, 520, &update_cb, status_fp, NULL);
+    conf = rtr_mgr_init(groups, 1, 30, 520, &update_cb, &update_spki, status_fp, NULL);
     if (conf == NULL)
 	    return EXIT_FAILURE;
     rtr_mgr_start(conf);

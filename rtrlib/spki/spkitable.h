@@ -19,6 +19,9 @@
 
 
 #include <stdint.h>
+#include <sys/types.h>
+#include "rtrlib/lib/ip.h"
+#include "rtrlib/rtr/rtr.h"
 
 #define SKI_SIZE 20
 #define SPKI_SIZE 91
@@ -58,12 +61,19 @@ struct spki_record {
     struct spki_record *next;
 };
 
+/**
+ * @brief A function pointer that is called if an record was added to the spki_table or was removed from the spki_table.
+ * @param spki_table which was updated.
+ * @param record spki_record that was modified.
+ * @param added True if the record was added, false if the record was removed.
+ */
+typedef void (*spki_update_fp)(struct spki_table *spki_table, const struct spki_record record, const bool added);
 
 /**
  * @brief Initializes the spki_table struct.
  * @param[in] spki_table spki_table that will be initialized.
  */
-void spki_table_init(struct spki_table *spki_table);
+void spki_table_init(struct spki_table *spki_table, spki_update_fp update_fp);
 
 
 /**
@@ -85,7 +95,7 @@ int spki_table_add_entry(struct spki_table *spki_table, struct spki_record *spki
 
 
 /**
- * @brief Returns all spki_record whose AS number matches asn. Multiple spki_record are linked
+ * @brief Returns all spki_record whose AS number matches asn and SKI matches ski. Multiple spki_record are linked
  * with their "next" field
  * @param[in] spki_table spki_table to use
  * @param[in] asn Hash index to look for

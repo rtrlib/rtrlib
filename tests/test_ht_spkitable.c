@@ -20,7 +20,7 @@
 
 static void test_add(){
     struct spki_table table;
-    spki_table_init(&table);
+    spki_table_init(&table,NULL);
 
     struct spki_record record;
     record.asn = 1;

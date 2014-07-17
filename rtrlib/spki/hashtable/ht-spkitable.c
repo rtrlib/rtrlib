@@ -37,18 +37,22 @@ static int spki_record_cmp(const void *arg, const void *obj);
 static int asn_cmp(const void *arg, const void *obj);
 static int key_entry_to_spki_record(struct key_entry *key_e, struct spki_record *spki_r);
 static int spki_record_to_key_entry(struct spki_record *spki_r, struct key_entry *key_e);
-
+static void spki_table_notify_clients(struct spki_table *spki_table, const struct spki_record *record, const bool added);
 
 //****NOTE****
 //All of the following code needs more error handling and of course testing, will come back to later
+void spki_table_notify_clients(struct spki_table *spki_table, const struct spki_record *record, const bool added) {
+    if(spki_table->update_fp != NULL)
+        spki_table->update_fp(spki_table, *record, added);
+}
 
 
-
-void spki_table_init(struct spki_table *spki_table) {
+void spki_table_init(struct spki_table *spki_table, spki_update_fp update_fp) {
     tommy_hashlin_init(&spki_table->hashtable);
     tommy_list_init(&spki_table->list);
     pthread_rwlock_init(&spki_table->lock, NULL);
     spki_table->cmp_fp = spki_record_cmp;
+    spki_table->update_fp = update_fp;
 }
 
 void spki_table_free(struct spki_table *spki_table){
@@ -83,7 +87,7 @@ int spki_table_add_entry(struct spki_table *spki_table, struct spki_record *spki
 		//Insert into hashtable and list
         tommy_hashlin_insert(&spki_table->hashtable, &entry->hash_node, entry, hash);
         tommy_list_insert_tail(&spki_table->list, &entry->list_node, entry);
-        printf("Add Router Key: ASN: %u\n",spki_record->asn);
+        spki_table_notify_clients(spki_table, spki_record, true);
         rtval = SPKI_SUCCESS;
 	}
     pthread_rwlock_unlock(&spki_table->lock);
@@ -95,7 +99,8 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski
     uint32_t hash = tommy_inthash_u32(asn);
 
     pthread_rwlock_wrlock(&spki_table->lock);
-    //A tommy node contains its storing spki_record (->data) as well as next and prev pointer
+
+    //A tommy node contains its storing key_entry (->data) as well as next and prev pointer
     //to accomodate multiple results.
     //The bucket is guaranteed to contain ALL the elements with the specified hash,
     //but it can contain also others.
@@ -150,7 +155,7 @@ int spki_table_remove_entry(struct spki_table *spki_table, struct spki_record *s
         struct key_entry *rmv_elem = tommy_hashlin_remove(&spki_table->hashtable, spki_table->cmp_fp, entry, hash);
         if(rmv_elem && tommy_list_remove_existing(&spki_table->list, &rmv_elem->list_node)){
             rtval = SPKI_SUCCESS;
-            printf("Removed Router Key: ASN: %u\n",rmv_elem->asn);
+            spki_table_notify_clients(spki_table, spki_record, false);
             free(rmv_elem);
         } else{
             rtval = SPKI_ERROR;

@@ -33,6 +33,7 @@ struct spki_table {
     tommy_hashlin hashtable;
     tommy_list list;
     hash_cmp_fp cmp_fp;
+    spki_update_fp update_fp;
     pthread_rwlock_t lock;
 };
 
