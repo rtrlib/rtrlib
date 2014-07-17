@@ -53,35 +53,15 @@ void spki_table_init(struct spki_table *spki_table) {
 
 void spki_table_free(struct spki_table *spki_table){
 
-    tommy_node* elem = tommy_list_head(&spki_table->list);
     pthread_rwlock_wrlock(&spki_table->lock);
-    while(elem){
 
-        //Save next elem of list
-        tommy_node* elem_next = elem->next;
-
-        //Remove from hashtable
-        struct key_entry *elem_entry = tommy_hashlin_remove_existing(&spki_table->hashtable,elem);
-
-        /* elem_entry contains elem and has been removed from the hashtable
-         * We don't need to explicitly remove it from the list, as the list
-         * is completely inplace and it doesn't allocate memory.*/
-        free(elem_entry);
-
-        elem = elem_next;
-    }
-
-    uint32_t count = tommy_hashlin_count(&spki_table->hashtable);
-
-    //TODO: This needs to be changed
-    if(count){
-        printf("spki_table_free MEMORY LEAK: %u key_entry not freed\n",count);
-    }
-    pthread_rwlock_unlock(&spki_table->lock);
-    pthread_rwlock_destroy(&spki_table->lock);
+    tommy_list_foreach(&spki_table->list, free);
 
     //Deinitialize the hashtable
     tommy_hashlin_done(&spki_table->hashtable);
+
+    pthread_rwlock_unlock(&spki_table->lock);
+    pthread_rwlock_destroy(&spki_table->lock);
 }
 
 //TODO: Remove printf statements and do real output (notify clients?)
