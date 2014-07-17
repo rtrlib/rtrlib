@@ -91,11 +91,7 @@ int spki_table_add_entry(struct spki_table *spki_table, struct spki_record *spki
         return SPKI_ERROR;
     }
 
-    entry->asn = spki_record->asn;
-    entry->socket = spki_record->socket;
-    entry->next = NULL;
-    memcpy(entry->ski, spki_record->ski, SKI_SIZE);
-    memcpy(entry->spki, spki_record->spki, SPKI_SIZE);
+    spki_record_to_key_entry(spki_record, entry);
 
     uint32_t hash = tommy_inthash_u32(spki_record->asn);
     int rtval = SPKI_ERROR;
@@ -148,11 +144,7 @@ int spki_table_remove_entry(struct spki_table *spki_table, struct spki_record *s
     if(entry == NULL){
         return SPKI_ERROR;
     }
-    entry->asn = spki_record->asn;
-    entry->socket = spki_record->socket;
-    entry->next = NULL;
-    memcpy(entry->ski, spki_record->ski, SKI_SIZE);
-    memcpy(entry->spki, spki_record->spki, SPKI_SIZE);
+    spki_record_to_key_entry(spki_record, entry);
 
     uint32_t hash = tommy_inthash_u32(spki_record->asn);
     int rtval;
