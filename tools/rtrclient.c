@@ -70,11 +70,11 @@ static void update_spki(struct spki_table* s __attribute__((unused)), const stru
         c = '-';
 
     printf("%c ",c);
-    printf("ASN: %u\n  ",record.asn);
+    printf("ASN:  %u\n  ",record.asn);
 
     int i;
     int size = sizeof(record.ski);
-    printf("SKI: ");
+    printf("SKI:  ");
     for(i = 0;i<size;i++){
         printf("%02x",record.ski[i]);
         if(i < size-1)
@@ -85,8 +85,8 @@ static void update_spki(struct spki_table* s __attribute__((unused)), const stru
     i = 0; size = sizeof(record.spki);
     printf("SPKI: ");
     for(i = 0;i<size;i++){
-        if(i % 40 == 0)
-            printf("\n  ");
+        if(i % 40 == 0 && i != 0)
+            printf("\n        ");
 
         printf("%02x",record.spki[i]);
         if(i < size-1)
@@ -99,10 +99,13 @@ int main(int argc, char** argv){
     enum mode_t { TCP, SSH } mode;
     char* host;
     char* port;
+    spki_update_fp spki_update_fp = NULL;
+    pfx_update_fp pfx_update_fp = NULL;
 #ifdef RTRLIB_HAVE_LIBSSH
     char* user;
     char* privkey;
     char* hostkey;
+
 #endif
     if(argc == 1){
         print_usage(argv);
@@ -110,13 +113,22 @@ int main(int argc, char** argv){
     }
 
     if(strncasecmp(argv[1], "tcp", strlen(argv[1])) == 0){
-        if(argc != 4){
+        if(argc < 4){
             print_usage(argv);
             return(EXIT_FAILURE);
         }
         mode = TCP;
         host = argv[2];
         port = argv[3];
+        int i;
+        for(i=4;i<argc;i++){
+            if(argv[i][0] == '-'){
+                if(argv[i][1] == 'K')
+                    spki_update_fp = update_spki;
+                if(argv[i][1] == 'P')
+                    pfx_update_fp = update_cb;
+            }
+        }
 
     }
 #ifdef RTRLIB_HAVE_LIBSSH
@@ -131,16 +143,18 @@ int main(int argc, char** argv){
         port = argv[3];
         user = argv[4];
         privkey = argv[5];
-	if (argc == 7)
-		hostkey = argv[6];
-	else
-		hostkey = NULL;
+    if (argc == 7)
+        hostkey = argv[6];
+    else
+        hostkey = NULL;
     }
 #endif
     else{
         print_usage(argv);
         return(EXIT_FAILURE);
     }
+
+
 
     struct tr_socket tr_sock;
     struct tr_tcp_config tcp_config;
@@ -175,7 +189,7 @@ int main(int argc, char** argv){
     groups[0].sockets[0] = &rtr;
     groups[0].preference = 1;
 
-    conf = rtr_mgr_init(groups, 1, 30, 520, &update_cb, &update_spki, status_fp, NULL);
+    conf = rtr_mgr_init(groups, 1, 30, 520, pfx_update_fp, spki_update_fp, status_fp, NULL);
     if (conf == NULL)
 	    return EXIT_FAILURE;
     rtr_mgr_start(conf);
