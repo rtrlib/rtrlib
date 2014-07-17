@@ -35,6 +35,8 @@ struct key_entry {
 
 static int spki_record_cmp(const void *arg, const void *obj);
 static int asn_cmp(const void *arg, const void *obj);
+static int key_entry_to_spki_record(struct key_entry *key_e, struct spki_record *spki_r);
+static int spki_record_to_key_entry(struct spki_record *spki_r, struct key_entry *key_e);
 
 
 //****NOTE****
@@ -261,7 +263,25 @@ static int asn_cmp(const void *arg, const void *obj) {
     return *(const uint32_t*)arg != ((const struct key_entry*)obj)->asn;
 }
 
+//just coping the content -> the target struct must allready be allocated
+static int key_entry_to_spki_record(struct key_entry *key_e, struct spki_record *spki_r){
+    spki_r->asn = key_e->asn;
+    spki_r->socket = key_e->socket;
+    memcpy(spki_r->ski, key_e->ski, SKI_SIZE);
+    memcpy(spki_r->spki, key_e->spki, SPKI_SIZE);
+    spki_r->next = NULL;
+    return SPKI_SUCCESS;
+}
 
+//just coping the content -> the target struct must allready be allocated
+static int spki_record_to_key_entry(struct spki_record *spki_r, struct key_entry *key_e){
+    key_e->asn = spki_r->asn;
+    key_e->socket = spki_r->socket;
+    key_e->next = NULL;
+    memcpy(key_e->ski, spki_r->ski, SKI_SIZE);
+    memcpy(key_e->spki, spki_r->spki, SPKI_SIZE);
+    return SPKI_SUCCESS;
+}
 
 
 
