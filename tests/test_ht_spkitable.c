@@ -24,12 +24,13 @@ struct spki_record *create_record(int ASN, int ski_offset, int spki_offset, stru
 struct spki_record *create_record(int ASN, int ski_offset, int spki_offset, struct rtr_socket *socket) {
     struct spki_record *record = malloc(sizeof(struct spki_record));
     record->asn = ASN;
+    uint32_t i;
 
-    for(int i = 0; i < sizeof(record->ski); i++){
+    for(i = 0; i < sizeof(record->ski); i++){
         record->ski[i] = i + ski_offset;
     }
 
-    for(int i = 0; i < sizeof(record->spki); i++){
+    for(i = 0; i < sizeof(record->spki); i++){
         record->spki[i] = i + spki_offset;
     }
     record->socket = socket;
