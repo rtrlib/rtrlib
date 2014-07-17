@@ -673,10 +673,6 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
                     for(unsigned int j = 0; j < router_key_pdus_nindex; j++)
                         rtval = rtr_undo_update_spki_table(rtr_socket, &(router_key_pdus[j]));
 
-                    // for(unsigned int j = 0; j < ipv4_pdus_nindex; j++)
-                    //     rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv4_pdus[j]));
-                    // for(unsigned int j = 0; (j < i) && (rtval == PFX_SUCCESS); j++)
-                    //     rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv6_pdus[j]));
                     if(rtval == RTR_ERROR) {
                         RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all key entries");
                         spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
@@ -830,8 +826,8 @@ int rtr_update_spki_table(struct rtr_socket* rtr_socket, const void* pdu){
     }
 
     if(rtval == SPKI_DUPLICATE_RECORD){
-        //TODO: This debug message isn't working yet.
-        RTR_DBG("Duplicate Announcement for router key: ASN: %u, SKI: %s, SPKI: %s, received", entry->asn, entry->ski, entry->spki);
+        //TODO: This debug message isn't working yet, how to display SKI/SPKI without %x?
+        RTR_DBG("Duplicate Announcement for router key: ASN: %u received",entry->asn);
         rtr_send_error_pdu(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT , NULL, 0);
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
         return RTR_ERROR;

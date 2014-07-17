@@ -34,7 +34,6 @@ struct key_entry {
 
 
 static int spki_record_cmp(const void *arg, const void *obj);
-static int asn_cmp(const void *arg, const void *obj);
 static int key_entry_to_spki_record(struct key_entry *key_e, struct spki_record *spki_r);
 static int spki_record_to_key_entry(struct spki_record *spki_r, struct key_entry *key_e);
 static void spki_table_notify_clients(struct spki_table *spki_table, const struct spki_record *record, const bool added);
@@ -141,7 +140,7 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski
     return SPKI_SUCCESS;
 }
 
-//TODO: Remove printf statements and do real output (notify clients?)
+
 int spki_table_remove_entry(struct spki_table *spki_table, struct spki_record *spki_record) {
 
     struct key_entry *entry = malloc(sizeof(struct key_entry));
@@ -157,7 +156,6 @@ int spki_table_remove_entry(struct spki_table *spki_table, struct spki_record *s
 
     if(!tommy_hashlin_search(&spki_table->hashtable, spki_table->cmp_fp, entry, hash)){
         rtval = SPKI_RECORD_NOT_FOUND;
-        printf("Could not remove Router Key: ASN: %u (key not found)\n",spki_record->asn);
     } else {
 
         //Remove from hashtable and list
@@ -178,7 +176,7 @@ int spki_table_remove_entry(struct spki_table *spki_table, struct spki_record *s
 }
 
 
-//Needs error handling and testing
+
 int spki_table_src_remove(struct spki_table *spki_table, const struct rtr_socket *socket) {
 
     //Find all spki_record that have spki_record->socket == socket, link them together
@@ -255,11 +253,7 @@ static int spki_record_cmp(const void *arg, const void *obj) {
 	return 0;
 }
 
-static int asn_cmp(const void *arg, const void *obj) {
-    return *(const uint32_t*)arg != ((const struct key_entry*)obj)->asn;
-}
-
-//just coping the content -> the target struct must allready be allocated
+//Copying the content, target struct must already be allocated
 static int key_entry_to_spki_record(struct key_entry *key_e, struct spki_record *spki_r){
     spki_r->asn = key_e->asn;
     spki_r->socket = key_e->socket;
@@ -269,7 +263,7 @@ static int key_entry_to_spki_record(struct key_entry *key_e, struct spki_record 
     return SPKI_SUCCESS;
 }
 
-//just coping the content -> the target struct must allready be allocated
+//Copying the content, target struct must already be allocated
 static int spki_record_to_key_entry(struct spki_record *spki_r, struct key_entry *key_e){
     key_e->asn = spki_r->asn;
     key_e->socket = spki_r->socket;
@@ -279,10 +273,6 @@ static int spki_record_to_key_entry(struct spki_record *spki_r, struct key_entry
     return SPKI_SUCCESS;
 }
 
-
-
-//TODO: Add validate_router_key function
-//TODO: Add notify_clients function
 
 
 
