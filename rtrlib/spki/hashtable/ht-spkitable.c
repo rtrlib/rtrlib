@@ -106,7 +106,7 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski
     //but it can contain also others.
     tommy_node *result_bucket = tommy_hashlin_bucket(&spki_table->hashtable, hash);
 
-    if(!result){
+    if(!result_bucket){
         pthread_rwlock_unlock(&spki_table->lock);
         (*result) = NULL;
         return SPKI_SUCCESS;
@@ -116,17 +116,26 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski
     struct key_entry *entry = ((struct key_entry*) result_bucket->data);
     if((entry->asn == asn) && memcmp(entry->ski, ski, SKI_SIZE) == 0){
         (*result) = malloc(sizeof(struct spki_record));
+        if(!(*result)){
+            return SPKI_ERROR;
+        }
         key_entry_to_spki_record(result_bucket->data, (*result));
     }
     result_bucket = result_bucket->next;
+    struct spki_record *current_element = (*result);
 
     while(result_bucket){
         entry = ((struct key_entry*) result_bucket->data);
         if((entry->asn == asn) && memcmp(entry->ski, ski, SKI_SIZE) == 0){
-            (*result)->next = malloc(sizeof(struct spki_record));
-            key_entry_to_spki_record(result_bucket->data, (*result)->next);
+            current_element->next = malloc(sizeof(struct spki_record));
+            if(!current_element->next){
+                return SPKI_ERROR;
+            }
+            key_entry_to_spki_record(result_bucket->data, current_element->next);
+            current_element = current_element->next;
         }
         result_bucket = result_bucket->next;
+
     }
     pthread_rwlock_unlock(&spki_table->lock);
     return SPKI_SUCCESS;
