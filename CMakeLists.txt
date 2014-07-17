@@ -51,6 +51,7 @@ ADD_SUBDIRECTORY(tests)
 ENABLE_TESTING()
 ADD_TEST(test_pfx tests/test_pfx)
 ADD_TEST(test_lpfst tests/test_lpfst)
+ADD_TEST(test_ht_spkitable tests/test_ht_spkitable)
 
 #install lib
 set (RTRLIB_VERSION_MAJOR 0)
