@@ -87,10 +87,12 @@ int spki_table_add_entry(struct spki_table *spki_table, struct spki_record *spki
 /**
  * @brief Returns all spki_record whose AS number matches asn. Multiple spki_record are linked
  * with their "next" field
- * @param spki_table spki_table to use
- * @param asn Hash index to look for
+ * @param[in] spki_table spki_table to use
+ * @param[in] asn Hash index to look for
+ * @param[in] ski the 20 byte field which contains the SKI to search for
+ * @param[out] result the first elemnt of a linked list which contains the result or NULL if no records was found
  */
-struct spki_record* spki_table_get_all(struct spki_table *spki_table, uint32_t asn);
+int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski, struct spki_record **result);
 
 
 /**

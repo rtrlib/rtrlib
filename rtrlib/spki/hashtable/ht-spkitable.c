@@ -107,34 +107,44 @@ int spki_table_add_entry(struct spki_table *spki_table, struct spki_record *spki
         rtval = SPKI_SUCCESS;
 	}
     pthread_rwlock_unlock(&spki_table->lock);
-    free(spki_record);
 	return rtval;
 }
 
 
-struct spki_record* spki_table_get_all(struct spki_table *spki_table, uint32_t asn) {
+int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski, struct spki_record **result){
     uint32_t hash = tommy_inthash_u32(asn);
 
     pthread_rwlock_wrlock(&spki_table->lock);
     //A tommy node contains its storing spki_record (->data) as well as next and prev pointer
-    //to accomodate multiple results
-    tommy_node *result = tommy_hashlin_bucket(&spki_table->hashtable, hash);
-    pthread_rwlock_unlock(&spki_table->lock);
+    //to accomodate multiple results.
+    //The bucket is guaranteed to contain ALL the elements with the specified hash,
+    //but it can contain also others.
+    tommy_node *result_bucket = tommy_hashlin_bucket(&spki_table->hashtable, hash);
 
     if(!result){
-        return NULL;
+        pthread_rwlock_unlock(&spki_table->lock);
+        (*result) = NULL;
+        return SPKI_SUCCESS;
     }
-
 
     //We link up the spki_record structs so we don't end up using tommy nodes outside of the keys files.
-    struct spki_record *head = result->data;
-    struct spki_record *current = head;
-    while(result){
-        current->next = result->next->data;
-        result = result->next;
-        current = current->next;
+    struct key_entry *entry = ((struct key_entry*) result_bucket->data);
+    if((entry->asn == asn) && memcmp(entry->ski, ski, SKI_SIZE) == 0){
+        (*result) = malloc(sizeof(struct spki_record));
+        key_entry_to_spki_record(result_bucket->data, (*result));
     }
-    return head;
+    result_bucket = result_bucket->next;
+
+    while(result_bucket){
+        entry = ((struct key_entry*) result_bucket->data);
+        if((entry->asn == asn) && memcmp(entry->ski, ski, SKI_SIZE) == 0){
+            (*result)->next = malloc(sizeof(struct spki_record));
+            key_entry_to_spki_record(result_bucket->data, (*result)->next);
+        }
+        result_bucket = result_bucket->next;
+    }
+    pthread_rwlock_unlock(&spki_table->lock);
+    return SPKI_SUCCESS;
 }
 
 //TODO: Remove printf statements and do real output (notify clients?)
