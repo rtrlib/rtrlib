@@ -303,6 +303,10 @@ inline int rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn, c
     return pfx_table_validate(config->groups[0].sockets[0]->pfx_table, asn, prefix, mask_len, result);
 }
 
+inline int rtr_mgr_get_spki(struct rtr_mgr_config *config, const uint32_t asn, uint8_t *ski, struct spki_record *result, unsigned int *result_count) {
+    return spki_table_get_all(config->groups[0].sockets[0]->spki_table, asn, ski, &result, result_count);
+}
+
 void rtr_mgr_stop(struct rtr_mgr_config *config) {
     for(unsigned int i = 0; i < config->len; i++) {
         for(unsigned int j = 0; j < config->groups[i].sockets_len; j++) {

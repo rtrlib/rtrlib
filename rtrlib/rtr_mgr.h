@@ -157,6 +157,19 @@ bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config);
  */
 int rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn, const struct ip_addr *prefix, const uint8_t mask_len, enum pfxv_state *result);
 
+
+/**
+ * @brief Returns all SPKI records which match the given ASN and SKI.
+ * @param[in] config
+ * @param[in] asn Autonomous system number of the Origin-AS.
+ * @param[in] ski the SKI to search for.
+ * @param[out] result a array of all matching spki_records
+ * @param[out] result_count number of returned spki_records
+ * @return SPKI_SUCCESS On success.
+ * @return SPKI_ERROR If an error occurred.
+ */
+int rtr_mgr_get_spki(struct rtr_mgr_config *config, const uint32_t asn, uint8_t *ski, struct spki_record *result, unsigned int *result_count);
+
 /**
  * @brief Converts a rtr_mgr_status to a String.
  * @param[in] status state to convert to a string.
