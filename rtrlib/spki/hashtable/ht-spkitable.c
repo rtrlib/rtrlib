@@ -172,7 +172,7 @@ int spki_table_src_remove(struct spki_table *spki_table, const struct rtr_socket
 
     pthread_rwlock_wrlock(&spki_table->lock);
 
-    tommy_node *current_node = tommy_list_tail(&spki_table->list);
+    tommy_node *current_node = tommy_list_head(&spki_table->list);
     while(current_node){
         current_entry = (struct key_entry *)current_node->data;
 

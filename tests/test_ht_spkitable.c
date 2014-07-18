@@ -65,8 +65,16 @@ static void test_add_1(){
 
     struct rtr_socket *socket_one = malloc(sizeof(struct rtr_socket));
     struct rtr_socket *socket_two = malloc(sizeof(struct rtr_socket));
-    //Create 255 records with same ASN and SKI, different SPKI. Add them
-    struct spki_record *record;
+    uint8_t ski[SKI_SIZE];
+    uint32_t asn = 1;
+
+
+
+    struct spki_record *record = create_record(1,0,0,NULL);
+    memcpy(ski, record->ski, 20);
+    free(record);
+
+
     for(int i = 0; i< 255;i++){
         if(i%2 != 0)
             record = create_record(1,0,i,socket_one);
@@ -74,33 +82,36 @@ static void test_add_1(){
             record = create_record(1,0,i,socket_two);
 
         assert(spki_table_add_entry(&table, record) == SPKI_SUCCESS);
-
+        free(record);
     }
 
     struct spki_record *result;
     unsigned int result_size;
-    spki_table_get_all(&table, record->asn, record->ski,&result, &result_size);
+    spki_table_get_all(&table, asn, ski,&result, &result_size);
 
     int count = 0;
 
     for(int i = 0; i < result_size; i++){
-        assert(result->asn == record->asn);
-        assert(memcmp(&result[i].ski,record->ski,SKI_SIZE) == 0);
+        assert(result->asn == asn);
+        assert(memcmp(&result[i].ski, ski,SKI_SIZE) == 0);
         count++;
     }
     assert(count == 255);
+    free(result);
 
     spki_table_src_remove(&table,socket_one);
-    spki_table_get_all(&table, record->asn, record->ski,&result,&result_size);
+    spki_table_get_all(&table, asn, ski,&result,&result_size);
 
     for(int i = 0; i < result_size; i++){
-        assert(result->asn == record->asn);
-        assert(memcmp(&result[i].ski,record->ski,SKI_SIZE) == 0);
-        count++;
+        assert(result[i].asn == asn);
+        assert(memcmp(&result[i].ski, ski,SKI_SIZE) == 0);
+        assert(result[i].socket == socket_two);
     }
 
     spki_table_free(&table);
     free(result);
+    free(socket_one);
+    free(socket_two);
 
     printf("test_add_1() complete\n");
 }
@@ -286,11 +297,11 @@ static void test_get_all_1(){
 
 int main(){
     test_add_1();
-    test_add_2();
+    // test_add_2();
 
-    test_remove_1();
+    // test_remove_1();
 
-    test_get_all_1();
+    // test_get_all_1();
 
 
     return EXIT_SUCCESS;
