@@ -114,8 +114,9 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski
     }
 
     //Build the result array
-    struct key_entry *element = result_bucket->data;
+    struct key_entry *element;
     while(result_bucket){
+        element = result_bucket->data;
         if(element->asn == asn && memcmp(element->ski, ski, SKI_SIZE) == 0){
             (*result_size)++;
             (*result) = realloc(*result, *result_size * sizeof(struct spki_record));

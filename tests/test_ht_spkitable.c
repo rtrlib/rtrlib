@@ -156,10 +156,48 @@ static void test_add_2(){
     printf("test_add_2() complete\n");
 }
 
+static void test_remove_1(){
+    struct spki_table table;
+    spki_table_init(&table,NULL);
+
+    struct spki_record *result;
+    unsigned int result_size;
+
+    //Test: Add 4 records with only one field differ from the first record.
+    //-> Checks the compare function
+    struct spki_record *record1 = create_record(10,10,10,NULL);
+    struct spki_record *record2 = create_record(10,10,11,NULL);
+    struct spki_record *record3 = create_record(10,11,10,NULL);
+    struct spki_record *record4 = create_record(11,10,10,NULL);
+
+    assert(spki_table_add_entry(&table, record1) == SPKI_SUCCESS);
+    assert(spki_table_add_entry(&table, record2) == SPKI_SUCCESS);
+    assert(spki_table_add_entry(&table, record3) == SPKI_SUCCESS);
+    assert(spki_table_add_entry(&table, record4) == SPKI_SUCCESS);
+
+    assert(spki_table_remove_entry(&table, record1) == SPKI_SUCCESS);
+    //Check if other records are still there
+    assert(spki_table_get_all(&table, record2->asn, record2->ski, &result, &result_size) == SPKI_SUCCESS);
+    assert(result_size == 1);
+    free(result);
+
+    assert(spki_table_get_all(&table, record2->asn, record2->ski, &result, &result_size) == SPKI_SUCCESS);
+    assert(result_size == 1);
+    free(result);
+
+    assert(spki_table_get_all(&table, record2->asn, record2->ski, &result, &result_size) == SPKI_SUCCESS);
+    assert(result_size == 1);
+    free(result);
+
+    spki_table_free(&table);
+        printf("test_remove_1() complete\n");
+}
 
 int main(){
     test_add_1();
     test_add_2();
+
+    test_remove_1();
 
     return EXIT_SUCCESS;
 }
