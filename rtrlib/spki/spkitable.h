@@ -58,7 +58,6 @@ struct spki_record {
     uint32_t asn;
     uint8_t spki[SPKI_SIZE];
     const struct rtr_socket *socket;
-    struct spki_record *next;
 };
 
 /**
@@ -100,9 +99,10 @@ int spki_table_add_entry(struct spki_table *spki_table, struct spki_record *spki
  * @param[in] spki_table spki_table to use
  * @param[in] asn Hash index to look for
  * @param[in] ski the 20 byte field which contains the SKI to search for
- * @param[out] result the first elemnt of a linked list which contains the result or NULL if no records was found
+ * @param[out] result the result array. NULL if no records could be found
+ * @param[out] result_size elment count of the result array
  */
-int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski, struct spki_record **result);
+int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski, struct spki_record **result, unsigned int *result_size);
 
 
 /**

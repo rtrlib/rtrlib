@@ -82,6 +82,7 @@ int spki_table_add_entry(struct spki_table *spki_table, struct spki_record *spki
     pthread_rwlock_wrlock(&spki_table->lock);
     if(tommy_hashlin_search(&spki_table->hashtable, spki_table->cmp_fp, entry, hash)){
         rtval = SPKI_DUPLICATE_RECORD;
+        free(entry);
 	} else{
 		//Insert into hashtable and list
         tommy_hashlin_insert(&spki_table->hashtable, &entry->hash_node, entry, hash);
@@ -94,8 +95,10 @@ int spki_table_add_entry(struct spki_table *spki_table, struct spki_record *spki
 }
 
 
-int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski, struct spki_record **result){
+int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski, struct spki_record **result, unsigned int *result_size){
     uint32_t hash = tommy_inthash_u32(asn);
+    (*result) = NULL;
+    (*result_size) = 0;
 
     pthread_rwlock_wrlock(&spki_table->lock);
 
@@ -107,35 +110,25 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski
 
     if(!result_bucket){
         pthread_rwlock_unlock(&spki_table->lock);
-        (*result) = NULL;
         return SPKI_SUCCESS;
     }
 
-    //We link up the spki_record structs so we don't end up using tommy nodes outside of the keys files.
-    struct key_entry *entry = ((struct key_entry*) result_bucket->data);
-    if((entry->asn == asn) && memcmp(entry->ski, ski, SKI_SIZE) == 0){
-        (*result) = malloc(sizeof(struct spki_record));
-        if(!(*result)){
-            return SPKI_ERROR;
-        }
-        key_entry_to_spki_record(result_bucket->data, (*result));
-    }
-    result_bucket = result_bucket->next;
-    struct spki_record *current_element = (*result);
-
+    //Build the result array
+    struct key_entry *element = result_bucket->data;
     while(result_bucket){
-        entry = ((struct key_entry*) result_bucket->data);
-        if((entry->asn == asn) && memcmp(entry->ski, ski, SKI_SIZE) == 0){
-            current_element->next = malloc(sizeof(struct spki_record));
-            if(!current_element->next){
+        if(element->asn == asn && memcmp(element->ski, ski, SKI_SIZE) == 0){
+            (*result_size)++;
+            (*result) = realloc(*result, *result_size * sizeof(struct spki_record));
+            if(!(*result)){
+                free(*result);
+                *result = NULL;
                 return SPKI_ERROR;
             }
-            key_entry_to_spki_record(result_bucket->data, current_element->next);
-            current_element = current_element->next;
+            key_entry_to_spki_record(element, &((*result)[(*result_size-1)]));
         }
         result_bucket = result_bucket->next;
-
     }
+
     pthread_rwlock_unlock(&spki_table->lock);
     return SPKI_SUCCESS;
 }
@@ -168,10 +161,8 @@ int spki_table_remove_entry(struct spki_table *spki_table, struct spki_record *s
             rtval = SPKI_ERROR;
         }
     }
-
     pthread_rwlock_unlock(&spki_table->lock);
     free(entry);
-    free(spki_record);
     return rtval;
 }
 
@@ -259,7 +250,6 @@ static int key_entry_to_spki_record(struct key_entry *key_e, struct spki_record 
     spki_r->socket = key_e->socket;
     memcpy(spki_r->ski, key_e->ski, SKI_SIZE);
     memcpy(spki_r->spki, key_e->spki, SPKI_SIZE);
-    spki_r->next = NULL;
     return SPKI_SUCCESS;
 }
 
@@ -267,7 +257,6 @@ static int key_entry_to_spki_record(struct key_entry *key_e, struct spki_record 
 static int spki_record_to_key_entry(struct spki_record *spki_r, struct key_entry *key_e){
     key_e->asn = spki_r->asn;
     key_e->socket = spki_r->socket;
-    key_e->next = NULL;
     memcpy(key_e->ski, spki_r->ski, SKI_SIZE);
     memcpy(key_e->spki, spki_r->spki, SPKI_SIZE);
     return SPKI_SUCCESS;
