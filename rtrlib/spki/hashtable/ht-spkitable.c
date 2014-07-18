@@ -119,10 +119,11 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski
         element = result_bucket->data;
         if(element->asn == asn && memcmp(element->ski, ski, SKI_SIZE) == 0){
             (*result_size)++;
-            (*result) = realloc(*result, *result_size * sizeof(struct spki_record));
+            (*result) = (struct spki_record*) realloc(*result, *result_size * sizeof(struct spki_record));
             if(!(*result)){
                 free(*result);
                 *result = NULL;
+                pthread_rwlock_unlock(&spki_table->lock);
                 return SPKI_ERROR;
             }
             key_entry_to_spki_record(element, &((*result)[(*result_size-1)]));
