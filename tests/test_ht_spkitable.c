@@ -149,6 +149,8 @@ static void test_add_2(){
     assert(result_size == 0);
     assert(result == NULL);
 
+    free(record1);
+    free(record2);
     spki_table_free(&table);
 
     //Test: Add equal records
@@ -162,8 +164,11 @@ static void test_add_2(){
 
     spki_table_get_all(&table, 10, record1->ski, &result, &result_size);
     assert(result_size == 1);
+    free(result);
 
     spki_table_free(&table);
+    free(record1);
+    free(record2);
     printf("test_add_2() complete\n");
 }
 
@@ -251,6 +256,10 @@ static void test_remove_1(){
     free(result);
 
     spki_table_free(&table);
+    free(record1);
+    free(record2);
+    free(record3);
+    free(record4);
     printf("test_remove_1() complete\n");
 }
 
@@ -279,6 +288,7 @@ static void test_get_all_1(){
             assert(result_size == 1);
             assert(spki_table_remove_entry(&table, records[i][j]) == SPKI_SUCCESS);
             free(result);
+            free(records[i][j]);
 
         }
     }
@@ -288,6 +298,7 @@ static void test_get_all_1(){
         for(int j = 0; j < 50; j++){
             records[i][j] = create_record(i,j,j,NULL);
             assert(spki_table_add_entry(&table, records[i][j]) == SPKI_SUCCESS);
+            free(records[i][j]);
         }
     }
 
@@ -297,11 +308,11 @@ static void test_get_all_1(){
 
 int main(){
     test_add_1();
-    // test_add_2();
+    test_add_2();
 
-    // test_remove_1();
+    test_remove_1();
 
-    // test_get_all_1();
+    test_get_all_1();
 
 
     return EXIT_SUCCESS;
