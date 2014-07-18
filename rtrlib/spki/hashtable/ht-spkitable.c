@@ -167,65 +167,30 @@ int spki_table_remove_entry(struct spki_table *spki_table, struct spki_record *s
     return rtval;
 }
 
-
-
 int spki_table_src_remove(struct spki_table *spki_table, const struct rtr_socket *socket) {
-
-    //Find all spki_record that have spki_record->socket == socket, link them together
-    tommy_node *current_node = tommy_list_head(&spki_table->list);
-
-    struct key_entry *del_head = NULL;
-    struct key_entry *del_tail = NULL;
     struct key_entry *current_entry = NULL;
 
+    pthread_rwlock_wrlock(&spki_table->lock);
 
+    tommy_node *current_node = tommy_list_tail(&spki_table->list);
     while(current_node){
         current_entry = (struct key_entry *)current_node->data;
 
-        //If socket matches, mark for deletion by linking
         if(current_entry->socket == socket){
-            if(del_head){
-                //Attach current_entry to the end, make it the new tail
-                del_tail->next = current_entry;
-                del_tail = current_entry;
-                del_tail->next = NULL;
-            } else {
-                //If this is the first elem that maches the socket
-                //Init head and tail
-                del_head = current_entry;
-                del_tail = current_entry;
-                del_head->next = del_tail;
-            }
+                current_node = current_node->next;
+                if(!tommy_list_remove_existing(&spki_table->list, &current_entry->list_node)){
+                    return SPKI_ERROR;
+                }
+                if(!tommy_hashlin_remove_existing(&spki_table->hashtable, &current_entry->hash_node)){
+                    return SPKI_ERROR;
+                }
+                free(current_entry);
+        } else {
+            current_node = current_node->next;
         }
-        //Iterate over spki_table->list
-        current_node = current_node->next;
-    }
-    //Now we have a singly linked list of key_entry to delete, starting at del_head 
-    current_entry = del_head;
-
-    struct key_entry *temp;
-
-    pthread_rwlock_wrlock(&spki_table->lock);
-    
-    //Remove all elements we found from hashtable and list, free them
-    while(current_entry){
-
-        temp = current_entry;
-        //Remove from list
-        if(!tommy_list_remove_existing(&spki_table->list, &current_entry->list_node)){
-            return SPKI_ERROR;
-        }
-
-        //Remove from hashtable
-        if(!tommy_hashlin_remove_existing(&spki_table->hashtable, &current_entry->hash_node)){
-            return SPKI_ERROR;
-        }
-        current_entry = current_entry->next;
-        free(temp);
     }
     pthread_rwlock_unlock(&spki_table->lock);
     return SPKI_SUCCESS;
-
 }
 
 //Local functions -------------------------
