@@ -26,14 +26,13 @@ struct key_entry {
     uint32_t asn;
     uint8_t spki[SPKI_SIZE];
     const struct rtr_socket *socket;
-    struct key_entry *next;
     tommy_node hash_node;
     tommy_node list_node;
 };
 
 
 
-static int spki_record_cmp(const void *arg, const void *obj);
+static int key_entry_cmp(const void *arg, const void *obj);
 static int key_entry_to_spki_record(struct key_entry *key_e, struct spki_record *spki_r);
 static int spki_record_to_key_entry(struct spki_record *spki_r, struct key_entry *key_e);
 static void spki_table_notify_clients(struct spki_table *spki_table, const struct spki_record *record, const bool added);
@@ -50,7 +49,7 @@ void spki_table_init(struct spki_table *spki_table, spki_update_fp update_fp) {
     tommy_hashlin_init(&spki_table->hashtable);
     tommy_list_init(&spki_table->list);
     pthread_rwlock_init(&spki_table->lock, NULL);
-    spki_table->cmp_fp = spki_record_cmp;
+    spki_table->cmp_fp = key_entry_cmp;
     spki_table->update_fp = update_fp;
 }
 
@@ -232,7 +231,7 @@ int spki_table_src_remove(struct spki_table *spki_table, const struct rtr_socket
 //Local functions -------------------------
 
 //TODO Add enum for rtvals?
-static int spki_record_cmp(const void *arg, const void *obj) {
+static int key_entry_cmp(const void *arg, const void *obj) {
     struct key_entry *param = (struct key_entry*)arg;
     struct key_entry *entry = (struct key_entry*)obj;
 
@@ -242,8 +241,10 @@ static int spki_record_cmp(const void *arg, const void *obj) {
 		return 1;
 	if(memcmp(param->spki,entry->spki,SPKI_SIZE))
 		return 1;
+    if(param->socket != entry->socket)
+        return 1;
 
-	return 0;
+    return 0;
 }
 
 //Copying the content, target struct must already be allocated
