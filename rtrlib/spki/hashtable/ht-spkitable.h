@@ -32,7 +32,10 @@ typedef int (*hash_cmp_fp)(const void *arg, const void *obj);
 /**
  * @brief spki_table.
  * @param hashtable Linear hashtable
- * @param lock
+ * @param list List that holds the same entries as hashtable, used to iterate.
+ * @param cmp_fp Compare function used to find entries in the hashtable
+ * @param update_fp Update function, called when the hashtable changes
+ * @param lock Read-Write lock to prevent data races
  */
 struct spki_table {
     tommy_hashlin hashtable;

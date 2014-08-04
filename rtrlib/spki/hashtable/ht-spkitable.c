@@ -42,8 +42,13 @@ static int key_entry_to_spki_record(struct key_entry *key_e, struct spki_record 
 static int spki_record_to_key_entry(struct spki_record *spki_r, struct key_entry *key_e);
 static void spki_table_notify_clients(struct spki_table *spki_table, const struct spki_record *record, const bool added);
 
-//****NOTE****
-//All of the following code needs more error handling and of course testing, will come back to later
+
+/**
+ * @brief Calls the spki_table update function.
+ * @param[in] spki_table spki_table to use.
+ * @param[in] record spki_record that was added/removed.
+ * @param[in] added True means record was added, False means removed
+ */
 void spki_table_notify_clients(struct spki_table *spki_table, const struct spki_record *record, const bool added) {
     if(spki_table->update_fp != NULL)
         spki_table->update_fp(spki_table, *record, added);
@@ -71,7 +76,7 @@ void spki_table_free(struct spki_table *spki_table){
     pthread_rwlock_destroy(&spki_table->lock);
 }
 
-//TODO: Remove printf statements and do real output (notify clients?)
+
 int spki_table_add_entry(struct spki_table *spki_table, struct spki_record *spki_record) {
     struct key_entry *entry = malloc(sizeof(struct key_entry));
     if(entry == NULL){
@@ -200,7 +205,13 @@ int spki_table_src_remove(struct spki_table *spki_table, const struct rtr_socket
 
 //Local functions -------------------------
 
-//TODO Add enum for rtvals?
+/**
+ * @brief Compares two key_entrys by comparing ASN, SKI and SPKI
+ * @param[in] arg Pointer to first key_entry
+ * @param[in] obj Pointer to second key_entry
+ * @return 1 if not equal
+ * @return 0 if equal
+ */
 static int key_entry_cmp(const void *arg, const void *obj) {
     struct key_entry *param = (struct key_entry*)arg;
     struct key_entry *entry = (struct key_entry*)obj;

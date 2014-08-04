@@ -52,11 +52,10 @@ struct spki_table;
 
 /**
  * @brief spki_record.
- * @param router_key The router key struct with the {ASN, SKI, Public Key} triple
- * @param asn Origin AS number, used as the hash index (I use index to not confuse it with the crypto keys).
- * @param next In case this spki_record returns from spki_table_get(..), this points to the next found spki_record.
- * @param hash_node Used to store the spki_record in spki_table->hashtable, for fast insert/remove/validate operations
- * @param list_node Used to store the spki_record in spki_table->list, to make them iterable (used for purging)
+ * @param ski Subject Key Identifier
+ * @param asn Origin AS number
+ * @param spki Subject public key info
+ * @param socket Pointer to the rtr_socket this spki_record was received in
  */
 struct spki_record {
     uint8_t ski[SKI_SIZE];
@@ -76,6 +75,7 @@ typedef void (*spki_update_fp)(struct spki_table *spki_table, const struct spki_
 /**
  * @brief Initializes the spki_table struct.
  * @param[in] spki_table spki_table that will be initialized.
+ * @param[in] update_fp Pointer to update function
  */
 void spki_table_init(struct spki_table *spki_table, spki_update_fp update_fp);
 
@@ -91,21 +91,22 @@ void spki_table_free(struct spki_table *spki_table);
  * @brief Adds a spki_record to a spki_table.
  * @param[in] spki_table spki_table to use.
  * @param[in] spki_record spki_record that will be added.
- * @return KEY_SUCCESS On success.
- * @return KEY_ERROR On error.
- * @return KEY_DUPLICATE_RECORD // TODO
+ * @return SPKI_SUCCESS On success.
+ * @return SPKI_ERROR On error.
+ * @return SPKI_DUPLICATE_RECORD If an identical spki_record already exists
  */
 int spki_table_add_entry(struct spki_table *spki_table, struct spki_record *spki_record);
 
 
 /**
- * @brief Returns all spki_record whose AS number matches asn and SKI matches ski. Multiple spki_record are linked
- * with their "next" field
+ * @brief Returns all spki_record whose AS number matches asn and SKI matches ski.
  * @param[in] spki_table spki_table to use
  * @param[in] asn Hash index to look for
  * @param[in] ski the 20 byte field which contains the SKI to search for
  * @param[out] result the result array. NULL if no records could be found
  * @param[out] result_size elment count of the result array
+ * @return SPKI_SUCCESS On success
+ * @return SPKI_ERROR On error
  */
 int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski, struct spki_record **result, unsigned int *result_size);
 
@@ -114,6 +115,9 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski
  * @brief Removes spki_record from spki_table
  * @param spki_table spki_table to use
  * @param spki_record spki_record to remove;
+ * @return SPKI_SUCCESS On success
+ * @return SPKI_ERROR On error
+ * @return SPKI_RECORD_NOT_FOUND On record not found
  */
 int spki_table_remove_entry(struct spki_table *spki_table, struct spki_record *spki_record);
 
@@ -122,8 +126,8 @@ int spki_table_remove_entry(struct spki_table *spki_table, struct spki_record *s
  * @brief Removes all entries in the spki_table that match the passed socket_id.
  * @param[in] spki_table spki_table to use.
  * @param[in] socket origin socket of the record
- * @return KEY_SUCCESS On success.
- * @return KEY_ERROR On error.
+ * @return SPKI_SUCCESS On success.
+ * @return SPKI_ERROR On error.
  */
 int spki_table_src_remove(struct spki_table *spki_table, const struct rtr_socket *socket);
 
