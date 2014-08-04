@@ -59,7 +59,7 @@ static struct spki_record *create_record(int ASN, int ski_offset, int spki_offse
     return record;
 }
 
-static void test_add_1(){
+static void test_ht_1(){
     struct spki_table table;
     spki_table_init(&table,NULL);
 
@@ -113,10 +113,10 @@ static void test_add_1(){
     free(socket_one);
     free(socket_two);
 
-    printf("test_add_1() complete\n");
+    printf("test_h1_1() complete\n");
 }
 
-static void test_add_2(){
+static void test_ht_2(){
     struct spki_table table;
     spki_table_init(&table,NULL);
 
@@ -169,10 +169,10 @@ static void test_add_2(){
     spki_table_free(&table);
     free(record1);
     free(record2);
-    printf("test_add_2() complete\n");
+    printf("test_ht_2() complete\n");
 }
 
-static void test_remove_1(){
+static void test_ht_3(){
     struct spki_table table;
     spki_table_init(&table,NULL);
 
@@ -260,10 +260,10 @@ static void test_remove_1(){
     free(record2);
     free(record3);
     free(record4);
-    printf("test_remove_1() complete\n");
+    printf("test_ht_3() complete\n");
 }
 
-static void test_get_all_1(){
+static void test_ht_4(){
     struct spki_table table;
     spki_table_init(&table,NULL);
 
@@ -303,17 +303,13 @@ static void test_get_all_1(){
     }
 
     spki_table_free(&table);
-    printf("test_get_all_1() complete\n");
+    printf("test_ht_4() complete\n");
 }
 
 int main(){
-    test_add_1();
-    test_add_2();
-
-    test_remove_1();
-
-    test_get_all_1();
-
-
+    test_ht_1();
+    test_ht_2();
+    test_ht_3();
+    test_ht_4();
     return EXIT_SUCCESS;
 }
