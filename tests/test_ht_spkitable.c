@@ -343,6 +343,44 @@ static void test_ht_5(){
     spki_table_free(&table);
     free(record1);
     free(record2);
+    printf("test_ht_5() complete\n");
+}
+
+/**
+ * @brief test_ht_6
+ * Test: spki_table_search_by_ski()
+ * Test if all spki_records with the same SKI get returned.
+ */
+static void test_ht_6(){
+    struct spki_table table;
+    spki_table_init(&table, NULL);
+
+    const unsigned int num_of_different_skis = 10;
+    const unsigned int num_of_records_with_same_ski = 10;
+
+    struct spki_record *records[num_of_different_skis][num_of_records_with_same_ski];
+    //Add the records to the table
+    for(unsigned int i = 0; i < num_of_different_skis; i++){
+        for(unsigned int j = 0; j < num_of_records_with_same_ski; j++){
+            records[i][j] = create_record(j,i,j,NULL);
+            assert(spki_table_add_entry(&table, records[i][j]) == SPKI_SUCCESS);
+        }
+    }
+
+    //Search for records by SKI and check result
+    for(unsigned int i = 0; i < num_of_different_skis; i++){
+        for(unsigned int j = 0; j < num_of_records_with_same_ski; j++){
+            struct spki_record *result;
+            unsigned int result_size;
+            assert(spki_table_search_by_ski(&table, records[i][j]->ski, &result, &result_size) == SPKI_SUCCESS);
+            assert(result_size == num_of_records_with_same_ski);
+            free(result);
+            free(records[i][j]);
+        }
+    }
+
+    spki_table_free(&table);
+    printf("test_ht_6() complete\n");
 }
 
 int main(){
@@ -351,5 +389,6 @@ int main(){
     test_ht_3();
     test_ht_4();
     test_ht_5();
+    test_ht_6();
     return EXIT_SUCCESS;
 }

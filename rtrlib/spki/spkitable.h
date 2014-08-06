@@ -110,6 +110,17 @@ int spki_table_add_entry(struct spki_table *spki_table, struct spki_record *spki
  */
 int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski, struct spki_record **result, unsigned int *result_size);
 
+/**
+ * @brief Returns all spki_record whose SKI number matches the given one.
+ * @param[in] spki_table spki_table to use
+ * @param[in] ski the 20 byte field which contains the SKI to search for
+ * @param[out] result the result array. NULL if no records could be found
+ * @param[out] result_size elment count of the result array
+ * @return SPKI_SUCCESS On success
+ * @return SPKI_ERROR On error
+ */
+ int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski, struct spki_record **result, unsigned int *result_size);
+
 
 /**
  * @brief Removes spki_record from spki_table

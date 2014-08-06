@@ -144,6 +144,32 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski
     return SPKI_SUCCESS;
 }
 
+int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski, struct spki_record **result, unsigned int *result_size){
+    (*result) = NULL;
+    (*result_size) = 0;
+    struct key_entry *current_entry;
+
+    pthread_rwlock_wrlock(&spki_table->lock);
+
+    tommy_node *current_node = tommy_list_head(&spki_table->list);
+    while(current_node){
+        current_entry = (struct key_entry *)current_node->data;
+
+        if(memcmp(current_entry->ski, ski, SKI_SIZE) == 0){
+            (*result_size)++;
+            (*result) = realloc((*result), sizeof(struct spki_record) * (*result_size));
+            if(result == NULL){
+                free((*result));
+                pthread_rwlock_unlock(&spki_table->lock);
+                return SPKI_ERROR;
+            }
+            key_entry_to_spki_record(current_entry, &((*result)[(*result_size)-1]));
+        }
+        current_node = current_node->next;
+    }
+    pthread_rwlock_unlock(&spki_table->lock);
+    return SPKI_SUCCESS;
+}
 
 int spki_table_remove_entry(struct spki_table *spki_table, struct spki_record *spki_record) {
 
