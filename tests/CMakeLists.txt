@@ -1,7 +1,6 @@
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -Wall -Wextra -Wformat-security -Wmissing-prototypes -Wmissing-declarations -Winit-self -Waggregate-return -Wmissing-format-attribute -Wundef -Wbad-function-cast -Wwrite-strings -Wformat=2")
 
-
 add_executable(test_pfx test_pfx.c)
 target_link_libraries(test_pfx rtrlib)
 add_executable(test_lpfst test_lpfst.c)
@@ -10,3 +9,5 @@ add_executable(test_pfx_locks test_pfx_locks.c)
 target_link_libraries(test_pfx_locks rtrlib)
 add_executable(test_ht_spkitable test_ht_spkitable.c)
 target_link_libraries(test_ht_spkitable rtrlib)
+add_executable(test_ht_spkitable_locks test_ht_spkitable_locks.c)
+target_link_libraries(test_ht_spkitable_locks rtrlib)
