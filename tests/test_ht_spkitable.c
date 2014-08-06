@@ -59,6 +59,13 @@ static struct spki_record *create_record(int ASN, int ski_offset, int spki_offse
     return record;
 }
 
+/**
+ * @brief test_ht_1
+ * Test if the spki_table_src_remove function is working correctly by adding
+ * spki_record associated with different rtr_socket. Then call spki_table_src_remove
+ * with one of the sockets as argument and validate that all records associated with different
+ * sockets are still there.
+ */
 static void test_ht_1(){
     struct spki_table table;
     spki_table_init(&table,NULL);
@@ -91,7 +98,7 @@ static void test_ht_1(){
 
     int count = 0;
 
-    for(int i = 0; i < result_size; i++){
+    for(unsigned int i = 0; i < result_size; i++){
         assert(result->asn == asn);
         assert(memcmp(&result[i].ski, ski,SKI_SIZE) == 0);
         count++;
@@ -102,7 +109,7 @@ static void test_ht_1(){
     spki_table_src_remove(&table,socket_one);
     spki_table_get_all(&table, asn, ski,&result,&result_size);
 
-    for(int i = 0; i < result_size; i++){
+    for(unsigned int i = 0; i < result_size; i++){
         assert(result[i].asn == asn);
         assert(memcmp(&result[i].ski, ski,SKI_SIZE) == 0);
         assert(result[i].socket == socket_two);
@@ -116,6 +123,11 @@ static void test_ht_1(){
     printf("test_h1_1() complete\n");
 }
 
+/**
+ * @brief test_ht_2
+ * Check the behaviour if we add spki_record with different SPKI values but
+ * same SKI values (Hash collision).
+ */
 static void test_ht_2(){
     struct spki_table table;
     spki_table_init(&table,NULL);
@@ -123,7 +135,6 @@ static void test_ht_2(){
     //Test: Two diff SPKIs hash to the same SKI
     struct spki_record *record1 = create_record(10,20,30,NULL);
     struct spki_record *record2 = create_record(10,20,40,NULL);
-
 
     assert(spki_table_add_entry(&table, record1) == SPKI_SUCCESS);
     assert(spki_table_add_entry(&table, record2) == SPKI_SUCCESS);
@@ -133,9 +144,11 @@ static void test_ht_2(){
     spki_table_get_all(&table, 10, record1->ski, &result, &result_size);
     assert(result_size == 2);
 
+    //Check if the returned records are the same we have added.
     assert(compare_spki_records(&result[0], record1) != compare_spki_records(&result[0], record2));
     assert(compare_spki_records(&result[1], record1) != compare_spki_records(&result[1], record2));
     free(result);
+
 
     spki_table_remove_entry(&table, record1);
     spki_table_get_all(&table, 10, record1->ski, &result, &result_size);
@@ -149,29 +162,23 @@ static void test_ht_2(){
     assert(result_size == 0);
     assert(result == NULL);
 
+    spki_table_get_all(&table, 10, record2->ski, &result, &result_size);
+    assert(result_size == 0);
+    assert(result == NULL);
+
     free(record1);
     free(record2);
     spki_table_free(&table);
-
-    //Test: Add equal records
-    spki_table_init(&table,NULL);
-    record1 = create_record(10,10,10,NULL);
-    record2 = create_record(10,10,10,NULL);
-
-    assert(spki_table_add_entry(&table, record1) == SPKI_SUCCESS);
-    assert(spki_table_add_entry(&table, record2) == SPKI_DUPLICATE_RECORD);
-    assert(spki_table_add_entry(&table, record1) == SPKI_DUPLICATE_RECORD);
-
-    spki_table_get_all(&table, 10, record1->ski, &result, &result_size);
-    assert(result_size == 1);
-    free(result);
-
-    spki_table_free(&table);
-    free(record1);
-    free(record2);
     printf("test_ht_2() complete\n");
 }
 
+
+/**
+ * @brief test_ht_3
+ * Test if the compare function for spki_record work correctly:
+ * Add spki_records which only differ in one attribute and delete one
+ * of the records, then check if the other records are still there.
+ */
 static void test_ht_3(){
     struct spki_table table;
     spki_table_init(&table,NULL);
@@ -263,6 +270,11 @@ static void test_ht_3(){
     printf("test_ht_3() complete\n");
 }
 
+/**
+ * @brief test_ht_4
+ * Test if all added records can be deleted and test if any of the added
+ * records retain in the table although they got deleted.
+ */
 static void test_ht_4(){
     struct spki_table table;
     spki_table_init(&table,NULL);
@@ -306,10 +318,38 @@ static void test_ht_4(){
     printf("test_ht_4() complete\n");
 }
 
+/**
+ * @brief test_ht_5
+ * Test the behavior if equal spki_records get added to the table.
+ */
+static void test_ht_5(){
+    struct spki_table table;
+    spki_table_init(&table,NULL);
+
+    struct spki_record *record1 = create_record(10,10,10,NULL);
+    struct spki_record *record2 = create_record(10,10,10,NULL);
+
+    assert(spki_table_add_entry(&table, record1) == SPKI_SUCCESS);
+    assert(spki_table_add_entry(&table, record2) == SPKI_DUPLICATE_RECORD);
+    assert(spki_table_add_entry(&table, record1) == SPKI_DUPLICATE_RECORD);
+
+    struct spki_record *result;
+    unsigned int result_size;
+
+    spki_table_get_all(&table, 10, record1->ski, &result, &result_size);
+    assert(result_size == 1);
+    free(result);
+
+    spki_table_free(&table);
+    free(record1);
+    free(record2);
+}
+
 int main(){
     test_ht_1();
     test_ht_2();
     test_ht_3();
     test_ht_4();
+    test_ht_5();
     return EXIT_SUCCESS;
 }
