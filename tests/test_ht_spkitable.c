@@ -383,6 +383,102 @@ static void test_ht_6(){
     printf("test_ht_6() complete\n");
 }
 
+/**
+ * @brief test_ht_7
+ * Test: Releation between ASN and SKI
+ * ASN(1) <---> SKI(n)
+ * ASN(n) <---> SKI(1)
+ * ASN(n) <---> SKI(n)
+ */
+static void test_ht_7(){
+    struct spki_table table;
+    spki_table_init(&table, NULL);
+
+    //ASN(1) <---> SKI(n) -----------------------------------------------------
+    const unsigned int NUM_OF_RECORDS = 200;
+    struct spki_record *records[NUM_OF_RECORDS];
+
+    //Create NUM_OF_RECORDS spki_records with same ASN but different SKI
+    for(unsigned int i = 0; i < NUM_OF_RECORDS; i++){
+        records[i] = create_record(2555,i,i,NULL);
+        assert(spki_table_add_entry(&table, records[i]) == SPKI_SUCCESS);
+    }
+
+    //Validate
+    for(unsigned int i = 0; i < NUM_OF_RECORDS; i++){
+        struct spki_record *result;
+        unsigned int size = 0;
+        spki_table_get_all(&table, 2555, records[i]->ski, &result, &size);
+
+        assert(size == 1);
+        assert(compare_spki_records(records[i],&result[0]));
+        free(result);
+        free(records[i]);
+    }
+    //Clean up
+    spki_table_free(&table);
+
+
+
+    //ASN(n) <---> SKI(1) -----------------------------------------------------
+    spki_table_init(&table, NULL);
+
+    //Create NUM_OF_RECORDS spki_records with same SKI but different ASN
+    for(unsigned int i = 0; i < NUM_OF_RECORDS; i++){
+        records[i] = create_record(i,100,100,NULL);
+        assert(spki_table_add_entry(&table, records[i]) == SPKI_SUCCESS);
+    }
+
+    //Validate
+    for(unsigned int i = 0; i < NUM_OF_RECORDS; i++){
+        struct spki_record *result;
+        unsigned int size = 0;
+        spki_table_get_all(&table, i, records[NUM_OF_RECORDS-1]->ski, &result, &size);
+
+        assert(size == 1);
+        assert(compare_spki_records(records[i],&result[0]));
+        free(result);
+        free(records[i]);
+    }
+    //Clean up
+    spki_table_free(&table);
+
+
+
+    //ASN(n) <---> SKI(n) -----------------------------------------------------
+    spki_table_init(&table, NULL);
+    const unsigned int NUM_OF_SKI = 200;
+    struct spki_record *records_n_n[NUM_OF_RECORDS][NUM_OF_SKI];
+
+    //Create: {NUM_OF_RECORDS} x {NUM_OF_SKI} spki_records
+    // {ASN_0,ASN_1...} x {SKI_0, SKI_1...}
+    for(unsigned int i = 0; i < NUM_OF_RECORDS; i++){
+        for(unsigned int j = 0; j < NUM_OF_SKI; j++){
+            records_n_n[i][j] = create_record(i,j,j,NULL);
+            assert(spki_table_add_entry(&table, records_n_n[i][j]) == SPKI_SUCCESS);
+        }
+    }
+
+    //Validate
+    for(unsigned int i = 0; i < NUM_OF_RECORDS; i++){
+        for(unsigned int j = 0; j < NUM_OF_SKI; j++){
+            struct spki_record *result;
+            unsigned int size = 0;
+            spki_table_get_all(&table, i, records_n_n[i][j]->ski, &result, &size);
+
+            assert(size == 1);
+            assert(compare_spki_records(records_n_n[i][j], &result[0]));
+            free(result);
+            free(records_n_n[i][j]);
+        }
+    }
+    //Clean up
+    spki_table_free(&table);
+
+
+    printf("test_ht_7() complete\n");
+}
+
 int main(){
     test_ht_1();
     test_ht_2();
@@ -390,5 +486,6 @@ int main(){
     test_ht_4();
     test_ht_5();
     test_ht_6();
+    test_ht_7();
     return EXIT_SUCCESS;
 }
