@@ -93,12 +93,12 @@ static void test_ht_1(){
     }
 
     struct spki_record *result;
-    unsigned int result_size;
+    size_t result_size;
     spki_table_get_all(&table, asn, ski,&result, &result_size);
 
     int count = 0;
 
-    for(unsigned int i = 0; i < result_size; i++){
+    for(size_t i = 0; i < result_size; i++){
         assert(result->asn == asn);
         assert(memcmp(&result[i].ski, ski,SKI_SIZE) == 0);
         count++;
@@ -109,7 +109,7 @@ static void test_ht_1(){
     spki_table_src_remove(&table,socket_one);
     spki_table_get_all(&table, asn, ski,&result,&result_size);
 
-    for(unsigned int i = 0; i < result_size; i++){
+    for(size_t i = 0; i < result_size; i++){
         assert(result[i].asn == asn);
         assert(memcmp(&result[i].ski, ski,SKI_SIZE) == 0);
         assert(result[i].socket == socket_two);
@@ -140,7 +140,7 @@ static void test_ht_2(){
     assert(spki_table_add_entry(&table, record2) == SPKI_SUCCESS);
 
     struct spki_record *result;
-    unsigned int result_size;
+    size_t result_size;
     spki_table_get_all(&table, 10, record1->ski, &result, &result_size);
     assert(result_size == 2);
 
@@ -184,7 +184,7 @@ static void test_ht_3(){
     spki_table_init(&table,NULL);
 
     struct spki_record *result;
-    unsigned int result_size;
+    size_t result_size;
 
     //Test: Add 4 records with only one field differ from the first record.
     //-> Checks the compare function
@@ -280,7 +280,7 @@ static void test_ht_4(){
     spki_table_init(&table,NULL);
 
     struct spki_record *result;
-    unsigned int result_size;
+    size_t result_size;
 
     struct spki_record *records[50][50];
 
@@ -334,7 +334,7 @@ static void test_ht_5(){
     assert(spki_table_add_entry(&table, record1) == SPKI_DUPLICATE_RECORD);
 
     struct spki_record *result;
-    unsigned int result_size;
+    size_t result_size;
 
     spki_table_get_all(&table, 10, record1->ski, &result, &result_size);
     assert(result_size == 1);
@@ -371,7 +371,7 @@ static void test_ht_6(){
     for(unsigned int i = 0; i < num_of_different_skis; i++){
         for(unsigned int j = 0; j < num_of_records_with_same_ski; j++){
             struct spki_record *result;
-            unsigned int result_size;
+            size_t result_size;
             assert(spki_table_search_by_ski(&table, records[i][j]->ski, &result, &result_size) == SPKI_SUCCESS);
             assert(result_size == num_of_records_with_same_ski);
             free(result);
@@ -407,7 +407,7 @@ static void test_ht_7(){
     //Validate
     for(unsigned int i = 0; i < NUM_OF_RECORDS; i++){
         struct spki_record *result;
-        unsigned int size = 0;
+        size_t size = 0;
         spki_table_get_all(&table, 2555, records[i]->ski, &result, &size);
 
         assert(size == 1);
@@ -432,7 +432,7 @@ static void test_ht_7(){
     //Validate
     for(unsigned int i = 0; i < NUM_OF_RECORDS; i++){
         struct spki_record *result;
-        unsigned int size = 0;
+        size_t size = 0;
         spki_table_get_all(&table, i, records[NUM_OF_RECORDS-1]->ski, &result, &size);
 
         assert(size == 1);
@@ -463,7 +463,7 @@ static void test_ht_7(){
     for(unsigned int i = 0; i < NUM_OF_RECORDS; i++){
         for(unsigned int j = 0; j < NUM_OF_SKI; j++){
             struct spki_record *result;
-            unsigned int size = 0;
+            size_t size = 0;
             spki_table_get_all(&table, i, records_n_n[i][j]->ski, &result, &size);
 
             assert(size == 1);
