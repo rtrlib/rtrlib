@@ -109,7 +109,7 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski
     (*result) = NULL;
     (*result_size) = 0;
 
-    pthread_rwlock_wrlock(&spki_table->lock);
+    pthread_rwlock_rdlock(&spki_table->lock);
 
     //A tommy node contains its storing key_entry (->data) as well as next and prev pointer
     //to accomodate multiple results.
@@ -128,14 +128,14 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski
         element = result_bucket->data;
         if(element->asn == asn && memcmp(element->ski, ski, SKI_SIZE) == 0){
             (*result_size)++;
-            (*result) = (struct spki_record*) realloc(*result, *result_size * sizeof(struct spki_record));
-            if(!(*result)){
+            void* tmp = realloc(*result, *result_size * sizeof(struct spki_record));
+            if(tmp == NULL){
                 free(*result);
-                *result = NULL;
                 pthread_rwlock_unlock(&spki_table->lock);
                 return SPKI_ERROR;
             }
-            key_entry_to_spki_record(element, &((*result)[(*result_size-1)]));
+            *result = tmp;
+            key_entry_to_spki_record(element, *result + *result_size-1);
         }
         result_bucket = result_bucket->next;
     }
@@ -157,7 +157,7 @@ int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski, struct
 
         if(memcmp(current_entry->ski, ski, SKI_SIZE) == 0){
             (*result_size)++;
-            void *tmp = realloc(*result, sizeof(struct spki_record) * (*result_size));
+            void* tmp = realloc(*result, sizeof(struct spki_record) * (*result_size));
             if(tmp == NULL){
                 free(*result);
                 pthread_rwlock_unlock(&spki_table->lock);
