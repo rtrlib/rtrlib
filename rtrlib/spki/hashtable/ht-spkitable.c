@@ -157,12 +157,13 @@ int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski, struct
 
         if(memcmp(current_entry->ski, ski, SKI_SIZE) == 0){
             (*result_size)++;
-            (*result) = realloc((*result), sizeof(struct spki_record) * (*result_size));
-            if(result == NULL){
-                free((*result));
+            void *tmp = realloc(*result, sizeof(struct spki_record) * (*result_size));
+            if(tmp == NULL){
+                free(*result);
                 pthread_rwlock_unlock(&spki_table->lock);
                 return SPKI_ERROR;
             }
+            *result = tmp;
             key_entry_to_spki_record(current_entry, &((*result)[(*result_size)-1]));
         }
         current_node = current_node->next;
