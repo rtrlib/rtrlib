@@ -232,53 +232,46 @@ void rtr_pdu_footer_to_host_byte_order(void *pdu) {
     const enum pdu_type type = rtr_get_pdu_type(pdu);
     struct pdu_header *header = pdu;
 
-    uint32_t int32_tmp;
     uint32_t addr6[4];
 
     switch(type) {
     case SERIAL_NOTIFY:
-        int32_tmp = ntohl(((struct pdu_serial_notify *) pdu)->sn);
-        ((struct pdu_serial_notify *) pdu)->sn = int32_tmp;
+        ((struct pdu_serial_notify *) pdu)->sn =
+                ntohl(((struct pdu_serial_notify *) pdu)->sn);
         break;
     case EOD:
         if(header->ver == RTR_PROTOCOL_VERSION_1){
-            int32_tmp = ntohl(((struct pdu_end_of_data_v1 *) pdu)->expire_interval);
-            ((struct pdu_end_of_data_v1 *) pdu)->expire_interval = int32_tmp;
-
-            int32_tmp = ntohl(((struct pdu_end_of_data_v1 *) pdu)->refresh_interval);
-            ((struct pdu_end_of_data_v1 *) pdu)->refresh_interval = int32_tmp;
-
-            int32_tmp = ntohl(((struct pdu_end_of_data_v1 *) pdu)->retry_interval);
-            ((struct pdu_end_of_data_v1 *) pdu)->retry_interval = int32_tmp;
-
-            int32_tmp = ntohl(((struct pdu_end_of_data_v1 *) pdu)->sn);
-            ((struct pdu_end_of_data_v1 *) pdu)->sn = int32_tmp;
+            ((struct pdu_end_of_data_v1 *) pdu)->expire_interval =
+                    ntohl(((struct pdu_end_of_data_v1 *) pdu)->expire_interval);
+            ((struct pdu_end_of_data_v1 *) pdu)->refresh_interval =
+                    ntohl(((struct pdu_end_of_data_v1 *) pdu)->refresh_interval);
+            ((struct pdu_end_of_data_v1 *) pdu)->retry_interval =
+                    ntohl(((struct pdu_end_of_data_v1 *) pdu)->retry_interval);
+            ((struct pdu_end_of_data_v1 *) pdu)->sn =
+                    ntohl(((struct pdu_end_of_data_v1 *) pdu)->sn);
         } else {
-            int32_tmp = ntohl(((struct pdu_end_of_data_v0 *) pdu)->sn);
-            ((struct pdu_end_of_data_v0 *) pdu)->sn = int32_tmp;
+            ((struct pdu_end_of_data_v0 *) pdu)->sn =
+                    ntohl(((struct pdu_end_of_data_v0 *) pdu)->sn);
         }
         break;
     case IPV4_PREFIX:
-        int32_tmp = ntohl(((struct pdu_ipv4 *) pdu)->prefix);
-        ((struct pdu_ipv4 *) pdu)->prefix = int32_tmp;
-
-        int32_tmp = ntohl(((struct pdu_ipv4 *) pdu)->asn);
-        ((struct pdu_ipv4 *) pdu)->asn = int32_tmp;
+        ((struct pdu_ipv4 *) pdu)->prefix =
+                ntohl(((struct pdu_ipv4 *) pdu)->prefix);
+        ((struct pdu_ipv4 *) pdu)->asn =
+                ntohl(((struct pdu_ipv4 *) pdu)->asn);
         break;
     case IPV6_PREFIX:
         ipv6_addr_to_host_byte_order(((struct pdu_ipv6 *) pdu)->prefix, addr6);
         memcpy(((struct pdu_ipv6 *) pdu)->prefix, addr6, sizeof(addr6));
-
-        int32_tmp = ntohl(((struct pdu_ipv6 *) pdu)->asn);
-        ((struct pdu_ipv6 *) pdu)->asn = int32_tmp;
+        ((struct pdu_ipv6 *) pdu)->asn = ntohl(((struct pdu_ipv6 *) pdu)->asn);
         break;
     case ROUTER_KEY:
-        int32_tmp = ntohl(((struct pdu_router_key *) pdu)->asn);
-        ((struct pdu_router_key *) pdu)->asn = int32_tmp;
+        ((struct pdu_router_key *) pdu)->asn =
+                ntohl(((struct pdu_router_key *) pdu)->asn);
         break;
     case ERROR:
-        int32_tmp = ntohl(((struct pdu_error *) pdu)->len_enc_pdu);
-        ((struct pdu_error *) pdu)->len_enc_pdu = int32_tmp;
+        ((struct pdu_error *) pdu)->len_enc_pdu =
+                ntohl(((struct pdu_error *) pdu)->len_enc_pdu);
         break;
     default:
         break;
@@ -288,21 +281,16 @@ void rtr_pdu_footer_to_host_byte_order(void *pdu) {
 static void rtr_pdu_to_network_byte_order(void *pdu) {
     struct pdu_header *header = pdu;
 
-    uint16_t int16_tmp =  htons(header->reserved);
-    header->reserved = int16_tmp;
-
-    uint32_t int32_tmp = htonl(header->len);
-    header->len = int32_tmp;
+    header->reserved = htons(header->reserved);
+    header->len = htonl(header->len);
 
     const enum pdu_type type = rtr_get_pdu_type(pdu);
     switch(type) {
     case SERIAL_QUERY:
-        int32_tmp = htonl(((struct pdu_serial_query *) pdu)->sn);
-        ((struct pdu_serial_query *) pdu)->sn = int32_tmp;
+        ((struct pdu_serial_query *) pdu)->sn = htonl(((struct pdu_serial_query *) pdu)->sn);
         break;
     case ERROR:
-        int32_tmp = htonl(((struct pdu_error *) pdu)->len_enc_pdu);
-        ((struct pdu_error *) pdu)->len_enc_pdu = int32_tmp;
+        ((struct pdu_error *) pdu)->len_enc_pdu = htonl(((struct pdu_error *) pdu)->len_enc_pdu);
         break;
     default:
         break;
