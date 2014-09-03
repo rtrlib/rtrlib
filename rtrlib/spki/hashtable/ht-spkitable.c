@@ -106,8 +106,8 @@ int spki_table_add_entry(struct spki_table *spki_table, struct spki_record *spki
 
 int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski, struct spki_record **result, size_t *result_size){
     uint32_t hash = tommy_inthash_u32(asn);
-    (*result) = NULL;
-    (*result_size) = 0;
+    *result = NULL;
+    *result_size = 0;
 
     pthread_rwlock_rdlock(&spki_table->lock);
 
@@ -145,8 +145,8 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski
 }
 
 int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski, struct spki_record **result, size_t *result_size){
-    (*result) = NULL;
-    (*result_size) = 0;
+    *result = NULL;
+    *result_size = 0;
     struct key_entry *current_entry;
 
     pthread_rwlock_rdlock(&spki_table->lock);
@@ -157,14 +157,14 @@ int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski, struct
 
         if(memcmp(current_entry->ski, ski, SKI_SIZE) == 0){
             (*result_size)++;
-            void* tmp = realloc(*result, sizeof(struct spki_record) * (*result_size));
+            void* tmp = realloc(*result, sizeof(**result) * (*result_size));
             if(tmp == NULL){
                 free(*result);
                 pthread_rwlock_unlock(&spki_table->lock);
                 return SPKI_ERROR;
             }
             *result = tmp;
-            key_entry_to_spki_record(current_entry, &((*result)[(*result_size)-1]));
+            key_entry_to_spki_record(current_entry, (*result + *result_size-1));
         }
         current_node = current_node->next;
     }
