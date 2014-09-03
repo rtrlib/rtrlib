@@ -138,7 +138,7 @@ int spki_table_add_entry(struct spki_table *spki_table, struct spki_record *spki
 }
 
 
-int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski, struct spki_record **result, size_t *result_size){
+int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski, struct spki_record **result, unsigned int *result_size){
     uint32_t hash = tommy_inthash_u32(asn);
     *result = NULL;
     *result_size = 0;
@@ -178,7 +178,7 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski
     return SPKI_SUCCESS;
 }
 
-int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski, struct spki_record **result, size_t *result_size){
+int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski, struct spki_record **result, unsigned int *result_size){
     *result = NULL;
     *result_size = 0;
     struct key_entry *current_entry;
