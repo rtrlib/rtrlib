@@ -30,6 +30,8 @@
 #include "rtrlib/lib/log.h"
 #include "rtrlib/spki/hashtable/ht-spkitable.h"
 
+#define TEMPORARY_PDU_STORE_INCREMENT_VALUE 100
+
 enum pdu_error_type {
     CORRUPT_DATA = 0,
     INTERNAL_ERROR = 1,
@@ -447,7 +449,7 @@ int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, const u
     const enum pdu_type pdu_type = rtr_get_pdu_type(pdu);
     assert(pdu_type  == IPV4_PREFIX || pdu_type == IPV6_PREFIX);
     if((*ind) >= *size) {
-        *size += 100;
+        *size += TEMPORARY_PDU_STORE_INCREMENT_VALUE;
         void *tmp = realloc(*ary, *size * pdu_size);
         if(tmp == NULL) {
             const char *txt = "Realloc failed";
@@ -474,7 +476,7 @@ int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *pdu, con
     assert(pdu_type == ROUTER_KEY);
 
     if((*ind) >= *size) {
-        *size += 100;
+        *size += TEMPORARY_PDU_STORE_INCREMENT_VALUE;
         void *tmp = realloc(*ary, *size * pdu_size);
         if(tmp == NULL) {
             const char *txt = "Realloc failed";
