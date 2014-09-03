@@ -215,9 +215,11 @@ int spki_table_src_remove(struct spki_table *spki_table, const struct rtr_socket
         if(current_entry->socket == socket){
                 current_node = current_node->next;
                 if(!tommy_list_remove_existing(&spki_table->list, &current_entry->list_node)){
+                    pthread_rwlock_unlock(&spki_table->lock);
                     return SPKI_ERROR;
                 }
                 if(!tommy_hashlin_remove_existing(&spki_table->hashtable, &current_entry->hash_node)){
+                    pthread_rwlock_unlock(&spki_table->lock);
                     return SPKI_ERROR;
                 }
                 free(current_entry);
