@@ -126,7 +126,7 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski
     struct key_entry *element;
     while(result_bucket){
         element = result_bucket->data;
-        if(element->asn == asn && memcmp(element->ski, ski, SKI_SIZE) == 0){
+        if(element->asn == asn && memcmp(element->ski, ski, sizeof(element->ski)) == 0){
             (*result_size)++;
             void* tmp = realloc(*result, *result_size * sizeof(struct spki_record));
             if(tmp == NULL){
@@ -155,7 +155,7 @@ int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski, struct
     while(current_node){
         current_entry = (struct key_entry *)current_node->data;
 
-        if(memcmp(current_entry->ski, ski, SKI_SIZE) == 0){
+        if(memcmp(current_entry->ski, ski, sizeof(current_entry->ski)) == 0){
             (*result_size)++;
             void* tmp = realloc(*result, sizeof(**result) * (*result_size));
             if(tmp == NULL){
@@ -243,9 +243,9 @@ static int key_entry_cmp(const void *arg, const void *obj) {
 
 	if(param->asn != entry->asn)
 		return 1;
-	if(memcmp(param->ski,entry->ski,SKI_SIZE))
+    if(memcmp(param->ski,entry->ski, sizeof(entry->ski)))
 		return 1;
-	if(memcmp(param->spki,entry->spki,SPKI_SIZE))
+    if(memcmp(param->spki,entry->spki,sizeof(entry->spki)))
 		return 1;
     if(param->socket != entry->socket)
         return 1;
@@ -257,8 +257,8 @@ static int key_entry_cmp(const void *arg, const void *obj) {
 static int key_entry_to_spki_record(struct key_entry *key_e, struct spki_record *spki_r){
     spki_r->asn = key_e->asn;
     spki_r->socket = key_e->socket;
-    memcpy(spki_r->ski, key_e->ski, SKI_SIZE);
-    memcpy(spki_r->spki, key_e->spki, SPKI_SIZE);
+    memcpy(spki_r->ski, key_e->ski, sizeof(key_e->ski));
+    memcpy(spki_r->spki, key_e->spki, sizeof(key_e->spki));
     return SPKI_SUCCESS;
 }
 
@@ -266,7 +266,7 @@ static int key_entry_to_spki_record(struct key_entry *key_e, struct spki_record 
 static int spki_record_to_key_entry(struct spki_record *spki_r, struct key_entry *key_e){
     key_e->asn = spki_r->asn;
     key_e->socket = spki_r->socket;
-    memcpy(key_e->ski, spki_r->ski, SKI_SIZE);
-    memcpy(key_e->spki, spki_r->spki, SPKI_SIZE);
+    memcpy(key_e->ski, spki_r->ski, sizeof(spki_r->ski));
+    memcpy(key_e->spki, spki_r->spki, sizeof(spki_r->spki));
     return SPKI_SUCCESS;
 }
