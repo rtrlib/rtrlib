@@ -173,23 +173,20 @@ int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski, struct
 
 int spki_table_remove_entry(struct spki_table *spki_table, struct spki_record *spki_record) {
 
-    struct key_entry *entry = malloc(sizeof(struct key_entry));
-    if(entry == NULL){
-        return SPKI_ERROR;
-    }
-    spki_record_to_key_entry(spki_record, entry);
+    struct key_entry entry;
+    spki_record_to_key_entry(spki_record, &entry);
 
     uint32_t hash = tommy_inthash_u32(spki_record->asn);
     int rtval;
 
     pthread_rwlock_wrlock(&spki_table->lock);
 
-    if(!tommy_hashlin_search(&spki_table->hashtable, spki_table->cmp_fp, entry, hash)){
+    if(!tommy_hashlin_search(&spki_table->hashtable, spki_table->cmp_fp, &entry, hash)){
         rtval = SPKI_RECORD_NOT_FOUND;
     } else {
 
         //Remove from hashtable and list
-        struct key_entry *rmv_elem = tommy_hashlin_remove(&spki_table->hashtable, spki_table->cmp_fp, entry, hash);
+        struct key_entry *rmv_elem = tommy_hashlin_remove(&spki_table->hashtable, spki_table->cmp_fp, &entry, hash);
         if(rmv_elem && tommy_list_remove_existing(&spki_table->list, &rmv_elem->list_node)){
             rtval = SPKI_SUCCESS;
             spki_table_notify_clients(spki_table, spki_record, false);
@@ -199,7 +196,6 @@ int spki_table_remove_entry(struct spki_table *spki_table, struct spki_record *s
         }
     }
     pthread_rwlock_unlock(&spki_table->lock);
-    free(entry);
     return rtval;
 }
 
