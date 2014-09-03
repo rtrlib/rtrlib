@@ -149,7 +149,7 @@ int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski, struct
     (*result_size) = 0;
     struct key_entry *current_entry;
 
-    pthread_rwlock_wrlock(&spki_table->lock);
+    pthread_rwlock_rdlock(&spki_table->lock);
 
     tommy_node *current_node = tommy_list_head(&spki_table->list);
     while(current_node){
