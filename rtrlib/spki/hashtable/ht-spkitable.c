@@ -36,11 +36,46 @@ struct key_entry {
 };
 
 
+/**
+ * @brief Compares two key_entrys by comparing ASN, SKI and SPKI
+ * @param[in] arg Pointer to first key_entry
+ * @param[in] obj Pointer to second key_entry
+ * @return 1 if not equal
+ * @return 0 if equal
+ */
+static int key_entry_cmp(const void *arg, const void *obj) {
+    struct key_entry *param = (struct key_entry*)arg;
+    struct key_entry *entry = (struct key_entry*)obj;
 
-static int key_entry_cmp(const void *arg, const void *obj);
-static int key_entry_to_spki_record(struct key_entry *key_e, struct spki_record *spki_r);
-static int spki_record_to_key_entry(struct spki_record *spki_r, struct key_entry *key_e);
-static void spki_table_notify_clients(struct spki_table *spki_table, const struct spki_record *record, const bool added);
+    if(param->asn != entry->asn)
+        return 1;
+    if(memcmp(param->ski,entry->ski, sizeof(entry->ski)))
+        return 1;
+    if(memcmp(param->spki,entry->spki,sizeof(entry->spki)))
+        return 1;
+    if(param->socket != entry->socket)
+        return 1;
+
+    return 0;
+}
+
+//Copying the content, target struct must already be allocated
+static int key_entry_to_spki_record(struct key_entry *key_e, struct spki_record *spki_r){
+    spki_r->asn = key_e->asn;
+    spki_r->socket = key_e->socket;
+    memcpy(spki_r->ski, key_e->ski, sizeof(key_e->ski));
+    memcpy(spki_r->spki, key_e->spki, sizeof(key_e->spki));
+    return SPKI_SUCCESS;
+}
+
+//Copying the content, target struct must already be allocated
+static int spki_record_to_key_entry(struct spki_record *spki_r, struct key_entry *key_e){
+    key_e->asn = spki_r->asn;
+    key_e->socket = spki_r->socket;
+    memcpy(key_e->ski, spki_r->ski, sizeof(spki_r->ski));
+    memcpy(key_e->spki, spki_r->spki, sizeof(spki_r->spki));
+    return SPKI_SUCCESS;
+}
 
 
 /**
@@ -64,7 +99,6 @@ void spki_table_init(struct spki_table *spki_table, spki_update_fp update_fp) {
 }
 
 void spki_table_free(struct spki_table *spki_table){
-
     pthread_rwlock_wrlock(&spki_table->lock);
 
     tommy_list_foreach(&spki_table->list, free);
@@ -225,48 +259,5 @@ int spki_table_src_remove(struct spki_table *spki_table, const struct rtr_socket
         }
     }
     pthread_rwlock_unlock(&spki_table->lock);
-    return SPKI_SUCCESS;
-}
-
-//Local functions -------------------------
-
-/**
- * @brief Compares two key_entrys by comparing ASN, SKI and SPKI
- * @param[in] arg Pointer to first key_entry
- * @param[in] obj Pointer to second key_entry
- * @return 1 if not equal
- * @return 0 if equal
- */
-static int key_entry_cmp(const void *arg, const void *obj) {
-    struct key_entry *param = (struct key_entry*)arg;
-    struct key_entry *entry = (struct key_entry*)obj;
-
-	if(param->asn != entry->asn)
-		return 1;
-    if(memcmp(param->ski,entry->ski, sizeof(entry->ski)))
-		return 1;
-    if(memcmp(param->spki,entry->spki,sizeof(entry->spki)))
-		return 1;
-    if(param->socket != entry->socket)
-        return 1;
-
-    return 0;
-}
-
-//Copying the content, target struct must already be allocated
-static int key_entry_to_spki_record(struct key_entry *key_e, struct spki_record *spki_r){
-    spki_r->asn = key_e->asn;
-    spki_r->socket = key_e->socket;
-    memcpy(spki_r->ski, key_e->ski, sizeof(key_e->ski));
-    memcpy(spki_r->spki, key_e->spki, sizeof(key_e->spki));
-    return SPKI_SUCCESS;
-}
-
-//Copying the content, target struct must already be allocated
-static int spki_record_to_key_entry(struct spki_record *spki_r, struct key_entry *key_e){
-    key_e->asn = spki_r->asn;
-    key_e->socket = spki_r->socket;
-    memcpy(key_e->ski, spki_r->ski, sizeof(spki_r->ski));
-    memcpy(key_e->spki, spki_r->spki, sizeof(spki_r->spki));
     return SPKI_SUCCESS;
 }
