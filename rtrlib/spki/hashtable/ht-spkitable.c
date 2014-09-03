@@ -271,12 +271,3 @@ static int spki_record_to_key_entry(struct spki_record *spki_r, struct key_entry
     memcpy(key_e->spki, spki_r->spki, SPKI_SIZE);
     return SPKI_SUCCESS;
 }
-
-
-
-
-
-
-
-
-
