@@ -120,21 +120,20 @@ int spki_table_add_entry(struct spki_table *spki_table, struct spki_record *spki
     spki_record_to_key_entry(spki_record, entry);
 
     uint32_t hash = tommy_inthash_u32(spki_record->asn);
-    int rtval = SPKI_ERROR;
 
     pthread_rwlock_wrlock(&spki_table->lock);
     if(tommy_hashlin_search(&spki_table->hashtable, spki_table->cmp_fp, entry, hash)){
-        rtval = SPKI_DUPLICATE_RECORD;
         free(entry);
-	} else{
-		//Insert into hashtable and list
+        pthread_rwlock_unlock(&spki_table->lock);
+        return SPKI_DUPLICATE_RECORD;
+    } else{
+        //Insert into hashtable and list
         tommy_hashlin_insert(&spki_table->hashtable, &entry->hash_node, entry, hash);
         tommy_list_insert_tail(&spki_table->list, &entry->list_node, entry);
+        pthread_rwlock_unlock(&spki_table->lock);
         spki_table_notify_clients(spki_table, spki_record, true);
-        rtval = SPKI_SUCCESS;
-	}
-    pthread_rwlock_unlock(&spki_table->lock);
-	return rtval;
+        return SPKI_SUCCESS;
+    }
 }
 
 
@@ -212,24 +211,25 @@ int spki_table_remove_entry(struct spki_table *spki_table, struct spki_record *s
     spki_record_to_key_entry(spki_record, &entry);
 
     uint32_t hash = tommy_inthash_u32(spki_record->asn);
-    int rtval;
+    int rtval = SPKI_ERROR;
 
     pthread_rwlock_wrlock(&spki_table->lock);
 
     if(!tommy_hashlin_search(&spki_table->hashtable, spki_table->cmp_fp, &entry, hash)){
         rtval = SPKI_RECORD_NOT_FOUND;
-    } else {
-
-        //Remove from hashtable and list
-        struct key_entry *rmv_elem = tommy_hashlin_remove(&spki_table->hashtable, spki_table->cmp_fp, &entry, hash);
-        if(rmv_elem && tommy_list_remove_existing(&spki_table->list, &rmv_elem->list_node)){
-            rtval = SPKI_SUCCESS;
-            spki_table_notify_clients(spki_table, spki_record, false);
-            free(rmv_elem);
-        } else{
-            rtval = SPKI_ERROR;
-        }
+        goto out;
     }
+
+    //Remove from hashtable and list
+    struct key_entry *rmv_elem = tommy_hashlin_remove(&spki_table->hashtable, spki_table->cmp_fp, &entry, hash);
+    if(rmv_elem && tommy_list_remove_existing(&spki_table->list, &rmv_elem->list_node)){
+        free(rmv_elem);
+        pthread_rwlock_unlock(&spki_table->lock);
+        spki_table_notify_clients(spki_table, spki_record, false);
+        return SPKI_SUCCESS;
+    }
+
+    out:
     pthread_rwlock_unlock(&spki_table->lock);
     return rtval;
 }
