@@ -163,39 +163,20 @@ struct pdu_end_of_data_v1 {
     uint32_t expire_interval;
 };
 
-static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_t pdu_len, const time_t timeout);
 static int rtr_send_error_pdu(const struct rtr_socket *rtr_socket, const void *erroneous_pdu, const uint32_t pdu_len, const enum pdu_error_type error, const char *text, const uint32_t text_len);
-static void rtr_pdu_header_to_host_byte_order(void *pdu);
-static void rtr_pdu_footer_to_host_byte_order(void *pdu);
-static enum pdu_type rtr_get_pdu_type(const void *pdu);
-static int rtr_handle_error_pdu(struct rtr_socket *rtr_socket, const void *buf);
-static int rtr_send_pdu(const struct rtr_socket *rtr_socket, const void *pdu, const unsigned len);
-static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, const void *pdu);
-static int rtr_set_last_update(struct rtr_socket *rtr_socket);
-void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, const void *pdu, struct pfx_record *pfxr, const enum pdu_type type);
-static int rtr_update_spki_table(struct rtr_socket* rtr_socket, const void* pdu);
-static void rtr_key_pdu_2_spki_record(const struct rtr_socket *rtr_socket, const void *pdu, struct spki_record *entry, const enum pdu_type type);
 
+static inline enum pdu_type rtr_get_pdu_type(const void *pdu) {
+    return *((char *) pdu + 1);
+}
 
-/*
- * @brief Appends the Prefix PDU pdu to ary.
- */
-static int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, const unsigned int pdu_size, void **ary, unsigned int *ind, unsigned int *size);
-
-int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *pdu, const unsigned int pdu_size, void **ary,
-                             unsigned int *ind, unsigned int *size);
-
-/*
- * @brief Removes all Prefix from the pfx_table with flag field == ADD, ADDs all Prefix PDU to the pfx_table with flag
- * field == REMOVE.
- */
-static int rtr_undo_update_pfx_table(struct rtr_socket *rtr_socket, void *pdu);
-
-/*
- * @brief Removes router_key from the spki_table with flag field == ADD, ADDs router_key PDU to the spki_table with flag
- * field == REMOVE.
- */
-static int rtr_undo_update_spki_table(struct rtr_socket *rtr_socket, void *pdu);
+static int rtr_set_last_update(struct rtr_socket *rtr_socket) {
+    if(rtr_get_monotonic_time(&(rtr_socket->last_update)) == -1) {
+        RTR_DBG1("get_monotonic_time(..) failed ");
+        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+        return RTR_ERROR;
+    }
+    return RTR_SUCCESS;
+}
 
 void rtr_change_socket_state(struct rtr_socket *rtr_socket, const enum rtr_socket_state new_state) {
     if(rtr_socket->state == new_state)
@@ -210,25 +191,26 @@ void rtr_change_socket_state(struct rtr_socket *rtr_socket, const enum rtr_socke
        rtr_socket->connection_state_fp(rtr_socket, new_state,rtr_socket->connection_state_fp_param);
 }
 
-void rtr_pdu_header_to_host_byte_order(void *pdu) {
+static void rtr_pdu_to_network_byte_order(void *pdu) {
     struct pdu_header *header = pdu;
 
-    //The ROUTER_KEY PDU has two 1 Byte fields instead of the 2 Byte reserved field.
-    if(header->type != ROUTER_KEY){
-        uint16_t reserved_tmp =  ntohs(header->reserved);
-        header->reserved = reserved_tmp;
+    header->reserved = htons(header->reserved);
+    header->len = htonl(header->len);
+
+    const enum pdu_type type = rtr_get_pdu_type(pdu);
+    switch(type) {
+    case SERIAL_QUERY:
+        ((struct pdu_serial_query *) pdu)->sn = htonl(((struct pdu_serial_query *) pdu)->sn);
+        break;
+    case ERROR:
+        ((struct pdu_error *) pdu)->len_enc_pdu = htonl(((struct pdu_error *) pdu)->len_enc_pdu);
+        break;
+    default:
+        break;
     }
-
-    uint32_t len_tmp = ntohl(header->len);
-    header->len = len_tmp;
 }
 
-inline enum pdu_type rtr_get_pdu_type(const void *pdu) {
-    return *((char *) pdu + 1);
-}
-
-
-void rtr_pdu_footer_to_host_byte_order(void *pdu) {
+static void rtr_pdu_footer_to_host_byte_order(void *pdu) {
     const enum pdu_type type = rtr_get_pdu_type(pdu);
     struct pdu_header *header = pdu;
 
@@ -278,23 +260,37 @@ void rtr_pdu_footer_to_host_byte_order(void *pdu) {
     }
 }
 
-static void rtr_pdu_to_network_byte_order(void *pdu) {
+static void rtr_pdu_header_to_host_byte_order(void *pdu) {
     struct pdu_header *header = pdu;
 
-    header->reserved = htons(header->reserved);
-    header->len = htonl(header->len);
-
-    const enum pdu_type type = rtr_get_pdu_type(pdu);
-    switch(type) {
-    case SERIAL_QUERY:
-        ((struct pdu_serial_query *) pdu)->sn = htonl(((struct pdu_serial_query *) pdu)->sn);
-        break;
-    case ERROR:
-        ((struct pdu_error *) pdu)->len_enc_pdu = htonl(((struct pdu_error *) pdu)->len_enc_pdu);
-        break;
-    default:
-        break;
+    //The ROUTER_KEY PDU has two 1 Byte fields instead of the 2 Byte reserved field.
+    if(header->type != ROUTER_KEY){
+        uint16_t reserved_tmp =  ntohs(header->reserved);
+        header->reserved = reserved_tmp;
     }
+
+    uint32_t len_tmp = ntohl(header->len);
+    header->len = len_tmp;
+}
+
+
+static int rtr_send_pdu(const struct rtr_socket *rtr_socket, const void *pdu, const unsigned len) {
+    char pdu_converted[len];
+    memcpy(pdu_converted, pdu, len);
+    rtr_pdu_to_network_byte_order(pdu_converted);
+    if(rtr_socket->state == RTR_SHUTDOWN)
+        return RTR_ERROR;
+    const int rtval = tr_send_all(rtr_socket->tr_socket, pdu_converted, len, RTR_SEND_TIMEOUT);
+
+    if(rtval > 0)
+        return RTR_SUCCESS;
+    if(rtval == TR_WOULDBLOCK) {
+        RTR_DBG1("send would block");
+        return RTR_ERROR;
+    }
+
+    RTR_DBG1("Error sending PDU");
+    return RTR_ERROR;
 }
 
 /*
@@ -304,7 +300,7 @@ static void rtr_pdu_to_network_byte_order(void *pdu) {
  * @return RTR_ERROR, error pdu was sent and socket_state changed
  * @return TR_WOULDBLOCK
  */
-int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_t pdu_len, const time_t timeout) {
+static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_t pdu_len, const time_t timeout) {
     //error values:
     // 0 = no_err
     // 1 = internal error
@@ -423,16 +419,140 @@ error:
     return RTR_ERROR;
 }
 
-int rtr_set_last_update(struct rtr_socket *rtr_socket) {
-    if(rtr_get_monotonic_time(&(rtr_socket->last_update)) == -1) {
-        RTR_DBG1("get_monotonic_time(..) failed ");
+static int rtr_handle_error_pdu(struct rtr_socket *rtr_socket, const void *buf) {
+    RTR_DBG1("Error PDU received");  //TODO: append server ip & port
+    const struct pdu_error *pdu = buf;
+
+    switch(pdu->error_code) {
+    case CORRUPT_DATA:
+        RTR_DBG1("Corrupt data received");
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-        return RTR_ERROR;
+        break;
+    case INTERNAL_ERROR:
+        RTR_DBG1("Internal error on server-side");
+        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+        break;
+    case NO_DATA_AVAIL:
+        RTR_DBG1("No data available");
+        rtr_change_socket_state(rtr_socket, RTR_ERROR_NO_DATA_AVAIL);
+        break;
+    case INVALID_REQUEST:
+        RTR_DBG1("Invalid request from client");
+        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+        break;
+    case UNSUPPORTED_PROTOCOL_VER:
+        RTR_DBG1("Client uses unsupported protocol version");
+        if(rtr_socket->version > RTR_PROTOCOL_MIN_SUPPORTED_VERSION){
+            RTR_DBG("Downgrading to version %i", rtr_socket->version - 1);
+            rtr_socket->version--;
+        }
+        //Allways change state to ERROR_FATAL, because then the next configuration (server)
+        //get scheduled by the rtr_manager which might support a higher version.
+        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+        break;
+    case UNSUPPORTED_PDU_TYPE:
+        RTR_DBG1("Client set unsupported PDU type");
+        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+        break;
+    default:
+        RTR_DBG("error unknown, server sent unsupported error code %u", pdu->error_code);
+        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+        break;
     }
+
+    const uint32_t len_err_txt = ntohl(*((uint32_t *) ((pdu->rest) + pdu->len_enc_pdu)));
+    if(len_err_txt > 0) {
+        if((sizeof(pdu->ver) + sizeof(pdu->type) + sizeof(pdu->error_code) + sizeof(pdu->len) + sizeof(pdu->len_enc_pdu) + pdu->len_enc_pdu + 4 + len_err_txt) != pdu->len)
+            RTR_DBG1("error: Length of error text contains an incorrect value");
+        else {
+            //assure that the error text contains an terminating \0 char
+            char txt[len_err_txt + 1];
+            char *pdu_txt = (char *) pdu->rest + pdu->len_enc_pdu + 4;
+            snprintf(txt, len_err_txt + 1, "%s", pdu_txt);
+            RTR_DBG("Error PDU included the following error msg: \'%s\'", txt);
+        }
+    }
+
     return RTR_SUCCESS;
 }
 
-int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, const unsigned int pdu_size, void **ary,
+static void rtr_key_pdu_2_spki_record(const struct rtr_socket *rtr_socket, const void *pdu, struct spki_record *entry, const enum pdu_type type) {
+    assert(type == ROUTER_KEY);
+    const struct pdu_router_key *rt_key = pdu;
+
+    entry->asn = rt_key->asn;
+    memcpy(entry->ski,rt_key->ski,SKI_SIZE);
+    memcpy(entry->spki,rt_key->spki,SPKI_SIZE);
+    entry->socket = rtr_socket;
+}
+
+static void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, const void *pdu, struct pfx_record *pfxr, const enum pdu_type type) {
+    assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
+    if(type == IPV4_PREFIX) {
+        const struct pdu_ipv4 *ipv4 = pdu;
+        pfxr->prefix.u.addr4.addr = ipv4->prefix;
+        pfxr->asn = ipv4->asn;
+        pfxr->prefix.ver = IPV4;
+        pfxr->min_len = ipv4->prefix_len;
+        pfxr->max_len = ipv4->max_prefix_len;
+        pfxr->socket = rtr_socket;
+    }
+    else if(type == IPV6_PREFIX) {
+        const struct pdu_ipv6 *ipv6 = pdu;
+        pfxr->asn = ipv6->asn;
+        pfxr->prefix.ver = IPV6;
+        memcpy(pfxr->prefix.u.addr6.addr, ipv6->prefix, sizeof(pfxr->prefix.u.addr6.addr));
+        pfxr->min_len = ipv6->prefix_len;
+        pfxr->max_len = ipv6->max_prefix_len;
+        pfxr->socket = rtr_socket;
+
+    }
+}
+
+/*
+ * @brief Removes all Prefix from the pfx_table with flag field == ADD, ADDs all Prefix PDU to the pfx_table with flag
+ * field == REMOVE.
+ */
+static int rtr_undo_update_pfx_table(struct rtr_socket *rtr_socket, void *pdu) {
+    const enum pdu_type type = rtr_get_pdu_type(pdu);
+    assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
+
+    struct pfx_record pfxr;
+    rtr_prefix_pdu_2_pfx_record(rtr_socket, pdu, &pfxr, type);
+
+    int rtval = RTR_ERROR;
+    //invert add/remove operation
+    if(((struct pdu_ipv4 *) pdu)->flags == 1)
+        rtval = pfx_table_remove(rtr_socket->pfx_table, &pfxr);
+    else if(((struct pdu_ipv4 *) pdu)->flags == 0)
+        rtval = pfx_table_add(rtr_socket->pfx_table, &pfxr);
+    return rtval;
+}
+
+/*
+ * @brief Removes router_key from the spki_table with flag field == ADD, ADDs router_key PDU to the spki_table with flag
+ * field == REMOVE.
+ */
+static int rtr_undo_update_spki_table(struct rtr_socket *rtr_socket, void *pdu) {
+    const enum pdu_type type = rtr_get_pdu_type(pdu);
+    assert(type == ROUTER_KEY);
+
+    struct spki_record *entry = malloc(sizeof(struct spki_record));
+    rtr_key_pdu_2_spki_record(rtr_socket, pdu, entry, type);
+
+    int rtval = RTR_ERROR;
+    //invert add/remove operation
+    if(((struct pdu_router_key*) pdu)->flags == 1)
+        rtval = spki_table_remove_entry(rtr_socket->spki_table, entry);
+    else if(((struct pdu_router_key*) pdu)->flags == 0)
+        rtval = spki_table_add_entry(rtr_socket->spki_table, entry);
+    return rtval;
+}
+
+/*
+ * @brief Appends the Prefix PDU pdu to ary.
+ */
+static int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, const unsigned int pdu_size, void **ary,
                          unsigned int *ind, unsigned int *size) {
     const enum pdu_type pdu_type = rtr_get_pdu_type(pdu);
     assert(pdu_type  == IPV4_PREFIX || pdu_type == IPV6_PREFIX);
@@ -458,7 +578,7 @@ int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, const u
     return RTR_SUCCESS;
 }
 
-int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *pdu, const unsigned int pdu_size, void **ary,
+static int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *pdu, const unsigned int pdu_size, void **ary,
                              unsigned int *ind, unsigned int *size) {
     const enum pdu_type pdu_type = rtr_get_pdu_type(pdu);
     assert(pdu_type == ROUTER_KEY);
@@ -482,6 +602,101 @@ int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *pdu, con
     (*ind)++;
     return RTR_SUCCESS;
 }
+
+static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, const void *pdu) {
+    const enum pdu_type type = rtr_get_pdu_type(pdu);
+    assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
+
+    struct pfx_record pfxr;
+    size_t pdu_size = (type == IPV4_PREFIX ? sizeof(struct pdu_ipv4) : sizeof(struct pdu_ipv6));
+    rtr_prefix_pdu_2_pfx_record(rtr_socket, pdu, &pfxr, type);
+
+    int rtval;
+    if(((struct pdu_ipv4 *) pdu)->flags == 1)
+        rtval = pfx_table_add(rtr_socket->pfx_table, &pfxr);
+    else if(((struct pdu_ipv4 *) pdu)->flags == 0)
+        rtval = pfx_table_remove(rtr_socket->pfx_table, &pfxr);
+    else {
+        const char *txt = "Prefix PDU with invalid flags value received";
+        RTR_DBG("%s", txt);
+        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, CORRUPT_DATA, txt, sizeof(txt));
+        return RTR_ERROR;
+    }
+
+    if(rtval == PFX_DUPLICATE_RECORD) {
+        char ip[INET6_ADDRSTRLEN];
+        ip_addr_to_str(&(pfxr.prefix), ip, INET6_ADDRSTRLEN);
+        RTR_DBG("Duplicate Announcement for record: %s/%u-%u, ASN: %u, received", ip, pfxr.min_len, pfxr.max_len, pfxr.asn);
+        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT , NULL, 0);
+        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+        return RTR_ERROR;
+    }
+    else if(rtval == PFX_RECORD_NOT_FOUND) {
+        RTR_DBG1("Withdrawal of unknown record");
+        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, WITHDRAWAL_OF_UNKNOWN_RECORD, NULL, 0);
+        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+        return RTR_ERROR;
+    }
+    else if(rtval == PFX_ERROR) {
+        const char *txt = "PFX_TABLE Error";
+        RTR_DBG("%s", txt);
+        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
+        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+        return RTR_ERROR;
+    }
+
+    return RTR_SUCCESS;
+}
+
+static int rtr_update_spki_table(struct rtr_socket* rtr_socket, const void* pdu){
+    const enum pdu_type type = rtr_get_pdu_type(pdu);
+    assert(type == ROUTER_KEY);
+
+    struct spki_record *entry = malloc(sizeof(struct spki_record));
+
+    size_t pdu_size = sizeof(struct pdu_router_key);
+    rtr_key_pdu_2_spki_record(rtr_socket, pdu, entry,type);
+
+    int rtval;
+    if(((struct pdu_router_key*) pdu)->flags == 1)
+        rtval = spki_table_add_entry(rtr_socket->spki_table, entry);
+
+    else if(((struct pdu_router_key*) pdu)->flags == 0)
+        rtval = spki_table_remove_entry(rtr_socket->spki_table, entry);
+
+    else{
+        const char* txt = "Router Key PDU with invalid flags value received";
+        RTR_DBG("%s", txt);
+        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, CORRUPT_DATA, txt, sizeof(txt));
+        return RTR_ERROR;
+    }
+
+    if(rtval == SPKI_DUPLICATE_RECORD){
+        //TODO: This debug message isn't working yet, how to display SKI/SPKI without %x?
+        RTR_DBG("Duplicate Announcement for router key: ASN: %u received",entry->asn);
+        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT , NULL, 0);
+        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+        return RTR_ERROR;
+    }
+    else if(rtval == SPKI_RECORD_NOT_FOUND){
+        RTR_DBG1("Withdrawal of unknown router key");
+        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, WITHDRAWAL_OF_UNKNOWN_RECORD, NULL, 0);
+        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+        return RTR_ERROR;
+    }
+    else if(rtval == SPKI_ERROR){
+        const char* txt = "spki_table Error";
+        RTR_DBG("%s", txt);
+        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
+        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+        return RTR_ERROR;
+    }
+
+    return RTR_SUCCESS;
+}
+
+
+
 
 
 int rtr_sync(struct rtr_socket *rtr_socket) {
@@ -708,162 +923,6 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
     return RTR_SUCCESS;
 }
 
-int rtr_undo_update_pfx_table(struct rtr_socket *rtr_socket, void *pdu) {
-    const enum pdu_type type = rtr_get_pdu_type(pdu);
-    assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
-
-    struct pfx_record pfxr;
-    rtr_prefix_pdu_2_pfx_record(rtr_socket, pdu, &pfxr, type);
-
-    int rtval = RTR_ERROR;
-    //invert add/remove operation
-    if(((struct pdu_ipv4 *) pdu)->flags == 1)
-        rtval = pfx_table_remove(rtr_socket->pfx_table, &pfxr);
-    else if(((struct pdu_ipv4 *) pdu)->flags == 0)
-        rtval = pfx_table_add(rtr_socket->pfx_table, &pfxr);
-    return rtval;
-}
-
-void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, const void *pdu, struct pfx_record *pfxr, const enum pdu_type type) {
-    assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
-    if(type == IPV4_PREFIX) {
-        const struct pdu_ipv4 *ipv4 = pdu;
-        pfxr->prefix.u.addr4.addr = ipv4->prefix;
-        pfxr->asn = ipv4->asn;
-        pfxr->prefix.ver = IPV4;
-        pfxr->min_len = ipv4->prefix_len;
-        pfxr->max_len = ipv4->max_prefix_len;
-        pfxr->socket = rtr_socket;
-    }
-    else if(type == IPV6_PREFIX) {
-        const struct pdu_ipv6 *ipv6 = pdu;
-        pfxr->asn = ipv6->asn;
-        pfxr->prefix.ver = IPV6;
-        memcpy(pfxr->prefix.u.addr6.addr, ipv6->prefix, sizeof(pfxr->prefix.u.addr6.addr));
-        pfxr->min_len = ipv6->prefix_len;
-        pfxr->max_len = ipv6->max_prefix_len;
-        pfxr->socket = rtr_socket;
-
-    }
-}
-
-int rtr_update_pfx_table(struct rtr_socket *rtr_socket, const void *pdu) {
-    const enum pdu_type type = rtr_get_pdu_type(pdu);
-    assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
-
-    struct pfx_record pfxr;
-    size_t pdu_size = (type == IPV4_PREFIX ? sizeof(struct pdu_ipv4) : sizeof(struct pdu_ipv6));
-    rtr_prefix_pdu_2_pfx_record(rtr_socket, pdu, &pfxr, type);
-
-    int rtval;
-    if(((struct pdu_ipv4 *) pdu)->flags == 1)
-        rtval = pfx_table_add(rtr_socket->pfx_table, &pfxr);
-    else if(((struct pdu_ipv4 *) pdu)->flags == 0)
-        rtval = pfx_table_remove(rtr_socket->pfx_table, &pfxr);
-    else {
-        const char *txt = "Prefix PDU with invalid flags value received";
-        RTR_DBG("%s", txt);
-        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, CORRUPT_DATA, txt, sizeof(txt));
-        return RTR_ERROR;
-    }
-
-    if(rtval == PFX_DUPLICATE_RECORD) {
-        char ip[INET6_ADDRSTRLEN];
-        ip_addr_to_str(&(pfxr.prefix), ip, INET6_ADDRSTRLEN);
-        RTR_DBG("Duplicate Announcement for record: %s/%u-%u, ASN: %u, received", ip, pfxr.min_len, pfxr.max_len, pfxr.asn);
-        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT , NULL, 0);
-        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-        return RTR_ERROR;
-    }
-    else if(rtval == PFX_RECORD_NOT_FOUND) {
-        RTR_DBG1("Withdrawal of unknown record");
-        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, WITHDRAWAL_OF_UNKNOWN_RECORD, NULL, 0);
-        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-        return RTR_ERROR;
-    }
-    else if(rtval == PFX_ERROR) {
-        const char *txt = "PFX_TABLE Error";
-        RTR_DBG("%s", txt);
-        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
-        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-        return RTR_ERROR;
-    }
-
-    return RTR_SUCCESS;
-}
-
-int rtr_update_spki_table(struct rtr_socket* rtr_socket, const void* pdu){
-    const enum pdu_type type = rtr_get_pdu_type(pdu);
-    assert(type == ROUTER_KEY);
-
-    struct spki_record *entry = malloc(sizeof(struct spki_record));
-
-    size_t pdu_size = sizeof(struct pdu_router_key);
-    rtr_key_pdu_2_spki_record(rtr_socket, pdu, entry,type);
-
-    int rtval;
-    if(((struct pdu_router_key*) pdu)->flags == 1)
-        rtval = spki_table_add_entry(rtr_socket->spki_table, entry);
-
-    else if(((struct pdu_router_key*) pdu)->flags == 0)
-        rtval = spki_table_remove_entry(rtr_socket->spki_table, entry);
-
-    else{
-        const char* txt = "Router Key PDU with invalid flags value received";
-        RTR_DBG("%s", txt);
-        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, CORRUPT_DATA, txt, sizeof(txt));
-        return RTR_ERROR;
-    }
-
-    if(rtval == SPKI_DUPLICATE_RECORD){
-        //TODO: This debug message isn't working yet, how to display SKI/SPKI without %x?
-        RTR_DBG("Duplicate Announcement for router key: ASN: %u received",entry->asn);
-        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT , NULL, 0);
-        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-        return RTR_ERROR;
-    }
-    else if(rtval == SPKI_RECORD_NOT_FOUND){
-        RTR_DBG1("Withdrawal of unknown router key");
-        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, WITHDRAWAL_OF_UNKNOWN_RECORD, NULL, 0);
-        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-        return RTR_ERROR;
-    }
-    else if(rtval == SPKI_ERROR){
-        const char* txt = "spki_table Error";
-        RTR_DBG("%s", txt);
-        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
-        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-        return RTR_ERROR;
-    }
-
-    return RTR_SUCCESS;
-}
-
-void rtr_key_pdu_2_spki_record(const struct rtr_socket *rtr_socket, const void *pdu, struct spki_record *entry, const enum pdu_type type) {
-    assert(type == ROUTER_KEY);
-    const struct pdu_router_key *rt_key = pdu;
-
-    entry->asn = rt_key->asn;
-    memcpy(entry->ski,rt_key->ski,SKI_SIZE);
-    memcpy(entry->spki,rt_key->spki,SPKI_SIZE);
-    entry->socket = rtr_socket;
-}
-
-int rtr_undo_update_spki_table(struct rtr_socket *rtr_socket, void *pdu) {
-    const enum pdu_type type = rtr_get_pdu_type(pdu);
-    assert(type == ROUTER_KEY);
-
-    struct spki_record *entry = malloc(sizeof(struct spki_record));
-    rtr_key_pdu_2_spki_record(rtr_socket, pdu, entry, type);
-
-    int rtval = RTR_ERROR;
-    //invert add/remove operation
-    if(((struct pdu_router_key*) pdu)->flags == 1)
-        rtval = spki_table_remove_entry(rtr_socket->spki_table, entry);
-    else if(((struct pdu_router_key*) pdu)->flags == 0)
-        rtval = spki_table_add_entry(rtr_socket->spki_table, entry);
-    return rtval;
-}
 
 int rtr_wait_for_sync(struct rtr_socket *rtr_socket) {
     char pdu[RTR_MAX_PDU_LEN];
@@ -913,82 +972,6 @@ int rtr_send_error_pdu(const struct rtr_socket *rtr_socket, const void *erroneou
         memcpy(msg+16+pdu_len, text, text_len);
 
     return rtr_send_pdu(rtr_socket, msg, msg_size);
-}
-
-int rtr_send_pdu(const struct rtr_socket *rtr_socket, const void *pdu, const unsigned len) {
-    char pdu_converted[len];
-    memcpy(pdu_converted, pdu, len);
-    rtr_pdu_to_network_byte_order(pdu_converted);
-    if(rtr_socket->state == RTR_SHUTDOWN)
-        return RTR_ERROR;
-    const int rtval = tr_send_all(rtr_socket->tr_socket, pdu_converted, len, RTR_SEND_TIMEOUT);
-
-    if(rtval > 0)
-        return RTR_SUCCESS;
-    if(rtval == TR_WOULDBLOCK) {
-        RTR_DBG1("send would block");
-        return RTR_ERROR;
-    }
-
-    RTR_DBG1("Error sending PDU");
-    return RTR_ERROR;
-}
-
-int rtr_handle_error_pdu(struct rtr_socket *rtr_socket, const void *buf) {
-    RTR_DBG1("Error PDU received");  //TODO: append server ip & port
-    const struct pdu_error *pdu = buf;
-
-    switch(pdu->error_code) {
-    case CORRUPT_DATA:
-        RTR_DBG1("Corrupt data received");
-        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-        break;
-    case INTERNAL_ERROR:
-        RTR_DBG1("Internal error on server-side");
-        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-        break;
-    case NO_DATA_AVAIL:
-        RTR_DBG1("No data available");
-        rtr_change_socket_state(rtr_socket, RTR_ERROR_NO_DATA_AVAIL);
-        break;
-    case INVALID_REQUEST:
-        RTR_DBG1("Invalid request from client");
-        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-        break;
-    case UNSUPPORTED_PROTOCOL_VER:
-        RTR_DBG1("Client uses unsupported protocol version");
-        if(rtr_socket->version > RTR_PROTOCOL_MIN_SUPPORTED_VERSION){
-            RTR_DBG("Downgrading to version %i", rtr_socket->version - 1);
-            rtr_socket->version--;
-        }
-        //Allways change state to ERROR_FATAL, because then the next configuration (server)
-        //get scheduled by the rtr_manager which might support a higher version.
-        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-        break;
-    case UNSUPPORTED_PDU_TYPE:
-        RTR_DBG1("Client set unsupported PDU type");
-        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-        break;
-    default:
-        RTR_DBG("error unknown, server sent unsupported error code %u", pdu->error_code);
-        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-        break;
-    }
-
-    const uint32_t len_err_txt = ntohl(*((uint32_t *) ((pdu->rest) + pdu->len_enc_pdu)));
-    if(len_err_txt > 0) {
-        if((sizeof(pdu->ver) + sizeof(pdu->type) + sizeof(pdu->error_code) + sizeof(pdu->len) + sizeof(pdu->len_enc_pdu) + pdu->len_enc_pdu + 4 + len_err_txt) != pdu->len)
-            RTR_DBG1("error: Length of error text contains an incorrect value");
-        else {
-            //assure that the error text contains an terminating \0 char
-            char txt[len_err_txt + 1];
-            char *pdu_txt = (char *) pdu->rest + pdu->len_enc_pdu + 4;
-            snprintf(txt, len_err_txt + 1, "%s", pdu_txt);
-            RTR_DBG("Error PDU included the following error msg: \'%s\'", txt);
-        }
-    }
-
-    return RTR_SUCCESS;
 }
 
 int rtr_send_serial_query(struct rtr_socket *rtr_socket) {
