@@ -754,7 +754,7 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
 
                rtr_socket->last_update = 0;
             }
-           rtr_socket->session_id = cr_pdu->reserved;
+           rtr_socket->session_id = cr_pdu->session_id;
         }
         else {
             if(rtr_socket->session_id != cr_pdu->session_id) {
