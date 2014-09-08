@@ -545,15 +545,15 @@ static int rtr_undo_update_spki_table(struct rtr_socket *rtr_socket, void *pdu) 
     const enum pdu_type type = rtr_get_pdu_type(pdu);
     assert(type == ROUTER_KEY);
 
-    struct spki_record *entry = malloc(sizeof(struct spki_record));
-    rtr_key_pdu_2_spki_record(rtr_socket, pdu, entry, type);
+    struct spki_record entry;
+    rtr_key_pdu_2_spki_record(rtr_socket, pdu, &entry, type);
 
     int rtval = RTR_ERROR;
     //invert add/remove operation
     if(((struct pdu_router_key*) pdu)->flags == 1)
-        rtval = spki_table_remove_entry(rtr_socket->spki_table, entry);
+        rtval = spki_table_remove_entry(rtr_socket->spki_table, &entry);
     else if(((struct pdu_router_key*) pdu)->flags == 0)
-        rtval = spki_table_add_entry(rtr_socket->spki_table, entry);
+        rtval = spki_table_add_entry(rtr_socket->spki_table, &entry);
     return rtval;
 }
 
@@ -660,17 +660,17 @@ static int rtr_update_spki_table(struct rtr_socket* rtr_socket, const void* pdu)
     const enum pdu_type type = rtr_get_pdu_type(pdu);
     assert(type == ROUTER_KEY);
 
-    struct spki_record *entry = malloc(sizeof(struct spki_record));
+    struct spki_record entry;
 
     size_t pdu_size = sizeof(struct pdu_router_key);
-    rtr_key_pdu_2_spki_record(rtr_socket, pdu, entry,type);
+    rtr_key_pdu_2_spki_record(rtr_socket, pdu, &entry,type);
 
     int rtval;
     if(((struct pdu_router_key*) pdu)->flags == 1)
-        rtval = spki_table_add_entry(rtr_socket->spki_table, entry);
+        rtval = spki_table_add_entry(rtr_socket->spki_table, &entry);
 
     else if(((struct pdu_router_key*) pdu)->flags == 0)
-        rtval = spki_table_remove_entry(rtr_socket->spki_table, entry);
+        rtval = spki_table_remove_entry(rtr_socket->spki_table, &entry);
 
     else{
         const char* txt = "Router Key PDU with invalid flags value received";
@@ -681,7 +681,7 @@ static int rtr_update_spki_table(struct rtr_socket* rtr_socket, const void* pdu)
 
     if(rtval == SPKI_DUPLICATE_RECORD){
         //TODO: This debug message isn't working yet, how to display SKI/SPKI without %x?
-        RTR_DBG("Duplicate Announcement for router key: ASN: %u received",entry->asn);
+        RTR_DBG("Duplicate Announcement for router key: ASN: %u received",entry.asn);
         rtr_send_error_pdu(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT , NULL, 0);
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
         return RTR_ERROR;

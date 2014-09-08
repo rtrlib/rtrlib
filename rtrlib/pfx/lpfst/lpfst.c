@@ -150,20 +150,20 @@ struct lpfst_node *lpfst_remove(struct lpfst_node *root_node, const struct ip_ad
 int lpfst_get_children(const struct lpfst_node *root_node, struct lpfst_node ***array, unsigned int *len) {
     if(root_node->lchild != NULL) {
         *len += 1;
-        *array = realloc(*array, (*len) * sizeof(struct lpfst_node *));
+        *array = realloc(*array, *len * sizeof(struct lpfst_node *));
         if(*array == NULL)
             return -1;
-        (*array)[(*len) - 1] = root_node->lchild;
+        (*array)[*len - 1] = root_node->lchild;
         if(lpfst_get_children(root_node->lchild, array, len) == -1)
             return -1;
     }
 
     if(root_node->rchild != NULL) {
         *len += 1;
-        *array = realloc(*array, (*len) * sizeof(struct lpfst_node *));
+        *array = realloc(*array, *len * sizeof(struct lpfst_node *));
         if(*array == NULL)
             return -1;
-        (*array)[(*len) - 1] = root_node->rchild;
+        (*array)[*len - 1] = root_node->rchild;
         if(lpfst_get_children(root_node->rchild, array, len) == -1)
             return -1;
     }
