@@ -40,7 +40,8 @@ enum pdu_error_type {
     UNSUPPORTED_PROTOCOL_VER = 4,
     UNSUPPORTED_PDU_TYPE = 5,
     WITHDRAWAL_OF_UNKNOWN_RECORD = 6,
-    DUPLICATE_ANNOUNCEMENT = 7
+    DUPLICATE_ANNOUNCEMENT = 7,
+    PDU_TOO_BIG = 32
 };
 
 enum pdu_type {
@@ -318,7 +319,7 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
     if(error < 0)
         goto error;
     else
-        error = 0;
+        error = RTR_SUCCESS;
 
     //header in hostbyte order, retain original received pdu, in case we need to detach it to an error pdu
     struct pdu_header header;
@@ -330,26 +331,26 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
         if(rtr_socket->request_session_id == true && rtr_socket->last_update == 0
                                                   && header.ver >= RTR_PROTOCOL_MIN_SUPPORTED_VERSION
                                                   && header.ver <= RTR_PROTOCOL_MAX_SUPPORTED_VERSION){
-            RTR_DBG("Downgrading current session from %i to %i", rtr_socket->version, header.ver);
+            RTR_DBG("Downgrading current session from %u to %u", rtr_socket->version, header.ver);
             rtr_socket->version = header.ver;
         } else {
-            error = 16;
+            error = UNSUPPORTED_PROTOCOL_VER;
             goto error;
         }
     }
 
     if((header.type > 10) || (header.ver == RTR_PROTOCOL_VERSION_0 && header.type == ROUTER_KEY)) {
-        error = 2;
+        error = UNSUPPORTED_PDU_TYPE;
         goto error;
     }
 
     //if header->len is < packet_header = corrupt data received
     if(header.len < sizeof(header)) {
-        error = 8;
+        error = CORRUPT_DATA;
         goto error;
     }
     else if(header.len > RTR_MAX_PDU_LEN) { //PDU too big, > than MAX_PDU_LEN Bytes
-        error = 4;
+        error = PDU_TOO_BIG;
         goto error;
     }
 
@@ -363,7 +364,7 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
         if(error < 0)
             goto error;
         else
-            error = 0;
+            error = RTR_SUCCESS;
     }
     memcpy(pdu, &header, sizeof(header)); //copy header in host_byte_order to pdu
     rtr_pdu_footer_to_host_byte_order(pdu);
@@ -393,23 +394,23 @@ error:
         RTR_DBG1("receive call interrupted");
         return TR_INTR;
     }
-    else if(error == 8) {
+    else if(error == CORRUPT_DATA) {
         RTR_DBG1("corrupt PDU received");
         const char *txt = "corrupt data received, length value in PDU is too small";
         rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), CORRUPT_DATA, txt, sizeof(txt));
     }
-    else if(error == 4) {
+    else if(error == PDU_TOO_BIG) {
         RTR_DBG1("PDU too big");
         char txt[42];
         snprintf(txt, sizeof(txt),"PDU too big, max. PDU size is: %u bytes", RTR_MAX_PDU_LEN);
         RTR_DBG("%s", txt);
         rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), CORRUPT_DATA, txt, sizeof(txt));
     }
-    else if(error == 2) {
+    else if(error == UNSUPPORTED_PDU_TYPE) {
         RTR_DBG1("Unsupported PDU type received");
         rtr_send_error_pdu(rtr_socket, pdu, header.len, UNSUPPORTED_PDU_TYPE, NULL, 0);
     }
-    else if(error == 16) {
+    else if(error == UNSUPPORTED_PROTOCOL_VER) {
         RTR_DBG1("PDU with unsupported Protocol version received");
         rtr_send_error_pdu(rtr_socket, pdu, header.len, UNSUPPORTED_PROTOCOL_VER, NULL, 0);
         return RTR_ERROR;
