@@ -64,6 +64,13 @@ struct pdu_header {
     uint32_t len;
 };
 
+struct pdu_cache_response {
+    uint8_t ver;
+    uint8_t type;
+    uint16_t session_id;
+    uint32_t len;
+};
+
 struct pdu_serial_notify {
     uint8_t ver;
     uint8_t type;
@@ -737,7 +744,7 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
 
     if(type == CACHE_RESPONSE) {
         RTR_DBG1("Cache Response PDU received");
-        struct pdu_header *cr_pdu = (struct pdu_header *) pdu;
+        struct pdu_cache_response *cr_pdu = (struct pdu_cache_response *) pdu;
         //set connection session_id
         if(rtr_socket->request_session_id) {
             if(rtr_socket->last_update != 0) {
@@ -750,7 +757,7 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
            rtr_socket->session_id = cr_pdu->reserved;
         }
         else {
-            if(rtr_socket->session_id != cr_pdu->reserved) {
+            if(rtr_socket->session_id != cr_pdu->session_id) {
                 const char *txt = "Wrong session_id in Cache Response PDU"; //TODO: Appendrtr_socket->session_id to string
                 rtr_send_error_pdu(rtr_socket, NULL, 0, CORRUPT_DATA, txt, sizeof(txt));
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
