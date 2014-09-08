@@ -31,10 +31,14 @@
 
 static void print_usage(char** argv){
     printf("Usage:\n");
-    printf(" %s tcp <host> <port> <parameters>\n", argv[0]);
+    printf(" %s tcp <host> <port> [options]\n", argv[0]);
 #ifdef RTRLIB_HAVE_LIBSSH
     printf(" %s ssh <host> <port> <username> <private_key> [<host_key>] \n", argv[0]);
 #endif
+    printf("\nOptions:\n");
+    printf("-K  Print inforamtions about SPKI updates.\n");
+    printf("-P  Print informations about PFX updates.\n");
+
     printf("\nExamples:\n");
     printf(" %s tcp rpki.realmv6.org 42420\n", argv[0]);
     printf(" %s tcp rpki.realmv6.org 42420 -K -P\n", argv[0]);
