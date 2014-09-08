@@ -484,13 +484,12 @@ static int rtr_handle_error_pdu(struct rtr_socket *rtr_socket, const void *buf) 
     return RTR_SUCCESS;
 }
 
-static void rtr_key_pdu_2_spki_record(const struct rtr_socket *rtr_socket, const void *pdu, struct spki_record *entry, const enum pdu_type type) {
+static void rtr_key_pdu_2_spki_record(const struct rtr_socket *rtr_socket, const struct pdu_router_key* pdu, struct spki_record* entry, const enum pdu_type type) {
     assert(type == ROUTER_KEY);
-    const struct pdu_router_key *rt_key = pdu;
 
-    entry->asn = rt_key->asn;
-    memcpy(entry->ski,rt_key->ski,SKI_SIZE);
-    memcpy(entry->spki,rt_key->spki,SPKI_SIZE);
+    entry->asn = pdu->asn;
+    memcpy(entry->ski,pdu->ski,SKI_SIZE);
+    memcpy(entry->spki,pdu->spki,SPKI_SIZE);
     entry->socket = rtr_socket;
 }
 
