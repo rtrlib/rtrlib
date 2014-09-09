@@ -704,7 +704,31 @@ static int rtr_update_spki_table(struct rtr_socket* rtr_socket, const void* pdu)
 
 
 
+int handle_cache_response_pdu(struct rtr_socket *rtr_socket, char *pdu) {
 
+        RTR_DBG1("Cache Response PDU received");
+        struct pdu_cache_response *cr_pdu = (struct pdu_cache_response *) pdu;
+        //set connection session_id
+        if(rtr_socket->request_session_id) {
+            if(rtr_socket->last_update != 0) {
+                //if this isnt the first sync, but we already received records, delete old records in the pfx_table
+                pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
+                spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
+
+               rtr_socket->last_update = 0;
+            }
+           rtr_socket->session_id = cr_pdu->session_id;
+        }
+        else {
+            if(rtr_socket->session_id != cr_pdu->session_id) {
+                const char *txt = "Wrong session_id in Cache Response PDU"; //TODO: Appendrtr_socket->session_id to string
+                rtr_send_error_pdu(rtr_socket, NULL, 0, CORRUPT_DATA, txt, sizeof(txt));
+                rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+                return RTR_ERROR;
+            }
+        }
+        return RTR_SUCCESS;
+}
 
 int rtr_sync(struct rtr_socket *rtr_socket) {
     char pdu[RTR_MAX_PDU_LEN];
@@ -742,27 +766,7 @@ int rtr_sync(struct rtr_socket *rtr_socket) {
     }
 
     if(type == CACHE_RESPONSE) {
-        RTR_DBG1("Cache Response PDU received");
-        struct pdu_cache_response *cr_pdu = (struct pdu_cache_response *) pdu;
-        //set connection session_id
-        if(rtr_socket->request_session_id) {
-            if(rtr_socket->last_update != 0) {
-                //if this isnt the first sync, but we already received records, delete old records in the pfx_table
-                pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
-                spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
-
-               rtr_socket->last_update = 0;
-            }
-           rtr_socket->session_id = cr_pdu->session_id;
-        }
-        else {
-            if(rtr_socket->session_id != cr_pdu->session_id) {
-                const char *txt = "Wrong session_id in Cache Response PDU"; //TODO: Appendrtr_socket->session_id to string
-                rtr_send_error_pdu(rtr_socket, NULL, 0, CORRUPT_DATA, txt, sizeof(txt));
-                rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-                return RTR_ERROR;
-            }
-        }
+        handle_cache_response_pdu(rtr_socket,pdu);
     }
     else if(type == ERROR) {
         rtr_handle_error_pdu(rtr_socket, pdu);
