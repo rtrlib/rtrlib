@@ -180,7 +180,7 @@ static inline enum pdu_type rtr_get_pdu_type(const void *pdu)
 
 static int rtr_set_last_update(struct rtr_socket *rtr_socket)
 {
-        if(rtr_get_monotonic_time(&(rtr_socket->last_update)) == -1) {
+        if (rtr_get_monotonic_time(&(rtr_socket->last_update)) == -1) {
                 RTR_DBG1("get_monotonic_time(..) failed ");
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
                 return RTR_ERROR;
@@ -190,15 +190,15 @@ static int rtr_set_last_update(struct rtr_socket *rtr_socket)
 
 void rtr_change_socket_state(struct rtr_socket *rtr_socket, const enum rtr_socket_state new_state)
 {
-        if(rtr_socket->state == new_state)
+        if (rtr_socket->state == new_state)
                 return;
 
         //RTR_SHUTDOWN state is final,struct rtr_socket will be shutdowned can't be switched to any other state
-        if(rtr_socket->state == RTR_SHUTDOWN)
+        if (rtr_socket->state == RTR_SHUTDOWN)
                 return;
 
         rtr_socket->state = new_state;
-        if(rtr_socket->connection_state_fp != NULL)
+        if (rtr_socket->connection_state_fp != NULL)
                 rtr_socket->connection_state_fp(rtr_socket, new_state,rtr_socket->connection_state_fp_param);
 }
 
@@ -210,7 +210,7 @@ static void rtr_pdu_to_network_byte_order(void *pdu)
         header->len = htonl(header->len);
 
         const enum pdu_type type = rtr_get_pdu_type(pdu);
-        switch(type) {
+        switch (type) {
         case SERIAL_QUERY:
                 ((struct pdu_serial_query *) pdu)->sn = htonl(((struct pdu_serial_query *) pdu)->sn);
                 break;
@@ -229,13 +229,13 @@ static void rtr_pdu_footer_to_host_byte_order(void *pdu)
 
         uint32_t addr6[4];
 
-        switch(type) {
+        switch (type) {
         case SERIAL_NOTIFY:
                 ((struct pdu_serial_notify *) pdu)->sn =
                 ntohl(((struct pdu_serial_notify *) pdu)->sn);
                 break;
         case EOD:
-                if(header->ver == RTR_PROTOCOL_VERSION_1){
+                if (header->ver == RTR_PROTOCOL_VERSION_1){
                         ((struct pdu_end_of_data_v1 *) pdu)->expire_interval =
                     ntohl(((struct pdu_end_of_data_v1 *) pdu)->expire_interval);
 
@@ -281,7 +281,7 @@ static void rtr_pdu_header_to_host_byte_order(void *pdu)
         struct pdu_header *header = pdu;
 
         //The ROUTER_KEY PDU has two 1 Byte fields instead of the 2 Byte reserved field.
-        if(header->type != ROUTER_KEY){
+        if (header->type != ROUTER_KEY){
                 uint16_t reserved_tmp =  ntohs(header->reserved);
                 header->reserved = reserved_tmp;
         }
@@ -296,13 +296,13 @@ static int rtr_send_pdu(const struct rtr_socket *rtr_socket, const void *pdu, co
         char pdu_converted[len];
         memcpy(pdu_converted, pdu, len);
         rtr_pdu_to_network_byte_order(pdu_converted);
-        if(rtr_socket->state == RTR_SHUTDOWN)
+        if (rtr_socket->state == RTR_SHUTDOWN)
                 return RTR_ERROR;
         const int rtval = tr_send_all(rtr_socket->tr_socket, pdu_converted, len, RTR_SEND_TIMEOUT);
 
-        if(rtval > 0)
+        if (rtval > 0)
                 return RTR_SUCCESS;
-        if(rtval == TR_WOULDBLOCK) {
+        if (rtval == TR_WOULDBLOCK) {
                 RTR_DBG1("send would block");
                 return RTR_ERROR;
         }
@@ -331,10 +331,10 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
 
         assert(pdu_len >= RTR_MAX_PDU_LEN);
         //receive packet header
-        if(rtr_socket->state == RTR_SHUTDOWN)
+        if (rtr_socket->state == RTR_SHUTDOWN)
                 return RTR_ERROR;
         error = tr_recv_all(rtr_socket->tr_socket, pdu, sizeof(struct pdu_header), timeout);
-        if(error < 0)
+        if (error < 0)
                 goto error;
         else
                 error = RTR_SUCCESS;
@@ -344,9 +344,9 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
         memcpy(&header, pdu, sizeof(header));
         rtr_pdu_header_to_host_byte_order(&header);
 
-        if(header.ver != rtr_socket->version) {
+        if (header.ver != rtr_socket->version) {
                 //If this is the first PDU we have received -> Downgrade.
-                if(rtr_socket->request_session_id == true && rtr_socket->last_update == 0
+                if (rtr_socket->request_session_id == true && rtr_socket->last_update == 0
                                                           && header.ver >= RTR_PROTOCOL_MIN_SUPPORTED_VERSION
                                                           && header.ver <= RTR_PROTOCOL_MAX_SUPPORTED_VERSION){
                     RTR_DBG("Downgrading current session from %u to %u", rtr_socket->version, header.ver);
@@ -357,17 +357,17 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
                 }
         }
 
-        if((header.type > 10) || (header.ver == RTR_PROTOCOL_VERSION_0 && header.type == ROUTER_KEY)) {
+        if ((header.type > 10) || (header.ver == RTR_PROTOCOL_VERSION_0 && header.type == ROUTER_KEY)) {
                 error = UNSUPPORTED_PDU_TYPE;
                 goto error;
         }
 
         //if header->len is < packet_header = corrupt data received
-        if(header.len < sizeof(header)) {
+        if (header.len < sizeof(header)) {
                 error = CORRUPT_DATA;
                 goto error;
         }
-        else if(header.len > RTR_MAX_PDU_LEN) { //PDU too big, > than MAX_PDU_LEN Bytes
+        else if (header.len > RTR_MAX_PDU_LEN) { //PDU too big, > than MAX_PDU_LEN Bytes
                 error = PDU_TOO_BIG;
                 goto error;
         }
@@ -375,64 +375,64 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
 
         //receive packet payload
         const unsigned int remaining_len = header.len - sizeof(header);
-        if(remaining_len > 0) {
-                if(rtr_socket->state == RTR_SHUTDOWN)
+        if (remaining_len > 0) {
+                if (rtr_socket->state == RTR_SHUTDOWN)
                         return RTR_ERROR;
                 error = tr_recv_all(rtr_socket->tr_socket, (((char *) pdu) + sizeof(header)), remaining_len, RTR_RECV_TIMEOUT);
-                if(error < 0)
-                    goto error;
+                if (error < 0)
+                        goto error;
                 else
                         error = RTR_SUCCESS;
         }
         memcpy(pdu, &header, sizeof(header)); //copy header in host_byte_order to pdu
         rtr_pdu_footer_to_host_byte_order(pdu);
 
-        if(header.type == IPV4_PREFIX || header.type == IPV6_PREFIX) {
-                if (((struct pdu_ipv4 *) pdu)->zero != 0) {
+        if (header.type == IPV4_PREFIX || header.type == IPV6_PREFIX) {
+                if (((struct pdu_ipv4 *) pdu)->zero != 0) 
                         RTR_DBG1("Warning: Zero field of received Prefix PDU doesn't contain 0");
-                }
+                
         }
-        if(header.type == ROUTER_KEY && ((struct pdu_router_key *) pdu)->zero != 0)
+        if (header.type == ROUTER_KEY && ((struct pdu_router_key *) pdu)->zero != 0)
                 RTR_DBG1("Warning: ROUTER_KEY_PDU zero field is != 0");
     
 
         return RTR_SUCCESS;
 
         error:
-        //send error msg to server, including unmodified pdu header(pdu variable instead header)
-        if(error == -1) {
-                rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
-                return RTR_ERROR;
-        }
-        else if(error == TR_WOULDBLOCK) {
-                RTR_DBG1("receive timeout expired");
-                return TR_WOULDBLOCK;
-        }
-        else if(error == TR_INTR) {
-                RTR_DBG1("receive call interrupted");
-                return TR_INTR;
-        }
-        else if(error == CORRUPT_DATA) {
-                RTR_DBG1("corrupt PDU received");
-                const char *txt = "corrupt data received, length value in PDU is too small";
-                rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), CORRUPT_DATA, txt, sizeof(txt));
-        }
-        else if(error == PDU_TOO_BIG) {
-                RTR_DBG1("PDU too big");
-                char txt[42];
-                snprintf(txt, sizeof(txt),"PDU too big, max. PDU size is: %u bytes", RTR_MAX_PDU_LEN);
-                RTR_DBG("%s", txt);
-                rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), CORRUPT_DATA, txt, sizeof(txt));
-        }
-        else if(error == UNSUPPORTED_PDU_TYPE) {
-                RTR_DBG1("Unsupported PDU type received");
-                rtr_send_error_pdu(rtr_socket, pdu, header.len, UNSUPPORTED_PDU_TYPE, NULL, 0);
-        }
-        else if(error == UNSUPPORTED_PROTOCOL_VER) {
-                RTR_DBG1("PDU with unsupported Protocol version received");
-                rtr_send_error_pdu(rtr_socket, pdu, header.len, UNSUPPORTED_PROTOCOL_VER, NULL, 0);
-                return RTR_ERROR;
-        }
+                //send error msg to server, including unmodified pdu header(pdu variable instead header)
+                if (error == -1) {
+                        rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
+                        return RTR_ERROR;
+                }
+                else if (error == TR_WOULDBLOCK) {
+                        RTR_DBG1("receive timeout expired");
+                        return TR_WOULDBLOCK;
+                }
+                else if (error == TR_INTR) {
+                        RTR_DBG1("receive call interrupted");
+                        return TR_INTR;
+                }
+                else if (error == CORRUPT_DATA) {
+                        RTR_DBG1("corrupt PDU received");
+                        const char *txt = "corrupt data received, length value in PDU is too small";
+                        rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), CORRUPT_DATA, txt, sizeof(txt));
+                }
+                else if (error == PDU_TOO_BIG) {
+                        RTR_DBG1("PDU too big");
+                        char txt[42];
+                        snprintf(txt, sizeof(txt),"PDU too big, max. PDU size is: %u bytes", RTR_MAX_PDU_LEN);
+                        RTR_DBG("%s", txt);
+                        rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), CORRUPT_DATA, txt, sizeof(txt));
+                }
+                else if (error == UNSUPPORTED_PDU_TYPE) {
+                        RTR_DBG1("Unsupported PDU type received");
+                        rtr_send_error_pdu(rtr_socket, pdu, header.len, UNSUPPORTED_PDU_TYPE, NULL, 0);
+                }
+                else if (error == UNSUPPORTED_PROTOCOL_VER) {
+                        RTR_DBG1("PDU with unsupported Protocol version received");
+                        rtr_send_error_pdu(rtr_socket, pdu, header.len, UNSUPPORTED_PROTOCOL_VER, NULL, 0);
+                        return RTR_ERROR;
+                }
 
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
         return RTR_ERROR;
@@ -443,7 +443,7 @@ static int rtr_handle_error_pdu(struct rtr_socket *rtr_socket, const void *buf)
         RTR_DBG1("Error PDU received");  //TODO: append server ip & port
         const struct pdu_error *pdu = buf;
 
-        switch(pdu->error_code) {
+        switch (pdu->error_code) {
         case CORRUPT_DATA:
                 RTR_DBG1("Corrupt data received");
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
@@ -462,7 +462,7 @@ static int rtr_handle_error_pdu(struct rtr_socket *rtr_socket, const void *buf)
                 break;
         case UNSUPPORTED_PROTOCOL_VER:
                 RTR_DBG1("Client uses unsupported protocol version");
-                if(rtr_socket->version > RTR_PROTOCOL_MIN_SUPPORTED_VERSION){
+                if (rtr_socket->version > RTR_PROTOCOL_MIN_SUPPORTED_VERSION){
                         RTR_DBG("Downgrading to version %i", rtr_socket->version - 1);
                         rtr_socket->version--;
                 }
@@ -481,8 +481,8 @@ static int rtr_handle_error_pdu(struct rtr_socket *rtr_socket, const void *buf)
         }
 
         const uint32_t len_err_txt = ntohl(*((uint32_t *) (pdu->rest + pdu->len_enc_pdu)));
-        if(len_err_txt > 0) {
-                if((sizeof(pdu->ver) + sizeof(pdu->type) + sizeof(pdu->error_code) + sizeof(pdu->len) + sizeof(pdu->len_enc_pdu) + pdu->len_enc_pdu + 4 + len_err_txt) != pdu->len)
+        if (len_err_txt > 0) {
+                if ((sizeof(pdu->ver) + sizeof(pdu->type) + sizeof(pdu->error_code) + sizeof(pdu->len) + sizeof(pdu->len_enc_pdu) + pdu->len_enc_pdu + 4 + len_err_txt) != pdu->len)
                         RTR_DBG1("error: Length of error text contains an incorrect value");
                 else {
                         //assure that the error text contains an terminating \0 char
@@ -502,8 +502,8 @@ static int rtr_handle_cache_response_pdu(struct rtr_socket *rtr_socket, char *pd
         RTR_DBG1("Cache Response PDU received");
         struct pdu_cache_response *cr_pdu = (struct pdu_cache_response *) pdu;
         //set connection session_id
-        if(rtr_socket->request_session_id) {
-                if(rtr_socket->last_update != 0) {
+        if (rtr_socket->request_session_id) {
+                if (rtr_socket->last_update != 0) {
                         //if this isnt the first sync, but we already received records, delete old records in the pfx_table
                         pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
                         spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
@@ -513,7 +513,7 @@ static int rtr_handle_cache_response_pdu(struct rtr_socket *rtr_socket, char *pd
                 rtr_socket->session_id = cr_pdu->session_id;
         }
         else {
-                if(rtr_socket->session_id != cr_pdu->session_id) {
+                if (rtr_socket->session_id != cr_pdu->session_id) {
                         const char *txt = "Wrong session_id in Cache Response PDU"; //TODO: Appendrtr_socket->session_id to string
                         rtr_send_error_pdu(rtr_socket, NULL, 0, CORRUPT_DATA, txt, sizeof(txt));
                         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
@@ -526,7 +526,6 @@ static int rtr_handle_cache_response_pdu(struct rtr_socket *rtr_socket, char *pd
 static void rtr_key_pdu_2_spki_record(const struct rtr_socket *rtr_socket, const struct pdu_router_key* pdu, struct spki_record* entry, const enum pdu_type type)
 {
         assert(type == ROUTER_KEY);
-
         entry->asn = pdu->asn;
         memcpy(entry->ski,pdu->ski,SKI_SIZE);
         memcpy(entry->spki,pdu->spki,SPKI_SIZE);
@@ -536,7 +535,7 @@ static void rtr_key_pdu_2_spki_record(const struct rtr_socket *rtr_socket, const
 static void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, const void *pdu, struct pfx_record *pfxr, const enum pdu_type type)
 {
         assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
-        if(type == IPV4_PREFIX) {
+        if (type == IPV4_PREFIX) {
                 const struct pdu_ipv4 *ipv4 = pdu;
                 pfxr->prefix.u.addr4.addr = ipv4->prefix;
                 pfxr->asn = ipv4->asn;
@@ -545,7 +544,7 @@ static void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, con
                 pfxr->max_len = ipv4->max_prefix_len;
                 pfxr->socket = rtr_socket;
         }
-        else if(type == IPV6_PREFIX) {
+        else if (type == IPV6_PREFIX) {
                 const struct pdu_ipv6 *ipv6 = pdu;
                 pfxr->asn = ipv6->asn;
                 pfxr->prefix.ver = IPV6;
@@ -570,9 +569,9 @@ static int rtr_undo_update_pfx_table(struct rtr_socket *rtr_socket, void *pdu)
 
         int rtval = RTR_ERROR;
         //invert add/remove operation
-        if(((struct pdu_ipv4 *) pdu)->flags == 1)
+        if (((struct pdu_ipv4 *) pdu)->flags == 1)
                 rtval = pfx_table_remove(rtr_socket->pfx_table, &pfxr);
-        else if(((struct pdu_ipv4 *) pdu)->flags == 0)
+        else if (((struct pdu_ipv4 *) pdu)->flags == 0)
                 rtval = pfx_table_add(rtr_socket->pfx_table, &pfxr);
         return rtval;
 }
@@ -591,9 +590,9 @@ static int rtr_undo_update_spki_table(struct rtr_socket *rtr_socket, void *pdu)
 
         int rtval = RTR_ERROR;
         //invert add/remove operation
-        if(((struct pdu_router_key*) pdu)->flags == 1)
+        if (((struct pdu_router_key*) pdu)->flags == 1)
                 rtval = spki_table_remove_entry(rtr_socket->spki_table, &entry);
-        else if(((struct pdu_router_key*) pdu)->flags == 0)
+        else if (((struct pdu_router_key*) pdu)->flags == 0)
                 rtval = spki_table_add_entry(rtr_socket->spki_table, &entry);
         return rtval;
 }
@@ -606,10 +605,10 @@ static int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, 
 {
         const enum pdu_type pdu_type = rtr_get_pdu_type(pdu);
         assert(pdu_type  == IPV4_PREFIX || pdu_type == IPV6_PREFIX);
-        if((*ind) >= *size) {
+        if ((*ind) >= *size) {
                 *size += TEMPORARY_PDU_STORE_INCREMENT_VALUE;
                 void *tmp = realloc(*ary, *size * pdu_size);
-                if(tmp == NULL) {
+                if (tmp == NULL) {
                         const char *txt = "Realloc failed";
                         RTR_DBG("%s", txt);
                         rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
@@ -620,9 +619,9 @@ static int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, 
                 }
                 *ary = tmp;
         }
-        if(pdu_type == IPV4_PREFIX)
+        if (pdu_type == IPV4_PREFIX)
                 memcpy((struct pdu_ipv4 *) *ary + *ind, pdu, pdu_size);
-        else if(pdu_type == IPV6_PREFIX)
+        else if (pdu_type == IPV6_PREFIX)
                 memcpy((struct pdu_ipv6 *) *ary + *ind, pdu, pdu_size);
         (*ind)++;
         return RTR_SUCCESS;
@@ -634,10 +633,10 @@ static int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *p
         const enum pdu_type pdu_type = rtr_get_pdu_type(pdu);
         assert(pdu_type == ROUTER_KEY);
 
-        if((*ind) >= *size) {
+        if ((*ind) >= *size) {
                 *size += TEMPORARY_PDU_STORE_INCREMENT_VALUE;
                 void *tmp = realloc(*ary, *size * pdu_size);
-                if(tmp == NULL) {
+                if (tmp == NULL) {
                         const char *txt = "Realloc failed";
                         RTR_DBG("%s", txt);
                         rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
@@ -664,9 +663,9 @@ static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, const void *pdu)
         rtr_prefix_pdu_2_pfx_record(rtr_socket, pdu, &pfxr, type);
 
         int rtval;
-        if(((struct pdu_ipv4 *) pdu)->flags == 1)
+        if (((struct pdu_ipv4 *) pdu)->flags == 1)
                 rtval = pfx_table_add(rtr_socket->pfx_table, &pfxr);
-        else if(((struct pdu_ipv4 *) pdu)->flags == 0)
+        else if (((struct pdu_ipv4 *) pdu)->flags == 0)
                 rtval = pfx_table_remove(rtr_socket->pfx_table, &pfxr);
         else {
                 const char *txt = "Prefix PDU with invalid flags value received";
@@ -675,7 +674,7 @@ static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, const void *pdu)
                 return RTR_ERROR;
         }
 
-        if(rtval == PFX_DUPLICATE_RECORD) {
+        if (rtval == PFX_DUPLICATE_RECORD) {
                 char ip[INET6_ADDRSTRLEN];
                 ip_addr_to_str(&(pfxr.prefix), ip, INET6_ADDRSTRLEN);
                 RTR_DBG("Duplicate Announcement for record: %s/%u-%u, ASN: %u, received", ip, pfxr.min_len, pfxr.max_len, pfxr.asn);
@@ -683,13 +682,13 @@ static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, const void *pdu)
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
                 return RTR_ERROR;
         }
-        else if(rtval == PFX_RECORD_NOT_FOUND) {
+        else if (rtval == PFX_RECORD_NOT_FOUND) {
                 RTR_DBG1("Withdrawal of unknown record");
                 rtr_send_error_pdu(rtr_socket, pdu, pdu_size, WITHDRAWAL_OF_UNKNOWN_RECORD, NULL, 0);
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
                 return RTR_ERROR;
         }
-        else if(rtval == PFX_ERROR) {
+        else if (rtval == PFX_ERROR) {
                 const char *txt = "PFX_TABLE Error";
                 RTR_DBG("%s", txt);
                 rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
@@ -711,33 +710,33 @@ static int rtr_update_spki_table(struct rtr_socket* rtr_socket, const void* pdu)
         rtr_key_pdu_2_spki_record(rtr_socket, pdu, &entry,type);
 
         int rtval;
-        if(((struct pdu_router_key*) pdu)->flags == 1)
+        if (((struct pdu_router_key*) pdu)->flags == 1)
                 rtval = spki_table_add_entry(rtr_socket->spki_table, &entry);
 
-        else if(((struct pdu_router_key*) pdu)->flags == 0)
+        else if (((struct pdu_router_key*) pdu)->flags == 0)
                 rtval = spki_table_remove_entry(rtr_socket->spki_table, &entry);
 
-        else{
+        else {
                 const char* txt = "Router Key PDU with invalid flags value received";
                 RTR_DBG("%s", txt);
                 rtr_send_error_pdu(rtr_socket, pdu, pdu_size, CORRUPT_DATA, txt, sizeof(txt));
                 return RTR_ERROR;
         }
 
-        if(rtval == SPKI_DUPLICATE_RECORD){
+        if (rtval == SPKI_DUPLICATE_RECORD){
                 //TODO: This debug message isn't working yet, how to display SKI/SPKI without %x?
                 RTR_DBG("Duplicate Announcement for router key: ASN: %u received",entry.asn);
                 rtr_send_error_pdu(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT , NULL, 0);
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
                 return RTR_ERROR;
         }
-        else if(rtval == SPKI_RECORD_NOT_FOUND){
+        else if (rtval == SPKI_RECORD_NOT_FOUND){
                 RTR_DBG1("Withdrawal of unknown router key");
                 rtr_send_error_pdu(rtr_socket, pdu, pdu_size, WITHDRAWAL_OF_UNKNOWN_RECORD, NULL, 0);
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
                 return RTR_ERROR;
         }
-        else if(rtval == SPKI_ERROR){
+        else if (rtval == SPKI_ERROR){
                 const char* txt = "spki_table Error";
                 RTR_DBG("%s", txt);
                 rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
@@ -753,40 +752,40 @@ int rtr_sync(struct rtr_socket *rtr_socket)
         char pdu[RTR_MAX_PDU_LEN];
 
         int rtval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
-        if(rtval == TR_WOULDBLOCK) {
+        if (rtval == TR_WOULDBLOCK) {
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
                 return RTR_ERROR;
         }
-        else if(rtval < 0)
+        else if (rtval < 0)
                 return RTR_ERROR;
         enum pdu_type type = rtr_get_pdu_type(pdu);
 
         //ignore serial_notify PDUs, we already sent a serial_query, must be old messages
-        while(type == SERIAL_NOTIFY) {
+        while (type == SERIAL_NOTIFY) {
                 RTR_DBG1("Ignoring Serial Notify");
                 rtval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
-                if(rtval == TR_WOULDBLOCK) {
+                if (rtval == TR_WOULDBLOCK) {
                         rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
                         return RTR_ERROR;
                 }
-                else if(rtval < 0)
+                else if (rtval < 0)
                         return RTR_ERROR;
                 type = rtr_get_pdu_type(pdu);
         }
 
-        if(type == ERROR) {
+        if (type == ERROR) {
                 rtr_handle_error_pdu(rtr_socket, pdu);
                 return RTR_ERROR;
         }
-        else if(type == CACHE_RESET) {
+        else if (type == CACHE_RESET) {
                 RTR_DBG1("Cache Reset PDU received");
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_NO_INCR_UPDATE_AVAIL);
                 return RTR_ERROR;
         }
 
-        if(type == CACHE_RESPONSE)
+        if (type == CACHE_RESPONSE)
                 rtr_handle_cache_response_pdu(rtr_socket,pdu);
-        else if(type == ERROR) {
+        else if (type == ERROR) {
                 rtr_handle_error_pdu(rtr_socket, pdu);
                 return RTR_ERROR;
         }
@@ -812,30 +811,30 @@ int rtr_sync(struct rtr_socket *rtr_socket)
         //receive IPV4/IPV6 PDUs till EOD
         do {
                 rtval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
-                if(rtval == TR_WOULDBLOCK) {
+                if (rtval == TR_WOULDBLOCK) {
                         rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
                         return RTR_ERROR;
                 }
-                else if(rtval < 0)
+                else if (rtval < 0)
                         return RTR_ERROR;
                 type = rtr_get_pdu_type(pdu);
-                if(type == IPV4_PREFIX) {
-                        if(rtr_store_prefix_pdu(rtr_socket, pdu, sizeof(struct pdu_ipv4), (void **) &ipv4_pdus, &ipv4_pdus_nindex, &ipv4_pdus_size) == RTR_ERROR)
+                if (type == IPV4_PREFIX) {
+                        if (rtr_store_prefix_pdu(rtr_socket, pdu, sizeof(struct pdu_ipv4), (void **) &ipv4_pdus, &ipv4_pdus_nindex, &ipv4_pdus_size) == RTR_ERROR)
                                 return RTR_ERROR;
                 }
-                else if(type == IPV6_PREFIX) {
-                        if(rtr_store_prefix_pdu(rtr_socket, pdu, sizeof(struct pdu_ipv6), (void **) &ipv6_pdus, &ipv6_pdus_nindex, &ipv6_pdus_size) == RTR_ERROR)
-                        return RTR_ERROR;
+                else if (type == IPV6_PREFIX) {
+                        if (rtr_store_prefix_pdu(rtr_socket, pdu, sizeof(struct pdu_ipv6), (void **) &ipv6_pdus, &ipv6_pdus_nindex, &ipv6_pdus_size) == RTR_ERROR)
+                                return RTR_ERROR;
                 }
-                else if(type == ROUTER_KEY){
-                        if(rtr_store_router_key_pdu(rtr_socket, pdu, sizeof(struct pdu_router_key), (void **) &router_key_pdus, &router_key_pdus_nindex, &router_key_pdus_size) == RTR_ERROR)
-                        return RTR_ERROR;
+                else if (type == ROUTER_KEY){
+                        if (rtr_store_router_key_pdu(rtr_socket, pdu, sizeof(struct pdu_router_key), (void **) &router_key_pdus, &router_key_pdus_nindex, &router_key_pdus_size) == RTR_ERROR)
+                                return RTR_ERROR;
                 }
-                else if(type == EOD) {
+                else if (type == EOD) {
                         RTR_DBG1("EOD PDU received.");
                         struct pdu_end_of_data_v0 *eod_pdu = (struct pdu_end_of_data_v0 *) pdu;
 
-                        if(eod_pdu->ver == RTR_PROTOCOL_VERSION_1){
+                        if (eod_pdu->ver == RTR_PROTOCOL_VERSION_1){
                                 rtr_socket->expire_interval = ((struct pdu_end_of_data_v1 *) pdu)->expire_interval;
                                 rtr_socket->refresh_interval = ((struct pdu_end_of_data_v1 *) pdu)->refresh_interval;
                                 rtr_socket->retry_interval = ((struct pdu_end_of_data_v1 *) pdu)->retry_interval;
@@ -843,7 +842,7 @@ int rtr_sync(struct rtr_socket *rtr_socket)
                                 rtr_socket->expire_interval, rtr_socket->refresh_interval, rtr_socket->retry_interval);
                         }
 
-                        if(eod_pdu->session_id !=rtr_socket->session_id) {
+                        if (eod_pdu->session_id !=rtr_socket->session_id) {
                                 char txt[67];
                                 snprintf(txt, sizeof(txt),"Expected session_id: %u, received session_id. %u in EOD PDU",rtr_socket->session_id, eod_pdu->session_id);
                                 rtr_send_error_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, CORRUPT_DATA, txt, strlen(txt) + 1);
@@ -856,13 +855,13 @@ int rtr_sync(struct rtr_socket *rtr_socket)
 
                         int rtval = RTR_SUCCESS;
                         //add all IPv4 prefix pdu to the pfx_table
-                        for(unsigned int i = 0; i < ipv4_pdus_nindex; i++) {
-                                if(rtr_update_pfx_table(rtr_socket, &(ipv4_pdus[i])) == PFX_ERROR) {
+                        for (unsigned int i = 0; i < ipv4_pdus_nindex; i++) {
+                                if (rtr_update_pfx_table(rtr_socket, &(ipv4_pdus[i])) == PFX_ERROR) {
                                         //undo all record updates, except the last which produced the error
                                         RTR_DBG("Error during data synchronisation, recovering Serial Nr. %u state",rtr_socket->serial_number);
-                                        for(unsigned int j = 0; (j < i) && (rtval == RTR_SUCCESS); j++)
+                                        for (unsigned int j = 0; (j < i) && (rtval == RTR_SUCCESS); j++)
                                                 rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv4_pdus[j]));
-                                        if(rtval == RTR_ERROR) {
+                                        if (rtval == RTR_ERROR) {
                                                 RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all records");
                                                 pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
                                                 rtr_socket->request_session_id = true;
@@ -875,15 +874,15 @@ int rtr_sync(struct rtr_socket *rtr_socket)
                                 }
                         }
                         //add all IPv6 prefix pdu to the pfx_table
-                        for(unsigned int i = 0; i < ipv6_pdus_nindex; i++) {
-                                if(rtr_update_pfx_table(rtr_socket, &(ipv6_pdus[i])) == PFX_ERROR) {
+                        for (unsigned int i = 0; i < ipv6_pdus_nindex; i++) {
+                                if (rtr_update_pfx_table(rtr_socket, &(ipv6_pdus[i])) == PFX_ERROR) {
                                         //undo all record updates if error occured
                                         RTR_DBG("Error during data synchronisation, recovering Serial Nr. %u state",rtr_socket->serial_number);
-                                        for(unsigned int j = 0; j < ipv4_pdus_nindex; j++)
+                                        for (unsigned int j = 0; j < ipv4_pdus_nindex; j++)
                                                 rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv4_pdus[j]));
-                                        for(unsigned int j = 0; (j < i) && (rtval == PFX_SUCCESS); j++)
+                                        for (unsigned int j = 0; (j < i) && (rtval == PFX_SUCCESS); j++)
                                                 rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv6_pdus[j]));
-                                        if(rtval == RTR_ERROR) {
+                                        if (rtval == RTR_ERROR) {
                                                 RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all records");
                                                 pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
                                                 rtr_socket->request_session_id = true;
@@ -897,17 +896,17 @@ int rtr_sync(struct rtr_socket *rtr_socket)
                         }
 
                         //add all router key pdu to the spki_table
-                        for(unsigned int i = 0; i < router_key_pdus_nindex; i++) {
-                                if(rtr_update_spki_table(rtr_socket, &(router_key_pdus[i])) == SPKI_ERROR) {
+                        for (unsigned int i = 0; i < router_key_pdus_nindex; i++) {
+                                if (rtr_update_spki_table(rtr_socket, &(router_key_pdus[i])) == SPKI_ERROR) {
 
                                         //TODO: Should a KEY_ERROR lead to pfx_table, spki_table being rolled back?
                                         //TODO: Should a failed undo lead to dropping of all router_keys/pfx records?
                                         // undo all record updates if error occured
                                         RTR_DBG("Error during router key data synchronisation, recovering Serial Nr. %u state",rtr_socket->serial_number);
-                                        for(unsigned int j = 0; j < router_key_pdus_nindex; j++)
+                                        for (unsigned int j = 0; j < router_key_pdus_nindex; j++)
                                                 rtval = rtr_undo_update_spki_table(rtr_socket, &(router_key_pdus[j]));
 
-                                        if(rtval == RTR_ERROR) {
+                                        if (rtval == RTR_ERROR) {
                                                 RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all key entries");
                                                 spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
                                                 rtr_socket->request_session_id = true;
@@ -925,14 +924,14 @@ int rtr_sync(struct rtr_socket *rtr_socket)
                         free(ipv4_pdus);
                         rtr_socket->serial_number = eod_pdu->sn;
                 }
-                else if(type == ERROR) {
+                else if (type == ERROR) {
                         rtr_handle_error_pdu(rtr_socket, pdu);
                         free(router_key_pdus);
                         free(ipv4_pdus);
                         free(ipv6_pdus);
                         return RTR_ERROR;
                 }
-                else if(type == SERIAL_NOTIFY) {
+                else if (type == SERIAL_NOTIFY) {
                         RTR_DBG1("Ignoring Serial Notify");
                 }
                 else {
@@ -944,7 +943,7 @@ int rtr_sync(struct rtr_socket *rtr_socket)
                         free(ipv6_pdus);
                         return RTR_ERROR;
                 }
-        } while(type != EOD);
+        } while (type != EOD);
         rtr_socket->request_session_id = false;
         if (rtr_set_last_update(rtr_socket) == RTR_ERROR)
                 return RTR_ERROR;
@@ -960,19 +959,19 @@ int rtr_wait_for_sync(struct rtr_socket *rtr_socket)
         time_t cur_time;
         rtr_get_monotonic_time(&cur_time);
         time_t wait = (rtr_socket->last_update +rtr_socket->refresh_interval) - cur_time;
-        if(wait < 0)
+        if (wait < 0)
                 wait = 0;
 
         RTR_DBG("waiting %jd sec. till next sync", (intmax_t) wait);
         const int rtval = rtr_receive_pdu(rtr_socket, pdu, sizeof(pdu), wait);
-        if(rtval >= 0) {
+        if (rtval >= 0) {
                 enum pdu_type type = rtr_get_pdu_type(pdu);
-                if(type == SERIAL_NOTIFY) {
+                if (type == SERIAL_NOTIFY) {
                         RTR_DBG1("Serial Notify received");
                         return RTR_SUCCESS;
                 }       
         }
-        else if(rtval == TR_WOULDBLOCK) {
+        else if (rtval == TR_WOULDBLOCK) {
                 RTR_DBG1("Refresh interval expired");
                 return RTR_SUCCESS;
         }
@@ -981,9 +980,9 @@ int rtr_wait_for_sync(struct rtr_socket *rtr_socket)
 
 int rtr_send_error_pdu(const struct rtr_socket *rtr_socket, const void *erroneous_pdu, const uint32_t pdu_len, const enum pdu_error_type error, const char *text, const uint32_t text_len) {
         //dont send errors for erroneous error PDUs
-        if(pdu_len >= 2) {
-                if(rtr_get_pdu_type(erroneous_pdu) == ERROR )
-                return RTR_SUCCESS;
+        if (pdu_len >= 2) {
+                if (rtr_get_pdu_type(erroneous_pdu) == ERROR)
+                        return RTR_SUCCESS;
         }
 
         unsigned int msg_size = 16 + pdu_len + text_len;
@@ -995,10 +994,10 @@ int rtr_send_error_pdu(const struct rtr_socket *rtr_socket, const void *erroneou
         header->len = msg_size;
 
         memcpy(msg+8, &pdu_len, sizeof(pdu_len));
-        if(pdu_len > 0)
+        if (pdu_len > 0)
                 memcpy(msg + 12, erroneous_pdu, pdu_len);
         *(msg + 12 + pdu_len) = htonl(text_len);
-        if(text_len > 0)
+        if (text_len > 0)
                 memcpy(msg+16+pdu_len, text, text_len);
 
         return rtr_send_pdu(rtr_socket, msg, msg_size);
@@ -1015,7 +1014,7 @@ int rtr_send_serial_query(struct rtr_socket *rtr_socket)
 
 
         RTR_DBG("sending serial query, SN: %u",rtr_socket->serial_number);
-        if(rtr_send_pdu(rtr_socket, &pdu, sizeof(pdu)) != RTR_SUCCESS) {
+        if (rtr_send_pdu(rtr_socket, &pdu, sizeof(pdu)) != RTR_SUCCESS) {
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
                 return RTR_ERROR;
         }
@@ -1031,7 +1030,7 @@ int rtr_send_reset_query(struct rtr_socket *rtr_socket)
         pdu.flags = 0;
         pdu.len = 8;
 
-        if(rtr_send_pdu(rtr_socket, &pdu, sizeof(pdu)) != RTR_SUCCESS) {
+        if (rtr_send_pdu(rtr_socket, &pdu, sizeof(pdu)) != RTR_SUCCESS) {
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
                 return RTR_ERROR;
         }
