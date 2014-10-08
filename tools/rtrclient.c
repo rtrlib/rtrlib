@@ -29,7 +29,8 @@
 #include <unistd.h>
 #include "rtrlib/rtrlib.h"
 
-static void print_usage(char** argv){
+static void print_usage(char** argv)
+{
     printf("Usage:\n");
     printf(" %s tcp <host> <port> [options]\n", argv[0]);
 #ifdef RTRLIB_HAVE_LIBSSH
@@ -49,15 +50,16 @@ static void print_usage(char** argv){
 }
 
 static void status_fp(const struct rtr_mgr_group *group __attribute__((unused)),
-			   enum rtr_mgr_status mgr_status, const struct rtr_socket *rtr_sock,
-			   void *data __attribute__((unused)))
+                      enum rtr_mgr_status mgr_status, const struct rtr_socket *rtr_sock,
+                      void *data __attribute__((unused)))
 {
-	printf("RTR-Socket changed connection status to: %s, Mgr Status: %s\n",
-		   rtr_state_to_str(rtr_sock->state),
-		   rtr_mgr_status_to_str(mgr_status));
+    printf("RTR-Socket changed connection status to: %s, Mgr Status: %s\n",
+           rtr_state_to_str(rtr_sock->state),
+           rtr_mgr_status_to_str(mgr_status));
 }
 
-static void update_cb(struct pfx_table* p  __attribute__((unused)), const struct pfx_record rec, const bool added){
+static void update_cb(struct pfx_table* p  __attribute__((unused)), const struct pfx_record rec, const bool added)
+{
     char ip[INET6_ADDRSTRLEN];
     if(added)
         printf("+ ");
@@ -67,7 +69,8 @@ static void update_cb(struct pfx_table* p  __attribute__((unused)), const struct
     printf("%-40s   %3u - %3u   %10u\n", ip, rec.min_len, rec.max_len, rec.asn);
 }
 
-static void update_spki(struct spki_table* s __attribute__((unused)), const struct spki_record record, const bool added){
+static void update_spki(struct spki_table* s __attribute__((unused)), const struct spki_record record, const bool added)
+{
     char c;
     if(added)
         c = '+';
@@ -80,16 +83,17 @@ static void update_spki(struct spki_table* s __attribute__((unused)), const stru
     int i;
     int size = sizeof(record.ski);
     printf("SKI:  ");
-    for(i = 0;i<size;i++){
+    for(i = 0; i<size; i++) {
         printf("%02x",record.ski[i]);
         if(i < size-1)
             printf(":");
     }
     printf("\n  ");
 
-    i = 0; size = sizeof(record.spki);
+    i = 0;
+    size = sizeof(record.spki);
     printf("SPKI: ");
-    for(i = 0;i<size;i++){
+    for(i = 0; i<size; i++) {
         if(i % 40 == 0 && i != 0)
             printf("\n        ");
 
@@ -100,7 +104,8 @@ static void update_spki(struct spki_table* s __attribute__((unused)), const stru
     printf("\n");
 }
 
-int main(int argc, char** argv){
+int main(int argc, char** argv)
+{
     enum mode_t { TCP, SSH } mode;
     char* host;
     char* port;
@@ -112,13 +117,13 @@ int main(int argc, char** argv){
     char* hostkey;
 
 #endif
-    if(argc == 1){
+    if(argc == 1) {
         print_usage(argv);
         return(EXIT_FAILURE);
     }
 
-    if(strncasecmp(argv[1], "tcp", strlen(argv[1])) == 0){
-        if(argc < 4){
+    if(strncasecmp(argv[1], "tcp", strlen(argv[1])) == 0) {
+        if(argc < 4) {
             print_usage(argv);
             return(EXIT_FAILURE);
         }
@@ -126,8 +131,8 @@ int main(int argc, char** argv){
         host = argv[2];
         port = argv[3];
         int i;
-        for(i=4;i<argc;i++){
-            if(argv[i][0] == '-'){
+        for(i=4; i<argc; i++) {
+            if(argv[i][0] == '-') {
                 if(argv[i][1] == 'K')
                     spki_update_fp = update_spki;
                 if(argv[i][1] == 'P')
@@ -137,8 +142,8 @@ int main(int argc, char** argv){
 
     }
 #ifdef RTRLIB_HAVE_LIBSSH
-    else if(strncasecmp(argv[1], "ssh", strlen(argv[1])) == 0){
-        if(argc < 6){
+    else if(strncasecmp(argv[1], "ssh", strlen(argv[1])) == 0) {
+        if(argc < 6) {
             print_usage(argv);
             return(EXIT_FAILURE);
         }
@@ -148,13 +153,13 @@ int main(int argc, char** argv){
         port = argv[3];
         user = argv[4];
         privkey = argv[5];
-    if (argc == 7)
-        hostkey = argv[6];
-    else
-        hostkey = NULL;
+        if (argc == 7)
+            hostkey = argv[6];
+        else
+            hostkey = NULL;
     }
 #endif
-    else{
+    else {
         print_usage(argv);
         return(EXIT_FAILURE);
     }
@@ -166,12 +171,14 @@ int main(int argc, char** argv){
 #ifdef RTRLIB_HAVE_LIBSSH
     struct tr_ssh_config ssh_config;
 #endif
-    if(mode == TCP){
-        tcp_config = (struct tr_tcp_config) { host, port };
+    if(mode == TCP) {
+        tcp_config = (struct tr_tcp_config) {
+            host, port
+        };
         tr_tcp_init(&tcp_config, &tr_sock);
     }
 #ifdef RTRLIB_HAVE_LIBSSH
-    else{
+    else {
         unsigned int iport = atoi(port);
         ssh_config = (struct tr_ssh_config) {
             host,
@@ -180,7 +187,7 @@ int main(int argc, char** argv){
             hostkey,
             privkey,
         };
-    tr_ssh_init(&ssh_config, &tr_sock);
+        tr_ssh_init(&ssh_config, &tr_sock);
     }
 #endif
 
@@ -196,7 +203,7 @@ int main(int argc, char** argv){
 
     conf = rtr_mgr_init(groups, 1, 30, 520, pfx_update_fp, spki_update_fp, status_fp, NULL);
     if (conf == NULL)
-	    return EXIT_FAILURE;
+        return EXIT_FAILURE;
     rtr_mgr_start(conf);
     printf("%-40s   %3s   %3s   %3s\n", "Prefix", "Prefix Length", "", "ASN");
     pause();

@@ -48,7 +48,8 @@ static int tr_tcp_recv(const void *tr_tcp_sock, void *pdu, const size_t len, con
 static int tr_tcp_send(const void *tr_tcp_sock, const void *pdu, const size_t len, const time_t timeout);
 static const char *tr_tcp_ident(void *socket);
 
-int tr_tcp_open(void *tr_socket) {
+int tr_tcp_open(void *tr_socket)
+{
 
     int rtval = TR_ERROR;
     struct tr_tcp_socket *tcp_socket = tr_socket;
@@ -85,7 +86,8 @@ end:
     return rtval;
 }
 
-void tr_tcp_close(void *tr_tcp_sock) {
+void tr_tcp_close(void *tr_tcp_sock)
+{
     struct tr_tcp_socket *tcp_socket = tr_tcp_sock;
     if(tcp_socket->socket != -1)
         close(tcp_socket->socket);
@@ -93,7 +95,8 @@ void tr_tcp_close(void *tr_tcp_sock) {
     tcp_socket->socket = -1;
 }
 
-void tr_tcp_free(struct tr_socket *tr_sock) {
+void tr_tcp_free(struct tr_socket *tr_sock)
+{
     struct tr_tcp_socket *tcp_sock = tr_sock->socket;
     assert(tcp_sock != NULL);
     assert(tcp_sock->socket == -1);
@@ -105,7 +108,8 @@ void tr_tcp_free(struct tr_socket *tr_sock) {
     TCP_DBG1("Socket freed", tcp_sock);
 }
 
-int tr_tcp_recv(const void *tr_tcp_sock, void *pdu, const size_t len, const time_t timeout) {
+int tr_tcp_recv(const void *tr_tcp_sock, void *pdu, const size_t len, const time_t timeout)
+{
     const struct tr_tcp_socket *tcp_socket = tr_tcp_sock;
     int rtval;
     if(timeout == 0)
@@ -132,7 +136,8 @@ int tr_tcp_recv(const void *tr_tcp_sock, void *pdu, const size_t len, const time
     return rtval;
 }
 
-int tr_tcp_send(const void *tr_tcp_sock, const void *pdu, const size_t len, const time_t timeout) {
+int tr_tcp_send(const void *tr_tcp_sock, const void *pdu, const size_t len, const time_t timeout)
+{
     const struct tr_tcp_socket *tcp_socket = tr_tcp_sock;
     int rtval;
     if(timeout == 0)
@@ -159,7 +164,8 @@ int tr_tcp_send(const void *tr_tcp_sock, const void *pdu, const size_t len, cons
     return rtval;
 }
 
-const char *tr_tcp_ident(void *socket) {
+const char *tr_tcp_ident(void *socket)
+{
     size_t len;
     struct tr_tcp_socket *sock = socket;
 
@@ -177,7 +183,8 @@ const char *tr_tcp_ident(void *socket) {
     return sock->ident;
 }
 
-int tr_tcp_init(const struct tr_tcp_config *config, struct tr_socket *socket) {
+int tr_tcp_init(const struct tr_tcp_config *config, struct tr_socket *socket)
+{
 
     socket->close_fp = &tr_tcp_close;
     socket->free_fp = &tr_tcp_free;

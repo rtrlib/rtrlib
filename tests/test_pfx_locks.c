@@ -35,7 +35,8 @@
 uint32_t min_i = 0xFF000000;
 uint32_t max_i = 0xFFFFFFF0;
 
-static void rec_insert(struct pfx_table* pfxt){
+static void rec_insert(struct pfx_table* pfxt)
+{
     const int tid = getpid();
     struct pfx_record rec;
     rec.min_len = 32;
@@ -45,7 +46,7 @@ static void rec_insert(struct pfx_table* pfxt){
 
 
     printf("Inserting %u records\n", (max_i - min_i) * 3);
-    for(uint32_t i = max_i; i >= min_i; i--){
+    for(uint32_t i = max_i; i >= min_i; i--) {
 
         rec.min_len = 32;
         rec.max_len = 32;
@@ -69,7 +70,8 @@ static void rec_insert(struct pfx_table* pfxt){
         //printf("%i: Record inserted\n", tid);
     }
 }
-static void rec_validate(struct pfx_table* pfxt){
+static void rec_validate(struct pfx_table* pfxt)
+{
     const int tid = getpid();
     struct pfx_record rec;
     rec.min_len = 32;
@@ -78,7 +80,7 @@ static void rec_validate(struct pfx_table* pfxt){
     rec.prefix.u.addr4.addr = 0;
     enum pfxv_state res;
     printf("validating..\n");
-    for(uint32_t i = max_i; i >= min_i; i--){
+    for(uint32_t i = max_i; i >= min_i; i--) {
         rec.min_len = 32;
         rec.max_len = 32;
         rec.prefix.ver = IPV4;
@@ -103,7 +105,8 @@ static void rec_validate(struct pfx_table* pfxt){
         usleep(rand() / (RAND_MAX / 20));
     }
 }
-static void rec_remove(struct pfx_table* pfxt){
+static void rec_remove(struct pfx_table* pfxt)
+{
     const int tid = getpid();
     struct pfx_record rec;
     rec.min_len = 32;
@@ -111,7 +114,7 @@ static void rec_remove(struct pfx_table* pfxt){
     rec.prefix.ver = IPV4;
     rec.prefix.u.addr4.addr = 0;
     printf("removing records\n");
-    for(uint32_t i = max_i; i >= min_i; i--){
+    for(uint32_t i = max_i; i >= min_i; i--) {
         rec.socket = NULL;
         rec.min_len = 32;
         rec.max_len = 32;
@@ -140,25 +143,26 @@ static void rec_remove(struct pfx_table* pfxt){
     printf("Done\n");
 }
 
-int main(){
+int main()
+{
     unsigned int max_threads = 15;
     struct pfx_table pfxt;
     pfx_table_init(&pfxt, NULL);
     pthread_t threads[max_threads];
     srand(time(NULL));
-    for(unsigned int i=0;i<max_threads;i++){
+    for(unsigned int i=0; i<max_threads; i++) {
         int r = rand() / (RAND_MAX / 3);
         if(r == 0)
             pthread_create(&(threads[i]), NULL, (void * (*)(void *)) rec_insert, &pfxt);
         else if(r == 1)
-                pthread_create(&(threads[i]), NULL, (void * (*)(void *)) rec_remove, &pfxt);
+            pthread_create(&(threads[i]), NULL, (void * (*)(void *)) rec_remove, &pfxt);
         else if(r == 2)
             pthread_create(&(threads[i]), NULL, (void * (*)(void *)) rec_validate, &pfxt);
         printf("Started Thread %d\n",i);
         usleep(200);
 
     }
-    for(unsigned int i=0;i<max_threads;i++){
+    for(unsigned int i=0; i<max_threads; i++) {
         pthread_join(threads[i], NULL);
         printf("Thread %i returned\n", i);
     }

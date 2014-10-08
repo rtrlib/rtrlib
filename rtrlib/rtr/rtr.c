@@ -47,11 +47,13 @@ static const char *socket_str_states[] = {
     [RTR_SHUTDOWN] = "RTR_SHUTDOWN"
 };
 
-void sighandler(int b __attribute__((unused)) ) {
+void sighandler(int b __attribute__((unused)) )
+{
     return;
 }
 
-static int install_sig_handler() {
+static int install_sig_handler()
+{
     struct sigaction sa;
     sa.sa_handler = &sighandler;
     sigset_t mask;
@@ -62,7 +64,8 @@ static int install_sig_handler() {
     return sigaction(SIGUSR1, &sa, NULL);
 }
 
-void rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_table *pfx_table, struct spki_table *spki_table, const unsigned int refresh_interval, const unsigned int expire_interval, rtr_connection_state_fp fp, void *fp_param) {
+void rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_table *pfx_table, struct spki_table *spki_table, const unsigned int refresh_interval, const unsigned int expire_interval, rtr_connection_state_fp fp, void *fp_param)
+{
     if(tr != NULL)
         rtr_socket->tr_socket = tr;
     assert(refresh_interval <= 3600);
@@ -84,14 +87,16 @@ void rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_ta
     rtr_socket->version = RTR_PROTOCOL_MAX_SUPPORTED_VERSION;
 }
 
-int rtr_start(struct rtr_socket *rtr_socket) {
+int rtr_start(struct rtr_socket *rtr_socket)
+{
     int rtval = pthread_create(&(rtr_socket->thread_id), NULL, (void* ( *)(void *)) &rtr_fsm_start, rtr_socket);
     if(rtval == 0)
         return RTR_SUCCESS;
     return RTR_ERROR;
 }
 
-void rtr_purge_outdated_records(struct rtr_socket *rtr_socket) {
+void rtr_purge_outdated_records(struct rtr_socket *rtr_socket)
+{
     if(rtr_socket->last_update == 0)
         return;
     time_t cur_time;
@@ -109,7 +114,8 @@ void rtr_purge_outdated_records(struct rtr_socket *rtr_socket) {
     }
 }
 
-void rtr_fsm_start(struct rtr_socket *rtr_socket) {
+void rtr_fsm_start(struct rtr_socket *rtr_socket)
+{
     rtr_socket->state = RTR_CONNECTING;
     install_sig_handler();
     while(1) {
@@ -121,12 +127,10 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket) {
 
             if(tr_open(rtr_socket->tr_socket) == TR_ERROR) {
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
-            }
-            else if(rtr_socket->request_session_id) {
+            } else if(rtr_socket->request_session_id) {
                 //change to state RESET, if socket dont has a session_id
                 rtr_change_socket_state(rtr_socket, RTR_RESET);
-            }
-            else {
+            } else {
                 //if we already have a session_id, send a serial query and start to sync
                 if(rtr_send_serial_query(rtr_socket) == RTR_SUCCESS)
                     rtr_change_socket_state(rtr_socket, RTR_SYNC);
@@ -203,7 +207,8 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket) {
     }
 }
 
-void rtr_stop(struct rtr_socket *rtr_socket) {
+void rtr_stop(struct rtr_socket *rtr_socket)
+{
     rtr_change_socket_state(rtr_socket, RTR_SHUTDOWN);
     if(rtr_socket->thread_id != 0) {
         pthread_kill(rtr_socket->thread_id, SIGUSR1);
@@ -214,5 +219,5 @@ void rtr_stop(struct rtr_socket *rtr_socket) {
 
 const char *rtr_state_to_str(enum rtr_socket_state state)
 {
-	return socket_str_states[state];
+    return socket_str_states[state];
 }
