@@ -45,15 +45,17 @@ static bool compare_spki_records(struct spki_record *r1, struct spki_record *r2)
 
 static struct spki_record *create_record(int ASN, int ski_offset, int spki_offset, struct rtr_socket *socket) {
     struct spki_record *record = malloc(sizeof(struct spki_record));
+    memset(record, 0, sizeof(*record));
+
     record->asn = ASN;
     uint32_t i;
 
-    for(i = 0; i < sizeof(record->ski); i++){
-        record->ski[i] = i + ski_offset;
+    for(i = 0; i < sizeof(record->ski)/sizeof(u_int32_t); i++){
+        ((u_int32_t*)record->ski)[i] = i + ski_offset;
     }
 
-    for(i = 0; i < sizeof(record->spki); i++){
-        record->spki[i] = i + spki_offset;
+    for(i = 0; i < sizeof(record->spki)/sizeof(u_int32_t); i++){
+        ((u_int32_t*)record->spki)[i] = i + spki_offset;
     }
     record->socket = socket;
     return record;
@@ -395,7 +397,7 @@ static void test_ht_7(){
     spki_table_init(&table, NULL);
 
     //ASN(1) <---> SKI(n) -----------------------------------------------------
-    const unsigned int NUM_OF_RECORDS = 200;
+    const unsigned int NUM_OF_RECORDS = 2000;
     struct spki_record *records[NUM_OF_RECORDS];
 
     //Create NUM_OF_RECORDS spki_records with same ASN but different SKI
