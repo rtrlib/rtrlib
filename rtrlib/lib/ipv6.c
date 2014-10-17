@@ -28,13 +28,15 @@
 #include <string.h>
 #include <stdio.h>
 
-inline bool ipv6_addr_equal(const struct ipv6_addr *a, const struct ipv6_addr *b) {
+inline bool ipv6_addr_equal(const struct ipv6_addr *a, const struct ipv6_addr *b)
+{
     if(a->addr[0] == b->addr[0] && a->addr[1] == b->addr[1] && a->addr[2] == b->addr[2] && a->addr[3] == b->addr[3])
         return true;
     return false;
 }
 
-struct ipv6_addr ipv6_get_bits(const struct ipv6_addr *val, const uint8_t first_bit, const uint8_t quantity) {
+struct ipv6_addr ipv6_get_bits(const struct ipv6_addr *val, const uint8_t first_bit, const uint8_t quantity)
+{
     assert(first_bit <= 127);
     assert(quantity <= 128);
     assert(first_bit + quantity <= 128);
@@ -81,7 +83,8 @@ struct ipv6_addr ipv6_get_bits(const struct ipv6_addr *val, const uint8_t first_
 /*
  * This function was copied from the bird routing daemon's ip_pton(..) function.
  */
-int ipv6_str_to_addr(const char *a, struct ipv6_addr *ip) {
+int ipv6_str_to_addr(const char *a, struct ipv6_addr *ip)
+{
     uint32_t *o = ip->addr;
     uint16_t words[8];
     int i, j, k, l, hfil;
@@ -127,8 +130,7 @@ int ipv6_str_to_addr(const char *a, struct ipv6_addr *ip) {
             words[i++] = addr4.addr >> 16;
             words[i++] = addr4.addr;
             break;
-        }
-        else if (*a)
+        } else if (*a)
             return -1;
         if (i >= 8)
             return -1;
@@ -153,7 +155,8 @@ int ipv6_str_to_addr(const char *a, struct ipv6_addr *ip) {
 /*
  * This function was copied from the bird routing daemon's ip_ntop(..) function.
 */
-int ipv6_addr_to_str(const struct ipv6_addr *ip_addr, char *b, const unsigned int len) {
+int ipv6_addr_to_str(const struct ipv6_addr *ip_addr, char *b, const unsigned int len)
+{
     if(len < INET6_ADDRSTRLEN)
         return -1;
     const uint32_t *a = ip_addr->addr;
@@ -196,8 +199,7 @@ int ipv6_addr_to_str(const struct ipv6_addr *ip_addr, char *b, const unsigned in
             *b++ = ':';
             if (i == 7)
                 *b++ = ':';
-        }
-        else {
+        } else {
             if (i)
                 *b++ = ':';
             b += sprintf(b, "%x", words[i]);
@@ -207,7 +209,8 @@ int ipv6_addr_to_str(const struct ipv6_addr *ip_addr, char *b, const unsigned in
     return 0;
 }
 
-void ipv6_addr_to_host_byte_order(const uint32_t *src, uint32_t *dest) {
+void ipv6_addr_to_host_byte_order(const uint32_t *src, uint32_t *dest)
+{
     for(int i = 0; i < 4; i++)
         dest[i] = ntohl(src[i]);
 }

@@ -23,31 +23,38 @@
 #include "rtrlib/transport/transport.h"
 #include "rtrlib/lib/utils.h"
 
-inline int tr_open(struct tr_socket *socket) {
+inline int tr_open(struct tr_socket *socket)
+{
     return socket->open_fp(socket->socket);
 }
 
-inline void tr_close(struct tr_socket *socket) {
+inline void tr_close(struct tr_socket *socket)
+{
     socket->close_fp(socket->socket);
 }
 
-inline void tr_free(struct tr_socket *socket) {
+inline void tr_free(struct tr_socket *socket)
+{
     socket->free_fp(socket);
 }
 
-inline int tr_send(const struct tr_socket *socket, const void *pdu, const size_t len, const time_t timeout) {
+inline int tr_send(const struct tr_socket *socket, const void *pdu, const size_t len, const time_t timeout)
+{
     return socket->send_fp(socket->socket, pdu, len, timeout);
 }
 
-inline int tr_recv(const struct tr_socket *socket, void *buf, const size_t len, const time_t timeout) {
+inline int tr_recv(const struct tr_socket *socket, void *buf, const size_t len, const time_t timeout)
+{
     return socket->recv_fp(socket->socket, buf, len, timeout);
 }
 
-inline const char *tr_ident(struct tr_socket *sock) {
-	return sock->ident_fp(sock->socket);
+inline const char *tr_ident(struct tr_socket *sock)
+{
+    return sock->ident_fp(sock->socket);
 }
 
-int tr_send_all(const struct tr_socket *socket, const void *pdu, const size_t len, const time_t timeout) {
+int tr_send_all(const struct tr_socket *socket, const void *pdu, const size_t len, const time_t timeout)
+{
     unsigned int total_send = 0;
     int rtval = 0;
     time_t end_time;
@@ -66,7 +73,8 @@ int tr_send_all(const struct tr_socket *socket, const void *pdu, const size_t le
     return total_send;
 }
 
-int tr_recv_all(const struct tr_socket *socket, const void *pdu, const size_t len, const time_t timeout) {
+int tr_recv_all(const struct tr_socket *socket, const void *pdu, const size_t len, const time_t timeout)
+{
     size_t total_recv = 0;
     int rtval = 0;
     time_t end_time;

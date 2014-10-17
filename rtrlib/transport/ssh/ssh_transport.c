@@ -48,7 +48,8 @@ static int tr_ssh_send(const void *tr_ssh_sock, const void *pdu, const size_t le
 static int tr_ssh_recv_async(const struct tr_ssh_socket *tr_ssh_sock, void *buf, const size_t buf_len);
 static const char *tr_ssh_ident(void *tr_ssh_sock);
 
-int tr_ssh_open(void *socket) {
+int tr_ssh_open(void *socket)
+{
     struct tr_ssh_socket *ssh_socket = socket;
     const struct tr_ssh_config *config = &ssh_socket->config;
 
@@ -110,7 +111,8 @@ error:
 
 }
 
-void tr_ssh_close(void *tr_ssh_sock) {
+void tr_ssh_close(void *tr_ssh_sock)
+{
     struct tr_ssh_socket *socket = tr_ssh_sock;
 
     if(socket->channel != NULL) {
@@ -127,7 +129,8 @@ void tr_ssh_close(void *tr_ssh_sock) {
     SSH_DBG1("Socket closed", socket);
 }
 
-void tr_ssh_free(struct tr_socket *tr_sock) {
+void tr_ssh_free(struct tr_socket *tr_sock)
+{
     struct tr_ssh_socket *tr_ssh_sock = tr_sock->socket;
     assert(tr_ssh_sock->channel == NULL);
     assert(tr_ssh_sock->session == NULL);
@@ -159,25 +162,25 @@ int tr_ssh_recv(const void* tr_ssh_sock, void* buf, unsigned int buf_len, const 
     return channel_read_nonblocking(((tr_ssh_socket*) tr_ssh_sock)->channel, buf, buf_len, false);
 }
 */
-int tr_ssh_recv_async(const struct tr_ssh_socket *tr_ssh_sock, void *buf, const size_t buf_len) {
+int tr_ssh_recv_async(const struct tr_ssh_socket *tr_ssh_sock, void *buf, const size_t buf_len)
+{
     const int rtval = channel_read_nonblocking(tr_ssh_sock->channel, buf, buf_len, false);
     if(rtval == 0) {
         if(channel_is_eof(tr_ssh_sock->channel) != 0) {
             SSH_DBG1("remote has sent EOF", tr_ssh_sock);
             return TR_ERROR;
-        }
-        else {
+        } else {
             return TR_WOULDBLOCK;
         }
-    }
-    else if(rtval == SSH_ERROR) {
+    } else if(rtval == SSH_ERROR) {
         SSH_DBG1("recv(..) error", tr_ssh_sock);
         return TR_ERROR;
     }
     return rtval;
 }
 
-int tr_ssh_recv(const void *tr_ssh_sock, void *buf, const size_t buf_len, const time_t timeout) {
+int tr_ssh_recv(const void *tr_ssh_sock, void *buf, const size_t buf_len, const time_t timeout)
+{
     if(timeout == 0)
         return tr_ssh_recv_async(tr_ssh_sock, buf, buf_len);
 
@@ -223,11 +226,13 @@ int tr_ssh_recv(const void* tr_ssh_sock, void* buf, const size_t buf_len, const 
 }
 */
 
-int tr_ssh_send(const void *tr_ssh_sock, const void *pdu, const size_t len, const time_t timeout __attribute__((unused))) {
+int tr_ssh_send(const void *tr_ssh_sock, const void *pdu, const size_t len, const time_t timeout __attribute__((unused)))
+{
     return channel_write(((struct tr_ssh_socket *) tr_ssh_sock)->channel, pdu, len);
 }
 
-const char *tr_ssh_ident(void *tr_ssh_sock) {
+const char *tr_ssh_ident(void *tr_ssh_sock)
+{
     size_t len;
     struct tr_ssh_socket *sock = tr_ssh_sock;
 
@@ -246,7 +251,8 @@ const char *tr_ssh_ident(void *tr_ssh_sock) {
     return sock->ident;
 }
 
-int tr_ssh_init(const struct tr_ssh_config *config, struct tr_socket *socket) {
+int tr_ssh_init(const struct tr_ssh_config *config, struct tr_socket *socket)
+{
 
     socket->close_fp = &tr_ssh_close;
     socket->free_fp = &tr_ssh_free;

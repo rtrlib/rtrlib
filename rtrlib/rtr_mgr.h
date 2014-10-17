@@ -110,11 +110,11 @@ struct rtr_mgr_config {
  * @return NULL On error
  */
 struct rtr_mgr_config *rtr_mgr_init(struct rtr_mgr_group groups[], const unsigned int groups_len,
-         const unsigned int refresh_interval, const unsigned int expire_interval,
-		 const pfx_update_fp update_fp,
-         const spki_update_fp spki_update_fp,
-		 const rtr_mgr_status_fp status_fp,
-		 void *status_fp_data);
+                                    const unsigned int refresh_interval, const unsigned int expire_interval,
+                                    const pfx_update_fp update_fp,
+                                    const spki_update_fp spki_update_fp,
+                                    const rtr_mgr_status_fp status_fp,
+                                    void *status_fp_data);
 
 /**
  * @brief Frees all resources that were allocated from the rtr_mgr.

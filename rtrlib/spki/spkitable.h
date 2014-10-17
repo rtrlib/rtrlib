@@ -22,7 +22,6 @@
 #ifndef RTR_SPKI_H
 #define RTR_SPKI_H
 
-
 #include <stdint.h>
 #include <sys/types.h>
 #include "rtrlib/lib/ip.h"
@@ -119,7 +118,7 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski
  * @return SPKI_SUCCESS On success
  * @return SPKI_ERROR On error
  */
- int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski, struct spki_record **result, unsigned int *result_size);
+int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski, struct spki_record **result, unsigned int *result_size);
 
 
 /**

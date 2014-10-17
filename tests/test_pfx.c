@@ -31,7 +31,8 @@
 #include "rtrlib/lib/utils.h"
 #include "rtrlib/pfx/lpfst/lpfst-pfx.h"
 
-static void remove_src_test(){
+static void remove_src_test()
+{
     struct pfx_table pfxt;
     pfx_table_init(&pfxt, NULL);
     struct rtr_socket tr1;
@@ -89,7 +90,8 @@ static void remove_src_test(){
     pfx_table_free(&pfxt);
 }
 
-static void mass_test(){
+static void mass_test()
+{
     struct pfx_table pfxt;
     pfx_table_init(&pfxt, NULL);
 
@@ -99,7 +101,7 @@ static void mass_test(){
     const uint32_t max_i = 0xFFFFFFF0;
 
     printf("Inserting %u records\n", (max_i - min_i) * 3);
-    for(uint32_t i = max_i; i >= min_i; i--){
+    for(uint32_t i = max_i; i >= min_i; i--) {
         rec.min_len = 32;
         rec.max_len = 32;
         rec.socket = NULL;
@@ -119,7 +121,7 @@ static void mass_test(){
     }
 
     printf("validating..\n");
-    for(uint32_t i = max_i; i >= min_i; i--){
+    for(uint32_t i = max_i; i >= min_i; i--) {
         rec.min_len = 32;
         rec.max_len = 32;
         rec.prefix.ver = IPV4;
@@ -141,7 +143,7 @@ static void mass_test(){
     }
 
     printf("removing records\n");
-    for(uint32_t i = max_i; i >= min_i; i--){
+    for(uint32_t i = max_i; i >= min_i; i--) {
         rec.socket = NULL;
         rec.min_len = 32;
         rec.max_len = 32;
@@ -164,7 +166,8 @@ static void mass_test(){
     printf("Done\n");
 }
 
-int main(){
+int main()
+{
     struct pfx_table pfxt;
     pfx_table_init(&pfxt, NULL);
 

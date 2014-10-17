@@ -54,7 +54,7 @@ enum rtr_rtvals {
 /**
  * @brief States of the RTR socket.
  */
-enum rtr_socket_state{
+enum rtr_socket_state {
     /** Socket is establishing the transport connection. */
     RTR_CONNECTING,
 

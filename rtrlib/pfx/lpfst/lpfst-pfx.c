@@ -49,19 +49,22 @@ static int pfx_table_node2pfx_record(struct lpfst_node *node, struct pfx_record 
 static void pfx_table_free_reason(struct pfx_record **reason, unsigned int *reason_len);
 
 
-void pfx_table_notify_clients(struct pfx_table *pfx_table, const struct pfx_record *record, const bool added) {
+void pfx_table_notify_clients(struct pfx_table *pfx_table, const struct pfx_record *record, const bool added)
+{
     if(pfx_table->update_fp != NULL)
         pfx_table->update_fp(pfx_table, *record, added);
 }
 
-void pfx_table_init(struct pfx_table *pfx_table, pfx_update_fp update_fp) {
+void pfx_table_init(struct pfx_table *pfx_table, pfx_update_fp update_fp)
+{
     pfx_table->ipv4 = NULL;
     pfx_table->ipv6 = NULL;
     pfx_table->update_fp = update_fp;
     pthread_rwlock_init(&(pfx_table->lock), NULL);
 }
 
-void pfx_table_free(struct pfx_table *pfx_table) {
+void pfx_table_free(struct pfx_table *pfx_table)
+{
     for(int i = 0; i < 2; i++) {
         struct lpfst_node *root = (i == 0 ? pfx_table->ipv4 : pfx_table->ipv6);
         struct lpfst_node *rm_node;
@@ -78,8 +81,7 @@ void pfx_table_free(struct pfx_table *pfx_table) {
                 free(((struct node_data *) rm_node->data)->ary);
                 free(rm_node->data);
                 free(rm_node);
-            }
-            while(rm_node != root);
+            } while(rm_node != root);
             if(i == 0)
                 pfx_table->ipv4 = NULL;
             else
@@ -91,7 +93,8 @@ void pfx_table_free(struct pfx_table *pfx_table) {
     pthread_rwlock_destroy(&(pfx_table->lock));
 }
 
-int pfx_table_append_elem(struct node_data *data, const struct pfx_record *record) {
+int pfx_table_append_elem(struct node_data *data, const struct pfx_record *record)
+{
     data->len++;
     data->ary = realloc(data->ary, sizeof(struct data_elem) * data->len);
     if(data->ary == NULL)
@@ -102,7 +105,8 @@ int pfx_table_append_elem(struct node_data *data, const struct pfx_record *recor
     return PFX_SUCCESS;
 }
 
-int pfx_table_create_node(struct lpfst_node **node, const struct pfx_record *record) {
+int pfx_table_create_node(struct lpfst_node **node, const struct pfx_record *record)
+{
     *node = malloc(sizeof(struct lpfst_node));
     if(*node == NULL)
         return PFX_ERROR;
@@ -121,7 +125,8 @@ int pfx_table_create_node(struct lpfst_node **node, const struct pfx_record *rec
     return pfx_table_append_elem(((struct node_data *) (*node)->data), record);
 }
 
-struct data_elem *pfx_table_find_elem(const struct node_data *data, const struct pfx_record *record, unsigned int *index) {
+struct data_elem *pfx_table_find_elem(const struct node_data *data, const struct pfx_record *record, unsigned int *index)
+{
     for(unsigned int i = 0; i < data->len; i++) {
         if(data->ary[i].asn == record->asn && data->ary[i].max_len == record->max_len && data->ary[i].socket == record->socket) {
             if(index != NULL)
@@ -133,11 +138,13 @@ struct data_elem *pfx_table_find_elem(const struct node_data *data, const struct
 }
 
 //returns pfx_table->ipv4 if record version is IPV4 else pfx_table->ipv6
-inline struct lpfst_node *pfx_table_get_root(const struct pfx_table *pfx_table, const enum ip_version ver) {
+inline struct lpfst_node *pfx_table_get_root(const struct pfx_table *pfx_table, const enum ip_version ver)
+{
     return ver == IPV4 ? pfx_table->ipv4 : pfx_table->ipv6;
 }
 
-int pfx_table_del_elem(struct node_data *data, const unsigned int index) {
+int pfx_table_del_elem(struct node_data *data, const unsigned int index)
+{
     //if index is not the last elem in the list, move all other elems backwards in the array
     if(index != data->len - 1) {
         for(unsigned int i = index; i < data->len - 1; i++) {
@@ -154,7 +161,8 @@ int pfx_table_del_elem(struct node_data *data, const unsigned int index) {
     return PFX_SUCCESS;
 }
 
-int pfx_table_add(struct pfx_table *pfx_table, const struct pfx_record *record) {
+int pfx_table_add(struct pfx_table *pfx_table, const struct pfx_record *record)
+{
     pthread_rwlock_wrlock(&(pfx_table->lock));
 
     struct lpfst_node *root = pfx_table_get_root(pfx_table, record->prefix.ver);
@@ -172,8 +180,7 @@ int pfx_table_add(struct pfx_table *pfx_table, const struct pfx_record *record) 
             pthread_rwlock_unlock(&pfx_table->lock);
             pfx_table_notify_clients(pfx_table, record, true);
             return rtval;
-        }
-        else {
+        } else {
             //no node with same prefix and prefix_len found
             struct lpfst_node *new_node = NULL;
             if(pfx_table_create_node(&new_node, record) == PFX_ERROR) {
@@ -185,8 +192,7 @@ int pfx_table_add(struct pfx_table *pfx_table, const struct pfx_record *record) 
             pfx_table_notify_clients(pfx_table, record, true);
             return PFX_SUCCESS;
         }
-    }
-    else {
+    } else {
         //tree is empty, record will be the root_node
         struct lpfst_node *new_node = NULL;
         if(pfx_table_create_node(&new_node, record) == PFX_ERROR) {
@@ -204,7 +210,8 @@ int pfx_table_add(struct pfx_table *pfx_table, const struct pfx_record *record) 
     return PFX_SUCCESS;
 }
 
-int pfx_table_remove(struct pfx_table *pfx_table, const struct pfx_record *record) {
+int pfx_table_remove(struct pfx_table *pfx_table, const struct pfx_record *record)
+{
     pthread_rwlock_wrlock(&(pfx_table->lock));
     struct lpfst_node *root = pfx_table_get_root(pfx_table, record->prefix.ver);
 
@@ -251,7 +258,8 @@ int pfx_table_remove(struct pfx_table *pfx_table, const struct pfx_record *recor
     return PFX_SUCCESS;
 }
 
-bool pfx_table_elem_matches(struct node_data *data, const uint32_t asn, const uint8_t prefix_len) {
+bool pfx_table_elem_matches(struct node_data *data, const uint32_t asn, const uint8_t prefix_len)
+{
     for(unsigned int i = 0; i < data->len; i++) {
         if(data->ary[i].asn != 0 && data->ary[i].asn == asn && prefix_len <= data->ary[i].max_len)
             return true;
@@ -259,7 +267,8 @@ bool pfx_table_elem_matches(struct node_data *data, const uint32_t asn, const ui
     return false;
 }
 
-int pfx_table_node2pfx_record(struct lpfst_node *node, struct pfx_record *records, const unsigned int ary_len) {
+int pfx_table_node2pfx_record(struct lpfst_node *node, struct pfx_record *records, const unsigned int ary_len)
+{
     struct node_data *data = node->data;
     if(ary_len < data->len)
         return PFX_ERROR;
@@ -274,7 +283,8 @@ int pfx_table_node2pfx_record(struct lpfst_node *node, struct pfx_record *record
     return data->len;
 }
 
-inline void pfx_table_free_reason(struct pfx_record **reason, unsigned int *reason_len) {
+inline void pfx_table_free_reason(struct pfx_record **reason, unsigned int *reason_len)
+{
     if(reason != NULL) {
         free(*reason);
         *reason = NULL;
@@ -283,7 +293,8 @@ inline void pfx_table_free_reason(struct pfx_record **reason, unsigned int *reas
         *reason_len = 0;
 }
 
-int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason, unsigned int *reason_len, const uint32_t asn, const struct ip_addr *prefix, const uint8_t prefix_len, enum pfxv_state *result) {
+int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason, unsigned int *reason_len, const uint32_t asn, const struct ip_addr *prefix, const uint8_t prefix_len, enum pfxv_state *result)
+{
     //assert(reason_len == NULL || *reason_len  == 0);
     //assert(reason == NULL || *reason == NULL);
 
@@ -355,11 +366,13 @@ int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason
     return PFX_SUCCESS;
 }
 
-int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const struct ip_addr *prefix, const uint8_t prefix_len, enum pfxv_state *result) {
+int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const struct ip_addr *prefix, const uint8_t prefix_len, enum pfxv_state *result)
+{
     return pfx_table_validate_r(pfx_table, NULL, NULL, asn, prefix, prefix_len, result);
 }
 
-int pfx_table_src_remove(struct pfx_table *pfx_table, const struct rtr_socket *socket) {
+int pfx_table_src_remove(struct pfx_table *pfx_table, const struct rtr_socket *socket)
+{
     for(unsigned int i = 0; i < 2; i++) {
         struct lpfst_node **root = (i == 0 ? &(pfx_table->ipv4) : &(pfx_table->ipv6));
         pthread_rwlock_wrlock(&(pfx_table->lock));
@@ -373,7 +386,8 @@ int pfx_table_src_remove(struct pfx_table *pfx_table, const struct rtr_socket *s
     return PFX_SUCCESS;
 }
 
-int pfx_table_remove_id(struct pfx_table *pfx_table, struct lpfst_node **root, struct lpfst_node *node, const struct rtr_socket *socket, const unsigned int level) {
+int pfx_table_remove_id(struct pfx_table *pfx_table, struct lpfst_node **root, struct lpfst_node *node, const struct rtr_socket *socket, const unsigned int level)
+{
     assert(node != NULL);
     assert(root != NULL);
     assert(*root != NULL);
@@ -400,11 +414,9 @@ int pfx_table_remove_id(struct pfx_table *pfx_table, struct lpfst_node **root, s
             if(rm_node == *root) {
                 *root = NULL;
                 return PFX_SUCCESS;
-            }
-            else if(rm_node == node)
+            } else if(rm_node == node)
                 return PFX_SUCCESS;
-        }
-        else
+        } else
             check_node = false;
     }
 
@@ -418,38 +430,40 @@ int pfx_table_remove_id(struct pfx_table *pfx_table, struct lpfst_node **root, s
 }
 
 static void pfx_table_for_each_rec(struct lpfst_node *n, void (fp)(const struct pfx_record *, void *),
-					  void *data) {
-	struct pfx_record pfxr;
-	struct node_data *nd;
+                                   void *data)
+{
+    struct pfx_record pfxr;
+    struct node_data *nd;
 
-	assert(n != NULL);
-	assert(fp != NULL);
+    assert(n != NULL);
+    assert(fp != NULL);
 
-	nd = (struct node_data *) n->data;
-	assert(nd != NULL);
+    nd = (struct node_data *) n->data;
+    assert(nd != NULL);
 
-	if (n->lchild != NULL)
-		pfx_table_for_each_rec(n->lchild, fp, data);
+    if (n->lchild != NULL)
+        pfx_table_for_each_rec(n->lchild, fp, data);
 
-	for (unsigned int i = 0; i < nd->len; i++) {
-		pfxr.asn =  nd->ary[i].asn;
-		pfxr.prefix = n->prefix;
-		pfxr.min_len = n->len;
-		pfxr.max_len = nd->ary[i].max_len;
-		pfxr.socket = nd->ary[i].socket;
-		fp(&pfxr, nd);
-	}
+    for (unsigned int i = 0; i < nd->len; i++) {
+        pfxr.asn =  nd->ary[i].asn;
+        pfxr.prefix = n->prefix;
+        pfxr.min_len = n->len;
+        pfxr.max_len = nd->ary[i].max_len;
+        pfxr.socket = nd->ary[i].socket;
+        fp(&pfxr, nd);
+    }
 
-	if (n->rchild != NULL)
-		pfx_table_for_each_rec(n->rchild, fp, data);
+    if (n->rchild != NULL)
+        pfx_table_for_each_rec(n->rchild, fp, data);
 }
 
 void pfx_table_for_each_ipv4_record(struct pfx_table *pfx_table, void (fp)(const struct pfx_record *, void *),
-				    void *data) {
-	assert(pfx_table != NULL);
+                                    void *data)
+{
+    assert(pfx_table != NULL);
 
-	if (pfx_table->ipv4 == NULL)
-		return;
+    if (pfx_table->ipv4 == NULL)
+        return;
 
     pthread_rwlock_rdlock(&(pfx_table->lock));
     pfx_table_for_each_rec(pfx_table->ipv4, fp, data);
@@ -457,13 +471,14 @@ void pfx_table_for_each_ipv4_record(struct pfx_table *pfx_table, void (fp)(const
 }
 
 void pfx_table_for_each_ipv6_record(struct pfx_table *pfx_table, void (fp)(const struct pfx_record *, void *),
-				    void *data) {
-	assert(pfx_table != NULL);
+                                    void *data)
+{
+    assert(pfx_table != NULL);
 
-	if (pfx_table->ipv6 == NULL)
-		return;
+    if (pfx_table->ipv6 == NULL)
+        return;
 
     pthread_rwlock_rdlock(&(pfx_table->lock));
-	pfx_table_for_each_rec(pfx_table->ipv6, fp, data);
+    pfx_table_for_each_rec(pfx_table->ipv6, fp, data);
     pthread_rwlock_unlock(&pfx_table->lock);
 }
