@@ -36,7 +36,7 @@
  * @brief  A tr_tcp_config struct holds configuration for a TCP connection.
  * @param host Hostname or IP address to connect to.
  * @param port Port to connect to.
- * @param bindaddr Hostname or IP address to connect from.
+ * @param bindaddr Hostname or IP address to connect from (null pointer for any).
  */
 struct tr_tcp_config {
     char *host;

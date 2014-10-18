@@ -12,6 +12,7 @@ int main(){
     struct tr_ssh_config config = {
         ssh_host,
         22,
+        0,
         ssh_user,
         ssh_hostkey,
         ssh_privkey,
