@@ -114,7 +114,7 @@ int main(int argc, char** argv){
     struct tr_ssh_config ssh_config;
 #endif
     if(mode == TCP){
-        tcp_config = (struct tr_tcp_config) { host, port };
+        tcp_config = (struct tr_tcp_config) { host, port, 0 };
         tr_tcp_init(&tcp_config, &tr_sock);
     }
 #ifdef RTRLIB_HAVE_LIBSSH
@@ -123,6 +123,7 @@ int main(int argc, char** argv){
         ssh_config = (struct tr_ssh_config) {
             host,
             iport,
+            NULL,
             user,
             hostkey,
             privkey,

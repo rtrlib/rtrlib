@@ -43,6 +43,8 @@
  * @brief A tr_ssh_config struct holds configuration data for an tr_ssh socket.
  * @param host Hostname or IP address to connect to.
  * @param port Port to connect to.
+ * @param bindaddr Hostname or IP address to connect from. NULL for
+ *		   determination by OS.
  * @param username Username for authentication.
  * @param server_hostkey_path Path to public SSH key of the server or NULL to
                               don't verify host authenticity.
@@ -52,6 +54,7 @@
 struct tr_ssh_config {
     char *host;
     unsigned int port;
+    char *bindaddr;
     char *username;
     char *server_hostkey_path;
     char *client_privkey_path;
