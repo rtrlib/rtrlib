@@ -32,33 +32,12 @@
 #include "rtrlib/lib/ip.h"
 #include "rtrlib/pfx/lpfst/lpfst-pfx.h"
 
-void print_state(const pfxv_state s){
-    if(s == BGP_PFXV_STATE_VALID)
-        printf("VALID\n");
-    else if(s == BGP_PFXV_STATE_NOT_FOUND)
-        printf("NOT FOUND\n");
-    else if(s == BGP_PFXV_STATE_INVALID)
-        printf("INVALID\n");
-}
-
-void print_pfx_rtval(const int rtval){
-    if(rtval == PFX_SUCCESS)
-        printf("PXF_SUCCESS\n");
-    else if(rtval == PFX_ERROR)
-        printf("PXF_ERROR\n");
-    else if(rtval == PFX_DUPLICATE_RECORD)
-        printf("PXF_DUPLICATE_RECORD\n");
-    else if(rtval == PFX_RECORD_NOT_FOUND)
-        printf("PXF_RECORD_NOT_FOUND\n");
-}
-
-
 uint32_t min_i = 0xFF000000;
 uint32_t max_i = 0xFFFFFFF0;
 
-void rec_insert(pfx_table* pfxt){
+static void rec_insert(struct pfx_table* pfxt){
     const int tid = getpid();
-    pfx_record rec;
+    struct pfx_record rec;
     rec.min_len = 32;
     rec.max_len = 32;
     rec.prefix.ver = IPV4;
@@ -70,7 +49,7 @@ void rec_insert(pfx_table* pfxt){
 
         rec.min_len = 32;
         rec.max_len = 32;
-        rec.socket_id = i;
+        rec.socket = NULL;
         rec.asn = tid % 2;
         rec.prefix.u.addr4.addr = htonl(i);
         rec.prefix.ver = IPV4;
@@ -90,14 +69,14 @@ void rec_insert(pfx_table* pfxt){
         //printf("%i: Record inserted\n", tid);
     }
 }
-void rec_validate(pfx_table* pfxt){
+static void rec_validate(struct pfx_table* pfxt){
     const int tid = getpid();
-    pfx_record rec;
+    struct pfx_record rec;
     rec.min_len = 32;
     rec.max_len = 32;
     rec.prefix.ver = IPV4;
     rec.prefix.u.addr4.addr = 0;
-    pfxv_state res;
+    enum pfxv_state res;
     printf("validating..\n");
     for(uint32_t i = max_i; i >= min_i; i--){
         rec.min_len = 32;
@@ -124,16 +103,16 @@ void rec_validate(pfx_table* pfxt){
         usleep(rand() / (RAND_MAX / 20));
     }
 }
-void rec_remove(pfx_table* pfxt){
+static void rec_remove(struct pfx_table* pfxt){
     const int tid = getpid();
-    pfx_record rec;
+    struct pfx_record rec;
     rec.min_len = 32;
     rec.max_len = 32;
     rec.prefix.ver = IPV4;
     rec.prefix.u.addr4.addr = 0;
     printf("removing records\n");
     for(uint32_t i = max_i; i >= min_i; i--){
-        rec.socket_id = i;
+        rec.socket = NULL;
         rec.min_len = 32;
         rec.max_len = 32;
         rec.asn = tid %2;
@@ -163,7 +142,7 @@ void rec_remove(pfx_table* pfxt){
 
 int main(){
     unsigned int max_threads = 15;
-    pfx_table pfxt;
+    struct pfx_table pfxt;
     pfx_table_init(&pfxt, NULL);
     pthread_t threads[max_threads];
     srand(time(NULL));

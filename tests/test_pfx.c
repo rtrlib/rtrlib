@@ -31,67 +31,50 @@
 #include "rtrlib/lib/utils.h"
 #include "rtrlib/pfx/lpfst/lpfst-pfx.h"
 
-void print_bytes(void* buf, size_t len){
-    for(unsigned int i = 0;i < len; i++){
-        if(len != 0)
-            printf(":");
-        printf("%02x", *((uint8_t*) ((char*) buf + i)));
-    }
-    printf("\n");
-}
-
-void print_state(const pfxv_state s){
-    if(s == BGP_PFXV_STATE_VALID)
-        printf("VALID\n");
-    else if(s == BGP_PFXV_STATE_NOT_FOUND)
-        printf("NOT FOUND\n");
-    else if(s == BGP_PFXV_STATE_INVALID)
-        printf("INVALID\n");
-}
-
-void remove_src_test(){
-    pfx_table pfxt;
+static void remove_src_test(){
+    struct pfx_table pfxt;
     pfx_table_init(&pfxt, NULL);
+    struct rtr_socket tr1;
 
-    pfx_record pfx;
+    struct pfx_record pfx;
     pfx.min_len = 32;
     pfx.max_len = 32;
 
     pfx.asn = 80;
-    pfx.socket_id = 1;
+    pfx.socket = &tr1;
     ip_str_to_addr("10.11.10.0", &(pfx.prefix));
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
     pfx.asn = 90;
-    pfx.socket_id = 2;
+    pfx.socket = NULL;
     ip_str_to_addr("10.11.10.0", &(pfx.prefix));
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
-    pfx.socket_id = 2;
+    pfx.socket = NULL;
     pfx.min_len = 24;
     ip_str_to_addr("192.168.0.0", &(pfx.prefix));
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
-    pfx.socket_id = 1;
+    pfx.socket = &tr1;
     pfx.min_len = 8;
     ip_str_to_addr("10.0.0.0", &(pfx.prefix));
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
     unsigned int len = 0;
-    lpfst_node** array = NULL;
+    struct lpfst_node** array = NULL;
     assert(lpfst_get_children(pfxt.ipv4, &array, &len) != -1);
     free(array);
     array = NULL;
     assert((len + 1) == 3);
 
-    pfx_table_src_remove(&pfxt, 1);
+    pfx_table_src_remove(&pfxt, &tr1);
     len=0;
     assert(lpfst_get_children(pfxt.ipv4, &array, &len) != -1);
 
     free(array);
     assert((len + 1) == 2);
 
-    pfxv_state res;
+    enum pfxv_state res;
     assert(pfx_table_validate(&pfxt, 90, &(pfx.prefix), 8, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_NOT_FOUND);
     ip_str_to_addr("10.11.10.0", &(pfx.prefix));
@@ -106,12 +89,12 @@ void remove_src_test(){
     pfx_table_free(&pfxt);
 }
 
-void mass_test(){
-    pfx_table pfxt;
+static void mass_test(){
+    struct pfx_table pfxt;
     pfx_table_init(&pfxt, NULL);
 
-    pfx_record rec;
-    pfxv_state res;
+    struct pfx_record rec;
+    enum pfxv_state res;
     const uint32_t min_i = 0xFFFF0000;
     const uint32_t max_i = 0xFFFFFFF0;
 
@@ -119,7 +102,7 @@ void mass_test(){
     for(uint32_t i = max_i; i >= min_i; i--){
         rec.min_len = 32;
         rec.max_len = 32;
-        rec.socket_id = i;
+        rec.socket = NULL;
         rec.asn = i;
         rec.prefix.u.addr4.addr = htonl(i);
         rec.prefix.ver = IPV4;
@@ -159,7 +142,7 @@ void mass_test(){
 
     printf("removing records\n");
     for(uint32_t i = max_i; i >= min_i; i--){
-        rec.socket_id = i;
+        rec.socket = NULL;
         rec.min_len = 32;
         rec.max_len = 32;
         rec.asn = i;
@@ -182,10 +165,10 @@ void mass_test(){
 }
 
 int main(){
-    pfx_table pfxt;
+    struct pfx_table pfxt;
     pfx_table_init(&pfxt, NULL);
 
-    pfx_record pfx;
+    struct pfx_record pfx;
     pfx.asn = 123;
     pfx.prefix.ver = IPV4;
     ip_str_to_addr("10.10.0.0", &(pfx.prefix));
@@ -193,7 +176,7 @@ int main(){
     pfx.max_len = 24;
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
-    pfxv_state res;
+    enum pfxv_state res;
     assert(pfx_table_validate(&pfxt, 123, &(pfx.prefix), 16, &res) == PFX_SUCCESS);
     assert(res == BGP_PFXV_STATE_VALID);
     assert(pfx_table_validate(&pfxt, 124, &(pfx.prefix), 16, &res) == PFX_SUCCESS);
@@ -351,7 +334,7 @@ int main(){
     pfx.asn=5;
     assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
-    pfx_record* r = NULL;
+    struct pfx_record* r = NULL;
     unsigned int r_len = 0;
     assert(ip_str_to_addr("10.1.0.0", &(pfx.prefix)) == 0);
     assert(pfx_table_validate_r(&pfxt, &r, &r_len, 123, &(pfx.prefix), 16, &res) == PFX_SUCCESS);

@@ -46,7 +46,7 @@
 /**
  * @brief Status of a rtr_mgr_group.
  */
-typedef enum {
+enum rtr_mgr_status {
     /** RTR sockets are disconnected */
     RTR_MGR_CLOSED,
 
@@ -58,7 +58,7 @@ typedef enum {
 
     /** Error occured on at least one RTR socket. */
     RTR_MGR_ERROR,
-} rtr_mgr_status;
+};
 
 /**
  * @brief A set of RTR sockets.
@@ -67,65 +67,73 @@ typedef enum {
  * @param preference The preference value of this group. Groups with lower preference values are preferred.
  * @param status Status of the group.
  */
-typedef struct {
-    rtr_socket** sockets;
+struct rtr_mgr_group {
+    struct rtr_socket **sockets;
     unsigned int sockets_len;
     uint8_t preference;
-    rtr_mgr_status status;
-} rtr_mgr_group;
+    enum rtr_mgr_status status;
+};
 
+typedef void (*rtr_mgr_status_fp)(const struct rtr_mgr_group *, enum rtr_mgr_status, const struct rtr_socket *, void *);
 
-/**
- * @brief rtr_mgr configuration structure.
- * @param A Pointer to an array of rtr_mgr_groups.
- * @param len Number of elements in the groups array.
- * @param mutex Pthread mutex, which is used internally by the rtr_mgr.
-*/
-typedef struct rtr_mgr_config {
-    rtr_mgr_group* groups;
+struct rtr_mgr_config {
+    struct rtr_mgr_group *groups;
     unsigned int len;
     pthread_mutex_t mutex;
-} rtr_mgr_config;
+    rtr_mgr_status_fp status_fp;
+    void *status_fp_data;
+};
 
 /**
- * @brief Initializes the rtr_mgr_config.
- * The passed parameters will be associated with the rtr_sockets in the config.
- * @param[in] config A rtr_mgr_config struct. The config->sockets, config->sockets_len, config->preference elements must
- * be initialized.
- * Every RTR socket in an rtr_mgr_group must be assoziated with an initialized transport socket. A Transport socket is
- * only allowed to be associated with one rtr socket. The given preference values must be unique in the
- * rtr_mgr_config->sockets array. More than one rtr_mgr_group with the same preference value isn't allowed.
+ * @brief Initializes a rtr_mgr_config.
+ * @param[in] groups Array of rtr_mgr_group. Every RTR socket in an
+ *		     rtr_mgr_group must be assoziated with an initialized
+ *		     transport socket. A Transport socket is only allowed to be
+ *		     associated with one rtr socket. The preference values must
+ *		     be unique in the group array. More than one rtr_mgr_group
+ *		     with the same preference value isn't allowed.
+ * @param[in] groups_len Number of elements in the groups array.
  * @param[in] polling_period Interval in seconds between serial queries that are sent to the server. Must be <= 3600.
  * If 0 is specified the polling_period is set to 300 seconds.
  * @param[in] cache_timeout Time period in seconds. Received pfx_records are deleted if the client was unable to refresh data for this time period.
  * If 0 is specified, the cache_timeout will be half the polling_period.
  * The default value is twice the polling_period.
  * @param[in] update_fp A Pointer to a pfx_update_fp callback, that is executed for every added and removed pfx_record.
- * @return RTR_SUCCESS On success 
- * @return RTR_ERROR On error 
+ * @param[in] status_fp Pointer to a function that is called if the connection
+ *	                status from one of the socket groups is changed.
+ * @param[in] status_fp_data Pointer to a memory area that is passed to the
+ *			     status_fp function. Memory area can be freely used
+ *			     to pass user-defined data to the status_fp
+ *			     callback.
+ * @return !NULL On success
+ * @return NULL On error
  */
-int rtr_mgr_init(rtr_mgr_config* config, const unsigned int polling_period, const unsigned int cache_timeout, const pfx_update_fp update_fp);
+struct rtr_mgr_config *rtr_mgr_init(struct rtr_mgr_group groups[], const unsigned int groups_len,
+		 const unsigned int polling_period, const unsigned int cache_timeout,
+		 const pfx_update_fp update_fp,
+		 const rtr_mgr_status_fp status_fp,
+		 void *status_fp_data);
 
 /**
  * @brief Frees all resources that were allocated from the rtr_mgr.
  * rtr_mgr_stop(..) must be called before, to shutdown all RTR socket connections.
  * @param[in] config rtr_mgr_config.
  */
-void rtr_mgr_free(rtr_mgr_config* config);
+void rtr_mgr_free(struct rtr_mgr_config *config);
 
 /**
  * @brief Establishes the connection with the rtr_sockets of the group with the lowest preference value and handles errors as defined in the RPKI-RTR protocol.
  * @param[in] config Pointer to an initialized rtr_mgr_config.
- * @return RTR_SUCCESS On success 
- * @return RTR_ERROR On error 
+ * @return RTR_SUCCESS On success
+ * @return RTR_ERROR On error
  */
-int rtr_mgr_start(rtr_mgr_config* config);
+int rtr_mgr_start(struct rtr_mgr_config *config);
 
 /**
  * @brief Terminates all rtr_socket connections that are defined in the config. All pfx_records received from these sockets will be purged.
  * @param[in] config The rtr_mgr_config struct
  */
-void rtr_mgr_stop(rtr_mgr_config* config);
+void rtr_mgr_stop(struct rtr_mgr_config *config);
 
 /**
  * @brief Detects if the rtr_mgr_group is fully synchronized with at least one group.
@@ -133,7 +141,7 @@ void rtr_mgr_stop(rtr_mgr_config* config);
  * @return true If the pfx_table stores non-outdated pfx_records from at least one socket group.
  * @return false If the pfx_table isn't fully synchronized with at least one group.
  */
-bool rtr_mgr_conf_in_sync(rtr_mgr_config* config);
+bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config);
 
 /**
  * @brief Validates the origin of a BGP-Route.
@@ -145,7 +153,35 @@ bool rtr_mgr_conf_in_sync(rtr_mgr_config* config);
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR If an error occurred.
  */
-int rtr_mgr_validate(rtr_mgr_config* config, const uint32_t asn, const ip_addr* prefix, const uint8_t mask_len, pfxv_state* result);
+int rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn, const struct ip_addr *prefix, const uint8_t mask_len, enum pfxv_state *result);
+
+/**
+ * @brief Converts a rtr_mgr_status to a String.
+ * @param[in] status state to convert to a string.
+ * @return NULL If status isn't a valid rtr_mgr_status.
+ * @return !=NULL The rtr_rtr_mgr_status as String.
+ */
+const char *rtr_mgr_status_to_str(enum rtr_mgr_status status);
+
+/**
+ * @brief Iterates over all IPv4 records in the pfx_table.
+ * @details For every pfx_record the function cb is called. The pfx_record and
+ * the data pointer is passed to the cb.
+ * @param[in] config rtr_mgr_config
+ * @param[in] fp A pointer to a callback function that is called for every pfx_record in the pfx_table.
+ * @param[in] data This parameter is forwarded to the callback function.
+ */
+void rtr_mgr_for_each_ipv4_record(struct rtr_mgr_config *config, void (fp)(const struct pfx_record *, void *data), void *data);
+
+/**
+ * @brief Iterates over all IPv6 records in the pfx_table.
+ * @details For every pfx_record the function cb is called. The pfx_record and
+ * the data pointer is passed to the cb.
+ * @param[in] config rtr_mgr_config
+ * @param[in] fp A pointer to a callback function that is called for every pfx_record in the pfx_table.
+ * @param[in] data This parameter is forwarded to the callback function.
+ */
+void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config, void (fp)(const struct pfx_record *, void *data), void *data);
 
 #endif
 /* @} */

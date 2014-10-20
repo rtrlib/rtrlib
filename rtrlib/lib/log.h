@@ -30,6 +30,6 @@
  * @brief Writes a message to stdout if NDEBUG isn't defined.
  * @param[in] frmt log message in printf format style.
  */
-void dbg(const char* frmt, ...) __attribute__ ((format (printf, 1, 2)));
+void dbg(const char *frmt, ...) __attribute__ ((format (printf, 1, 2)));
 
 #endif
