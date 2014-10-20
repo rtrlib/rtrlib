@@ -55,6 +55,8 @@ int tr_tcp_open(void *tr_socket) {
 
     struct addrinfo hints;
     struct addrinfo *res;
+    struct addrinfo *bind_addrinfo = 0;
+
     bzero(&hints, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
@@ -69,6 +71,18 @@ int tr_tcp_open(void *tr_socket) {
         goto end;
     }
 
+    if (tcp_socket->config.bindaddr) {
+        if (getaddrinfo(tcp_socket->config.bindaddr, 0, &hints, &bind_addrinfo) != 0) {
+            TCP_DBG("getaddrinfo error, %s", tcp_socket, gai_strerror(errno));
+            goto end;
+        }
+
+        if (bind(tcp_socket->socket, bind_addrinfo->ai_addr, bind_addrinfo->ai_addrlen) != 0) {
+            TCP_DBG("Socket bind failed, %s", tcp_socket, strerror(errno));
+            goto end;
+        }
+    }
+
     if (connect(tcp_socket->socket, res->ai_addr, res->ai_addrlen) == -1) {
         TCP_DBG("Couldn't establish TCP connection, %s", tcp_socket, strerror(errno));
         goto end;
@@ -79,6 +93,8 @@ int tr_tcp_open(void *tr_socket) {
 
 end:
     freeaddrinfo(res);
+    if (bind_addrinfo)
+        freeaddrinfo(bind_addrinfo);
     if(rtval == -1)
         tr_tcp_close(tr_socket);
     return rtval;

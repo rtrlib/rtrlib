@@ -64,6 +64,7 @@ int tr_ssh_open(void *socket) {
 
     ssh_options_set(ssh_socket->session, SSH_OPTIONS_HOST, config->host);
     ssh_options_set(ssh_socket->session, SSH_OPTIONS_PORT, &(config->port));
+    ssh_options_set(ssh_socket->session, SSH_OPTIONS_BINDADDR, config->bindaddr);
     ssh_options_set(ssh_socket->session, SSH_OPTIONS_USER, config->username);
 
     if (config->server_hostkey_path != NULL)
