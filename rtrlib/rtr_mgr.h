@@ -100,6 +100,7 @@ struct rtr_mgr_config {
  * If 0 is specified, the expire_interval will be half the refresh_interval.
  * The default value is twice the refresh_interval.
  * @param[in] update_fp A Pointer to a pfx_update_fp callback, that is executed for every added and removed pfx_record.
+ * @param[in] spki_update_fp A Pointer to a spki_update_fp callback, that is executed for every added and removed spki_record.
  * @param[in] status_fp Pointer to a function that is called if the connection
  *	                status from one of the socket groups is changed.
  * @param[in] status_fp_data Pointer to a memory area that is passed to the
