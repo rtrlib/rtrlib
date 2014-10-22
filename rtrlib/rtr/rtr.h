@@ -67,6 +67,9 @@ enum rtr_socket_state {
     /** Receiving validation records from the RTR server.  */
     RTR_SYNC,
 
+    /** Reconnect without any waiting period */
+    RTR_FAST_RECONNECT,
+
     /** No validation records are available on the RTR server. */
     RTR_ERROR_NO_DATA_AVAIL,
 

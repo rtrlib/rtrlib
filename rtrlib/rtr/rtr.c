@@ -163,6 +163,12 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket)
             }
         }
 
+        else if(rtr_socket->state == RTR_FAST_RECONNECT){
+            RTR_DBG1("State: RTR_FAST_RECONNECT");
+            tr_close(rtr_socket->tr_socket);
+            rtr_change_socket_state(rtr_socket, RTR_CONNECTING);
+        }
+
         else if(rtr_socket->state == RTR_ERROR_NO_DATA_AVAIL) {
             RTR_DBG1("State: RTR_ERROR_NO_DATA_AVAIL");
             rtr_socket->request_session_id = true;

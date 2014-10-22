@@ -344,7 +344,8 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
     memcpy(&header, pdu, sizeof(header));
     rtr_pdu_header_to_host_byte_order(&header);
 
-    if (header.ver != rtr_socket->version) {
+    //Do dont handle error PDUs here, leave this task to rtr_handle_error_pdu()
+    if (header.ver != rtr_socket->version && header.type != ERROR) {
         //If this is the first PDU we have received -> Downgrade.
         if (rtr_socket->request_session_id == true && rtr_socket->last_update == 0
             && header.ver >= RTR_PROTOCOL_MIN_SUPPORTED_VERSION
@@ -352,6 +353,8 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
             RTR_DBG("Downgrading current session from %u to %u", rtr_socket->version, header.ver);
             rtr_socket->version = header.ver;
         } else {
+            //If this isnt the first PDU we have received something is wrong with
+            //the server implementation -> Error
             error = UNSUPPORTED_PROTOCOL_VER;
             goto error;
         }
@@ -458,10 +461,14 @@ static int rtr_handle_error_pdu(struct rtr_socket *rtr_socket, const void *buf)
         if (rtr_socket->version > RTR_PROTOCOL_MIN_SUPPORTED_VERSION) {
             RTR_DBG("Downgrading to version %i", rtr_socket->version - 1);
             rtr_socket->version--;
+            rtr_change_socket_state(rtr_socket, RTR_FAST_RECONNECT);
         }
-        //Allways change state to ERROR_FATAL, because then the next configuration (server)
-        //get scheduled by the rtr_manager which might support a higher version.
-        rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+        else {
+            //We are not able to downgreade anymore -> ERROR_FATAL
+            RTR_DBG("Got UNSUPPORTED_PROTOCOL_VER error PDU,\
+                    but we are already on the lowest supported version !");
+            rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+        }
         break;
     case UNSUPPORTED_PDU_TYPE:
         RTR_DBG1("Client set unsupported PDU type");
