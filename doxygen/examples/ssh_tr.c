@@ -7,15 +7,14 @@ int main(){
     char ssh_user[]		= "rpki_user";
     char ssh_hostkey[]	= "/etc/rpki-rtr/hostkey";
     char ssh_privkey[]	= "/etc/rpki-rtr/client.priv";
-    char ssh_pubkey[]	= "/etc/rpki-rtr/client.pub";
 
     struct tr_ssh_config config = {
         ssh_host,
         22,
+        NULL,
         ssh_user,
         ssh_hostkey,
         ssh_privkey,
-        ssh_pubkey,
     };
 
     tr_ssh_init(&config, &ssh_socket);

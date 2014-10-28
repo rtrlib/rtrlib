@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with RTRlib; see the file COPYING.LESSER.
  *
- * written by Fabian Holler, in cooperation with:
  * INET group, Hamburg University of Applied Sciences,
  * CST group, Freie Universitaet Berlin
  * Website: http://rpki.realmv6.org/

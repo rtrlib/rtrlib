@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with RTRlib; see the file COPYING.LESSER.
  *
- * written by Fabian Holler, in cooperation with:
  * INET group, Hamburg University of Applied Sciences,
  * CST group, Freie Universitaet Berlin
  * Website: http://rpki.realmv6.org/
@@ -171,10 +170,8 @@ int main(int argc, char** argv)
 #ifdef RTRLIB_HAVE_LIBSSH
     struct tr_ssh_config ssh_config;
 #endif
-    if(mode == TCP) {
-        tcp_config = (struct tr_tcp_config) {
-            host, port
-        };
+    if(mode == TCP){
+        tcp_config = (struct tr_tcp_config) { host, port, 0 };
         tr_tcp_init(&tcp_config, &tr_sock);
     }
 #ifdef RTRLIB_HAVE_LIBSSH
@@ -183,6 +180,7 @@ int main(int argc, char** argv)
         ssh_config = (struct tr_ssh_config) {
             host,
             iport,
+            NULL,
             user,
             hostkey,
             privkey,
