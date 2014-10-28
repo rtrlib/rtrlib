@@ -348,7 +348,8 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
         //If this is the first PDU we have received -> Downgrade.
         if (rtr_socket->request_session_id == true && rtr_socket->last_update == 0
             && header.ver >= RTR_PROTOCOL_MIN_SUPPORTED_VERSION
-            && header.ver <= RTR_PROTOCOL_MAX_SUPPORTED_VERSION) {
+            && header.ver <= RTR_PROTOCOL_MAX_SUPPORTED_VERSION
+            && header.ver < rtr_socket->version) {
             RTR_DBG("Downgrading current session from %u to %u", rtr_socket->version, header.ver);
             rtr_socket->version = header.ver;
         } else {
@@ -457,15 +458,17 @@ static int rtr_handle_error_pdu(struct rtr_socket *rtr_socket, const void *buf)
         break;
     case UNSUPPORTED_PROTOCOL_VER:
         RTR_DBG1("Client uses unsupported protocol version");
-        if (rtr_socket->version > RTR_PROTOCOL_MIN_SUPPORTED_VERSION) {
-            RTR_DBG("Downgrading to version %i", rtr_socket->version - 1);
-            rtr_socket->version--;
+        if (pdu->ver <= RTR_PROTOCOL_MAX_SUPPORTED_VERSION &&
+                pdu->ver >= RTR_PROTOCOL_MIN_SUPPORTED_VERSION &&
+                pdu->ver < rtr_socket->version)
+        {
+            RTR_DBG("Downgrading from %i to version %i", rtr_socket->version, pdu->ver);
+            rtr_socket->version = pdu->ver;
             rtr_change_socket_state(rtr_socket, RTR_FAST_RECONNECT);
         }
         else {
-            //We are not able to downgreade anymore -> ERROR_FATAL
-            RTR_DBG("Got UNSUPPORTED_PROTOCOL_VER error PDU,\
-                    but we are already on the lowest supported version !");
+            RTR_DBG("Got UNSUPPORTED_PROTOCOL_VER error PDU with invalid values,\
+                    current version:%i, PDU version:%i", rtr_socket->version, pdu->ver);
             rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
         }
         break;
