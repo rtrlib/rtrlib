@@ -19,6 +19,14 @@
  * CST group, Freie Universitaet Berlin
  * Website: http://rpki.realmv6.org/
  */
+
+/**
+ * @defgroup mod_spki_h Subject Public Key Info table
+ * @brief The spki_table is an abstract data structure to organize the received Router Key PDUs from a RPKI-RTR cache server.
+ *
+ * @{
+ */
+
 #ifndef RTR_SPKI_H
 #define RTR_SPKI_H
 
@@ -98,9 +106,9 @@ int spki_table_add_entry(struct spki_table *spki_table, struct spki_record *spki
 
 
 /**
- * @brief Returns all spki_record whose AS number matches asn and SKI matches ski.
+ * @brief Returns all spki_record whose ASN and SKI matches.
  * @param[in] spki_table spki_table to use
- * @param[in] asn Hash index to look for
+ * @param[in] asn the AS number
  * @param[in] ski the 20 byte field which contains the SKI to search for
  * @param[out] result the result array. NULL if no records could be found
  * @param[out] result_size elment count of the result array
@@ -142,3 +150,4 @@ int spki_table_remove_entry(struct spki_table *spki_table, struct spki_record *s
 int spki_table_src_remove(struct spki_table *spki_table, const struct rtr_socket *socket);
 
 #endif
+/* @} */
