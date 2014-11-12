@@ -50,7 +50,10 @@ enum tr_rtvals {
     TR_WOULDBLOCK = -2,
 
     /** Call was interrupted from a signal */
-    TR_INTR = -3
+    TR_INTR = -3,
+
+    /** Connection closed */
+    TR_CLOSED = -4
 };
 
 struct tr_socket;

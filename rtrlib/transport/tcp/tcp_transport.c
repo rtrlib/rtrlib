@@ -147,7 +147,7 @@ int tr_tcp_recv(const void *tr_tcp_sock, void *pdu, const size_t len, const time
         return TR_ERROR;
     }
     if(rtval == 0)
-        return TR_ERROR;
+        return TR_CLOSED;
     return rtval;
 }
 

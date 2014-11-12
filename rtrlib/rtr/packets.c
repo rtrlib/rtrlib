@@ -748,6 +748,18 @@ int rtr_sync(struct rtr_socket *rtr_socket)
     char pdu[RTR_MAX_PDU_LEN];
 
     int rtval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
+    //If the cache has closed the connection and we dont have a session_id
+    //(no packages where exchanged) we should downgrade.
+    if(rtval == TR_CLOSED && rtr_socket->request_session_id){
+        RTR_DBG1("The cache server closed the connection and we have no session_id!");
+        if (rtr_socket->version > RTR_PROTOCOL_MIN_SUPPORTED_VERSION)
+        {
+            RTR_DBG("Downgrading from %i to version %i", rtr_socket->version, rtr_socket->version-1);
+            rtr_socket->version = rtr_socket->version - 1;
+            rtr_change_socket_state(rtr_socket, RTR_FAST_RECONNECT);
+            return RTR_ERROR;
+        }
+    }
     if (rtval == TR_WOULDBLOCK) {
         rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
         return RTR_ERROR;

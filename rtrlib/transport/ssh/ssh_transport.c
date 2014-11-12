@@ -168,7 +168,7 @@ int tr_ssh_recv_async(const struct tr_ssh_socket *tr_ssh_sock, void *buf, const 
     if(rtval == 0) {
         if(channel_is_eof(tr_ssh_sock->channel) != 0) {
             SSH_DBG1("remote has sent EOF", tr_ssh_sock);
-            return TR_ERROR;
+            return TR_CLOSED;
         } else {
             return TR_WOULDBLOCK;
         }
