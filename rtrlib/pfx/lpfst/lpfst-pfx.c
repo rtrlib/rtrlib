@@ -449,7 +449,7 @@ static void pfx_table_for_each_rec(struct lpfst_node *n, pfx_for_each_fp fp,
         pfxr.min_len = n->len;
         pfxr.max_len = nd->ary[i].max_len;
         pfxr.socket = nd->ary[i].socket;
-        fp(&pfxr, nd);
+        fp(&pfxr, data);
     }
 
     if (n->rchild != NULL)
