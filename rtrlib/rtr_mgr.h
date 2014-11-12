@@ -76,6 +76,12 @@ struct rtr_mgr_group {
 
 typedef void (*rtr_mgr_status_fp)(const struct rtr_mgr_group *, enum rtr_mgr_status, const struct rtr_socket *, void *);
 
+
+/**
+ * Type alias \c pfx_for_each_fp for function signature: \code (*)(const struct pfx_record *pfx_record, void *data) \endcode
+ */
+typedef void (*pfx_for_each_fp)(const struct pfx_record *pfx_record, void *data);
+
 struct rtr_mgr_config {
     struct rtr_mgr_group *groups;
     unsigned int len;
@@ -180,23 +186,23 @@ const char *rtr_mgr_status_to_str(enum rtr_mgr_status status);
 
 /**
  * @brief Iterates over all IPv4 records in the pfx_table.
- * @details For every pfx_record the function cb is called. The pfx_record and
- * the data pointer is passed to the cb.
+ * @details For every pfx_record the function fp is called. The pfx_record and
+ * the data pointer is passed to the fp.
  * @param[in] config rtr_mgr_config
- * @param[in] fp A pointer to a callback function that is called for every pfx_record in the pfx_table.
+ * @param[in] fp A pointer to a callback function with the signature \c pfx_for_each_fp.
  * @param[in] data This parameter is forwarded to the callback function.
  */
-void rtr_mgr_for_each_ipv4_record(struct rtr_mgr_config *config, void (fp)(const struct pfx_record *, void *data), void *data);
+void rtr_mgr_for_each_ipv4_record(struct rtr_mgr_config *config, pfx_for_each_fp fp, void *data);
 
 /**
  * @brief Iterates over all IPv6 records in the pfx_table.
- * @details For every pfx_record the function cb is called. The pfx_record and
- * the data pointer is passed to the cb.
+ * @details For every pfx_record the function fp is called. The pfx_record and
+ * the data pointer is passed to the fp.
  * @param[in] config rtr_mgr_config
- * @param[in] fp A pointer to a callback function that is called for every pfx_record in the pfx_table.
+ * @param[in] fp A pointer to a callback function with the signature \c pfx_for_each_fp.
  * @param[in] data This parameter is forwarded to the callback function.
  */
-void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config, void (fp)(const struct pfx_record *, void *data), void *data);
+void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config, pfx_for_each_fp fp, void *data);
 
 #endif
 /* @} */

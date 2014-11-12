@@ -92,6 +92,13 @@ struct pfx_record {
 typedef void (*pfx_update_fp)(struct pfx_table *pfx_table, const struct pfx_record record, const bool added);
 
 /**
+ * @brief A function pointer that is called for each record in the pfx_table.
+ * @param pfx_record 
+ * @param data the node_data assigned to the returned pfx_record
+ */
+typedef void (*pfx_for_each_fp)(const struct pfx_record *pfx_record, void *data);
+
+/**
  * @brief Initializes the pfx_table struct.
  * @param[in] pfx_table pfx_table that will be initialized.
  * @param[in] update_fp Afunction pointers that will be called if a record was added or removed.
@@ -161,23 +168,23 @@ int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason
 
 /**
  * @brief Iterates over all IPv4 records in the pfx_table.
- * @details For every pfx_record the function cb is called. The pfx_record and
- * the data pointer is passed to the cb.
+ * @details For every pfx_record the function fp is called. The pfx_record and
+ * the data pointer is passed to the fp.
  * @param[in] pfx_table
- * @param[in] fp A pointer to a callback function that is called for every pfx_record in the pfx_table.
+ * @param[in] fp A pointer to a callback function with the signature \c pfx_for_each_fp.
  * @param[in] data This parameter is forwarded to the callback function.
  */
-void pfx_table_for_each_ipv4_record(struct pfx_table *pfx_table, void (fp)(const struct pfx_record *, void *data), void *data);
+void pfx_table_for_each_ipv4_record(struct pfx_table *pfx_table, pfx_for_each_fp fp, void *data);
 
-/*
+/**
  * @brief Iterates over all IPv6 records in the pfx_table.
- * @details For every pfx_record the function cb is called. The pfx_record and
- * the data pointer is passed to the cb.
+ * @details For every pfx_record the function fp is called. The pfx_record and
+ * the data pointer is passed to the fp.
  * @param[in] pfx_table
- * @param[in] fp A pointer to a callback function that is called for every pfx_record in the pfx_table.
+ * @param[in] fp A pointer to a callback function with the signature \c pfx_for_each_fp.
  * @param[in] data This parameter is forwarded to the callback function.
  */
-void pfx_table_for_each_ipv6_record(struct pfx_table *pfx_table, void (fp)(const struct pfx_record *, void *data), void *data);
+void pfx_table_for_each_ipv6_record(struct pfx_table *pfx_table, pfx_for_each_fp fp, void *data);
 
 #endif
 /* @} */
