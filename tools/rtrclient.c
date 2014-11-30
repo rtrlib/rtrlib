@@ -36,12 +36,12 @@ static void print_usage(char** argv)
     printf(" %s ssh <host> <port> <username> <private_key> [<host_key>] \n", argv[0]);
 #endif
     printf("\nOptions:\n");
-    printf("-K  Print inforamtions about SPKI updates.\n");
-    printf("-P  Print informations about PFX updates.\n");
+    printf("-k  Print inforamtions about SPKI updates.\n");
+    printf("-p  Print informations about PFX updates.\n");
 
     printf("\nExamples:\n");
     printf(" %s tcp rpki.realmv6.org 42420\n", argv[0]);
-    printf(" %s tcp rpki.realmv6.org 42420 -K -P\n", argv[0]);
+    printf(" %s tcp rpki.realmv6.org 42420 -k -p\n", argv[0]);
 #ifdef RTRLIB_HAVE_LIBSSH
     printf(" %s ssh rpki.realmv6.org 22 rtr-ssh ~/.ssh/id_rsa ~/.ssh/known_hosts\n", argv[0]);
 #endif
@@ -132,9 +132,9 @@ int main(int argc, char** argv)
         int i;
         for(i=4; i<argc; i++) {
             if(argv[i][0] == '-') {
-                if(argv[i][1] == 'K')
+                if(argv[i][1] == 'k')
                     spki_update_fp = update_spki;
-                if(argv[i][1] == 'P')
+                if(argv[i][1] == 'p')
                     pfx_update_fp = update_cb;
             }
         }
