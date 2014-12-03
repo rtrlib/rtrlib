@@ -275,27 +275,27 @@ out:
 int spki_table_src_remove(struct spki_table *spki_table,
 			  const struct rtr_socket *socket)
 {
-	struct key_entry *current_entry;
+	struct key_entry *entry;
 	tommy_node *current_node;
 
 	pthread_rwlock_wrlock(&spki_table->lock);
 
 	current_node = tommy_list_head(&spki_table->list);
 	while (current_node) {
-		current_entry = (struct key_entry *)current_node->data;
-		if (current_entry->socket == socket) {
+		entry = (struct key_entry *)current_node->data;
+		if (entry->socket == socket) {
 			current_node = current_node->next;
 			if (!tommy_list_remove_existing(&spki_table->list,
-							&current_entry->list_node)) {
+							&entry->list_node)) {
 				pthread_rwlock_unlock(&spki_table->lock);
 				return SPKI_ERROR;
 			}
 			if (!tommy_hashlin_remove_existing(&spki_table->hashtable,
-							   &current_entry->hash_node)) {
+							   &entry->hash_node)) {
 				pthread_rwlock_unlock(&spki_table->lock);
 				return SPKI_ERROR;
 			}
-			free(current_entry);
+			free(entry);
 		} else {
 			current_node = current_node->next;
 		}
