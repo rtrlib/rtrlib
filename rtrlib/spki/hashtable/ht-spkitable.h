@@ -38,11 +38,11 @@ typedef int (*hash_cmp_fp)(const void *arg, const void *obj);
  * @param lock Read-Write lock to prevent data races
  */
 struct spki_table {
-    tommy_hashlin hashtable;
-    tommy_list list;
-    hash_cmp_fp cmp_fp;
-    spki_update_fp update_fp;
-    pthread_rwlock_t lock;
+	tommy_hashlin hashtable;
+	tommy_list list;
+	hash_cmp_fp cmp_fp;
+	spki_update_fp update_fp;
+	pthread_rwlock_t lock;
 };
 
 
