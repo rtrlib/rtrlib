@@ -274,7 +274,7 @@ int spki_table_src_remove(struct spki_table *spki_table,
 
 	current_node = tommy_list_head(&spki_table->list);
 	while (current_node) {
-		entry = (struct key_entry *)current_node->data;
+		entry = current_node->data;
 		if (entry->socket == socket) {
 			current_node = current_node->next;
 			if (!tommy_list_remove_existing(&spki_table->list,
