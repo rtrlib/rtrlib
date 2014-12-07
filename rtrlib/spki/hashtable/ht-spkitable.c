@@ -134,16 +134,16 @@ int spki_table_add_entry(struct spki_table *spki_table,
 		free(entry);
 		pthread_rwlock_unlock(&spki_table->lock);
 		return SPKI_DUPLICATE_RECORD;
-	} else {
-		/* Insert into hashtable and list */
-		tommy_hashlin_insert(&spki_table->hashtable, &entry->hash_node,
-				     entry, hash);
-		tommy_list_insert_tail(&spki_table->list, &entry->list_node,
-				       entry);
-		pthread_rwlock_unlock(&spki_table->lock);
-		spki_table_notify_clients(spki_table, spki_record, true);
-		return SPKI_SUCCESS;
 	}
+
+	/* Insert into hashtable and list */
+	tommy_hashlin_insert(&spki_table->hashtable, &entry->hash_node,
+			     entry, hash);
+	tommy_list_insert_tail(&spki_table->list, &entry->list_node,
+			       entry);
+	pthread_rwlock_unlock(&spki_table->lock);
+	spki_table_notify_clients(spki_table, spki_record, true);
+	return SPKI_SUCCESS;
 }
 
 int spki_table_get_all(struct spki_table *spki_table, uint32_t asn,
