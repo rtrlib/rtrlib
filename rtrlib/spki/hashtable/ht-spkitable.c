@@ -35,7 +35,6 @@ struct key_entry {
 	tommy_node list_node;
 };
 
-
 /**
  * @brief Compares two key_entrys by comparing ASN, SKI and SPKI
  * @param[in] arg Pointer to first key_entry
@@ -82,7 +81,6 @@ static int spki_record_to_key_entry(struct spki_record *spki_r,
 	return SPKI_SUCCESS;
 }
 
-
 /**
  * @brief Calls the spki_table update function.
  * @param[in] spki_table spki_table to use.
@@ -90,13 +88,12 @@ static int spki_record_to_key_entry(struct spki_record *spki_r,
  * @param[in] added True means record was added, False means removed
  */
 static void spki_table_notify_clients(struct spki_table *spki_table,
-			       const struct spki_record *record,
-			       const bool added)
+				      const struct spki_record *record,
+				      const bool added)
 {
 	if (spki_table->update_fp != NULL)
 		spki_table->update_fp(spki_table, *record, added);
 }
-
 
 void spki_table_init(struct spki_table *spki_table, spki_update_fp update_fp)
 {
@@ -117,7 +114,6 @@ void spki_table_free(struct spki_table *spki_table)
 	pthread_rwlock_unlock(&spki_table->lock);
 	pthread_rwlock_destroy(&spki_table->lock);
 }
-
 
 int spki_table_add_entry(struct spki_table *spki_table,
 			 struct spki_record *spki_record)
@@ -150,7 +146,6 @@ int spki_table_add_entry(struct spki_table *spki_table,
 	}
 }
 
-
 int spki_table_get_all(struct spki_table *spki_table, uint32_t asn,
 		       uint8_t *ski, struct spki_record **result,
 		       unsigned int *result_size)
@@ -182,7 +177,7 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn,
 	while (result_bucket) {
 		element = result_bucket->data;
 		if (element->asn == asn &&
-			memcmp(element->ski, ski, sizeof(element->ski)) == 0) {
+		    memcmp(element->ski, ski, sizeof(element->ski)) == 0) {
 			(*result_size)++;
 			tmp = realloc(*result, *result_size * sizeof(**result));
 			if (tmp == NULL) {
