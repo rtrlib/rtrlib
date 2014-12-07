@@ -236,7 +236,7 @@ int spki_table_remove_entry(struct spki_table *spki_table,
 	uint32_t hash;
 	struct key_entry entry;
 	struct key_entry *rmv_elem;
-	unsigned int rtval = SPKI_ERROR;
+	int rtval;
 
 	spki_record_to_key_entry(spki_record, &entry);
 	hash = tommy_inthash_u32(spki_record->asn);
