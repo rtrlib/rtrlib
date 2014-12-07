@@ -44,8 +44,8 @@ struct key_entry {
  */
 static int key_entry_cmp(const void *arg, const void *obj)
 {
-	struct key_entry *param = (struct key_entry *)arg;
-	struct key_entry *entry = (struct key_entry *)obj;
+	const struct key_entry *param = arg;
+	const struct key_entry *entry = obj;
 
 	if (param->asn != entry->asn)
 		return 1;
