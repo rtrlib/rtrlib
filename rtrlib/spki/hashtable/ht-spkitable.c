@@ -119,7 +119,7 @@ int spki_table_add_entry(struct spki_table *spki_table,
 	uint32_t hash;
 	struct key_entry *entry;
 
-	entry = malloc(sizeof(struct key_entry));
+	entry = malloc(sizeof(*entry));
 	if (entry == NULL)
 		return SPKI_ERROR;
 
