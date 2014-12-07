@@ -70,14 +70,13 @@ static void key_entry_to_spki_record(struct key_entry *key_e,
 }
 
 /* Copying the content, target struct must already be allocated */
-static int spki_record_to_key_entry(struct spki_record *spki_r,
+static void spki_record_to_key_entry(struct spki_record *spki_r,
 				    struct key_entry *key_e)
 {
 	key_e->asn = spki_r->asn;
 	key_e->socket = spki_r->socket;
 	memcpy(key_e->ski, spki_r->ski, sizeof(spki_r->ski));
 	memcpy(key_e->spki, spki_r->spki, sizeof(spki_r->spki));
-	return SPKI_SUCCESS;
 }
 
 /**
