@@ -255,9 +255,8 @@ int spki_table_remove_entry(struct spki_table *spki_table,
 	if (rmv_elem && tommy_list_remove_existing(&spki_table->list,
 						   &rmv_elem->list_node)) {
 		free(rmv_elem);
-		pthread_rwlock_unlock(&spki_table->lock);
 		spki_table_notify_clients(spki_table, spki_record, false);
-		return SPKI_SUCCESS;
+		rtval = SPKI_SUCCESS;
 	}
 
 out:
