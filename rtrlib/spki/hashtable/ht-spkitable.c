@@ -60,14 +60,13 @@ static int key_entry_cmp(const void *arg, const void *obj)
 }
 
 /* Copying the content, target struct must already be allocated */
-static int key_entry_to_spki_record(struct key_entry *key_e,
+static void key_entry_to_spki_record(struct key_entry *key_e,
 				    struct spki_record *spki_r)
 {
 	spki_r->asn = key_e->asn;
 	spki_r->socket = key_e->socket;
 	memcpy(spki_r->ski, key_e->ski, sizeof(key_e->ski));
 	memcpy(spki_r->spki, key_e->spki, sizeof(key_e->spki));
-	return SPKI_SUCCESS;
 }
 
 /* Copying the content, target struct must already be allocated */
