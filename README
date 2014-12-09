@@ -1,20 +1,24 @@
 Introduction
 ------------
-The RTRlib implements the client-side part of the RPKI-RTR protocol and
-BGP Prefix Origin Validation. This release supports the IETF RFCs RFC
-6810 and RFC 6811. It was successfully tested on Linux and FreeBSD.
+The RTRlib implements the client-side of the RPKI-RTR protocol (RFC
+6810) and BGP Prefix Origin Validation (RFC 6811). This release also
+supports Internet-Draft draft-ietf-sidr-rpki-rtr-rfc6810-bis, which
+enables the maintenance of router keys. Router keys are required to
+deploy BGPSEC.
+
+The software was successfully tested on Linux and FreeBSD.
 
 This package contains also the rtrclient program. It connects to an
-RTR-Server over TCP or SSH and shows on STDOUT the validation state of
-the BGP prefixes that has been received from the RTR server. The program
-can be found in the tools/ directory.
+RTR-Server over TCP or SSH and shows on STDOUT prefix origin data and
+router keys that have been received from the RTR server. The program can
+be found in the bin/ directory.
 
 Requirements
 ------------
 To build the RTRlib, the CMake build system must be installed.
 
-To establish a SSH connection between RTR-Client and RTR-Server, the
-libssh 0.4.x library must also be installed.
+To establish an SSH connection between RTR-Client and RTR-Server, the
+libssh 0.6.x library must also be installed.
 
 Doxygen (optional) is required to create the HTML documentation.
 
@@ -77,11 +81,12 @@ Test RTR-Server Connection
 The following command establishes a plain TCP connection to an
 RTR-Server using the rtrclient command line tool:
 
-    tools/rtrclient tcp rpki.realmv6.org 42420
+    bin/rtrclient tcp rpki-validator.realmv6.org 8282
 
-rpki.realmv6.org is an open RTR-Server instance for testing purposes,
-which runs rcynic. It listens on port 42420 and validates ROAs from the
-following trust anchors: AfriNIC, APNIC, ARIN, LACNIC, RIPE.
+rpki-validator.realmv6.org is an open RTR-Server instance for testing
+purposes, which runs the RIPE Validator. It listens on port 8282 and
+validates ROAs from the following trust anchors: AfriNIC, APNIC, ARIN,
+LACNIC, RIPE.
 
 
 Directories
