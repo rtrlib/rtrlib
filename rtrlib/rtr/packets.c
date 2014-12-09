@@ -127,9 +127,9 @@ struct pdu_router_key {
     uint8_t flags;
     uint8_t zero;
     uint32_t len;
-    uint8_t ski[20];
+    uint8_t ski[SKI_SIZE];
     uint32_t asn;
-    uint8_t spki[91];
+    uint8_t spki[SPKI_SIZE];
 };
 
 /*
