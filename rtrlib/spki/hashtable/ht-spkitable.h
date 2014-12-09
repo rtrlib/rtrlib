@@ -25,8 +25,6 @@
 #include "rtrlib/spki/spkitable.h"
 #include "rtrlib/spki/hashtable/tommyds-1.8/tommy.h"
 
-
-
 typedef int (*hash_cmp_fp)(const void *arg, const void *obj);
 
 /**
@@ -44,6 +42,5 @@ struct spki_table {
 	spki_update_fp update_fp;
 	pthread_rwlock_t lock;
 };
-
 
 #endif
