@@ -4,6 +4,19 @@ Release History:
     - Added support for IETF draft draft-ietf-sidr-rpki-rtr-rfc6810-bis-02
     - Minor changes of the library API (see doxygen documentation).
 
+* Version 0.2.4
+    - rtrclient: fix rtrclient didn't compile when libssh wasn't
+      installed and found by cmake
+
+* Version 0.2.3
+    - rtrclient: increase polling period from 1 to 30 seconds
+    - rtrclient: bug fix for segfault caused by out-of-scope variable access
+    - rtrclient: fix wrong ssh example in usage output
+    - transport: remove const modifier from tr_ssh_config and
+      tr_tcp_config struct members
+    - cmake: install doxygen documentation to $PREFIX/share/doc/rtrlib/
+    - add debian packaging files
+
 * Version 0.2.2
     - Fixed a bug in ipv6_get_bits(..), specific IPv6 records couldn't
       be addded to the pfx_table
@@ -35,5 +48,6 @@ Release History:
       draft-ietf-sidr-pfx-validate-03
     - Extended debug messages
     - Many bug fixes
+
 * Version 0.1
     - Beta version
