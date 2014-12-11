@@ -1,5 +1,9 @@
 Release History:
 
+* Version 0.3.0
+    - Added support for IETF draft draft-ietf-sidr-rpki-rtr-rfc6810-bis-02
+    - Minor changes of the library API (see doxygen documentation).
+
 * Version 0.2.2
     - Fixed a bug in ipv6_get_bits(..), specific IPv6 records couldn't
       be addded to the pfx_table
