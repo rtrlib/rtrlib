@@ -36,14 +36,14 @@ static void print_usage(char** argv)
     printf(" %s ssh <host> <port> <username> <private_key> [<host_key>] \n", argv[0]);
 #endif
     printf("\nOptions:\n");
-    printf("-k  Print inforamtions about SPKI updates.\n");
-    printf("-p  Print informations about PFX updates.\n");
+    printf("-k  Print information about SPKI updates.\n");
+    printf("-p  Print information about PFX updates.\n");
 
     printf("\nExamples:\n");
-    printf(" %s tcp rpki.realmv6.org 42420\n", argv[0]);
-    printf(" %s tcp rpki.realmv6.org 42420 -k -p\n", argv[0]);
+    printf(" %s tcp rpki-validator.realmv6.org 8282\n", argv[0]);
+    printf(" %s tcp rpki-validator.realmv6.org 8282 -k -p\n", argv[0]);
 #ifdef RTRLIB_HAVE_LIBSSH
-    printf(" %s ssh rpki.realmv6.org 22 rtr-ssh ~/.ssh/id_rsa ~/.ssh/known_hosts\n", argv[0]);
+    printf(" %s ssh rpki-validator.realmv6.org 22 rtr-ssh ~/.ssh/id_rsa ~/.ssh/known_hosts\n", argv[0]);
 #endif
 
 }
