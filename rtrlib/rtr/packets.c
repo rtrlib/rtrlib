@@ -795,10 +795,8 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
                 snprintf(txt, sizeof(txt),"Expected session_id: %u, received session_id. %u in EOD PDU",rtr_socket->session_id, eod_pdu->session_id);
                 rtr_send_error_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, CORRUPT_DATA, txt, strlen(txt) + 1);
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-                free(router_key_pdus);
-                free(ipv4_pdus);
-                free(ipv6_pdus);
-                return RTR_ERROR;
+                rtval = RTR_ERROR;
+                goto cleanup;
             }
 
             int rtval = PFX_SUCCESS;
@@ -814,11 +812,9 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
                         pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
                         rtr_socket->request_session_id = true;
                     }
-                    free(router_key_pdus);
-                    free(ipv6_pdus);
-                    free(ipv4_pdus);
                     rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-                    return RTR_ERROR;
+                    rtval = RTR_ERROR;
+                    goto cleanup;
                 }
             }
             //add all IPv6 prefix pdu to the pfx_table
@@ -835,11 +831,9 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
                         pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
                         rtr_socket->request_session_id = true;
                     }
-                    free(router_key_pdus);
-                    free(ipv6_pdus);
-                    free(ipv4_pdus);
                     rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-                    return RTR_ERROR;
+                    rtval = RTR_ERROR;
+                    goto cleanup;
                 }
             }
 
@@ -858,38 +852,34 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
                         spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
                         rtr_socket->request_session_id = true;
                     }
-                    free(router_key_pdus);
-                    free(ipv6_pdus);
-                    free(ipv4_pdus);
                     rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-                    return RTR_ERROR;
+                    rtval = RTR_ERROR;
+                    goto cleanup;
                 }
             }
-
-            free(router_key_pdus);
-            free(ipv6_pdus);
-            free(ipv4_pdus);
             rtr_socket->serial_number = eod_pdu->sn;
+            RTR_DBG("Sync successfull, received %u Prefix PDUs, %u Router Key PDUs, session_id: %u, SN: %u", (ipv4_pdus_nindex + ipv6_pdus_nindex), router_key_pdus_nindex,rtr_socket->session_id,rtr_socket->serial_number);
+            goto cleanup;
         } else if (type == ERROR) {
             rtr_handle_error_pdu(rtr_socket, pdu);
-            free(router_key_pdus);
-            free(ipv4_pdus);
-            free(ipv6_pdus);
-            return RTR_ERROR;
+            rtval = RTR_ERROR;
+            goto cleanup;
         } else if (type == SERIAL_NOTIFY) {
             RTR_DBG1("Ignoring Serial Notify");
         } else {
             RTR_DBG("Received unexpected PDU (Type: %u)", ((struct pdu_header *) pdu)->type);
             const char *txt = "Unexpected PDU received during data synchronisation";
             rtr_send_error_pdu(rtr_socket, pdu, sizeof(struct pdu_header), CORRUPT_DATA, txt, sizeof(txt));
-            free(router_key_pdus);
-            free(ipv4_pdus);
-            free(ipv6_pdus);
-            return RTR_ERROR;
+            rtval = RTR_ERROR;
+            goto cleanup;
         }
     } while (type != EOD);
-    RTR_DBG("Sync successfull, received %u Prefix PDUs, %u Router Key PDUs, session_id: %u, SN: %u", (ipv4_pdus_nindex + ipv6_pdus_nindex), router_key_pdus_nindex,rtr_socket->session_id,rtr_socket->serial_number);
-    return RTR_SUCCESS;
+
+    cleanup:
+    free(router_key_pdus);
+    free(ipv6_pdus);
+    free(ipv4_pdus);
+    return rtval;
 }
 
 int rtr_sync(struct rtr_socket *rtr_socket)
