@@ -801,13 +801,13 @@ int rtr_sync_receive_pdus(struct rtr_socket *rtr_socket){
                 return RTR_ERROR;
             }
 
-            int rtval = RTR_SUCCESS;
+            int rtval = PFX_SUCCESS;
             //add all IPv4 prefix pdu to the pfx_table
             for (unsigned int i = 0; i < ipv4_pdus_nindex; i++) {
                 if (rtr_update_pfx_table(rtr_socket, &(ipv4_pdus[i])) == PFX_ERROR) {
                     //undo all record updates, except the last which produced the error
                     RTR_DBG("Error during data synchronisation, recovering Serial Nr. %u state",rtr_socket->serial_number);
-                    for (unsigned int j = 0; (j < i) && (rtval == RTR_SUCCESS); j++)
+                    for (unsigned int j = 0; (j < i) && (rtval == PFX_SUCCESS); j++)
                         rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv4_pdus[j]));
                     if (rtval == RTR_ERROR) {
                         RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all records");
