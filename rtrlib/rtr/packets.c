@@ -807,7 +807,7 @@ int rtr_sync_receive_pdus(struct rtr_socket *rtr_socket){
                 if (rtr_update_pfx_table(rtr_socket, &(ipv4_pdus[i])) == PFX_ERROR) {
                     //undo all record updates, except the last which produced the error
                     RTR_DBG("Error during data synchronisation, recovering Serial Nr. %u state",rtr_socket->serial_number);
-                    for (unsigned int j = 0; (j < i) && (rtval == PFX_SUCCESS); j++)
+                    for (unsigned int j = 0; j < i && rtval == PFX_SUCCESS; j++)
                         rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv4_pdus[j]));
                     if (rtval == RTR_ERROR) {
                         RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all records");
@@ -826,9 +826,9 @@ int rtr_sync_receive_pdus(struct rtr_socket *rtr_socket){
                 if (rtr_update_pfx_table(rtr_socket, &(ipv6_pdus[i])) == PFX_ERROR) {
                     //undo all record updates if error occured
                     RTR_DBG("Error during data synchronisation, recovering Serial Nr. %u state",rtr_socket->serial_number);
-                    for (unsigned int j = 0; j < ipv4_pdus_nindex && (rtval == PFX_SUCCESS); j++)
+                    for (unsigned int j = 0; j < ipv4_pdus_nindex && rtval == PFX_SUCCESS; j++)
                         rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv4_pdus[j]));
-                    for (unsigned int j = 0; (j < i) && (rtval == PFX_SUCCESS); j++)
+                    for (unsigned int j = 0; j < i && rtval == PFX_SUCCESS; j++)
                         rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv6_pdus[j]));
                     if (rtval == PFX_ERROR) {
                         RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all records");
@@ -846,14 +846,14 @@ int rtr_sync_receive_pdus(struct rtr_socket *rtr_socket){
             //add all router key pdu to the spki_table
             for (unsigned int i = 0; i < router_key_pdus_nindex; i++) {
                 if (rtr_update_spki_table(rtr_socket, &(router_key_pdus[i])) == SPKI_ERROR) {
-
-                    //TODO: Should a KEY_ERROR lead to pfx_table, spki_table being rolled back?
-                    //TODO: Should a failed undo lead to dropping of all router_keys/pfx records?
-                    // undo all record updates if error occured
                     RTR_DBG("Error during router key data synchronisation, recovering Serial Nr. %u state",rtr_socket->serial_number);
-                    for (unsigned int j = 0; j < router_key_pdus_nindex; j++)
+                    for (unsigned int j = 0; j < ipv4_pdus_nindex && rtval == PFX_SUCCESS; j++)
+                        rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv4_pdus[j]));
+                    for (unsigned int j = 0; j < ipv6_pdus_nindex && rtval == PFX_SUCCESS; j++)
+                        rtval = rtr_undo_update_pfx_table(rtr_socket, &(ipv6_pdus[j]));
+                    for (unsigned int j = 0; j < i && (rtval == PFX_SUCCESS || rtval == SPKI_SUCCESS); j++)
                         rtval = rtr_undo_update_spki_table(rtr_socket, &(router_key_pdus[j]));
-                    if (rtval == RTR_ERROR) {
+                    if (rtval == RTR_ERROR || rtval == SPKI_ERROR) {
                         RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all key entries");
                         spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
                         rtr_socket->request_session_id = true;
@@ -889,6 +889,7 @@ int rtr_sync_receive_pdus(struct rtr_socket *rtr_socket){
         }
     } while (type != EOD);
     RTR_DBG("Sync successfull, received %u Prefix PDUs, %u Router Key PDUs, session_id: %u, SN: %u", (ipv4_pdus_nindex + ipv6_pdus_nindex), router_key_pdus_nindex,rtr_socket->session_id,rtr_socket->serial_number);
+    return RTR_SUCCESS;
 }
 
 int rtr_sync(struct rtr_socket *rtr_socket)
