@@ -743,62 +743,10 @@ static int rtr_update_spki_table(struct rtr_socket* rtr_socket, const void* pdu)
     return RTR_SUCCESS;
 }
 
-int rtr_sync(struct rtr_socket *rtr_socket)
-{
+int rtr_sync_receive_pdus(struct rtr_socket *rtr_socket){
     char pdu[RTR_MAX_PDU_LEN];
-
-    int rtval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
-    //If the cache has closed the connection and we dont have a session_id
-    //(no packages where exchanged) we should downgrade.
-    if(rtval == TR_CLOSED && rtr_socket->request_session_id){
-        RTR_DBG1("The cache server closed the connection and we have no session_id!");
-        if (rtr_socket->version > RTR_PROTOCOL_MIN_SUPPORTED_VERSION)
-        {
-            RTR_DBG("Downgrading from %i to version %i", rtr_socket->version, rtr_socket->version-1);
-            rtr_socket->version = rtr_socket->version - 1;
-            rtr_change_socket_state(rtr_socket, RTR_FAST_RECONNECT);
-            return RTR_ERROR;
-        }
-    }
-    if (rtval == TR_WOULDBLOCK) {
-        rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
-        return RTR_ERROR;
-    } else if (rtval < 0)
-        return RTR_ERROR;
-    enum pdu_type type = rtr_get_pdu_type(pdu);
-
-    //ignore serial_notify PDUs, we already sent a serial_query, must be old messages
-    while (type == SERIAL_NOTIFY) {
-        RTR_DBG1("Ignoring Serial Notify");
-        rtval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
-        if (rtval == TR_WOULDBLOCK) {
-            rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
-            return RTR_ERROR;
-        } else if (rtval < 0)
-            return RTR_ERROR;
-        type = rtr_get_pdu_type(pdu);
-    }
-
-    if (type == ERROR) {
-        rtr_handle_error_pdu(rtr_socket, pdu);
-        return RTR_ERROR;
-    } else if (type == CACHE_RESET) {
-        RTR_DBG1("Cache Reset PDU received");
-        rtr_change_socket_state(rtr_socket, RTR_ERROR_NO_INCR_UPDATE_AVAIL);
-        return RTR_ERROR;
-    }
-
-    if (type == CACHE_RESPONSE)
-        rtr_handle_cache_response_pdu(rtr_socket,pdu);
-    else if (type == ERROR) {
-        rtr_handle_error_pdu(rtr_socket, pdu);
-        return RTR_ERROR;
-    } else {
-        RTR_DBG("Expected Cache Response PDU but received PDU Type (Type: %u)", ((struct pdu_header *) pdu)->type);
-        const char *txt = "Unexpected PDU received in data synchronisation";
-        rtr_send_error_pdu(rtr_socket, pdu, sizeof(struct pdu_header), CORRUPT_DATA, txt, sizeof(txt));
-        return RTR_ERROR;
-    }
+    enum pdu_type type;
+    int rtval = RTR_SUCCESS;
 
     struct pdu_ipv6 *ipv6_pdus = NULL;
     unsigned int ipv6_pdus_nindex = 0; //next free index in ipv6_pdus
@@ -941,10 +889,71 @@ int rtr_sync(struct rtr_socket *rtr_socket)
             return RTR_ERROR;
         }
     } while (type != EOD);
+    RTR_DBG("Sync successfull, received %u Prefix PDUs, %u Router Key PDUs, session_id: %u, SN: %u", (ipv4_pdus_nindex + ipv6_pdus_nindex), router_key_pdus_nindex,rtr_socket->session_id,rtr_socket->serial_number);
+}
+
+int rtr_sync(struct rtr_socket *rtr_socket)
+{
+    char pdu[RTR_MAX_PDU_LEN];
+    int rtval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
+    //If the cache has closed the connection and we dont have a session_id
+    //(no packages where exchanged) we should downgrade.
+    if(rtval == TR_CLOSED && rtr_socket->request_session_id){
+        RTR_DBG1("The cache server closed the connection and we have no session_id!");
+        if (rtr_socket->version > RTR_PROTOCOL_MIN_SUPPORTED_VERSION)
+        {
+            RTR_DBG("Downgrading from %i to version %i", rtr_socket->version, rtr_socket->version-1);
+            rtr_socket->version = rtr_socket->version - 1;
+            rtr_change_socket_state(rtr_socket, RTR_FAST_RECONNECT);
+            return RTR_ERROR;
+        }
+    }
+    if (rtval == TR_WOULDBLOCK) {
+        rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
+        return RTR_ERROR;
+    } else if (rtval < 0)
+        return RTR_ERROR;
+    enum pdu_type type = rtr_get_pdu_type(pdu);
+
+    //ignore serial_notify PDUs, we already sent a serial_query, must be old messages
+    while (type == SERIAL_NOTIFY) {
+        RTR_DBG1("Ignoring Serial Notify");
+        rtval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
+        if (rtval == TR_WOULDBLOCK) {
+            rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
+            return RTR_ERROR;
+        } else if (rtval < 0)
+            return RTR_ERROR;
+        type = rtr_get_pdu_type(pdu);
+    }
+
+    if (type == ERROR) {
+        rtr_handle_error_pdu(rtr_socket, pdu);
+        return RTR_ERROR;
+    } else if (type == CACHE_RESET) {
+        RTR_DBG1("Cache Reset PDU received");
+        rtr_change_socket_state(rtr_socket, RTR_ERROR_NO_INCR_UPDATE_AVAIL);
+        return RTR_ERROR;
+    } else if (type == CACHE_RESPONSE) {
+        rtr_handle_cache_response_pdu(rtr_socket,pdu);
+    } else if (type == ERROR) {
+        rtr_handle_error_pdu(rtr_socket, pdu);
+        return RTR_ERROR;
+    } else {
+        RTR_DBG("Expected Cache Response PDU but received PDU Type (Type: %u)", ((struct pdu_header *) pdu)->type);
+        const char *txt = "Unexpected PDU received in data synchronisation";
+        rtr_send_error_pdu(rtr_socket, pdu, sizeof(struct pdu_header), CORRUPT_DATA, txt, sizeof(txt));
+        return RTR_ERROR;
+    }
+
+    //Receive all pdus until EOD PDU
+    if(rtr_sync_receive_pdus(rtr_socket) == RTR_ERROR){
+        return RTR_ERROR;
+    }
+
     rtr_socket->request_session_id = false;
     if (rtr_set_last_update(rtr_socket) == RTR_ERROR)
         return RTR_ERROR;
-    RTR_DBG("Sync successfull, received %u Prefix PDUs, %u Router Key PDUs, session_id: %u, SN: %u", (ipv4_pdus_nindex + ipv6_pdus_nindex), router_key_pdus_nindex,rtr_socket->session_id,rtr_socket->serial_number);
     return RTR_SUCCESS;
 }
 
