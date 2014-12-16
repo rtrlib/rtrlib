@@ -31,9 +31,9 @@
 static void print_usage(char** argv)
 {
     printf("Usage:\n");
-    printf(" %s tcp <host> <port> [options]\n", argv[0]);
+    printf(" %s tcp [options] <host> <port>\n", argv[0]);
 #ifdef RTRLIB_HAVE_LIBSSH
-    printf(" %s ssh <host> <port> <username> <private_key> [<host_key>] \n", argv[0]);
+    printf(" %s ssh [options] <host> <port> <username> <private_key> [<host_key>] \n", argv[0]);
 #endif
     printf("\nOptions:\n");
     printf("-k  Print information about SPKI updates.\n");
@@ -41,9 +41,10 @@ static void print_usage(char** argv)
 
     printf("\nExamples:\n");
     printf(" %s tcp rpki-validator.realmv6.org 8282\n", argv[0]);
-    printf(" %s tcp rpki-validator.realmv6.org 8282 -k -p\n", argv[0]);
+    printf(" %s tcp -k -p rpki-validator.realmv6.org 8282\n", argv[0]);
 #ifdef RTRLIB_HAVE_LIBSSH
     printf(" %s ssh rpki-validator.realmv6.org 22 rtr-ssh ~/.ssh/id_rsa ~/.ssh/known_hosts\n", argv[0]);
+    printf(" %s ssh -k -p rpki-validator.realmv6.org 22 rtr-ssh ~/.ssh/id_rsa ~/.ssh/known_hosts\n", argv[0]);
 #endif
 
 }
@@ -106,57 +107,68 @@ static void update_spki(struct spki_table* s __attribute__((unused)), const stru
 int main(int argc, char** argv)
 {
     enum mode_t { TCP, SSH } mode;
-    char* host;
-    char* port;
+    char* host = NULL;
+    char* port = NULL;
     spki_update_fp spki_update_fp = NULL;
     pfx_update_fp pfx_update_fp = NULL;
 #ifdef RTRLIB_HAVE_LIBSSH
-    char* user;
-    char* privkey;
-    char* hostkey;
+    char* user = NULL;
+    char* privkey = NULL;
+    char* hostkey = NULL;
 
 #endif
-    if(argc == 1) {
+    if (argc == 1) {
         print_usage(argv);
         return(EXIT_FAILURE);
     }
 
-    if(strncasecmp(argv[1], "tcp", strlen(argv[1])) == 0) {
-        if(argc < 4) {
+    if (strncasecmp(argv[1], "tcp", strlen(argv[1])) == 0) {
+        mode = TCP;
+    }
+    else if(strncasecmp(argv[1], "ssh", strlen(argv[1])) == 0){
+        mode = SSH;
+    }
+
+    //Optional args
+    int argsIndex = 2;
+    for (argsIndex=2; argsIndex<argc; argsIndex++) {
+        if (argv[argsIndex][0] == '-') {
+            if (argv[argsIndex][1] == 'k')
+                spki_update_fp = update_spki;
+            else if (argv[argsIndex][1] == 'p')
+                pfx_update_fp = update_cb;
+            else {
+                print_usage(argv);
+                return(EXIT_FAILURE);
+            }
+        } else {
+            break;
+        }
+    }
+
+    if (mode == TCP){
+        if ((argc - argsIndex) < 2){
             print_usage(argv);
             return(EXIT_FAILURE);
         }
-        mode = TCP;
-        host = argv[2];
-        port = argv[3];
-        int i;
-        for(i=4; i<argc; i++) {
-            if(argv[i][0] == '-') {
-                if(argv[i][1] == 'k')
-                    spki_update_fp = update_spki;
-                if(argv[i][1] == 'p')
-                    pfx_update_fp = update_cb;
-            }
-        }
-
+        host = argv[argsIndex++];
+        port = argv[argsIndex++];
     }
 #ifdef RTRLIB_HAVE_LIBSSH
-    else if(strncasecmp(argv[1], "ssh", strlen(argv[1])) == 0) {
-        if(argc < 6) {
+    else if (mode == SSH){
+        if((argc - argsIndex) < 4) {
             print_usage(argv);
             return(EXIT_FAILURE);
         }
-
-        mode = SSH;
-        host = argv[2];
-        port = argv[3];
-        user = argv[4];
-        privkey = argv[5];
-        if (argc == 7)
-            hostkey = argv[6];
+        host = argv[argsIndex++];
+        port = argv[argsIndex++];
+        user = argv[argsIndex++];
+        privkey = argv[argsIndex++];
+        if ((argc - argsIndex) == 1 )
+            hostkey = argv[argsIndex++];
         else
             hostkey = NULL;
-    }
+        }
 #endif
     else {
         print_usage(argv);
