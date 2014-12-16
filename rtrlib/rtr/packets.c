@@ -913,8 +913,8 @@ int rtr_sync(struct rtr_socket *rtr_socket)
         return RTR_ERROR;
     } else if (rtval < 0)
         return RTR_ERROR;
-    enum pdu_type type = rtr_get_pdu_type(pdu);
 
+    enum pdu_type type = rtr_get_pdu_type(pdu);
     //ignore serial_notify PDUs, we already sent a serial_query, must be old messages
     while (type == SERIAL_NOTIFY) {
         RTR_DBG1("Ignoring Serial Notify");
