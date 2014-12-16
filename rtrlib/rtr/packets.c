@@ -743,7 +743,7 @@ static int rtr_update_spki_table(struct rtr_socket* rtr_socket, const void* pdu)
     return RTR_SUCCESS;
 }
 
-int rtr_sync_receive_pdus(struct rtr_socket *rtr_socket){
+int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
     char pdu[RTR_MAX_PDU_LEN];
     enum pdu_type type;
     int rtval = RTR_SUCCESS;
@@ -946,8 +946,8 @@ int rtr_sync(struct rtr_socket *rtr_socket)
         return RTR_ERROR;
     }
 
-    //Receive all pdus until EOD PDU
-    if(rtr_sync_receive_pdus(rtr_socket) == RTR_ERROR){
+    //Receive all PDUs until EOD PDU
+    if(rtr_sync_receive_and_store_pdus(rtr_socket) == RTR_ERROR){
         return RTR_ERROR;
     }
 
