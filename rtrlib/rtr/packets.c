@@ -770,13 +770,13 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
             return RTR_ERROR;
         type = rtr_get_pdu_type(pdu);
         if (type == IPV4_PREFIX) {
-            if (rtr_store_prefix_pdu(rtr_socket, pdu, sizeof(struct pdu_ipv4), (void **) &ipv4_pdus, &ipv4_pdus_nindex, &ipv4_pdus_size) == RTR_ERROR)
+            if (rtr_store_prefix_pdu(rtr_socket, pdu, sizeof(*ipv4_pdus), (void **) &ipv4_pdus, &ipv4_pdus_nindex, &ipv4_pdus_size) == RTR_ERROR)
                 return RTR_ERROR;
         } else if (type == IPV6_PREFIX) {
-            if (rtr_store_prefix_pdu(rtr_socket, pdu, sizeof(struct pdu_ipv6), (void **) &ipv6_pdus, &ipv6_pdus_nindex, &ipv6_pdus_size) == RTR_ERROR)
+            if (rtr_store_prefix_pdu(rtr_socket, pdu, sizeof(*ipv6_pdus), (void **) &ipv6_pdus, &ipv6_pdus_nindex, &ipv6_pdus_size) == RTR_ERROR)
                 return RTR_ERROR;
         } else if (type == ROUTER_KEY) {
-            if (rtr_store_router_key_pdu(rtr_socket, pdu, sizeof(struct pdu_router_key), (void **) &router_key_pdus, &router_key_pdus_nindex, &router_key_pdus_size) == RTR_ERROR)
+            if (rtr_store_router_key_pdu(rtr_socket, pdu, sizeof(*router_key_pdus), (void **) &router_key_pdus, &router_key_pdus_nindex, &router_key_pdus_size) == RTR_ERROR)
                 return RTR_ERROR;
         } else if (type == EOD) {
             RTR_DBG1("EOD PDU received.");
