@@ -746,7 +746,7 @@ static int rtr_update_spki_table(struct rtr_socket* rtr_socket, const void* pdu)
 int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
     char pdu[RTR_MAX_PDU_LEN];
     enum pdu_type type;
-    int rtval = RTR_SUCCESS;
+    int retval = RTR_SUCCESS;
 
     struct pdu_ipv6 *ipv6_pdus = NULL;
     unsigned int ipv6_pdus_nindex = 0; //next free index in ipv6_pdus
@@ -762,29 +762,29 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
 
     //receive IPV4/IPV6 PDUs till EOD
     do {
-        rtval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
-        if (rtval == TR_WOULDBLOCK) {
+        retval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
+        if (retval == TR_WOULDBLOCK) {
             rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
             return RTR_ERROR;
-        } else if (rtval < 0)
+        } else if (retval < 0)
             return RTR_ERROR;
         type = rtr_get_pdu_type(pdu);
         if (type == IPV4_PREFIX) {
             if (rtr_store_prefix_pdu(rtr_socket, pdu, sizeof(*ipv4_pdus), (void **) &ipv4_pdus, &ipv4_pdus_nindex, &ipv4_pdus_size) == RTR_ERROR){
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-                rtval = RTR_ERROR;
+                retval = RTR_ERROR;
                 goto cleanup;
             }
         } else if (type == IPV6_PREFIX) {
             if (rtr_store_prefix_pdu(rtr_socket, pdu, sizeof(*ipv6_pdus), (void **) &ipv6_pdus, &ipv6_pdus_nindex, &ipv6_pdus_size) == RTR_ERROR){
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-                rtval = RTR_ERROR;
+                retval = RTR_ERROR;
                 goto cleanup;
             }
         } else if (type == ROUTER_KEY) {
             if (rtr_store_router_key_pdu(rtr_socket, pdu, sizeof(*router_key_pdus), (void **) &router_key_pdus, &router_key_pdus_nindex, &router_key_pdus_size) == RTR_ERROR){
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-                rtval = RTR_ERROR;
+                retval = RTR_ERROR;
                 goto cleanup;
             }
         } else if (type == EOD) {
@@ -804,7 +804,7 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
                 snprintf(txt, sizeof(txt),"Expected session_id: %u, received session_id. %u in EOD PDU",rtr_socket->session_id, eod_pdu->session_id);
                 rtr_send_error_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, CORRUPT_DATA, txt, strlen(txt) + 1);
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-                rtval = RTR_ERROR;
+                retval = RTR_ERROR;
                 goto cleanup;
             }
 
@@ -871,7 +871,7 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
             goto cleanup;
         } else if (type == ERROR) {
             rtr_handle_error_pdu(rtr_socket, pdu);
-            rtval = RTR_ERROR;
+            retval = RTR_ERROR;
             goto cleanup;
         } else if (type == SERIAL_NOTIFY) {
             RTR_DBG1("Ignoring Serial Notify");
@@ -879,7 +879,7 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
             RTR_DBG("Received unexpected PDU (Type: %u)", ((struct pdu_header *) pdu)->type);
             const char *txt = "Unexpected PDU received during data synchronisation";
             rtr_send_error_pdu(rtr_socket, pdu, sizeof(struct pdu_header), CORRUPT_DATA, txt, sizeof(txt));
-            rtval = RTR_ERROR;
+            retval = RTR_ERROR;
             goto cleanup;
         }
     } while (type != EOD);
@@ -888,7 +888,7 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
     free(router_key_pdus);
     free(ipv6_pdus);
     free(ipv4_pdus);
-    return rtval;
+    return retval;
 }
 
 int rtr_sync(struct rtr_socket *rtr_socket)
