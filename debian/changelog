@@ -1,3 +1,11 @@
+librtr0 (0.3.0-1) stable; urgency=low
+
+  * New upstream version 0.3.0
+  * Added support for IETF draft draft-ietf-sidr-rpki-rtr-rfc6810-bis-02
+  * Minor changes of the library API (see doxygen documentation).
+
+ -- Nils Bars <nils.bars@haw-hamburg.de>  Sun, 28 Dec 2014 18:30:00 +0000
+
 librtr0 (0.2.4-1) stable; urgency=low
 
   * New upstream version 0.2.4
