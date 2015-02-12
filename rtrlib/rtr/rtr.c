@@ -100,7 +100,7 @@ void rtr_purge_outdated_records(struct rtr_socket *rtr_socket)
         return;
     time_t cur_time;
     int rtval = rtr_get_monotonic_time(&cur_time);
-    if(rtval == -1 || (rtr_socket->last_update + rtr_socket->expire_interval) > cur_time) {
+    if(rtval == -1 || (rtr_socket->last_update + rtr_socket->expire_interval) < cur_time) {
         if(rtval == -1)
             RTR_DBG1("get_monotic_time(..) failed");
         pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
