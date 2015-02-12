@@ -5,7 +5,7 @@
 #include "rtrlib/rtrlib.h"
 
 enum rtr_mgr_status connectionStatus = -1;
-static void connectionStatusCallback(struct rtr_mgr_group *group, enum rtr_mgr_status status) {
+static void connectionStatusCallback(const struct rtr_mgr_group *group, enum rtr_mgr_status status, const struct rtr_socket *socket, void *data) {
 	if(status == RTR_MGR_ERROR) {
 		connectionStatus = status;
 	}
@@ -53,9 +53,9 @@ int main(int argc, char *argv[]) {
 
 	conf = rtr_mgr_init(groups, 1, 
                             30, 520, 
-                            connectionStatusCallback, 
+                            NULL,
                             NULL, 
-                            NULL, 
+                            &connectionStatusCallback,
                             NULL);
 	rtr_mgr_start(conf);
 
