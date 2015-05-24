@@ -92,9 +92,9 @@ int main(int argc, char *argv[]) {
 		}
 
 		if(!fgets(input, 256, stdin)) {
-            printf("input error\n");
-            return 1;
-        }
+			printf("input error\n");
+			return 1;
+		}
 		// Remove newline, if present
 		inputLength = strlen(input) - 1;
 		if (input[inputLength] == '\n')
