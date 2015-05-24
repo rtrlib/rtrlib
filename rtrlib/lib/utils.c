@@ -30,14 +30,30 @@
 #include <string.h>
 #include "rtrlib/lib/utils.h"
 
+#ifdef __MACH__
+#include <mach/mach_time.h>
+static double timeconvert = 0.0;
+#endif
+
 int rtr_get_monotonic_time(time_t *seconds)
 {
+#ifdef __MACH__
+  if (timeconvert == 0.0) {
+    mach_timebase_info_data_t timeBase;
+    (void)mach_timebase_info( &timeBase );
+    timeconvert = (double)timeBase.numer /
+                  (double)timeBase.denom /
+                  1000000000.0;
+  }
+  *seconds = (time_t) mach_absolute_time() * timeconvert;
+#else
     struct timespec time;
     if(clock_gettime(CLOCK_MONOTONIC, &time) == -1)
         return -1;
     *seconds = time.tv_sec;
     if((time.tv_nsec *  1000000000) >=5)
         *seconds +=1;
+#endif
     return 0;
 }
 
