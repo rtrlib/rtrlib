@@ -68,6 +68,24 @@ install(DIRECTORY rtrlib/ DESTINATION include/rtrlib
     FILES_MATCHING PATTERN "*.h"
     PATTERN rtrlib/rtr_mgr. EXCLUDE)
 
+#pkgconfig file
+if(LIBSSH_FOUND)
+    set (PKG_CONFIG_REQUIRES "libssh >= 0.6.0")
+endif(LIBSSH_FOUND)
+set (PKG_CONFIG_LIBDIR     "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
+# '#include <rtrlib/rtrlib.h>' includes the "rtrlib/"
+set (PKG_CONFIG_INCLUDEDIR "\${prefix}/include")
+set (PKG_CONFIG_LIBS       "-L\${libdir} -lrtr")
+set (PKG_CONFIG_CFLAGS     "-I\${includedir}")
+
+configure_file (
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/pkg-config.pc.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
+)
+install (
+    FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
+    DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/pkgconfig"
+)
 #add uninstall target
 configure_file(
     "cmake/cmake_uninstall.cmake.in"
