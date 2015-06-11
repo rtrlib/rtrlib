@@ -12,7 +12,9 @@ endif(CMAKE_BUILD_TYPE STREQUAL Debug)
 
 include_directories(.)
 find_package(Threads REQUIRED)
-find_library(RT_LIB rt)
+if(NOT APPLE)
+    find_library(RT_LIB rt)
+endif(NOT APPLE)
 include(UseMultiArch) # needed for debian packaging
 
 set(RTRLIB_SRC rtrlib/rtr_mgr.c rtrlib/lib/utils.c rtrlib/lib/ip.c rtrlib/lib/ipv4.c rtrlib/lib/ipv6.c rtrlib/lib/log.c
