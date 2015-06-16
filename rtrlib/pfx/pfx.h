@@ -63,7 +63,7 @@ enum pfxv_state {
     BGP_PFXV_STATE_NOT_FOUND,
 
     /** @brief One or more records that match the input prefix exists in the pfx_table but the prefix max_len or ASN does'nt match. */
-    BGP_PFXV_STATE_INVALID,
+    BGP_PFXV_STATE_INVALID
 };
 
 
