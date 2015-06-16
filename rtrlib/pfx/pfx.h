@@ -64,12 +64,6 @@ enum pfxv_state {
 
     /** @brief One or more records that match the input prefix exists in the pfx_table but the prefix max_len or ASN does'nt match. */
     BGP_PFXV_STATE_INVALID,
-
-    /** @brief One or more records that match the input prefix exists in the pfx_table but the prefix ASN does'nt match. */
-    BGP_PFXV_STATE_INVALID_ASN,
-
-    /** @brief One or more records that match the input prefix exists in the pfx_table but the prefix max_len does'nt match. */
-    BGP_PFXV_STATE_INVALID_LEN
 };
 
 

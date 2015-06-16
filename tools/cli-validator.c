@@ -143,10 +143,10 @@ int main(int argc, char *argv[])
             validityNr = 1;
         } else if (result == BGP_PFXV_STATE_INVALID) {
             validityNr = 2;
-        } else if (result == BGP_PFXV_STATE_INVALID_ASN) {
-            validityNr = 3;
-        } else if (result == BGP_PFXV_STATE_INVALID_LEN) {
-            validityNr = 4;
+            if (reason->asn != asn)
+                validityNr = 3;
+            else if (reason->max_len != mask)
+                validityNr = 4;
         }
 
         // IP Mask BGP-ASN|
