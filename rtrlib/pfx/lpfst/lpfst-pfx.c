@@ -42,6 +42,8 @@ static int pfx_table_create_node(struct lpfst_node **node, const struct pfx_reco
 static int pfx_table_append_elem(struct node_data *data, const struct pfx_record *record);
 static struct data_elem *pfx_table_find_elem(const struct node_data *data, const struct pfx_record *record, unsigned int *index);
 static bool pfx_table_elem_matches(struct node_data *data, const uint32_t asn, const uint8_t prefix_len);
+static bool pfx_table_elem_matches_asn(struct node_data *data, const uint32_t asn);
+static bool pfx_table_elem_matches_len(struct node_data *data, const uint8_t prefix_len);
 static void pfx_table_notify_clients(struct pfx_table *pfx_table, const struct pfx_record *record, const bool added);
 static int pfx_table_remove_id(struct pfx_table *pfx_table, struct lpfst_node **root, struct lpfst_node *node, const struct rtr_socket *socket, const unsigned int level);
 static int pfx_table_node2pfx_record(struct lpfst_node *node, struct pfx_record records[], const unsigned int ary_len);
@@ -266,6 +268,25 @@ bool pfx_table_elem_matches(struct node_data *data, const uint32_t asn, const ui
     return false;
 }
 
+bool pfx_table_elem_matches_asn(struct node_data *data, const uint32_t asn)
+{
+    for(unsigned int i = 0; i < data->len; i++) {
+        if(data->ary[i].asn != 0 && data->ary[i].asn == asn)
+            return true;
+    }
+    return false;
+}
+
+bool pfx_table_elem_matches_len(struct node_data *data, const uint8_t prefix_len)
+{
+    for(unsigned int i = 0; i < data->len; i++) {
+        if(prefix_len <= data->ary[i].max_len)
+            return true;
+    }
+    return false;
+}
+
+
 int pfx_table_node2pfx_record(struct lpfst_node *node, struct pfx_record *records, const unsigned int ary_len)
 {
     struct node_data *data = node->data;
@@ -330,7 +351,14 @@ int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason
         }
     }
 
-    while(!pfx_table_elem_matches(node->data, asn, prefix_len)) {
+    while(1) {
+        if (!pfx_table_elem_matches_asn(node->data, asn))
+            *result = BGP_PFXV_STATE_INVALID_ASN;
+        else if (!pfx_table_elem_matches_len(node->data, prefix_len))
+            *result = BGP_PFXV_STATE_INVALID_LEN;
+        else
+          break;
+
         if(ip_addr_is_zero(ip_addr_get_bits(prefix, lvl++, 1))) //post-incr lvl, lpfst_lookup is performed on child_nodes => parent lvl + 1
             node = lpfst_lookup(node->lchild, prefix, prefix_len, &lvl);
         else
@@ -338,7 +366,6 @@ int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason
 
         if(node == NULL) {
             pthread_rwlock_unlock(&pfx_table->lock);
-            *result = BGP_PFXV_STATE_INVALID;
             return PFX_SUCCESS;
         }
 
