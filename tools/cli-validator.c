@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include "rtrlib/rtrlib.h"
 
+const int connection_timeout = 20;
 enum rtr_mgr_status connectionStatus = -1;
 
 static void connectionStatusCallback(const struct rtr_mgr_group *group,
@@ -11,9 +12,8 @@ static void connectionStatusCallback(const struct rtr_mgr_group *group,
                                      const struct rtr_socket *socket,
                                      void *data)
 {
-    if(status == RTR_MGR_ERROR) {
+    if(status == RTR_MGR_ERROR)
         connectionStatus = status;
-    }
 }
 
 int connectionError(enum rtr_mgr_status status)
@@ -28,31 +28,30 @@ int connectionError(enum rtr_mgr_status status)
         printf("error\n");
         fflush(stdout);
         return 1;
-    } else {
-        return 0;
     }
+    return 0;
 }
 
 int main(int argc, char *argv[])
 {
+    // check arguments, need hostname/IP and port of cache-server
     if (argc < 3) {
         printf("Usage: %s [host] [port]\n", argv[0]);
-        return 0;
+        return(EXIT_FAILURE);
     }
 
-    // Create a TCP transport socket
+    // create a TCP transport socket
     struct tr_socket tr_tcp;
     struct tr_tcp_config tcp_config = { argv[1], argv[2], NULL };
     tr_tcp_init(&tcp_config, &tr_tcp);
 
-    // Create an rtr_socket and associate it with the transport socket
+    // create an rtr_socket and associate it with the transport socket
     struct rtr_socket rtr_tcp;
     rtr_tcp.tr_socket = &tr_tcp;
     struct rtr_mgr_config *conf;
 
-    // Create a rtr_mgr_group array with 1 element
+    // create a rtr_mgr_group array with 1 element
     struct rtr_mgr_group groups[1];
-
     groups[0].sockets = malloc(1 * sizeof(struct rtr_socket*));
     groups[0].sockets_len = 1;
     groups[0].sockets[0] = &rtr_tcp;
@@ -64,23 +63,22 @@ int main(int argc, char *argv[])
 
     char input[256];
     int inputLength;
-
     int sleepCounter = 0;
-    int timeout = 20;
-    // Wait till at least one rtr_mgr_group is fully synchronized with the server
+
+    // wait till at least one rtr_mgr_group is fully synchronized with server
     while (!rtr_mgr_conf_in_sync(conf)) {
-        if(connectionError(connectionStatus)) {
-            return 0;
-        }
+        if(connectionError(connectionStatus))
+            return(EXIT_FAILURE);
+
         sleep(1);
         sleepCounter++;
-        if (sleepCounter >= timeout) {
-            // Wait for input before printing "timeout" to avoid "broken pipe" error while communicating
-            // with the Python program.
+        if (sleepCounter >= connection_timeout) {
+            // Wait for input before printing "timeout",to avoid "broken pipe"
+            // error while communicating with the Python program
             fgets(input, 256, stdin);
             printf("timeout\n");
             fflush(stdout);
-            return 0;
+            return(EXIT_FAILURE);
         }
     }
 
@@ -89,21 +87,24 @@ int main(int argc, char *argv[])
     int asn;
     int counter;
     int spaces;
+    // loop for input
     while (1) {
-        if(connectionError(connectionStatus)) {
-            return 0;
-        }
+        // recheck connection, exit on failure
+        if(connectionError(connectionStatus))
+            return(EXIT_FAILURE);
 
+        // try reading from stdin, exit on failure
         if(!fgets(input, 256, stdin)) {
             printf("input error\n");
-            return 1;
+            return(EXIT_FAILURE);
         }
-        // Remove newline, if present
+
+        // remove newline, if present
         inputLength = strlen(input) - 1;
         if (input[inputLength] == '\n')
             input[inputLength] = '\0';
 
-        // Check if there are exactly 3 arguments
+        // check if there are exactly 3 arguments
         spaces = 0;
         for (counter = 0; counter < inputLength; counter++) {
             if (input[counter] == ' ' && input[counter + 1] != ' ' &&
@@ -112,6 +113,7 @@ int main(int argc, char *argv[])
             }
         }
 
+        // check input matching pattern
         if (spaces != 2) {
             printf("Arguments required: IP Mask ASN\n");
             fflush(stdout);
@@ -122,10 +124,8 @@ int main(int argc, char *argv[])
         char *inputToken = NULL;
         inputToken = strtok(input, delims);
         strcpy(ip, inputToken);
-
         inputToken = strtok(NULL, delims);
         mask = atoi(inputToken);
-
         inputToken = strtok(NULL, delims); asn = atoi(inputToken);
 
         struct ip_addr pref;
@@ -134,19 +134,17 @@ int main(int argc, char *argv[])
         struct pfx_record* reason = NULL;
         unsigned int reason_len = 0;
 
+        // do validation
         pfx_table_validate_r(groups[0].sockets[0]->pfx_table, &reason,
                              &reason_len, asn, &pref, mask, &result);
-        int validityNr = -1;
+        // translate validation result
+        int validity_code = -1;
         if (result == BGP_PFXV_STATE_VALID) {
-            validityNr = 0;
+            validity_code = 0;
         } else if (result == BGP_PFXV_STATE_NOT_FOUND) {
-            validityNr = 1;
+            validity_code = 1;
         } else if (result == BGP_PFXV_STATE_INVALID) {
-            validityNr = 2;
-            if (reason->asn != asn)
-                validityNr = 3;
-            else if (reason->max_len != mask)
-                validityNr = 4;
+            validity_code = 2;
         }
 
         // IP Mask BGP-ASN|
@@ -166,8 +164,8 @@ int main(int argc, char *argv[])
             }
         }
 
-        // |ValidityNr
-        printf("|%d", validityNr);
+        // |validity_code
+        printf("|%d", validity_code);
 
         printf("\n");
         fflush(stdout);
@@ -176,4 +174,6 @@ int main(int argc, char *argv[])
     rtr_mgr_stop(conf);
     rtr_mgr_free(conf);
     free(groups[0].sockets);
+
+    return(EXIT_SUCCESS);
 }
