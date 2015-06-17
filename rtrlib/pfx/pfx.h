@@ -93,7 +93,7 @@ typedef void (*pfx_update_fp)(struct pfx_table *pfx_table, const struct pfx_reco
 
 /**
  * @brief A function pointer that is called for each record in the pfx_table.
- * @param pfx_record 
+ * @param pfx_record
  * @param data forwarded data which the user has passed to pfx_table_for_each_ipv4_record() or
  * pfx_table_for_each_ipv6_record()
  */
