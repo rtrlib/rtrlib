@@ -365,8 +365,10 @@ int pfx_table_src_remove(struct pfx_table *pfx_table, const struct rtr_socket *s
         pthread_rwlock_wrlock(&(pfx_table->lock));
         if(*root != NULL) {
             int rtval = pfx_table_remove_id(pfx_table, root, *root, socket, 0);
-            if(rtval == PFX_ERROR)
+            if(rtval == PFX_ERROR) {
+                pthread_rwlock_unlock(&pfx_table->lock);
                 return PFX_ERROR;
+            }
         }
         pthread_rwlock_unlock(&pfx_table->lock);
     }
