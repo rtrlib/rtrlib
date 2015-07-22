@@ -1,11 +1,23 @@
 /*
  * This file is part of RTRlib.
  *
- * This file is subject to the terms and conditions of the MIT license.
- * See the file LICENSE in the top level directory for more details.
+ * RTRlib is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version.
  *
- * Website: http://rtrlib.realmv6.org/
-*/
+ * RTRlib is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with RTRlib; see the file COPYING.LESSER.
+ *
+ * INET group, Hamburg University of Applied Sciences,
+ * CST group, Freie Universitaet Berlin
+ * Website: http://rpki.realmv6.org/
+ */
 
 #include "rtrlib/pfx/lpfst/lpfst-pfx.h"
 #include <assert.h>
@@ -360,18 +372,26 @@ int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const st
 
 int pfx_table_src_remove(struct pfx_table *pfx_table, const struct rtr_socket *socket)
 {
+    RTR_DBG1("Enter pfx_table_src_remove");   
     for(unsigned int i = 0; i < 2; i++) {
         struct lpfst_node **root = (i == 0 ? &(pfx_table->ipv4) : &(pfx_table->ipv6));
+        RTR_DBG1("Before Lock");   
         pthread_rwlock_wrlock(&(pfx_table->lock));
+        RTR_DBG1("After Lock");   
         if(*root != NULL) {
+            RTR_DBG1("before remove_id");   
             int rtval = pfx_table_remove_id(pfx_table, root, *root, socket, 0);
+            RTR_DBG1("After remove_id");   
             if(rtval == PFX_ERROR) {
+                RTR_DBG1("Unkown existing record");   
                 pthread_rwlock_unlock(&pfx_table->lock);
                 return PFX_ERROR;
             }
         }
+        RTR_DBG1("Before last unluck");   
         pthread_rwlock_unlock(&pfx_table->lock);
     }
+    RTR_DBG1("Before PFX_SUCCESS");   
     return PFX_SUCCESS;
 }
 
