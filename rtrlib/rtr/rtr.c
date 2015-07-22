@@ -1,11 +1,23 @@
 /*
  * This file is part of RTRlib.
  *
- * This file is subject to the terms and conditions of the MIT license.
- * See the file LICENSE in the top level directory for more details.
+ * RTRlib is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version.
  *
- * Website: http://rtrlib.realmv6.org/
-*/
+ * RTRlib is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with RTRlib; see the file COPYING.LESSER.
+ *
+ * INET group, Hamburg University of Applied Sciences,
+ * CST group, Freie Universitaet Berlin
+ * Website: http://rpki.realmv6.org/
+ */
 
 #include <assert.h>
 #include <pthread.h>
@@ -107,7 +119,7 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket)
     install_sig_handler();
     while(1) {
         if(rtr_socket->state == RTR_CONNECTING) {
-            RTR_DBG1("State: RTR_CONNECTING");
+            RTR_DBG1("State: RTR_CONNECTING 111");
             //old pfx_record could exists in the pfx_table, check if they are too old and must be removed
             //old key_entry could exists in the spki_table, check if they are too old and must be removed
             rtr_purge_outdated_records(rtr_socket);
