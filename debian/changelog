@@ -1,3 +1,14 @@
+librtr0 (0.3.5-1) stable; urgency=low
+
+  * New upstream version 0.3.5
+  * Change license from LGPLv3 to MIT license
+  * Fix bug in pfx_table_src_remove, a lock was not released
+  * Fix bug in rtr_purge_outdated_records that removed prefixes incorrectly
+  * Create and install rtrlib.pc pkg-config
+  * Update code style
+  * Add support for OS X (10.10)
+  * Add new tool cli-validator
+
 librtr0 (0.3.0-1) stable; urgency=low
 
   * New upstream version 0.3.0

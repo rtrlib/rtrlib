@@ -1,7 +1,6 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: rtrlib
 Source: https://github.com/rtrlib/rtrlib
-Copyright: 211-2013 Fabian Holler
-License: LGPL
- On Debian systems, the complete text of the LGPL can be found in
- /usr/share/common-licenses/LGPL-3.
+Copyright: 2011-2013 Fabian Holler
+License: MIT
+ For details see http://opensource.org/licenses/MIT.

@@ -81,8 +81,28 @@ Section: debug
 Architecture: any
 Depends: rtrclient (= ${binary:Version}), ${misc:Depends}, ${shlibs:Depends}
 Description: RPKI-RTR command line tool
- Rtrclient is command line that connects to an RPKI-RTR server and prints
+ Rtrclient is a command line tool that connects to an RPKI-RTR server and prints
  protocol information and information about the fetched ROAs to the
  console.
+ .
+ This package contains debug symbols.
+
+Package: cli-validator
+Section: utils
+Architecture: any
+Depends: librtr0 (= ${binary:Version}), ${misc:Depends}, ${shlibs:Depends}, libssh-4
+Description: RPKI-RTR command line tool
+ Cli-validator is a command line tool that connects to an RPKI-RTR server and
+ allows to validate given IP prefixes and origin ASes.
+
+
+Package: cli-validator-dbg
+Priority: extra
+Section: debug
+Architecture: any
+Depends: rtrclient (= ${binary:Version}), ${misc:Depends}, ${shlibs:Depends}
+Description: RPKI-RTR command line tool
+ Cli-validator is a command line tool that connects to an RPKI-RTR server and
+ allows to validate given IP prefixes and origin ASes.
  .
  This package contains debug symbols.
