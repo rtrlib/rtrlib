@@ -65,7 +65,7 @@ enum pfxv_state {
  */
 struct pfx_record {
     uint32_t asn;
-    struct ip_addr prefix;
+    struct rtr_ip_addr prefix;
     uint8_t min_len;
     uint8_t max_len;
     const struct rtr_socket *socket;
@@ -139,7 +139,7 @@ int pfx_table_src_remove(struct pfx_table *pfx_table, const struct rtr_socket *s
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR On error.
  */
-int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const struct ip_addr *prefix, const uint8_t mask_len, enum pfxv_state *result);
+int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const struct rtr_ip_addr *prefix, const uint8_t mask_len, enum pfxv_state *result);
 
 /**
  * @brief Validates the origin of a BGP-Route and returns a list of pfx_record that decided the result.
@@ -153,7 +153,7 @@ int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const st
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR On error.
  */
-int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason, unsigned int *reason_len,  const uint32_t asn, const struct ip_addr *prefix, const uint8_t mask_len, enum pfxv_state *result);
+int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason, unsigned int *reason_len,  const uint32_t asn, const struct rtr_ip_addr *prefix, const uint8_t mask_len, enum pfxv_state *result);
 
 /**
  * @brief Iterates over all IPv4 records in the pfx_table.

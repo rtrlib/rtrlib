@@ -33,10 +33,10 @@
 
 static void get_bits_testv4()
 {
-    struct ip_addr addr;
-    addr.ver = IPV4;
+    struct rtr_ip_addr addr;
+    addr.ver = RTRLIB_IPV4;
 
-    struct ip_addr result;
+    struct rtr_ip_addr result;
     addr.u.addr4.addr=0xAABBCC22;
 
     result = ip_addr_get_bits(&addr, 0, 32);
@@ -107,14 +107,14 @@ static void get_bits_testv4()
 
 static void get_bits_testv6()
 {
-    struct ip_addr addr;
-    addr.ver = IPV6;
+    struct rtr_ip_addr addr;
+    addr.ver = RTRLIB_IPV6;
     addr.u.addr6.addr[0] = 0x22AABBCC;
     addr.u.addr6.addr[1] = 0xDDEEFF99;
     addr.u.addr6.addr[2] = 0x33001122;
     addr.u.addr6.addr[3] = 0x33445566;
 
-    struct ip_addr result;
+    struct rtr_ip_addr result;
 
     result = ip_addr_get_bits(&addr, 0, 128);
     assert(result.u.addr6.addr[0] == addr.u.addr6.addr[0] && result.u.addr6.addr[1] == addr.u.addr6.addr[1] && result.u.addr6.addr[2] == addr.u.addr6.addr[2] && result.u.addr6.addr[3] == addr.u.addr6.addr[3]);
@@ -145,7 +145,7 @@ static void get_bits_testv6()
     char buf[INET6_ADDRSTRLEN];
 
     ip_str_to_addr("fe80::862b:2bff:fe9a:f50f", &addr);
-    addr.ver=IPV6;
+    addr.ver= RTRLIB_IPV6;
     assert(addr.u.addr6.addr[0] == 0xfe800000);
     assert(addr.u.addr6.addr[1] == 0);
     assert(addr.u.addr6.addr[2] == 0x862b2bff);
@@ -181,8 +181,8 @@ static void get_bits_testv6()
 
 static void lpfst_test()
 {
-    struct ip_addr addr;
-    addr.ver = IPV4;
+    struct rtr_ip_addr addr;
+    addr.ver = RTRLIB_IPV4;
     struct lpfst_node* result;
     unsigned int lvl = 0;
     //n1

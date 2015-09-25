@@ -149,7 +149,7 @@ bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config);
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR If an error occurred.
  */
-int rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn, const struct ip_addr *prefix, const uint8_t mask_len, enum pfxv_state *result);
+int rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn, const struct rtr_ip_addr *prefix, const uint8_t mask_len, enum pfxv_state *result);
 
 
 /**

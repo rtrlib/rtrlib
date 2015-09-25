@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
         mask = atoi(inputToken);
         inputToken = strtok(NULL, delims); asn = atoi(inputToken);
 
-        struct ip_addr pref;
+        struct rtr_ip_addr pref;
         ip_str_to_addr(ip, &pref);
         enum pfxv_state result;
         struct pfx_record* reason = NULL;

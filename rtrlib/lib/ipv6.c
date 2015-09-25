@@ -133,7 +133,7 @@ int ipv6_str_to_addr(const char *a, struct ipv6_addr *ip)
             words[i] = 0;
     }
 
-    /* Convert the address to ip_addr format */
+    /* Convert the address to rtr_ip_addr format */
     for(i=0; i<4; i++)
         o[i] = (words[2*i] << 16) | words[2*i+1];
     return 0;
@@ -142,11 +142,11 @@ int ipv6_str_to_addr(const char *a, struct ipv6_addr *ip)
 /*
  * This function was copied from the bird routing daemon's ip_ntop(..) function.
 */
-int ipv6_addr_to_str(const struct ipv6_addr *ip_addr, char *b, const unsigned int len)
+int ipv6_addr_to_str(const struct ipv6_addr *rtr_ip_addr, char *b, const unsigned int len)
 {
     if(len < INET6_ADDRSTRLEN)
         return -1;
-    const uint32_t *a = ip_addr->addr;
+    const uint32_t *a = rtr_ip_addr->addr;
     uint16_t words[8];
     int bestpos, bestlen, curpos, curlen, i;
 

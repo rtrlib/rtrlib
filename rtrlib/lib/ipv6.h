@@ -48,7 +48,7 @@ struct ipv6_addr ipv6_get_bits(const struct ipv6_addr *val, const uint8_t first_
  * @result 0 on success
  * @result -1 on error
 */
-int ipv6_addr_to_str(const struct ipv6_addr *ip_addr, char *b, const unsigned int len);
+int ipv6_addr_to_str(const struct ipv6_addr *rtr_ip_addr, char *b, const unsigned int len);
 
 /**
  * Converts the passed IPv6 address in string representation to an ipv6_addr struct.

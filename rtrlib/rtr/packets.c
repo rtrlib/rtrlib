@@ -528,14 +528,14 @@ static void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, con
         const struct pdu_ipv4 *ipv4 = pdu;
         pfxr->prefix.u.addr4.addr = ipv4->prefix;
         pfxr->asn = ipv4->asn;
-        pfxr->prefix.ver = IPV4;
+        pfxr->prefix.ver = RTRLIB_IPV4;
         pfxr->min_len = ipv4->prefix_len;
         pfxr->max_len = ipv4->max_prefix_len;
         pfxr->socket = rtr_socket;
     } else if (type == IPV6_PREFIX) {
         const struct pdu_ipv6 *ipv6 = pdu;
         pfxr->asn = ipv6->asn;
-        pfxr->prefix.ver = IPV6;
+        pfxr->prefix.ver = RTRLIB_IPV6;
         memcpy(pfxr->prefix.u.addr6.addr, ipv6->prefix, sizeof(pfxr->prefix.u.addr6.addr));
         pfxr->min_len = ipv6->prefix_len;
         pfxr->max_len = ipv6->max_prefix_len;

@@ -292,7 +292,7 @@ void rtr_mgr_free(struct rtr_mgr_config *config)
     pthread_mutex_destroy(&(config->mutex));
 }
 
-inline int rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn, const struct ip_addr *prefix, const uint8_t mask_len, enum pfxv_state *result)
+inline int rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn, const struct rtr_ip_addr *prefix, const uint8_t mask_len, enum pfxv_state *result)
 {
     return pfx_table_validate(config->groups[0].sockets[0]->pfx_table, asn, prefix, mask_len, result);
 }

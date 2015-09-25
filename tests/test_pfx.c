@@ -106,14 +106,14 @@ static void mass_test()
         rec.socket = NULL;
         rec.asn = i;
         rec.prefix.u.addr4.addr = htonl(i);
-        rec.prefix.ver = IPV4;
+        rec.prefix.ver = RTRLIB_IPV4;
         assert(pfx_table_add(&pfxt, &rec) == PFX_SUCCESS);
         rec.asn = i + 1;
         assert(pfx_table_add(&pfxt, &rec) == PFX_SUCCESS);
 
         rec.min_len = 128;
         rec.max_len = 128;
-        rec.prefix.ver = IPV6;
+        rec.prefix.ver = RTRLIB_IPV6;
         ((uint64_t*) rec.prefix.u.addr6.addr)[1] = max_i;
         ((uint64_t*) rec.prefix.u.addr6.addr)[0] = min_i+i;
         assert(pfx_table_add(&pfxt, &rec) == PFX_SUCCESS);
@@ -123,7 +123,7 @@ static void mass_test()
     for(uint32_t i = max_i; i >= min_i; i--) {
         rec.min_len = 32;
         rec.max_len = 32;
-        rec.prefix.ver = IPV4;
+        rec.prefix.ver = RTRLIB_IPV4;
         rec.prefix.u.addr4.addr = htonl(i);
         assert(pfx_table_validate(&pfxt, i, &(rec.prefix), rec.min_len, &res) == PFX_SUCCESS);
         assert(res == BGP_PFXV_STATE_VALID);
@@ -133,7 +133,7 @@ static void mass_test()
 
         rec.min_len = 128;
         rec.max_len = 128;
-        rec.prefix.ver = IPV6;
+        rec.prefix.ver = RTRLIB_IPV6;
         ((uint64_t*) rec.prefix.u.addr6.addr)[1] = max_i;
         ((uint64_t*) rec.prefix.u.addr6.addr)[0] = min_i + i;
 
@@ -147,14 +147,14 @@ static void mass_test()
         rec.min_len = 32;
         rec.max_len = 32;
         rec.asn = i;
-        rec.prefix.ver = IPV4;
+        rec.prefix.ver = RTRLIB_IPV4;
         rec.prefix.u.addr4.addr = htonl(i);
         assert(pfx_table_remove(&pfxt, &rec) == PFX_SUCCESS);
 
         rec.asn = i + 1;
         assert(pfx_table_remove(&pfxt, &rec) == PFX_SUCCESS);
 
-        rec.prefix.ver = IPV6;
+        rec.prefix.ver = RTRLIB_IPV6;
         rec.min_len = 128;
         rec.max_len = 128;
         ((uint64_t*) rec.prefix.u.addr6.addr)[1] = max_i;
@@ -172,7 +172,7 @@ int main()
 
     struct pfx_record pfx;
     pfx.asn = 123;
-    pfx.prefix.ver = IPV4;
+    pfx.prefix.ver = RTRLIB_IPV4;
     ip_str_to_addr("10.10.0.0", &(pfx.prefix));
     pfx.min_len = 16;
     pfx.max_len = 24;
@@ -215,7 +215,7 @@ int main()
 
 
     ip_str_to_addr("2a01:4f8:131::", &(pfx.prefix));
-    pfx.prefix.ver = IPV6;
+    pfx.prefix.ver = RTRLIB_IPV6;
     pfx.min_len = 48;
     pfx.max_len = 48;
     pfx.asn = 124;
