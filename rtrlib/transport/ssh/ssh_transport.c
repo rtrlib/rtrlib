@@ -124,9 +124,9 @@ void tr_ssh_free(struct tr_socket *tr_sock)
     assert(tr_ssh_sock->session == NULL);
     if (tr_ssh_sock->ident != NULL)
         free(tr_ssh_sock->ident);
+    SSH_DBG1("Socket freed", tr_ssh_sock);
     free(tr_ssh_sock);
     tr_sock->socket = NULL;
-    SSH_DBG1("Socket freed", tr_ssh_sock);
 }
 
 /*
