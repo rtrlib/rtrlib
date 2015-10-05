@@ -68,11 +68,16 @@ void rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_ta
 {
     if(tr != NULL)
         rtr_socket->tr_socket = tr;
-    if(refresh_interval == 0 || rtr_socket->refresh_interval > 86400) {
+    if(refresh_interval == 0 || refresh_interval > 86400) {
         rtr_socket->refresh_interval = 3600;
+    } else {
+        rtr_socket->refresh_interval = refresh_interval;
     }
-    if (rtr_socket->expire_interval == 0 || rtr_socket->expire_interval > 172800) {
+
+    if (expire_interval == 0 || expire_interval > 172800) {
         rtr_socket->expire_interval = rtr_socket->refresh_interval * 2;
+    } else {
+        rtr_socket->expire_interval = expire_interval;
     }
 
     rtr_socket->retry_interval = 600;
