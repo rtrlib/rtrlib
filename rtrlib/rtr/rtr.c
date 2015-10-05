@@ -68,11 +68,16 @@ void rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_ta
     if(tr != NULL)
         rtr_socket->tr_socket = tr;
     assert(refresh_interval <= 3600);
-    if(refresh_interval == 0)
+    if(refresh_interval == 0) {
         rtr_socket->refresh_interval = 300;
-    else
-        rtr_socket->refresh_interval = (refresh_interval > (3600 - RTR_RECV_TIMEOUT) ? (3600 - RTR_RECV_TIMEOUT) : refresh_interval);
-    rtr_socket->expire_interval = (expire_interval == 0 ? (rtr_socket->refresh_interval / 2) : expire_interval);
+    }
+    else {
+        rtr_socket->refresh_interval =
+            (refresh_interval > (3600 - RTR_RECV_TIMEOUT) ?
+            (3600 - RTR_RECV_TIMEOUT) : refresh_interval);
+    }
+    rtr_socket->expire_interval = (expire_interval == 0) ?
+        (rtr_socket->refresh_interval * 2) : expire_interval;
     rtr_socket->retry_interval = 600;
     rtr_socket->state = RTR_SHUTDOWN;
     rtr_socket->request_session_id = true;
