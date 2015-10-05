@@ -92,10 +92,10 @@ struct rtr_mgr_config {
  *		     be unique in the group array. More than one rtr_mgr_group
  *		     with the same preference value isn't allowed.
  * @param[in] groups_len Number of elements in the groups array.
- * @param[in] refresh_interval Interval in seconds between serial queries that are sent to the server. Must be <= 3600.
- * If 0 is specified the refresh_interval is set to 300 seconds.
+ * @param[in] refresh_interval Interval in seconds between serial queries that are sent to the server.
+ * The maximum value is 86400 seconds (one day). If 0 is specified the refresh_interval is set to 3600 seconds.
  * @param[in] expire_interval Time period in seconds. Received pfx_records are deleted if the client was unable to refresh data for this time period.
- * If 0 is specified, the expire_interval will be half the refresh_interval.
+ * The maximum value is 172800 seconds (two days). If 0 is specified, the expire_interval is twice as large as refresh_interval.
  * The default value is twice the refresh_interval.
  * @param[in] update_fp A Pointer to a pfx_update_fp callback, that is executed for every added and removed pfx_record.
  * @param[in] spki_update_fp A Pointer to a spki_update_fp callback, that is executed for every added and removed spki_record.
