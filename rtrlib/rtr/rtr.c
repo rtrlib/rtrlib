@@ -52,7 +52,13 @@ static int install_sig_handler()
     return sigaction(SIGUSR1, &sa, NULL);
 }
 
-void rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_table *pfx_table, struct spki_table *spki_table, const unsigned int refresh_interval, const unsigned int expire_interval, rtr_connection_state_fp fp, void *fp_param)
+void rtr_init(struct rtr_socket *rtr_socket,
+              struct tr_socket *tr,
+              struct pfx_table *pfx_table,
+              struct spki_table *spki_table,
+              const unsigned int refresh_interval,
+              const unsigned int expire_interval,
+              rtr_connection_state_fp fp, void *fp_param)
 {
     if(tr != NULL)
         rtr_socket->tr_socket = tr;
@@ -62,7 +68,8 @@ void rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_ta
         rtr_socket->refresh_interval = refresh_interval;
     }
 
-    if (expire_interval == 0 || expire_interval > 172800) {
+    if (expire_interval == 0 || expire_interval > 172800
+            || expire_interval < rtr_socket->refresh_interval) {
         rtr_socket->expire_interval = rtr_socket->refresh_interval * 2;
     } else {
         rtr_socket->expire_interval = expire_interval;
