@@ -149,16 +149,17 @@ static void rtr_mgr_cb(const struct rtr_socket *sock, const enum rtr_socket_stat
 
         int next_config = ind + 1;
         bool found = false;
-        //find next group with higher preference value
-        for(unsigned int i = ind + 1; (i < config->len) && !found; i++) {
+
+        //find group with lower preference value; the lower the value, the more preferred.
+        for(int i = ind - 1; (i > - 1) && (!found); i--) {
             if(config->groups[i].status == RTR_MGR_CLOSED) {
                 found = true;
                 next_config = i;
             }
         }
         if(!found) {
-            //find group with lower preference value
-            for(int i = ind - 1; (i > - 1) && (!found); i--) {
+          //find next group with higher preference value
+          for(unsigned int i = ind + 1; (i < config->len) && !found; i++) {
                 if(config->groups[i].status == RTR_MGR_CLOSED) {
                     found = true;
                     next_config = i;
