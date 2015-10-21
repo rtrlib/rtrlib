@@ -287,6 +287,7 @@ void rtr_mgr_free(struct rtr_mgr_config *config)
     spki_table_free(config->groups[0].sockets[0]->spki_table);
     free(config->groups[0].sockets[0]->spki_table);
     free(config->groups[0].sockets[0]->pfx_table);
+    free(config->groups);
     pthread_mutex_unlock(&(config->mutex));
     pthread_mutex_destroy(&(config->mutex));
     free(config);
