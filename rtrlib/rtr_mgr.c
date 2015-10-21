@@ -76,6 +76,19 @@ bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *group)
     return true;
 }
 
+static void rtr_mgr_close_all_groups_except_one(const struct rtr_socket *sock, struct rtr_mgr_config *config, unsigned int except_group_ind)
+{
+    for(unsigned int i = 0; i < config->len; i++) {
+        if(config->groups[i].status != RTR_MGR_CLOSED && i != except_group_ind) {
+            for(unsigned int j = 0; j < config->groups[i].sockets_len; j++) {
+                rtr_stop(config->groups[i].sockets[j]);
+            }
+            set_status(config, &config->groups[i], RTR_MGR_CLOSED, sock);
+        }
+    }
+}
+
+
 static void rtr_mgr_cb(const struct rtr_socket *sock, const enum rtr_socket_state state, void *data)
 {
     struct rtr_mgr_config *config = data;
@@ -113,14 +126,7 @@ static void rtr_mgr_cb(const struct rtr_socket *sock, const enum rtr_socket_stat
             //if yes change group state to ESTABLISHED
             if(rtr_mgr_config_status_is_synced(&(config->groups[ind]))) {
                 set_status(config, &config->groups[ind], RTR_MGR_ESTABLISHED, sock);
-                for(unsigned int i = 0; i < config->len; i++) {
-                    if(config->groups[i].status != RTR_MGR_CLOSED && i != ind) {
-                        for(unsigned int j = 0; j < config->groups[i].sockets_len; j++) {
-                            rtr_stop(config->groups[i].sockets[j]);
-                        }
-                        set_status(config, &config->groups[i], RTR_MGR_CLOSED, sock);
-                    }
-                }
+                rtr_mgr_close_all_groups_except_one(sock, config, ind);
             }
         } else if(config->groups[ind].status == RTR_MGR_ERROR) {
             //if previous state was ERROR, only change state to ESTABLISHED if all other socket groups are also in error or SHUTDOWN state
@@ -130,17 +136,8 @@ static void rtr_mgr_cb(const struct rtr_socket *sock, const enum rtr_socket_stat
                     all_error = false;
             }
             if(all_error && rtr_mgr_config_status_is_synced(&(config->groups[ind]))) {
-                set_status(config, &config->groups[ind], RTR_MGR_ESTABLISHED,
-                           sock);
-                for(unsigned int i = 0; i < config->len; i++) {
-                    if(config->groups[i].status != RTR_MGR_CLOSED && i != ind) {
-                        for(unsigned int j = 0; j < config->groups[i].sockets_len; j++) {
-                            rtr_stop(config->groups[i].sockets[j]);
-                        }
-                        set_status(config, &config->groups[i], RTR_MGR_CLOSED,
-                                   sock);
-                    }
-                }
+                set_status(config, &config->groups[ind], RTR_MGR_ESTABLISHED, sock);
+                rtr_mgr_close_all_groups_except_one(sock, config, ind);
             }
         }
     } else if(state == RTR_ERROR_FATAL || state == RTR_ERROR_TRANSPORT || state == RTR_ERROR_NO_DATA_AVAIL) {
