@@ -118,8 +118,7 @@ static void rtr_mgr_cb(const struct rtr_socket *sock, const enum rtr_socket_stat
                         for(unsigned int j = 0; j < config->groups[i].sockets_len; j++) {
                             rtr_stop(config->groups[i].sockets[j]);
                         }
-                        set_status(config, &config->groups[i],
-                                   RTR_MGR_ESTABLISHED, sock);
+                        set_status(config, &config->groups[i], RTR_MGR_CLOSED, sock);
                     }
                 }
             }
