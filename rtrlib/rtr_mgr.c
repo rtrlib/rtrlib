@@ -21,7 +21,7 @@
 
 static const char *mgr_str_status[] = {
     [RTR_MGR_CLOSED] = "RTR_MGR_CLOSED",
-    [RTR_MGR_CONNECTING] = "RTR_MGR_CLOSED",
+    [RTR_MGR_CONNECTING] = "RTR_MGR_CONNECTING",
     [RTR_MGR_ESTABLISHED] = "RTR_MGR_ESTABLISHED",
     [RTR_MGR_ERROR] = "RTR_MGR_ERROR",
 };
