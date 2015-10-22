@@ -18,8 +18,8 @@
  * sockets of the group with the lowest preference value.\n
  * In case of failures, the connection manager establishes connections to
  * RTR servers of another group with the next lowest preference value (see
- * the <a href="http://tools.ietf.org/html/draft-ietf-sidr-rpki-rtr">IETF
- * draft-ietf-sidr-rpki-rtr</a> for details about error handling).
+ * the <a href="https://tools.ietf.org/html/rfc6810">IETF
+ * RFC 6810</a> for details about error handling).
  *
  * @{
  * @example rtr_mgr.c
