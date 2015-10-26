@@ -129,27 +129,6 @@ void tr_ssh_free(struct tr_socket *tr_sock)
     SSH_DBG1("Socket freed", tr_ssh_sock);
 }
 
-/*
-int tr_ssh_recv(const void* tr_ssh_sock, void* buf, unsigned int buf_len, const unsigned int timeout){
-    if(timeout > 0){
-        struct timeval timev;
-        //timev.tv_sec = timeout;
-        timev.tv_sec = 0;
-        timev.tv_usec = 1;
-        ssh_channel channels[2] = { (((tr_ssh_socket*) tr_ssh_sock)->channel), NULL };
-
-        if(channel_select(channels, NULL, NULL, &timev) == SSH_OK){
-        SSH_DBG("END");
-            if(channels[0] == NULL)
-                return -2;
-        }
-        SSH_DBG("END");
-        //TODO: select kann INTr zurückgeben, wurde durch signal unterbrochen, dann verbleibende zeit berechnen und nochma
-        //select ausführen
-    }
-    return channel_read_nonblocking(((tr_ssh_socket*) tr_ssh_sock)->channel, buf, buf_len, false);
-}
-*/
 int tr_ssh_recv_async(const struct tr_ssh_socket *tr_ssh_sock, void *buf, const size_t buf_len)
 {
     const int rtval = ssh_channel_read_nonblocking(tr_ssh_sock->channel, buf, buf_len, false);
