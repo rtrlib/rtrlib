@@ -146,19 +146,14 @@ int tr_ssh_recv_async(const struct tr_ssh_socket *tr_ssh_sock, void *buf, const 
     return rtval;
 }
 
-// channel_select is broken, it ignores the timeval parameter and blocks forever :/
-// ssh_channel_select is corrected with timeval parameter :-)
 int tr_ssh_recv(const void* tr_ssh_sock, void* buf, const size_t buf_len, const time_t timeout){
     ssh_channel rchans[2] = { ((struct tr_ssh_socket*) tr_ssh_sock)->channel, NULL };
 
     struct timeval timev = { 1, 0 };
 
-    const int rtval = ssh_channel_select(rchans, NULL, NULL, &timev);
-
-    if(rtval == SSH_ERROR)
-        return TR_ERROR;
-    if(rtval == SSH_EINTR)
+    if(ssh_channel_select(rchans, NULL, NULL, &timev) == SSH_EINTR)
         return TR_INTR;
+
     if(ssh_channel_is_eof(((struct tr_ssh_socket*) tr_ssh_sock)->channel) != 0)
         return SSH_ERROR;
 
