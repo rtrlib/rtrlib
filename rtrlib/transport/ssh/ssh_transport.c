@@ -17,8 +17,8 @@
 #include "../../lib/utils.h"
 #include "ssh_transport.h"
 
-#define SSH_DBG(fmt, sock, ...) dbg("SSH Transport(%s@%s:%u): " fmt, sock->config.username, sock->config.host, sock->config.port, ## __VA_ARGS__)
-#define SSH_DBG1(a, sock) dbg("SSH Transport(%s@%s:%u): " a, sock->config.username, sock->config.host, sock->config.port)
+#define SSH_DBG(fmt, sock, ...) dbg("SSH Transport(%s@%s:%u): " fmt, (sock)->config.username, (sock)->config.host, (sock)->config.port, ## __VA_ARGS__)
+#define SSH_DBG1(a, sock) dbg("SSH Transport(%s@%s:%u): " a, (sock)->config.username, (sock)->config.host, (sock)->config.port)
 
 struct tr_ssh_socket {
     ssh_session session;
@@ -146,34 +146,10 @@ int tr_ssh_recv_async(const struct tr_ssh_socket *tr_ssh_sock, void *buf, const 
     return rtval;
 }
 
-int tr_ssh_recv(const void *tr_ssh_sock, void *buf, const size_t buf_len, const time_t timeout)
-{
-    if(timeout == 0)
-        return tr_ssh_recv_async(tr_ssh_sock, buf, buf_len);
-
-    time_t end_time;
-    rtr_get_monotonic_time(&end_time);
-    end_time += timeout;
-    time_t cur_time;
-    do {
-        int rtval = channel_poll(((struct tr_ssh_socket *) tr_ssh_sock)->channel, false);
-        if(rtval > 0)
-            return tr_ssh_recv_async(tr_ssh_sock, buf, buf_len);
-        else if(rtval == SSH_ERROR) {
-            return TR_ERROR;
-        }
-
-        sleep(1);
-        rtr_get_monotonic_time(&cur_time);
-    } while((end_time - cur_time) >0);
-    return TR_WOULDBLOCK;;
-}
-
 // channel_select is broken, it ignores the timeval parameter and blocks forever :/
 // ssh_channel_select is corrected with timeval parameter :-)
-/*
 int tr_ssh_recv(const void* tr_ssh_sock, void* buf, const size_t buf_len, const time_t timeout){
-    ssh_channel rchans[2] = { ((tr_ssh_socket*) tr_ssh_sock)->channel, NULL };
+    ssh_channel rchans[2] = { ((struct tr_ssh_socket*) tr_ssh_sock)->channel, NULL };
 
     struct timeval timev = { 1, 0 };
 
@@ -192,7 +168,6 @@ int tr_ssh_recv(const void* tr_ssh_sock, void* buf, const size_t buf_len, const 
 
     return tr_ssh_recv_async(tr_ssh_sock, buf, buf_len);
 }
-*/
 
 int tr_ssh_send(const void *tr_ssh_sock, const void *pdu, const size_t len, const time_t timeout __attribute__((unused)))
 {
