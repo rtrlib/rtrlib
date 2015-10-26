@@ -79,13 +79,13 @@ int tr_ssh_open(void *socket)
         goto error;
     }
 
-    if((ssh_socket->channel = channel_new(ssh_socket->session)) == NULL)
+    if((ssh_socket->channel = ssh_channel_new(ssh_socket->session)) == NULL)
         goto error;
 
-    if(channel_open_session(ssh_socket->channel) == SSH_ERROR)
+    if(ssh_channel_open_session(ssh_socket->channel) == SSH_ERROR)
         goto error;
 
-    if(channel_request_subsystem(ssh_socket->channel, "rpki-rtr") == SSH_ERROR) {
+    if(ssh_channel_request_subsystem(ssh_socket->channel, "rpki-rtr") == SSH_ERROR) {
         SSH_DBG1("tr_ssh_init: Error requesting subsystem rpki-rtr", ssh_socket);
         goto error;
     }
@@ -104,9 +104,9 @@ void tr_ssh_close(void *tr_ssh_sock)
     struct tr_ssh_socket *socket = tr_ssh_sock;
 
     if(socket->channel != NULL) {
-        if(channel_is_open(socket->channel))
-            channel_close(socket->channel);
-        channel_free(socket->channel);
+        if(ssh_channel_is_open(socket->channel))
+            ssh_channel_close(socket->channel);
+        ssh_channel_free(socket->channel);
         socket->channel = NULL;
     }
     if(socket->session != NULL) {
@@ -152,9 +152,9 @@ int tr_ssh_recv(const void* tr_ssh_sock, void* buf, unsigned int buf_len, const 
 */
 int tr_ssh_recv_async(const struct tr_ssh_socket *tr_ssh_sock, void *buf, const size_t buf_len)
 {
-    const int rtval = channel_read_nonblocking(tr_ssh_sock->channel, buf, buf_len, false);
+    const int rtval = ssh_channel_read_nonblocking(tr_ssh_sock->channel, buf, buf_len, false);
     if(rtval == 0) {
-        if(channel_is_eof(tr_ssh_sock->channel) != 0) {
+        if(ssh_channel_is_eof(tr_ssh_sock->channel) != 0) {
             SSH_DBG1("remote has sent EOF", tr_ssh_sock);
             return TR_CLOSED;
         } else {
@@ -191,19 +191,20 @@ int tr_ssh_recv(const void *tr_ssh_sock, void *buf, const size_t buf_len, const 
 }
 
 // channel_select is broken, it ignores the timeval parameter and blocks forever :/
+// ssh_channel_select is corrected with timeval parameter :-)
 /*
 int tr_ssh_recv(const void* tr_ssh_sock, void* buf, const size_t buf_len, const time_t timeout){
     ssh_channel rchans[2] = { ((tr_ssh_socket*) tr_ssh_sock)->channel, NULL };
 
     struct timeval timev = { 1, 0 };
 
-    const int rtval = channel_select(rchans, NULL, NULL, &timev);
+    const int rtval = ssh_channel_select(rchans, NULL, NULL, &timev);
 
     if(rtval == SSH_ERROR)
         return TR_ERROR;
     if(rtval == SSH_EINTR)
         return TR_INTR;
-    if(channel_is_eof(((tr_ssh_socket*) tr_ssh_sock)->channel) != 0)
+    if(ssh_channel_is_eof(((struct tr_ssh_socket*) tr_ssh_sock)->channel) != 0)
         return SSH_ERROR;
 
     if(rchans[0] == NULL)
@@ -216,7 +217,7 @@ int tr_ssh_recv(const void* tr_ssh_sock, void* buf, const size_t buf_len, const 
 
 int tr_ssh_send(const void *tr_ssh_sock, const void *pdu, const size_t len, const time_t timeout __attribute__((unused)))
 {
-    return channel_write(((struct tr_ssh_socket *) tr_ssh_sock)->channel, pdu, len);
+    return ssh_channel_write(((struct tr_ssh_socket *) tr_ssh_sock)->channel, pdu, len);
 }
 
 const char *tr_ssh_ident(void *tr_ssh_sock)
