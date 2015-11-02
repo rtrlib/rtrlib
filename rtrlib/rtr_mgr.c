@@ -128,6 +128,9 @@ static void rtr_mgr_cb(const struct rtr_socket *sock, const enum rtr_socket_stat
                 set_status(config, &config->groups[ind], RTR_MGR_ESTABLISHED, sock);
                 rtr_mgr_close_all_groups_except_one(sock, config, ind);
             }
+            else {
+                set_status(config, &config->groups[ind], RTR_MGR_CONNECTING, sock);
+            }
         } else if(config->groups[ind].status == RTR_MGR_ERROR) {
             //if previous state was ERROR, only change state to ESTABLISHED if all other socket groups are also in error or SHUTDOWN state
             bool all_error = true;
@@ -140,6 +143,11 @@ static void rtr_mgr_cb(const struct rtr_socket *sock, const enum rtr_socket_stat
                 rtr_mgr_close_all_groups_except_one(sock, config, ind);
             }
         }
+    } else if(state == RTR_CONNECTING) {
+        if (config->groups[ind].status == RTR_MGR_ERROR)
+            set_status(config, &config->groups[ind], RTR_MGR_ERROR, sock);
+        else
+            set_status(config, &config->groups[ind], RTR_MGR_CONNECTING, sock);
     } else if(state == RTR_ERROR_FATAL || state == RTR_ERROR_TRANSPORT || state == RTR_ERROR_NO_DATA_AVAIL) {
         set_status(config, &config->groups[ind], RTR_MGR_ERROR, sock);
 
@@ -176,6 +184,8 @@ static void rtr_mgr_cb(const struct rtr_socket *sock, const enum rtr_socket_stat
         }
         if(next_config >= 0)
             rtr_mgr_start_sockets(&(config->groups[next_config]));
+    } else {
+        set_status(config, &config->groups[ind], config->groups[ind].status, sock);
     }
 
 out:
