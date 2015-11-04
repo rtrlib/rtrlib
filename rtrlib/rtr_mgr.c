@@ -49,6 +49,7 @@ static int rtr_mgr_start_sockets(struct rtr_mgr_group *group)
             return RTR_ERROR;
         }
     }
+    group->status = RTR_MGR_CONNECTING;
     return RTR_SUCCESS;
 }
 
