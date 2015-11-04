@@ -101,22 +101,6 @@ static void rtr_mgr_cb(const struct rtr_socket *sock, const enum rtr_socket_stat
 
     pthread_mutex_lock(&(config->mutex));
 
-    if(config->len == 1) {
-        if (state == RTR_CONNECTING)
-            set_status(config, &config->groups[ind], RTR_MGR_CONNECTING, sock);
-        else if (state == RTR_ESTABLISHED)
-            set_status(config, &config->groups[ind], RTR_MGR_ESTABLISHED, sock);
-        else if(state == RTR_ERROR_FATAL || state == RTR_ERROR_TRANSPORT ||
-                state == RTR_ERROR_NO_DATA_AVAIL)
-            set_status(config, &config->groups[ind], RTR_MGR_ERROR, sock);
-        else if (state == RTR_SHUTDOWN)
-            set_status(config, &config->groups[ind], RTR_MGR_CLOSED, sock);
-        else
-            set_status(config, &config->groups[ind],
-                       config->groups[ind].status, sock);
-        goto out;
-    }
-
     if(state == RTR_SHUTDOWN)
         goto out;
 
