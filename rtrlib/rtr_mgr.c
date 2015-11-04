@@ -77,10 +77,11 @@ bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *group)
     return true;
 }
 
-static void rtr_mgr_close_all_groups_except_one(const struct rtr_socket *sock, struct rtr_mgr_config *config, unsigned int except_group_ind)
+static void rtr_mgr_close_less_preferable_groups(const struct rtr_socket *sock, struct rtr_mgr_config *config, unsigned int my_group_idx)
 {
     for(unsigned int i = 0; i < config->len; i++) {
-        if(config->groups[i].status != RTR_MGR_CLOSED && i != except_group_ind) {
+        if(config->groups[i].status != RTR_MGR_CLOSED && i != my_group_idx
+            && config->groups[i].preference > config->groups[my_group_idx].preference) {
             for(unsigned int j = 0; j < config->groups[i].sockets_len; j++) {
                 pthread_mutex_unlock(&(config->mutex));
                 rtr_stop(config->groups[i].sockets[j]);
@@ -113,21 +114,22 @@ static void rtr_mgr_cb(const struct rtr_socket *sock, const enum rtr_socket_stat
             //if yes change group state to ESTABLISHED
             if(rtr_mgr_config_status_is_synced(&(config->groups[ind]))) {
                 set_status(config, &config->groups[ind], RTR_MGR_ESTABLISHED, sock);
-                rtr_mgr_close_all_groups_except_one(sock, config, ind);
+                rtr_mgr_close_less_preferable_groups(sock, config, ind);
             }
             else {
                 set_status(config, &config->groups[ind], RTR_MGR_CONNECTING, sock);
             }
         } else if(config->groups[ind].status == RTR_MGR_ERROR) {
-            //if previous state was ERROR, only change state to ESTABLISHED if all other socket groups are also in error or SHUTDOWN state
+            //if previous state was ERROR, only change state to ESTABLISHED if all other more preferable socket groups are also in ERROR or SHUTDOWN state
             bool all_error = true;
             for(unsigned int i = 0; (i < config->len) && (all_error); i++) {
-                if(config->groups[i].status != RTR_MGR_ERROR && config->groups[i].status != RTR_MGR_CLOSED)
+                if(i != ind && config->groups[i].status != RTR_MGR_ERROR && config->groups[i].status != RTR_MGR_CLOSED
+                    && config->groups[i].preference < config->groups[ind].preference)
                     all_error = false;
             }
             if(all_error && rtr_mgr_config_status_is_synced(&(config->groups[ind]))) {
                 set_status(config, &config->groups[ind], RTR_MGR_ESTABLISHED, sock);
-                rtr_mgr_close_all_groups_except_one(sock, config, ind);
+                rtr_mgr_close_less_preferable_groups(sock, config, ind);
             }
         }
     } else if(state == RTR_CONNECTING) {
