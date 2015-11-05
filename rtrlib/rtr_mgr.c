@@ -82,7 +82,9 @@ static void rtr_mgr_close_all_groups_except_one(const struct rtr_socket *sock, s
     for(unsigned int i = 0; i < config->len; i++) {
         if(config->groups[i].status != RTR_MGR_CLOSED && i != except_group_ind) {
             for(unsigned int j = 0; j < config->groups[i].sockets_len; j++) {
+                pthread_mutex_unlock(&(config->mutex));
                 rtr_stop(config->groups[i].sockets[j]);
+                pthread_mutex_lock(&(config->mutex));
             }
             set_status(config, &config->groups[i], RTR_MGR_CLOSED, sock);
         }
