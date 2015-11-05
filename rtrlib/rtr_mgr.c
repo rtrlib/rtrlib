@@ -93,6 +93,27 @@ static void rtr_mgr_close_less_preferable_groups(const struct rtr_socket *sock, 
 }
 
 
+static struct rtr_mgr_group *get_best_inactive_rtr_mgr_group(
+    struct rtr_mgr_config *config,
+    unsigned int my_group_idx)
+{
+    //groups are sorted by preference
+    for(int i = 0; i < config->len; i++) {
+        if(i != my_group_idx && config->groups[i].status == RTR_MGR_CLOSED)
+            return(&config->groups[i]);
+    }
+    return NULL;
+}
+
+static bool is_some_rtr_mgr_group_established(struct rtr_mgr_config *config)
+{
+  for(int i = 0; i < config->len; i++) {
+      if(config->groups[i].status == RTR_MGR_ESTABLISHED)
+          return true;
+  }
+  return false;
+}
+
 static void rtr_mgr_cb(const struct rtr_socket *sock, const enum rtr_socket_state state, void *data)
 {
     struct rtr_mgr_config *config = data;
@@ -152,30 +173,14 @@ static void rtr_mgr_cb(const struct rtr_socket *sock, const enum rtr_socket_stat
     } else if(state == RTR_ERROR_FATAL || state == RTR_ERROR_TRANSPORT || state == RTR_ERROR_NO_DATA_AVAIL) {
         set_status(config, &config->groups[ind], RTR_MGR_ERROR, sock);
 
-        int next_config = ind + 1;
-        bool found = false;
+        if(!is_some_rtr_mgr_group_established(config)) {
+            struct rtr_mgr_group *next_group = get_best_inactive_rtr_mgr_group(config, ind);
 
-        //find group with lower preference value, more preferred
-        for(int i = ind - 1; (i > - 1) && (!found); i--) {
-            if(config->groups[i].status == RTR_MGR_CLOSED) {
-                found = true;
-                next_config = i;
-            }
+            if(next_group)
+                rtr_mgr_start_sockets(next_group);
+            else
+                MGR_DBG1("No other inactive groups found");
         }
-        if(!found) {
-            //find group with higher preference value, less preferred
-            for(unsigned int i = ind + 1; (i < config->len) && !found; i++) {
-                if(config->groups[i].status == RTR_MGR_CLOSED) {
-                    found = true;
-                    next_config = i;
-                }
-            }
-        }
-
-        if(found)
-            rtr_mgr_start_sockets(&(config->groups[next_config]));
-        else
-            MGR_DBG1("No other inactive groups found");
     } else if(state == RTR_ERROR_NO_INCR_UPDATE_AVAIL) {
         set_status(config, &config->groups[ind], RTR_MGR_ERROR, sock);
         //find a group with a lower preference value, if no other group exists do nothing
