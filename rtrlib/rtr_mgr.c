@@ -131,6 +131,9 @@ static void rtr_mgr_cb(const struct rtr_socket *sock, const enum rtr_socket_stat
                 set_status(config, &config->groups[ind], RTR_MGR_ESTABLISHED, sock);
                 rtr_mgr_close_less_preferable_groups(sock, config, ind);
             }
+            else {
+                set_status(config, &config->groups[ind], RTR_MGR_ERROR, sock);
+            }
         }
     } else if(state == RTR_CONNECTING) {
         if (config->groups[ind].status == RTR_MGR_ERROR)
