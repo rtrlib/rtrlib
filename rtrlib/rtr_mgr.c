@@ -104,10 +104,19 @@ static void rtr_mgr_cb(const struct rtr_socket *sock, const enum rtr_socket_stat
 
     pthread_mutex_lock(&(config->mutex));
 
-    if(state == RTR_SHUTDOWN)
-        goto out;
-
-    if(state == RTR_ESTABLISHED) {
+    if(state == RTR_SHUTDOWN) {
+        bool all_down = true;
+        for(unsigned int i = 0; i < config->groups[ind].sockets_len; i++) {
+            if(config->groups[ind].sockets[i]->state != RTR_SHUTDOWN) {
+                all_down = false;
+                break;
+            }
+        }
+        if(all_down)
+            set_status(config, &config->groups[ind], RTR_MGR_CLOSED, sock);
+        else
+            set_status(config, &config->groups[ind], config->groups[ind].status, sock);
+    } else if(state == RTR_ESTABLISHED) {
         //socket established successfull a connection to the rtr_server
         if(config->groups[ind].status == RTR_MGR_CONNECTING) {
             //if previous state was CONNECTING, check if all other sockets in the group also have a established connection,
