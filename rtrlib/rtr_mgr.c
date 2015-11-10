@@ -181,15 +181,6 @@ static void rtr_mgr_cb(const struct rtr_socket *sock, const enum rtr_socket_stat
             else
                 MGR_DBG1("No other inactive groups found");
         }
-    } else if(state == RTR_ERROR_NO_INCR_UPDATE_AVAIL) {
-        set_status(config, &config->groups[ind], RTR_MGR_ERROR, sock);
-        //find a group with a lower preference value, if no other group exists do nothing
-        int next_config = ind - 1;
-        while(next_config >= 0 && config->groups[next_config].status != RTR_MGR_CLOSED) {
-            next_config--;
-        }
-        if(next_config >= 0)
-            rtr_mgr_start_sockets(&(config->groups[next_config]));
     } else {
         set_status(config, &config->groups[ind], config->groups[ind].status, sock);
     }
