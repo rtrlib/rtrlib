@@ -753,9 +753,13 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
         retval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
         if (retval == TR_WOULDBLOCK) {
             rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
-            return RTR_ERROR;
-        } else if (retval < 0)
-            return RTR_ERROR;
+            retval = RTR_ERROR;
+            goto cleanup;
+        } else if (retval < 0) {
+            retval = RTR_ERROR;
+            goto cleanup;
+        }
+        
         type = rtr_get_pdu_type(pdu);
         if (type == IPV4_PREFIX) {
             if (rtr_store_prefix_pdu(rtr_socket, pdu, sizeof(*ipv4_pdus), (void **) &ipv4_pdus, &ipv4_pdus_nindex, &ipv4_pdus_size) == RTR_ERROR){
