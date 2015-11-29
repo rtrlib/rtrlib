@@ -411,10 +411,10 @@ error:
         rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), CORRUPT_DATA, txt, sizeof(txt));
     } else if (error == UNSUPPORTED_PDU_TYPE) {
         RTR_DBG1("Unsupported PDU type received");
-        rtr_send_error_pdu(rtr_socket, pdu, header.len, UNSUPPORTED_PDU_TYPE, NULL, 0);
+        rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), UNSUPPORTED_PDU_TYPE, NULL, 0);
     } else if (error == UNSUPPORTED_PROTOCOL_VER) {
         RTR_DBG1("PDU with unsupported Protocol version received");
-        rtr_send_error_pdu(rtr_socket, pdu, header.len, UNSUPPORTED_PROTOCOL_VER, NULL, 0);
+        rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), UNSUPPORTED_PROTOCOL_VER, NULL, 0);
         return RTR_ERROR;
     }
 
