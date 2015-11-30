@@ -206,6 +206,7 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket)
             RTR_DBG1("State: RTR_ERROR_TRANSPORT");
             tr_close(rtr_socket->tr_socket);
             rtr_change_socket_state(rtr_socket, RTR_CONNECTING);
+            RTR_DBG("Waiting %u", rtr_socket->retry_interval);
             sleep(rtr_socket->retry_interval);
         }
 
@@ -213,6 +214,7 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket)
             RTR_DBG1("State: RTR_ERROR_FATAL");
             tr_close(rtr_socket->tr_socket);
             rtr_change_socket_state(rtr_socket, RTR_CONNECTING);
+            RTR_DBG("Waiting %u", rtr_socket->retry_interval);
             sleep(rtr_socket->retry_interval);
         }
 
