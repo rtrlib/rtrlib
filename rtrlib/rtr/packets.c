@@ -195,6 +195,7 @@ void rtr_change_socket_state(struct rtr_socket *rtr_socket, const enum rtr_socke
 static void rtr_pdu_to_network_byte_order(void *pdu)
 {
     struct pdu_header *header = pdu;
+    struct pdu_error *err_pdu = NULL;
 
     header->reserved = htons(header->reserved);
     header->len = htonl(header->len);
@@ -205,7 +206,10 @@ static void rtr_pdu_to_network_byte_order(void *pdu)
         ((struct pdu_serial_query *) pdu)->sn = htonl(((struct pdu_serial_query *) pdu)->sn);
         break;
     case ERROR:
-        ((struct pdu_error *) pdu)->len_enc_pdu = htonl(((struct pdu_error *) pdu)->len_enc_pdu);
+        err_pdu = pdu;
+        err_pdu->len_enc_pdu = htonl(err_pdu->len_enc_pdu);
+        *((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)) =
+            htonl(*((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)));
         break;
     default:
         break;
@@ -216,6 +220,7 @@ static void rtr_pdu_footer_to_host_byte_order(void *pdu)
 {
     const enum pdu_type type = rtr_get_pdu_type(pdu);
     struct pdu_header *header = pdu;
+    struct pdu_error * err_pdu = NULL;
 
     uint32_t addr6[4];
 
@@ -258,8 +263,13 @@ static void rtr_pdu_footer_to_host_byte_order(void *pdu)
             ntohl(((struct pdu_router_key *) pdu)->asn);
         break;
     case ERROR:
-        ((struct pdu_error *) pdu)->len_enc_pdu =
-            ntohl(((struct pdu_error *) pdu)->len_enc_pdu);
+        err_pdu = pdu;
+
+        err_pdu->len_enc_pdu =
+            ntohl(err_pdu->len_enc_pdu);
+
+        *((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)) =
+            ntohl(*((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)));
         break;
     default:
         break;
@@ -347,7 +357,7 @@ static bool rtr_pdu_check_size (const struct pdu_header *pdu) {
     }
 
     //Check if the the PDU really contains the error msg
-    uint32_t err_msg_len = ntohl(*(err_pdu->rest + enc_pdu_len));
+    uint32_t err_msg_len = ntohl(*((uint32_t *)(err_pdu->rest + enc_pdu_len)));
     RTR_DBG("err_msg_len: %u", err_msg_len);
     min_size += err_msg_len;
     if (err_pdu->len != min_size) {
@@ -581,7 +591,7 @@ static int rtr_handle_error_pdu(struct rtr_socket *rtr_socket, const void *buf)
         break;
     }
 
-    const uint32_t len_err_txt = ntohl(*((uint32_t *) (pdu->rest + pdu->len_enc_pdu)));
+    const uint32_t len_err_txt = (*((uint32_t *) (pdu->rest + pdu->len_enc_pdu)));
     if (len_err_txt > 0) {
         if ((sizeof(pdu->ver) + sizeof(pdu->type) + sizeof(pdu->error_code) + sizeof(pdu->len) + sizeof(pdu->len_enc_pdu) + pdu->len_enc_pdu + 4 + len_err_txt) != pdu->len)
             RTR_DBG1("error: Length of error text contains an incorrect value");
