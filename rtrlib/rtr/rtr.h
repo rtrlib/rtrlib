@@ -24,8 +24,8 @@
 #include "rtrlib/pfx/pfx.h"
 #include "rtrlib/transport/transport.h"
 
-#define RTR_DBG(fmt, ...) dbg("RTR Socket: " fmt, ## __VA_ARGS__)
-#define RTR_DBG1(a) dbg("RTR Socket: " a)
+#define RTR_DBG(fmt, ...) lrtr_dbg("RTR Socket: " fmt, ## __VA_ARGS__)
+#define RTR_DBG1(a) lrtr_dbg("RTR Socket: " a)
 
 static const uint8_t RTR_PROTOCOL_VERSION_0 = 0;
 static const uint8_t RTR_PROTOCOL_VERSION_1 = 1;

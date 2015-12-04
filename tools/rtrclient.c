@@ -65,7 +65,7 @@ static void update_cb(struct pfx_table* p  __attribute__((unused)), const struct
         printf("+ ");
     else
         printf("- ");
-    ip_addr_to_str(&(rec.prefix), ip, sizeof(ip));
+    lrtr_ip_addr_to_str(&(rec.prefix), ip, sizeof(ip));
     printf("%-40s   %3u - %3u   %10u\n", ip, rec.min_len, rec.max_len, rec.asn);
 }
 

@@ -15,21 +15,21 @@
 #include <string.h>
 #include <stdio.h>
 
-inline bool ipv6_addr_equal(const struct ipv6_addr *a, const struct ipv6_addr *b)
+inline bool lrtr_ipv6_addr_equal(const struct lrtr_ipv6_addr *a, const struct lrtr_ipv6_addr *b)
 {
     if(a->addr[0] == b->addr[0] && a->addr[1] == b->addr[1] && a->addr[2] == b->addr[2] && a->addr[3] == b->addr[3])
         return true;
     return false;
 }
 
-struct ipv6_addr ipv6_get_bits(const struct ipv6_addr *val, const uint8_t first_bit, const uint8_t quantity)
+struct lrtr_ipv6_addr lrtr_ipv6_get_bits(const struct lrtr_ipv6_addr *val, const uint8_t first_bit, const uint8_t quantity)
 {
     assert(first_bit <= 127);
     assert(quantity <= 128);
     assert(first_bit + quantity <= 128);
 
     // if no bytes get extracted the result has to be 0
-    struct ipv6_addr result;
+    struct lrtr_ipv6_addr result;
     memset(&result, 0, sizeof(result));
 
     uint8_t bits_left = quantity;
@@ -38,7 +38,7 @@ struct ipv6_addr ipv6_get_bits(const struct ipv6_addr *val, const uint8_t first_
         const uint8_t q = quantity > 32 ? 32 : quantity;
         assert(bits_left >= q);
         bits_left -= q;
-        result.addr[0] = rtr_get_bits(val->addr[0], first_bit, q);
+        result.addr[0] = lrtr_get_bits(val->addr[0], first_bit, q);
     }
 
     if((first_bit <= 63) && ((first_bit + quantity) > 32)) {
@@ -46,7 +46,7 @@ struct ipv6_addr ipv6_get_bits(const struct ipv6_addr *val, const uint8_t first_
         const uint8_t q = bits_left > 32 ? 32 : bits_left;
         assert(bits_left >= q);
         bits_left -= q;
-        result.addr[1] = rtr_get_bits(val->addr[1], fr, q);
+        result.addr[1] = lrtr_get_bits(val->addr[1], fr, q);
     }
 
     if((first_bit <= 95) && ((first_bit + quantity) > 64)) {
@@ -54,7 +54,7 @@ struct ipv6_addr ipv6_get_bits(const struct ipv6_addr *val, const uint8_t first_
         const uint8_t q = bits_left > 32 ? 32 : bits_left;
         assert(bits_left >= q);
         bits_left -= q;
-        result.addr[2] = rtr_get_bits(val->addr[2], fr, q);
+        result.addr[2] = lrtr_get_bits(val->addr[2], fr, q);
     }
 
     if((first_bit <= 127) && ((first_bit + quantity) > 96)) {
@@ -62,7 +62,7 @@ struct ipv6_addr ipv6_get_bits(const struct ipv6_addr *val, const uint8_t first_
         const uint8_t q = bits_left > 32 ? 32 : bits_left;
         assert(bits_left >= q);
         bits_left -= q;
-        result.addr[3] = rtr_get_bits(val->addr[3], fr, q);
+        result.addr[3] = lrtr_get_bits(val->addr[3], fr, q);
     }
     return result;
 }
@@ -70,7 +70,7 @@ struct ipv6_addr ipv6_get_bits(const struct ipv6_addr *val, const uint8_t first_
 /*
  * This function was copied from the bird routing daemon's ip_pton(..) function.
  */
-int ipv6_str_to_addr(const char *a, struct ipv6_addr *ip)
+int lrtr_ipv6_str_to_addr(const char *a, struct lrtr_ipv6_addr *ip)
 {
     uint32_t *o = ip->addr;
     uint16_t words[8];
@@ -111,8 +111,8 @@ int ipv6_str_to_addr(const char *a, struct ipv6_addr *ip)
         if (*a == ':' && a[1])
             a++;
         else if (*a == '.' && (i == 6 || (i < 6 && hfil >= 0))) {             /* Embedded IPv4 address */
-            struct ipv4_addr addr4;
-            if (ipv4_str_to_addr(start, &addr4) == -1)
+            struct lrtr_ipv4_addr addr4;
+            if (lrtr_ipv4_str_to_addr(start, &addr4) == -1)
                 return -1;
             words[i++] = addr4.addr >> 16;
             words[i++] = addr4.addr;
@@ -133,7 +133,7 @@ int ipv6_str_to_addr(const char *a, struct ipv6_addr *ip)
             words[i] = 0;
     }
 
-    /* Convert the address to ip_addr format */
+    /* Convert the address to lrtr_ip_addr format */
     for(i=0; i<4; i++)
         o[i] = (words[2*i] << 16) | words[2*i+1];
     return 0;
@@ -142,7 +142,7 @@ int ipv6_str_to_addr(const char *a, struct ipv6_addr *ip)
 /*
  * This function was copied from the bird routing daemon's ip_ntop(..) function.
 */
-int ipv6_addr_to_str(const struct ipv6_addr *ip_addr, char *b, const unsigned int len)
+int lrtr_ipv6_addr_to_str(const struct lrtr_ipv6_addr *ip_addr, char *b, const unsigned int len)
 {
     if(len < INET6_ADDRSTRLEN)
         return -1;
@@ -196,7 +196,7 @@ int ipv6_addr_to_str(const struct ipv6_addr *ip_addr, char *b, const unsigned in
     return 0;
 }
 
-void ipv6_addr_to_host_byte_order(const uint32_t *src, uint32_t *dest)
+void lrtr_ipv6_addr_to_host_byte_order(const uint32_t *src, uint32_t *dest)
 {
     for(int i = 0; i < 4; i++)
         dest[i] = ntohl(src[i]);
