@@ -87,7 +87,7 @@ void rtr_purge_outdated_records(struct rtr_socket *rtr_socket)
     if(rtr_socket->last_update == 0)
         return;
     time_t cur_time;
-    int rtval = rtr_get_monotonic_time(&cur_time);
+    int rtval = lrtr_get_monotonic_time(&cur_time);
     if(rtval == -1 || (rtr_socket->last_update + rtr_socket->expire_interval) < cur_time) {
         if(rtval == -1)
             RTR_DBG1("get_monotic_time(..) failed");

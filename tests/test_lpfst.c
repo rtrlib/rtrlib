@@ -33,64 +33,64 @@
 
 static void get_bits_testv4()
 {
-    struct rtr_ip_addr addr;
+    struct lrtr_ip_addr addr;
     addr.ver = RTRLIB_IPV4;
 
-    struct rtr_ip_addr result;
+    struct lrtr_ip_addr result;
     addr.u.addr4.addr=0xAABBCC22;
 
-    result = ip_addr_get_bits(&addr, 0, 32);
+    result = lrtr_ip_addr_get_bits(&addr, 0, 32);
     assert(result.u.addr4.addr == 0xAABBCC22);
 
-    result = ip_addr_get_bits(&addr, 0, 1);
+    result = lrtr_ip_addr_get_bits(&addr, 0, 1);
     assert(result.u.addr4.addr == 0x80000000);
 
-    result = ip_addr_get_bits(&addr, 1, 1);
+    result = lrtr_ip_addr_get_bits(&addr, 1, 1);
     assert(result.u.addr4.addr == 0);
 
-    result = ip_addr_get_bits(&addr, 2, 1);
+    result = lrtr_ip_addr_get_bits(&addr, 2, 1);
     assert(result.u.addr4.addr == 0x20000000);
 
-    result = ip_addr_get_bits(&addr, 0, 8);
+    result = lrtr_ip_addr_get_bits(&addr, 0, 8);
     assert(result.u.addr4.addr == 0xAA000000);
 
-    result = ip_addr_get_bits(&addr, 8, 8);
+    result = lrtr_ip_addr_get_bits(&addr, 8, 8);
     assert(result.u.addr4.addr == 0x00BB0000);
 
 
-    ip_str_to_addr("10.10.10.0", &addr);
+    lrtr_ip_str_to_addr("10.10.10.0", &addr);
 
-    result = ip_addr_get_bits(&addr, 0, 8);
-    assert(ip_str_cmp(&result, "10.0.0.0"));
+    result = lrtr_ip_addr_get_bits(&addr, 0, 8);
+    assert(lrtr_ip_str_cmp(&result, "10.0.0.0"));
 
-    result = ip_addr_get_bits(&addr, 0, 16);
-    assert(ip_str_cmp(&result, "10.10.0.0"));
+    result = lrtr_ip_addr_get_bits(&addr, 0, 16);
+    assert(lrtr_ip_str_cmp(&result, "10.10.0.0"));
 
-    result = ip_addr_get_bits(&addr, 8, 8);
-    assert(ip_str_cmp(&result, "0.10.0.0"));
+    result = lrtr_ip_addr_get_bits(&addr, 8, 8);
+    assert(lrtr_ip_str_cmp(&result, "0.10.0.0"));
 
-    result = ip_addr_get_bits(&addr, 8, 24);
-    assert(ip_str_cmp(&result, "0.10.10.0"));
+    result = lrtr_ip_addr_get_bits(&addr, 8, 24);
+    assert(lrtr_ip_str_cmp(&result, "0.10.10.0"));
 
-    result = ip_addr_get_bits(&addr, 31, 1);
+    result = lrtr_ip_addr_get_bits(&addr, 31, 1);
     assert(result.u.addr4.addr == 0);
 
-    result = ip_addr_get_bits(&addr, 0, 1);
+    result = lrtr_ip_addr_get_bits(&addr, 0, 1);
     assert(result.u.addr4.addr == 0);
 
-    result = ip_addr_get_bits(&addr, 3, 3);
-    assert(ip_str_cmp(&result, "8.0.0.0"));
+    result = lrtr_ip_addr_get_bits(&addr, 3, 3);
+    assert(lrtr_ip_str_cmp(&result, "8.0.0.0"));
 
-    assert(ip_str_to_addr("132.200.0.0", &addr) == 0);
-    result = ip_addr_get_bits(&addr, 0, 1);
+    assert(lrtr_ip_str_to_addr("132.200.0.0", &addr) == 0);
+    result = lrtr_ip_addr_get_bits(&addr, 0, 1);
     assert(result.u.addr4.addr == 0x80000000);
 
-    assert(ip_str_to_addr("101.200.0.0", &addr) == 0);
-    result = ip_addr_get_bits(&addr, 0, 1);
+    assert(lrtr_ip_str_to_addr("101.200.0.0", &addr) == 0);
+    result = lrtr_ip_addr_get_bits(&addr, 0, 1);
     assert(result.u.addr4.addr == 0);
 
     addr.u.addr4.addr = 0x6D698000;
-    result = ip_addr_get_bits(&addr, 0, 19);
+    result = lrtr_ip_addr_get_bits(&addr, 0, 19);
     assert(result.u.addr4.addr == 0x6D698000);
     /*
     ip_str_to_addr("109.105.128.0", &addr);
@@ -99,89 +99,89 @@ static void get_bits_testv4()
     */
 
     char buf[INET_ADDRSTRLEN];
-    assert(ip_str_to_addr("10.10.10.5", &addr) == 0);
-    assert(ip_addr_to_str(&addr, buf, sizeof(buf)) == 0);
+    assert(lrtr_ip_str_to_addr("10.10.10.5", &addr) == 0);
+    assert(lrtr_ip_addr_to_str(&addr, buf, sizeof(buf)) == 0);
     assert(strcmp("10.10.10.5", buf) == 0);
 
 }
 
 static void get_bits_testv6()
 {
-    struct rtr_ip_addr addr;
+    struct lrtr_ip_addr addr;
     addr.ver = RTRLIB_IPV6;
     addr.u.addr6.addr[0] = 0x22AABBCC;
     addr.u.addr6.addr[1] = 0xDDEEFF99;
     addr.u.addr6.addr[2] = 0x33001122;
     addr.u.addr6.addr[3] = 0x33445566;
 
-    struct rtr_ip_addr result;
+    struct lrtr_ip_addr result;
 
-    result = ip_addr_get_bits(&addr, 0, 128);
+    result = lrtr_ip_addr_get_bits(&addr, 0, 128);
     assert(result.u.addr6.addr[0] == addr.u.addr6.addr[0] && result.u.addr6.addr[1] == addr.u.addr6.addr[1] && result.u.addr6.addr[2] == addr.u.addr6.addr[2] && result.u.addr6.addr[3] == addr.u.addr6.addr[3]);
 
-    result = ip_addr_get_bits(&addr, 0, 64);
+    result = lrtr_ip_addr_get_bits(&addr, 0, 64);
     assert(result.u.addr6.addr[0] == addr.u.addr6.addr[0] && result.u.addr6.addr[1] == addr.u.addr6.addr[1] && result.u.addr6.addr[2] == 0 && result.u.addr6.addr[3] == 0);
 
     bzero(&result, sizeof(result));
-    result = ip_addr_get_bits(&addr, 64, 64);
+    result = lrtr_ip_addr_get_bits(&addr, 64, 64);
     assert(result.u.addr6.addr[0] == 0);
     assert(result.u.addr6.addr[1] == 0);
     assert(result.u.addr6.addr[2] == addr.u.addr6.addr[2]);
     assert(result.u.addr6.addr[3] == addr.u.addr6.addr[3]);
 
 
-    result = ip_addr_get_bits(&addr, 0, 8);
+    result = lrtr_ip_addr_get_bits(&addr, 0, 8);
     assert(result.u.addr6.addr[0] == 0x22000000 && result.u.addr6.addr[1] == 0);
 
-    result = ip_addr_get_bits(&addr, 64, 8);
+    result = lrtr_ip_addr_get_bits(&addr, 64, 8);
     assert(result.u.addr6.addr[1] == 0 && result.u.addr6.addr[2] == 0x33000000);
 
-    result = ip_addr_get_bits(&addr, 7, 8);
+    result = lrtr_ip_addr_get_bits(&addr, 7, 8);
     assert(result.u.addr6.addr[0] == 0xAA0000 && result.u.addr6.addr[1] == 0);
 
-    result = ip_addr_get_bits(&addr, 68, 7);
+    result = lrtr_ip_addr_get_bits(&addr, 68, 7);
     assert(result.u.addr6.addr[0] == 0 && result.u.addr6.addr[2] == 0x03000000);
 
     char buf[INET6_ADDRSTRLEN];
 
-    ip_str_to_addr("fe80::862b:2bff:fe9a:f50f", &addr);
+    lrtr_ip_str_to_addr("fe80::862b:2bff:fe9a:f50f", &addr);
     addr.ver= RTRLIB_IPV6;
     assert(addr.u.addr6.addr[0] == 0xfe800000);
     assert(addr.u.addr6.addr[1] == 0);
     assert(addr.u.addr6.addr[2] == 0x862b2bff);
     assert(addr.u.addr6.addr[3] == 0xfe9af50f);
 
-    assert(ip_str_to_addr("2001::", &addr) == 0);
+    assert(lrtr_ip_str_to_addr("2001::", &addr) == 0);
     assert(addr.u.addr6.addr[0] == 0x20010000);
     assert(addr.u.addr6.addr[1] == 0);
     assert(addr.u.addr6.addr[2] == 0);
     assert(addr.u.addr6.addr[3] == 0);
 
-    assert(ip_addr_to_str(&addr, buf, sizeof(buf)) == 0);
+    assert(lrtr_ip_addr_to_str(&addr, buf, sizeof(buf)) == 0);
     assert(strcmp("2001::", buf) == 0);
 
-    ip_str_to_addr("2001:0db8:85a3:08d3:1319:8a2e:0370:7344", &addr);
-    assert(ip_addr_to_str(&addr, buf, sizeof(buf)) == 0);
+    lrtr_ip_str_to_addr("2001:0db8:85a3:08d3:1319:8a2e:0370:7344", &addr);
+    assert(lrtr_ip_addr_to_str(&addr, buf, sizeof(buf)) == 0);
     assert(strcmp("2001:db8:85a3:8d3:1319:8a2e:370:7344", buf) == 0);
 
-    result = ip_addr_get_bits(&addr, 0, 16);
-    assert(ip_addr_to_str(&result, buf, sizeof(buf)) == 0);
-    assert(ip_str_cmp(&result, "2001::"));
+    result = lrtr_ip_addr_get_bits(&addr, 0, 16);
+    assert(lrtr_ip_addr_to_str(&result, buf, sizeof(buf)) == 0);
+    assert(lrtr_ip_str_cmp(&result, "2001::"));
 
-    result = ip_addr_get_bits(&addr, 16, 16);
-    assert(ip_addr_to_str(&result, buf, sizeof(buf)) == 0);
-    assert(ip_str_cmp(&result, "0:db8::"));
-    result = ip_addr_get_bits(&addr, 0, 1);
-    assert(ip_str_cmp(&result, "::"));
+    result = lrtr_ip_addr_get_bits(&addr, 16, 16);
+    assert(lrtr_ip_addr_to_str(&result, buf, sizeof(buf)) == 0);
+    assert(lrtr_ip_str_cmp(&result, "0:db8::"));
+    result = lrtr_ip_addr_get_bits(&addr, 0, 1);
+    assert(lrtr_ip_str_cmp(&result, "::"));
 
-    result = ip_addr_get_bits(&addr, 126, 1);
-    assert(ip_addr_to_str(&result, buf, sizeof(buf)) == 0);
-    assert(ip_str_cmp(&result, "::"));
+    result = lrtr_ip_addr_get_bits(&addr, 126, 1);
+    assert(lrtr_ip_addr_to_str(&result, buf, sizeof(buf)) == 0);
+    assert(lrtr_ip_str_cmp(&result, "::"));
 }
 
 static void lpfst_test()
 {
-    struct rtr_ip_addr addr;
+    struct lrtr_ip_addr addr;
     addr.ver = RTRLIB_IPV4;
     struct lpfst_node* result;
     unsigned int lvl = 0;
@@ -192,19 +192,19 @@ static void lpfst_test()
     n1.rchild = NULL;
     n1.parent = NULL;
     n1.data = NULL;
-    ip_str_to_addr( "100.200.0.0", &(n1.prefix));
+    lrtr_ip_str_to_addr( "100.200.0.0", &(n1.prefix));
 
-    ip_str_to_addr( "100.200.0.0", &(addr));
+    lrtr_ip_str_to_addr( "100.200.0.0", &(addr));
     lvl = 0;
     result = lpfst_lookup(&n1, &addr, 16, &lvl);
     assert(result != NULL);
-    assert(ip_str_cmp(&(result->prefix), "100.200.0.0"));
+    assert(lrtr_ip_str_cmp(&(result->prefix), "100.200.0.0"));
 
-    ip_str_to_addr( "100.200.30.0", &(addr));
+    lrtr_ip_str_to_addr( "100.200.30.0", &(addr));
     lvl = 0;
     result = lpfst_lookup(&n1, &addr, 16, &lvl);
     assert(result != NULL);
-    assert(ip_str_cmp(&(result->prefix), "100.200.0.0"));
+    assert(lrtr_ip_str_cmp(&(result->prefix), "100.200.0.0"));
 
 
     //n2
@@ -214,14 +214,14 @@ static void lpfst_test()
     n2.rchild = NULL;
     n2.parent = NULL;
     n2.data = NULL;
-    ip_str_to_addr("132.200.0.0", &(n2.prefix));
+    lrtr_ip_str_to_addr("132.200.0.0", &(n2.prefix));
     lpfst_insert(&n1, &n2, 0);
 
-    ip_str_to_addr("132.200.0.0", &(addr));
+    lrtr_ip_str_to_addr("132.200.0.0", &(addr));
     lvl = 0;
     result = lpfst_lookup(&n1, &addr, 16, &lvl);
     assert(result != NULL);
-    assert(ip_str_cmp(&(result->prefix), "132.200.0.0"));
+    assert(lrtr_ip_str_cmp(&(result->prefix), "132.200.0.0"));
     assert(n1.rchild == &n2);
 
 
@@ -232,14 +232,14 @@ static void lpfst_test()
     n3.rchild = NULL;
     n3.parent = NULL;
     n3.data = NULL;
-    ip_str_to_addr("101.200.0.0", &(n3.prefix));
+    lrtr_ip_str_to_addr("101.200.0.0", &(n3.prefix));
     lpfst_insert(&n1, &n3, 0);
 
-    ip_str_to_addr("101.200.0.0", &(addr));
+    lrtr_ip_str_to_addr("101.200.0.0", &(addr));
     lvl = 0;
     result = lpfst_lookup(&n1, &addr, 16, &lvl);
     assert(result != NULL);
-    assert(ip_str_cmp(&(result->prefix), "101.200.0.0"));
+    assert(lrtr_ip_str_cmp(&(result->prefix), "101.200.0.0"));
     assert(n1.lchild == &n3);
 
     //n4
@@ -249,62 +249,62 @@ static void lpfst_test()
     n4.rchild = NULL;
     n4.parent = NULL;
     n4.data = NULL;
-    ip_str_to_addr("132.200.3.0", &(n4.prefix));
+    lrtr_ip_str_to_addr("132.200.3.0", &(n4.prefix));
     lpfst_insert(&n1, &n4, 0);
 
-    ip_str_to_addr("132.200.3.0", &(addr));
+    lrtr_ip_str_to_addr("132.200.3.0", &(addr));
     lvl = 0;
     result = lpfst_lookup(&n1, &addr, 24, &lvl);
     assert(result != NULL);
-    assert(ip_str_cmp(&(result->prefix), "132.200.3.0"));
-    assert(ip_str_cmp(&(n1.prefix), "132.200.3.0"));
+    assert(lrtr_ip_str_cmp(&(result->prefix), "132.200.3.0"));
+    assert(lrtr_ip_str_cmp(&(n1.prefix), "132.200.3.0"));
     assert(n1.len == 24);
-    assert(ip_str_cmp(&(n1.lchild->prefix), "101.200.0.0"));
+    assert(lrtr_ip_str_cmp(&(n1.lchild->prefix), "101.200.0.0"));
     assert(n1.lchild->len == 16);
-    assert(ip_str_cmp(&(n1.rchild->prefix), "132.200.0.0"));
+    assert(lrtr_ip_str_cmp(&(n1.rchild->prefix), "132.200.0.0"));
     assert(n1.rchild->len == 16);
-    assert(ip_str_cmp(&(n1.lchild->rchild->prefix), "100.200.0.0"));
+    assert(lrtr_ip_str_cmp(&(n1.lchild->rchild->prefix), "100.200.0.0"));
     assert(n1.lchild->rchild->len == 16);
 
-    ip_str_to_addr("132.200.0.0", &(addr));
+    lrtr_ip_str_to_addr("132.200.0.0", &(addr));
     lvl = 0;
     result = lpfst_lookup(&n1, &addr, 16, &lvl);
     assert(result != NULL);
-    assert(ip_str_cmp(&(result->prefix), "132.200.0.0"));
+    assert(lrtr_ip_str_cmp(&(result->prefix), "132.200.0.0"));
 
-    ip_str_to_addr("132.200.3.0", &(addr));
+    lrtr_ip_str_to_addr("132.200.3.0", &(addr));
     lvl = 0;
     result = lpfst_lookup(&n1, &addr, 16, &lvl);
     assert(result != NULL);
-    assert(ip_str_cmp(&(result->prefix), "132.200.0.0"));
+    assert(lrtr_ip_str_cmp(&(result->prefix), "132.200.0.0"));
 
 
     lvl = 0;
-    ip_str_to_addr("132.0.0.0", &(addr));
+    lrtr_ip_str_to_addr("132.0.0.0", &(addr));
     bool found;
     result = lpfst_lookup_exact(&n1, &addr, 16, &lvl, &found);
     assert(!found);
 
     lvl = 0;
-    ip_str_to_addr("132.200.3.0", &(addr));
+    lrtr_ip_str_to_addr("132.200.3.0", &(addr));
     result = lpfst_lookup_exact(&n1, &addr, 24, &lvl, &found);
     assert(found);
-    assert(ip_str_cmp(&(result->prefix), "132.200.3.0"));
+    assert(lrtr_ip_str_cmp(&(result->prefix), "132.200.3.0"));
 
     result = lpfst_remove(&n1, &addr, 24, 0);
     assert(result != NULL);
-    assert(ip_str_cmp(&(n1.prefix), "132.200.0.0"));
-    assert(ip_str_cmp(&(n1.lchild->prefix), "101.200.0.0"));
-    assert(ip_str_cmp(&(n1.lchild->rchild->prefix), "100.200.0.0"));
+    assert(lrtr_ip_str_cmp(&(n1.prefix), "132.200.0.0"));
+    assert(lrtr_ip_str_cmp(&(n1.lchild->prefix), "101.200.0.0"));
+    assert(lrtr_ip_str_cmp(&(n1.lchild->rchild->prefix), "100.200.0.0"));
     assert(n1.rchild == NULL);
 
-    ip_str_to_addr("101.200.0.0", &(addr));
+    lrtr_ip_str_to_addr("101.200.0.0", &(addr));
     result = lpfst_remove(&n1, &addr, 16, 0);
     assert(result != NULL);
-    assert(ip_str_cmp(&(n1.lchild->prefix), "100.200.0.0"));
+    assert(lrtr_ip_str_cmp(&(n1.lchild->prefix), "100.200.0.0"));
     assert(n1.rchild == NULL);
 
-    ip_str_to_addr("100.200.0.0", &(addr));
+    lrtr_ip_str_to_addr("100.200.0.0", &(addr));
     result = lpfst_remove(&n1, &addr, 16, 0);
     assert(result != NULL);
     assert(n1.lchild == NULL);

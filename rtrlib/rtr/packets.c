@@ -167,7 +167,7 @@ static inline enum pdu_type rtr_get_pdu_type(const void *pdu)
 
 static int rtr_set_last_update(struct rtr_socket *rtr_socket)
 {
-    if (rtr_get_monotonic_time(&(rtr_socket->last_update)) == -1) {
+    if (lrtr_get_monotonic_time(&(rtr_socket->last_update)) == -1) {
         RTR_DBG1("get_monotonic_time(..) failed ");
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
         return RTR_ERROR;
@@ -246,7 +246,7 @@ static void rtr_pdu_footer_to_host_byte_order(void *pdu)
             ntohl(((struct pdu_ipv4 *) pdu)->asn);
         break;
     case IPV6_PREFIX:
-        ipv6_addr_to_host_byte_order(((struct pdu_ipv6 *) pdu)->prefix, addr6);
+        lrtr_ipv6_addr_to_host_byte_order(((struct pdu_ipv6 *) pdu)->prefix, addr6);
         memcpy(((struct pdu_ipv6 *) pdu)->prefix, addr6, sizeof(addr6));
         ((struct pdu_ipv6 *) pdu)->asn = ntohl(((struct pdu_ipv6 *) pdu)->asn);
         break;
@@ -664,7 +664,7 @@ static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, const void *pdu)
 
     if (rtval == PFX_DUPLICATE_RECORD) {
         char ip[INET6_ADDRSTRLEN];
-        ip_addr_to_str(&(pfxr.prefix), ip, INET6_ADDRSTRLEN);
+        lrtr_ip_addr_to_str(&(pfxr.prefix), ip, INET6_ADDRSTRLEN);
         RTR_DBG("Duplicate Announcement for record: %s/%u-%u, ASN: %u, received", ip, pfxr.min_len, pfxr.max_len, pfxr.asn);
         rtr_send_error_pdu(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT , NULL, 0);
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
@@ -950,7 +950,7 @@ int rtr_wait_for_sync(struct rtr_socket *rtr_socket)
     char pdu[RTR_MAX_PDU_LEN];
 
     time_t cur_time;
-    rtr_get_monotonic_time(&cur_time);
+    lrtr_get_monotonic_time(&cur_time);
     time_t wait = (rtr_socket->last_update +rtr_socket->refresh_interval) - cur_time;
     if (wait < 0)
         wait = 0;

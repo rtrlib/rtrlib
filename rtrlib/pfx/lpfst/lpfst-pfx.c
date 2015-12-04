@@ -24,7 +24,7 @@ struct node_data {
     struct data_elem *ary;
 };
 
-static struct lpfst_node *pfx_table_get_root(const struct pfx_table *pfx_table, const enum rtr_ip_version ver);
+static struct lpfst_node *pfx_table_get_root(const struct pfx_table *pfx_table, const enum lrtr_ip_version ver);
 static int pfx_table_del_elem(struct node_data *data, const unsigned int index);
 static int pfx_table_create_node(struct lpfst_node **node, const struct pfx_record *record);
 static int pfx_table_append_elem(struct node_data *data, const struct pfx_record *record);
@@ -125,7 +125,7 @@ struct data_elem *pfx_table_find_elem(const struct node_data *data, const struct
 }
 
 //returns pfx_table->ipv4 if record version is RTRLIB_IPV4 else pfx_table->ipv6
-inline struct lpfst_node *pfx_table_get_root(const struct pfx_table *pfx_table, const enum rtr_ip_version ver)
+inline struct lpfst_node *pfx_table_get_root(const struct pfx_table *pfx_table, const enum lrtr_ip_version ver)
 {
     return ver == RTRLIB_IPV4 ? pfx_table->ipv4 : pfx_table->ipv6;
 }
@@ -280,7 +280,7 @@ inline void pfx_table_free_reason(struct pfx_record **reason, unsigned int *reas
         *reason_len = 0;
 }
 
-int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason, unsigned int *reason_len, const uint32_t asn, const struct rtr_ip_addr *prefix, const uint8_t prefix_len, enum pfxv_state *result)
+int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason, unsigned int *reason_len, const uint32_t asn, const struct lrtr_ip_addr *prefix, const uint8_t prefix_len, enum pfxv_state *result)
 {
     //assert(reason_len == NULL || *reason_len  == 0);
     //assert(reason == NULL || *reason == NULL);
@@ -319,7 +319,7 @@ int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason
     }
 
     while(!pfx_table_elem_matches(node->data, asn, prefix_len)) {
-        if(ip_addr_is_zero(ip_addr_get_bits(prefix, lvl++, 1))) //post-incr lvl, lpfst_lookup is performed on child_nodes => parent lvl + 1
+        if(lrtr_ip_addr_is_zero(lrtr_ip_addr_get_bits(prefix, lvl++, 1))) //post-incr lvl, lpfst_lookup is performed on child_nodes => parent lvl + 1
             node = lpfst_lookup(node->lchild, prefix, prefix_len, &lvl);
         else
             node = lpfst_lookup(node->rchild, prefix, prefix_len, &lvl);
@@ -353,7 +353,7 @@ int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason
     return PFX_SUCCESS;
 }
 
-int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const struct rtr_ip_addr *prefix, const uint8_t prefix_len, enum pfxv_state *result)
+int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const struct lrtr_ip_addr *prefix, const uint8_t prefix_len, enum pfxv_state *result)
 {
     return pfx_table_validate_r(pfx_table, NULL, NULL, asn, prefix, prefix_len, result);
 }

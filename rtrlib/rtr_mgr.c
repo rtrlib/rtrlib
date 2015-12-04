@@ -16,8 +16,8 @@
 #include <string.h>
 #include "rtrlib/lib/log.h"
 
-#define MGR_DBG(fmt, ...) dbg("RTR_MGR: " fmt, ## __VA_ARGS__)
-#define MGR_DBG1(a) dbg("RTR_MGR: " a)
+#define MGR_DBG(fmt, ...) lrtr_dbg("RTR_MGR: " fmt, ## __VA_ARGS__)
+#define MGR_DBG1(a) lrtr_dbg("RTR_MGR: " a)
 
 static const char *mgr_str_status[] = {
     [RTR_MGR_CLOSED] = "RTR_MGR_CLOSED",
@@ -292,7 +292,7 @@ void rtr_mgr_free(struct rtr_mgr_config *config)
     pthread_mutex_destroy(&(config->mutex));
 }
 
-inline int rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn, const struct rtr_ip_addr *prefix, const uint8_t mask_len, enum pfxv_state *result)
+inline int rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn, const struct lrtr_ip_addr *prefix, const uint8_t mask_len, enum pfxv_state *result)
 {
     return pfx_table_validate(config->groups[0].sockets[0]->pfx_table, asn, prefix, mask_len, result);
 }

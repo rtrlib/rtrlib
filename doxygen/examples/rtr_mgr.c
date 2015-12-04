@@ -76,8 +76,8 @@ int main(){
         sleep(1);
 
     //validate the BGP-Route 10.10.0.0/24, origin ASN: 12345
-    struct rtr_ip_addr pref;
-    ip_str_to_addr("10.10.0.0", &pref);
+    struct lrtr_ip_addr pref;
+    lrtr_ip_str_to_addr("10.10.0.0", &pref);
     enum pfxv_state result;
     rtr_mgr_validate(conf, 12345, &pref, 24, &result);
 

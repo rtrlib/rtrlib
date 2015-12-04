@@ -7,8 +7,8 @@
  * Website: http://rtrlib.realmv6.org/
 */
 
-#ifndef RTR_IP_H
-#define RTR_IP_H
+#ifndef LRTR_IP_H
+#define LRTR_IP_H
 #include "rtrlib/lib/ipv4.h"
 #include "rtrlib/lib/ipv6.h"
 
@@ -16,7 +16,7 @@
 /**
  * @brief Version of the IP protocol.
  */
-enum rtr_ip_version {
+enum lrtr_ip_version {
     /** IPV4 */
             RTRLIB_IPV4,
 
@@ -29,11 +29,11 @@ enum rtr_ip_version {
  * @param ver Specifies the type of the stored address.
  * @param u Union holding a ipv4_addr or ipv6_addr.
  */
-struct rtr_ip_addr {
-    enum rtr_ip_version ver;
+struct lrtr_ip_addr {
+    enum lrtr_ip_version ver;
     union {
-        struct ipv4_addr addr4;
-        struct ipv6_addr addr6;
+        struct lrtr_ipv4_addr addr4;
+        struct lrtr_ipv6_addr addr6;
     } u;
 };
 
@@ -43,7 +43,7 @@ struct rtr_ip_addr {
  * @returns true If the saved rtr_ip_addr is 0.
  * @returns false If the saved rtr_ip_addr isn't 0.
  */
-bool ip_addr_is_zero(const struct rtr_ip_addr);
+bool lrtr_ip_addr_is_zero(const struct lrtr_ip_addr);
 
 /**
  * @brief Extracts number bits from the passed rtr_ip_addr, starting at bit number from. The bit with the highest
@@ -53,7 +53,7 @@ bool ip_addr_is_zero(const struct rtr_ip_addr);
  * @param[in] number How many bits will be extracted.
  * @returns An ipv4_addr, where all bits that aren't in the specified range are set to 0.
 */
-struct rtr_ip_addr ip_addr_get_bits(const struct rtr_ip_addr *val, const uint8_t from, const uint8_t number);
+struct lrtr_ip_addr lrtr_ip_addr_get_bits(const struct lrtr_ip_addr *val, const uint8_t from, const uint8_t number);
 
 /**
  * @defgroup util_h Utility functions
@@ -65,7 +65,7 @@ struct rtr_ip_addr ip_addr_get_bits(const struct rtr_ip_addr *val, const uint8_t
  * @return true If a == b.
  * @return false If a != b.
  */
-bool ip_addr_equal(const struct rtr_ip_addr a, const struct rtr_ip_addr b);
+bool lrtr_ip_addr_equal(const struct lrtr_ip_addr a, const struct lrtr_ip_addr b);
 
 /**
  * Converts the passed rtr_ip_addr struct to string representation.
@@ -76,7 +76,7 @@ bool ip_addr_equal(const struct rtr_ip_addr a, const struct rtr_ip_addr b);
  * @result 0 On success.
  * @result -1 On error.
 */
-int ip_addr_to_str(const struct rtr_ip_addr *ip, char *str, const unsigned int len);
+int lrtr_ip_addr_to_str(const struct lrtr_ip_addr *ip, char *str, const unsigned int len);
 
 /**
  * Converts the passed IP address in string representation to an rtr_ip_addr.
@@ -85,7 +85,7 @@ int ip_addr_to_str(const struct rtr_ip_addr *ip, char *str, const unsigned int l
  * @result 0 On success.
  * @result -1 On error.
 */
-int ip_str_to_addr(const char *str, struct rtr_ip_addr *ip);
+int lrtr_ip_str_to_addr(const char *str, struct lrtr_ip_addr *ip);
 
 /**
  * Compares addr1 in the rtr_ip_addr struct with addr2 in string representation.
@@ -94,7 +94,7 @@ int ip_str_to_addr(const char *str, struct rtr_ip_addr *ip);
  * @return true If a == b
  * @return false If a != b
 */
-bool ip_str_cmp(const struct rtr_ip_addr *addr1, const char *addr2);
+bool lrtr_ip_str_cmp(const struct lrtr_ip_addr *addr1, const char *addr2);
 
 #endif
 /* @} */

@@ -19,8 +19,8 @@
 #include "rtrlib/lib/log.h"
 #include "rtrlib/transport/tcp/tcp_transport.h"
 
-#define TCP_DBG(fmt, sock, ...) dbg("TCP Transport(%s:%s): " fmt, sock->config.host, sock->config.port, ## __VA_ARGS__)
-#define TCP_DBG1(a, sock) dbg("TCP Transport(%s:%s): " a,sock->config.host, sock->config.port)
+#define TCP_DBG(fmt, sock, ...) lrtr_dbg("TCP Transport(%s:%s): " fmt, sock->config.host, sock->config.port, ## __VA_ARGS__)
+#define TCP_DBG1(a, sock) lrtr_dbg("TCP Transport(%s:%s): " a,sock->config.host, sock->config.port)
 
 struct tr_tcp_socket {
     int socket;
