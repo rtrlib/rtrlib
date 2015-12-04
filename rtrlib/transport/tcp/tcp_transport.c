@@ -106,9 +106,9 @@ void tr_tcp_free(struct tr_socket *tr_sock)
 
     if (tcp_sock->ident != NULL)
         free(tcp_sock->ident);
-    free(tcp_sock);
     tr_sock->socket = NULL;
     TCP_DBG1("Socket freed", tcp_sock);
+    free(tcp_sock);
 }
 
 int tr_tcp_recv(const void *tr_tcp_sock, void *pdu, const size_t len, const time_t timeout)

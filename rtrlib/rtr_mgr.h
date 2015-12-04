@@ -14,12 +14,17 @@
  * rtr_socket "RTR sockets".
  * @details The RTR connection manager is initialized with one or multiple
  * groups of rtr_sockets. Each group is configured with a preference
- * value and contains a set of rtr_socket "RTR sockets. It connects to all
+ * value and contains a set of rtr_socket RTR sockets. It connects to all
  * sockets of the group with the lowest preference value.\n
  * In case of failures, the connection manager establishes connections to
  * RTR servers of another group with the next lowest preference value (see
- * the <a href="http://tools.ietf.org/html/draft-ietf-sidr-rpki-rtr">IETF
- * draft-ietf-sidr-rpki-rtr</a> for details about error handling).
+ * <a href="https://tools.ietf.org/html/rfc6810">IETF
+ * RFC 6810</a> for details about error handling).\n
+ * RTRlib also supports a Retry Interval (see <a
+ * href="https://tools.ietf.org/html/draft-ietf-sidr-rpki-rtr-rfc6810-bis">draft-ietf-sidr-rpki-rtr-rfc6810-bis</a>).
+ * If a more preferred group is online again, the RTR connection manager
+ * will switch back and close connections to the caches of the less
+ * preferred group.
  *
  * @{
  * @example rtr_mgr.c

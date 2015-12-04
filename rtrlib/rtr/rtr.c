@@ -27,6 +27,7 @@ static const char *socket_str_states[] = {
     [RTR_ESTABLISHED] = "RTR_ESTABLISHED",
     [RTR_RESET] = "RTR_RESET",
     [RTR_SYNC] = "RTR_SYNC",
+    [RTR_FAST_RECONNECT] = "RTR_FAST_RECONNECT",
     [RTR_ERROR_NO_DATA_AVAIL] = "RTR_ERROR_NO_DATA_AVAIL",
     [RTR_ERROR_NO_INCR_UPDATE_AVAIL] = "RTR_ERROR_NO_INCR_UPDATE_AVAIL",
     [RTR_ERROR_FATAL] = "RTR_ERROR_FATAL",
@@ -76,6 +77,9 @@ void rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_ta
 
 int rtr_start(struct rtr_socket *rtr_socket)
 {
+    if(rtr_socket->thread_id)
+        return RTR_ERROR;
+
     int rtval = pthread_create(&(rtr_socket->thread_id), NULL, (void* ( *)(void *)) &rtr_fsm_start, rtr_socket);
     if(rtval == 0)
         return RTR_SUCCESS;
@@ -195,6 +199,7 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket)
             rtr_socket->last_update = 0;
             pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
             spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
+            rtr_socket->thread_id = 0;
             pthread_exit(NULL);
         }
     }

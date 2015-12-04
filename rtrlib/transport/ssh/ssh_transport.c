@@ -17,8 +17,8 @@
 #include "../../lib/utils.h"
 #include "ssh_transport.h"
 
-#define SSH_DBG(fmt, sock, ...) lrtr_dbg("SSH Transport(%s@%s:%u): " fmt, sock->config.username, sock->config.host, sock->config.port, ## __VA_ARGS__)
-#define SSH_DBG1(a, sock) lrtr_dbg("SSH Transport(%s@%s:%u): " a, sock->config.username, sock->config.host, sock->config.port)
+#define SSH_DBG(fmt, sock, ...) lrtr_dbg("SSH Transport(%s@%s:%u): " fmt, (sock)->config.username, (sock)->config.host, (sock)->config.port, ## __VA_ARGS__)
+#define SSH_DBG1(a, sock) lrtr_dbg("SSH Transport(%s@%s:%u): " a, (sock)->config.username, (sock)->config.host, (sock)->config.port)
 
 struct tr_ssh_socket {
     ssh_session session;
@@ -79,13 +79,13 @@ int tr_ssh_open(void *socket)
         goto error;
     }
 
-    if((ssh_socket->channel = channel_new(ssh_socket->session)) == NULL)
+    if((ssh_socket->channel = ssh_channel_new(ssh_socket->session)) == NULL)
         goto error;
 
-    if(channel_open_session(ssh_socket->channel) == SSH_ERROR)
+    if(ssh_channel_open_session(ssh_socket->channel) == SSH_ERROR)
         goto error;
 
-    if(channel_request_subsystem(ssh_socket->channel, "rpki-rtr") == SSH_ERROR) {
+    if(ssh_channel_request_subsystem(ssh_socket->channel, "rpki-rtr") == SSH_ERROR) {
         SSH_DBG1("tr_ssh_init: Error requesting subsystem rpki-rtr", ssh_socket);
         goto error;
     }
@@ -104,9 +104,9 @@ void tr_ssh_close(void *tr_ssh_sock)
     struct tr_ssh_socket *socket = tr_ssh_sock;
 
     if(socket->channel != NULL) {
-        if(channel_is_open(socket->channel))
-            channel_close(socket->channel);
-        channel_free(socket->channel);
+        if(ssh_channel_is_open(socket->channel))
+            ssh_channel_close(socket->channel);
+        ssh_channel_free(socket->channel);
         socket->channel = NULL;
     }
     if(socket->session != NULL) {
@@ -124,37 +124,16 @@ void tr_ssh_free(struct tr_socket *tr_sock)
     assert(tr_ssh_sock->session == NULL);
     if (tr_ssh_sock->ident != NULL)
         free(tr_ssh_sock->ident);
+    SSH_DBG1("Socket freed", tr_ssh_sock);
     free(tr_ssh_sock);
     tr_sock->socket = NULL;
-    SSH_DBG1("Socket freed", tr_ssh_sock);
 }
 
-/*
-int tr_ssh_recv(const void* tr_ssh_sock, void* buf, unsigned int buf_len, const unsigned int timeout){
-    if(timeout > 0){
-        struct timeval timev;
-        //timev.tv_sec = timeout;
-        timev.tv_sec = 0;
-        timev.tv_usec = 1;
-        ssh_channel channels[2] = { (((tr_ssh_socket*) tr_ssh_sock)->channel), NULL };
-
-        if(channel_select(channels, NULL, NULL, &timev) == SSH_OK){
-        SSH_DBG("END");
-            if(channels[0] == NULL)
-                return -2;
-        }
-        SSH_DBG("END");
-        //TODO: select kann INTr zurückgeben, wurde durch signal unterbrochen, dann verbleibende zeit berechnen und nochma
-        //select ausführen
-    }
-    return channel_read_nonblocking(((tr_ssh_socket*) tr_ssh_sock)->channel, buf, buf_len, false);
-}
-*/
 int tr_ssh_recv_async(const struct tr_ssh_socket *tr_ssh_sock, void *buf, const size_t buf_len)
 {
-    const int rtval = channel_read_nonblocking(tr_ssh_sock->channel, buf, buf_len, false);
+    const int rtval = ssh_channel_read_nonblocking(tr_ssh_sock->channel, buf, buf_len, false);
     if(rtval == 0) {
-        if(channel_is_eof(tr_ssh_sock->channel) != 0) {
+        if(ssh_channel_is_eof(tr_ssh_sock->channel) != 0) {
             SSH_DBG1("remote has sent EOF", tr_ssh_sock);
             return TR_CLOSED;
         } else {
@@ -167,43 +146,15 @@ int tr_ssh_recv_async(const struct tr_ssh_socket *tr_ssh_sock, void *buf, const 
     return rtval;
 }
 
-int tr_ssh_recv(const void *tr_ssh_sock, void *buf, const size_t buf_len, const time_t timeout)
-{
-    if(timeout == 0)
-        return tr_ssh_recv_async(tr_ssh_sock, buf, buf_len);
-
-    time_t end_time;
-    lrtr_get_monotonic_time(&end_time);
-    end_time += timeout;
-    time_t cur_time;
-    do {
-        int rtval = channel_poll(((struct tr_ssh_socket *) tr_ssh_sock)->channel, false);
-        if(rtval > 0)
-            return tr_ssh_recv_async(tr_ssh_sock, buf, buf_len);
-        else if(rtval == SSH_ERROR) {
-            return TR_ERROR;
-        }
-
-        sleep(1);
-        lrtr_get_monotonic_time(&cur_time);
-    } while((end_time - cur_time) >0);
-    return TR_WOULDBLOCK;;
-}
-
-// channel_select is broken, it ignores the timeval parameter and blocks forever :/
-/*
 int tr_ssh_recv(const void* tr_ssh_sock, void* buf, const size_t buf_len, const time_t timeout){
-    ssh_channel rchans[2] = { ((tr_ssh_socket*) tr_ssh_sock)->channel, NULL };
+    ssh_channel rchans[2] = { ((struct tr_ssh_socket*) tr_ssh_sock)->channel, NULL };
 
     struct timeval timev = { 1, 0 };
 
-    const int rtval = channel_select(rchans, NULL, NULL, &timev);
-
-    if(rtval == SSH_ERROR)
-        return TR_ERROR;
-    if(rtval == SSH_EINTR)
+    if(ssh_channel_select(rchans, NULL, NULL, &timev) == SSH_EINTR)
         return TR_INTR;
-    if(channel_is_eof(((tr_ssh_socket*) tr_ssh_sock)->channel) != 0)
+
+    if(ssh_channel_is_eof(((struct tr_ssh_socket*) tr_ssh_sock)->channel) != 0)
         return SSH_ERROR;
 
     if(rchans[0] == NULL)
@@ -212,11 +163,10 @@ int tr_ssh_recv(const void* tr_ssh_sock, void* buf, const size_t buf_len, const 
 
     return tr_ssh_recv_async(tr_ssh_sock, buf, buf_len);
 }
-*/
 
 int tr_ssh_send(const void *tr_ssh_sock, const void *pdu, const size_t len, const time_t timeout __attribute__((unused)))
 {
-    return channel_write(((struct tr_ssh_socket *) tr_ssh_sock)->channel, pdu, len);
+    return ssh_channel_write(((struct tr_ssh_socket *) tr_ssh_sock)->channel, pdu, len);
 }
 
 const char *tr_ssh_ident(void *tr_ssh_sock)
