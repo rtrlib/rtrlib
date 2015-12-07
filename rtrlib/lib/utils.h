@@ -7,8 +7,8 @@
  * Website: http://rtrlib.realmv6.org/
 */
 
-#ifndef RTR_UTILS_H
-#define RTR_UTILS_H
+#ifndef LRTR_UTILS_H
+#define LRTR_UTILS_H
 #include <time.h>
 #include "rtrlib/lib/ip.h"
 
@@ -18,7 +18,7 @@
  * @return 0 on successs
  * @return -1 on error
  */
-int rtr_get_monotonic_time(time_t *seconds);
+int lrtr_get_monotonic_time(time_t *seconds);
 
 /**
  * @brief Extracts number bits from the passed uint32_t, starting at bit number from. The bit with the highest
@@ -28,6 +28,6 @@ int rtr_get_monotonic_time(time_t *seconds);
  * @param[in] number How many bits will be extracted.
  * @returns a uint32_t, where all bits that aren't in the specified range are set to 0.
 */
-uint32_t rtr_get_bits(const uint32_t val, const uint8_t from, const uint8_t number);
+uint32_t lrtr_get_bits(const uint32_t val, const uint8_t from, const uint8_t number);
 
 #endif

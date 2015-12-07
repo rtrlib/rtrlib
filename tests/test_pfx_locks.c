@@ -40,7 +40,7 @@ static void rec_insert(struct pfx_table* pfxt)
     struct pfx_record rec;
     rec.min_len = 32;
     rec.max_len = 32;
-    rec.prefix.ver = IPV4;
+    rec.prefix.ver = RTRLIB_IPV4;
     rec.prefix.u.addr4.addr = 0;
 
 
@@ -52,7 +52,7 @@ static void rec_insert(struct pfx_table* pfxt)
         rec.socket = NULL;
         rec.asn = tid % 2;
         rec.prefix.u.addr4.addr = htonl(i);
-        rec.prefix.ver = IPV4;
+        rec.prefix.ver = RTRLIB_IPV4;
         pfx_table_add(pfxt, &rec);
         //printf("%i: Record inserted\n", tid);
         rec.asn = (tid % 2) + 1;
@@ -61,7 +61,7 @@ static void rec_insert(struct pfx_table* pfxt)
 
         rec.min_len = 128;
         rec.max_len = 128;
-        rec.prefix.ver = IPV6;
+        rec.prefix.ver = RTRLIB_IPV6;
         rec.prefix.u.addr6.addr[1] = min_i + 0xFFFFFFFF;
         rec.prefix.u.addr6.addr[0] = htonl(i) + 0xFFFFFFFF;
         pfx_table_add(pfxt, &rec);
@@ -75,14 +75,14 @@ static void rec_validate(struct pfx_table* pfxt)
     struct pfx_record rec;
     rec.min_len = 32;
     rec.max_len = 32;
-    rec.prefix.ver = IPV4;
+    rec.prefix.ver = RTRLIB_IPV4;
     rec.prefix.u.addr4.addr = 0;
     enum pfxv_state res;
     printf("validating..\n");
     for(uint32_t i = max_i; i >= min_i; i--) {
         rec.min_len = 32;
         rec.max_len = 32;
-        rec.prefix.ver = IPV4;
+        rec.prefix.ver = RTRLIB_IPV4;
         rec.prefix.u.addr4.addr = htonl(i);
         pfx_table_validate(pfxt, (tid % 2), &(rec.prefix), rec.min_len, &res);
         //printf("%i: Record validated,status: ", tid);
@@ -94,7 +94,7 @@ static void rec_validate(struct pfx_table* pfxt)
 
         rec.min_len = 128;
         rec.max_len = 128;
-        rec.prefix.ver = IPV6;
+        rec.prefix.ver = RTRLIB_IPV6;
         rec.prefix.u.addr6.addr[1] = min_i + 0xFFFFFFFF;
         rec.prefix.u.addr6.addr[0] = htonl(i) + 0xFFFFFFFF;
 
@@ -110,7 +110,7 @@ static void rec_remove(struct pfx_table* pfxt)
     struct pfx_record rec;
     rec.min_len = 32;
     rec.max_len = 32;
-    rec.prefix.ver = IPV4;
+    rec.prefix.ver = RTRLIB_IPV4;
     rec.prefix.u.addr4.addr = 0;
     printf("removing records\n");
     for(uint32_t i = max_i; i >= min_i; i--) {
@@ -118,7 +118,7 @@ static void rec_remove(struct pfx_table* pfxt)
         rec.min_len = 32;
         rec.max_len = 32;
         rec.asn = tid %2;
-        rec.prefix.ver = IPV4;
+        rec.prefix.ver = RTRLIB_IPV4;
         rec.prefix.u.addr4.addr = htonl(i);
         pfx_table_remove(pfxt, &rec);
         //printf("%i: Record removed, rtval: ", tid);
@@ -129,7 +129,7 @@ static void rec_remove(struct pfx_table* pfxt)
         //printf("%i: Record removed, rtval: ", tid);
         //print_pfx_rtval(rtval);
 
-        rec.prefix.ver = IPV6;
+        rec.prefix.ver = RTRLIB_IPV6;
         rec.min_len = 128;
         rec.max_len = 128;
         rec.prefix.u.addr6.addr[1] = min_i + 0xFFFFFFFF;
