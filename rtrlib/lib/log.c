@@ -16,7 +16,7 @@
 #include "rtrlib/lib/log.h"
 
 
-void dbg(const char *frmt, ...)
+void lrtr_dbg(const char *frmt, ...)
 {
 #ifndef NDEBUG
     va_list argptr;
