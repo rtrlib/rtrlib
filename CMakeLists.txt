@@ -27,7 +27,7 @@ if(LIBSSH_FOUND)
     set(RTRLIB_HAVE_LIBSSH 1)
     message(STATUS "libssh found, building librtr with SSH support")
 
-    include_directories(LIBSSH_INCLUDE_DIRS)
+    include_directories(${LIBSSH_INCLUDE_DIRS})
     set(RTRLIB_SRC ${RTRLIB_SRC} rtrlib/transport/ssh/ssh_transport.c)
     set(RTRLIB_LINK ${RTRLIB_LINK} ${LIBSSH_LIBRARIES})
 else()
