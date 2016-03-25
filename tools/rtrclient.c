@@ -211,7 +211,13 @@ int main(int argc, char** argv)
     groups[0].sockets[0] = &rtr;
     groups[0].preference = 1;
 
-    conf = rtr_mgr_init(groups, 1, 30, 520, pfx_update_fp, spki_update_fp, status_fp, NULL);
+    int ret = rtr_mgr_init(&conf, groups, 1, 30, 600, 600, pfx_update_fp, spki_update_fp, status_fp, NULL);
+    if (ret == RTR_ERROR) {
+        printf("Error in rtr_mgr_init!\n");
+    } else if (ret == RTR_INVALID_PARAM) {
+        printf("Invalid params passed to rtr_mgr_init\n");
+    }
+
     if (conf == NULL)
         return EXIT_FAILURE;
     rtr_mgr_start(conf);

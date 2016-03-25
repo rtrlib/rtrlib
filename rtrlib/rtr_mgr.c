@@ -201,18 +201,26 @@ int rtr_mgr_config_cmp(const void *a, const void *b)
     return 0;
 }
 
-struct rtr_mgr_config *rtr_mgr_init(struct rtr_mgr_group groups[],
-                                    const unsigned int groups_len,
-                                    const unsigned int refresh_interval,
-                                    const unsigned int expire_interval,
-                                    const pfx_update_fp update_fp,
-                                    const spki_update_fp spki_update_fp,
-                                    const rtr_mgr_status_fp status_fp,
-                                    void *status_fp_data)
+int rtr_mgr_init(struct rtr_mgr_config **config_out,
+                struct rtr_mgr_group groups[],
+                const unsigned int groups_len,
+                const unsigned int refresh_interval,
+                const unsigned int expire_interval,
+                const unsigned int retry_interval,
+                const pfx_update_fp update_fp,
+                const spki_update_fp spki_update_fp,
+                const rtr_mgr_status_fp status_fp,
+                void *status_fp_data)
 {
-    struct rtr_mgr_config *config = malloc(sizeof(*config));
+    int err_code = RTR_ERROR;
+    struct pfx_table *pfxt;
+    struct spki_table *spki_table;
+    struct rtr_mgr_config *config;
+    *config_out = NULL;
+
+    *config_out = config = malloc(sizeof(*config));
     if (config == NULL)
-        return NULL;
+        return RTR_ERROR;
 
     if(pthread_mutex_init(&(config->mutex), NULL) != 0) {
         MGR_DBG1("Mutex initialization failed");
@@ -239,12 +247,12 @@ struct rtr_mgr_config *rtr_mgr_init(struct rtr_mgr_group groups[],
         }
     }
 
-    struct pfx_table *pfxt = malloc(sizeof(*pfxt));
+    pfxt = malloc(sizeof(*pfxt));
     if(pfxt == NULL)
         goto err;
     pfx_table_init(pfxt, update_fp);
 
-    struct spki_table *spki_table = malloc(sizeof(*spki_table));
+    spki_table = malloc(sizeof(*spki_table));
     if(spki_table == NULL)
         goto err;
     spki_table_init(spki_table, spki_update_fp);
@@ -252,17 +260,35 @@ struct rtr_mgr_config *rtr_mgr_init(struct rtr_mgr_group groups[],
     for(unsigned int i = 0; i < config->len; i++) {
         config->groups[i].status = RTR_MGR_CLOSED;
         for(unsigned int j = 0; j < config->groups[i].sockets_len; j++) {
-            rtr_init(config->groups[i].sockets[j], NULL, pfxt, spki_table, refresh_interval, expire_interval, rtr_mgr_cb, config);
+            if (rtr_init(config->groups[i].sockets[j], NULL, pfxt, spki_table,
+                         refresh_interval, expire_interval, retry_interval, rtr_mgr_cb, config) != RTR_SUCCESS) {
+                err_code = RTR_INVALID_PARAM;
+                goto err;
+            }
         }
     }
     config->status_fp_data = status_fp_data;
     config->status_fp = status_fp;
-    return config;
+
+    if (*config_out == NULL) {
+        printf("xyxyx");
+    }
+
+    return RTR_SUCCESS;
 
 err:
+    if (spki_table != NULL)
+        spki_table_free(spki_table);
+    if (pfxt != NULL)
+        pfx_table_free(pfxt);
+
+    free(pfxt);
+    free(spki_table);
+
     free(config->groups);
     free(config);
-    return NULL;
+    config = NULL;
+    return err_code;
 }
 
 int rtr_mgr_start(struct rtr_mgr_config *config)

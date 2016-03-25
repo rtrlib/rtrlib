@@ -66,7 +66,8 @@ int main(){
     //create a rtr_mgr_config struct that stores the group
 
     //initialize all rtr_sockets in the server pool with the same settings
-    struct rtr_mgr_config *conf = rtr_mgr_init(groups, 2, 240, 520, NULL, NULL, NULL, NULL);
+    struct rtr_mgr_config *conf;
+    int ret = rtr_mgr_init(&conf ,groups, 2, 30, 600, 600, NULL, NULL, NULL, NULL);
 
     //start the connection manager
     rtr_mgr_start(conf);
