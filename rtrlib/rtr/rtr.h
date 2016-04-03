@@ -35,7 +35,8 @@ static const uint8_t RTR_PROTOCOL_MAX_SUPPORTED_VERSION = 1;
 
 enum rtr_rtvals {
     RTR_SUCCESS = 0,
-    RTR_ERROR = -1
+    RTR_ERROR = -1,
+    RTR_INVALID_PARAM = -2
 };
 
 /**
@@ -113,6 +114,7 @@ struct rtr_socket {
     rtr_connection_state_fp connection_state_fp;
     void *connection_state_fp_param;
     unsigned int version;
+    bool has_received_pdus;
     struct spki_table *spki_table;
 };
 
@@ -123,13 +125,23 @@ struct rtr_socket {
  * the rtr_socket won't be changed.
  * @param[in] pfx_table pfx_table that stores the validation records obtained from the connected rtr server.
  * @param[in] spki_table spki_table that stores the router keys obtained from the connected rtr server.
- * @param[in] refresh_interval Interval in seconds between serial queries that are sent to the server. Must be <= 3600
- * @param[in] expire_interval Stored validation records will be deleted if cache was unable to refresh data for this period.\n
- * The default value is twice the refresh_interval.
+ * @param[in] refresh_interval Interval in seconds between serial queries that are sent to the server. Must be >= 1 and <= 86400 (one day),
+ * recommended default is 3600s (one hour).
+ * @param[in] expire_interval Stored validation records will be deleted if cache was unable to refresh data for this period.
+ * The value should be twice the refresh_interval. The value must be >= 600 (ten minutes) and <= 172800 (two days).
+ * The recommanded default is 7200s (two hours).
+ * @param[in] retry_interval This parameter tells the router how long to wait (in seconds) before retrying
+ * a failed Serial Query or Reset Query. The value must be >= 1s and <= 7200s (two hours).
+ * The recommanded default is 600 seconds (ten minutes).
  * @param[in] fp A callback function that is executed when the state of the socket changes.
  * @param[in] fp_data Parameter that is passed to the connection_state_fp callback.
+ * @return RTR_INVALID_PARAM If the refresh_interval or the expire_interval is not valid.
+ * @return RTR_SUCCESS On success.
  */
-void rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr_socket, struct pfx_table *pfx_table, struct spki_table *spki_table, const unsigned int refresh_interval, const unsigned int expire_interval, rtr_connection_state_fp fp, void *fp_data);
+int rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr_socket, struct pfx_table *pfx_table,
+             struct spki_table *spki_table, const unsigned int refresh_interval,
+             const unsigned int expire_interval, const unsigned int retry_interval,
+             rtr_connection_state_fp fp, void *fp_data);
 
 /**
  * @brief Starts the RTR protocol state machine in a pthread. Connection to the rtr_server will be established and the

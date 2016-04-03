@@ -52,17 +52,36 @@ static int install_sig_handler()
     return sigaction(SIGUSR1, &sa, NULL);
 }
 
-void rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_table *pfx_table, struct spki_table *spki_table, const unsigned int refresh_interval, const unsigned int expire_interval, rtr_connection_state_fp fp, void *fp_param)
+int rtr_init(struct rtr_socket *rtr_socket,
+              struct tr_socket *tr,
+              struct pfx_table *pfx_table,
+              struct spki_table *spki_table,
+              const unsigned int refresh_interval,
+              const unsigned int expire_interval,
+              const unsigned int retry_interval,
+              rtr_connection_state_fp fp, void *fp_param)
 {
     if(tr != NULL)
         rtr_socket->tr_socket = tr;
-    assert(refresh_interval <= 3600);
-    if(refresh_interval == 0)
-        rtr_socket->refresh_interval = 300;
-    else
-        rtr_socket->refresh_interval = (refresh_interval > (3600 - RTR_RECV_TIMEOUT) ? (3600 - RTR_RECV_TIMEOUT) : refresh_interval);
-    rtr_socket->expire_interval = (expire_interval == 0 ? (rtr_socket->refresh_interval / 2) : expire_interval);
-    rtr_socket->retry_interval = 600;
+
+    if(refresh_interval > 86400 || refresh_interval < 1) {
+        return RTR_INVALID_PARAM;
+    } else {
+        rtr_socket->refresh_interval = refresh_interval;
+    }
+
+    if ((expire_interval < 600) || (expire_interval > 172800)) {
+        return RTR_INVALID_PARAM;
+    } else {
+        rtr_socket->expire_interval = expire_interval;
+    }
+
+    if ((retry_interval > 7200) || (retry_interval < 1)) {
+        return RTR_INVALID_PARAM;
+    } else {
+        rtr_socket->retry_interval = retry_interval;
+    }
+
     rtr_socket->state = RTR_SHUTDOWN;
     rtr_socket->request_session_id = true;
     rtr_socket->serial_number = 0;
@@ -73,6 +92,8 @@ void rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_ta
     rtr_socket->connection_state_fp_param = fp_param;
     rtr_socket->thread_id = 0;
     rtr_socket->version = RTR_PROTOCOL_MAX_SUPPORTED_VERSION;
+    rtr_socket->has_received_pdus = false;
+    return RTR_SUCCESS;
 }
 
 int rtr_start(struct rtr_socket *rtr_socket)
@@ -112,6 +133,9 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket)
     while(1) {
         if(rtr_socket->state == RTR_CONNECTING) {
             RTR_DBG1("State: RTR_CONNECTING");
+
+            rtr_socket->has_received_pdus = false;
+
             //old pfx_record could exists in the pfx_table, check if they are too old and must be removed
             //old key_entry could exists in the spki_table, check if they are too old and must be removed
             rtr_purge_outdated_records(rtr_socket);
@@ -181,6 +205,7 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket)
             RTR_DBG1("State: RTR_ERROR_TRANSPORT");
             tr_close(rtr_socket->tr_socket);
             rtr_change_socket_state(rtr_socket, RTR_CONNECTING);
+            RTR_DBG("Waiting %u", rtr_socket->retry_interval);
             sleep(rtr_socket->retry_interval);
         }
 
@@ -188,6 +213,7 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket)
             RTR_DBG1("State: RTR_ERROR_FATAL");
             tr_close(rtr_socket->tr_socket);
             rtr_change_socket_state(rtr_socket, RTR_CONNECTING);
+            RTR_DBG("Waiting %u", rtr_socket->retry_interval);
             sleep(rtr_socket->retry_interval);
         }
 
@@ -199,7 +225,6 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket)
             rtr_socket->last_update = 0;
             pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
             spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
-            rtr_socket->thread_id = 0;
             pthread_exit(NULL);
         }
     }
@@ -207,10 +232,14 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket)
 
 void rtr_stop(struct rtr_socket *rtr_socket)
 {
+    RTR_DBG1("rtr_stop()");
     rtr_change_socket_state(rtr_socket, RTR_SHUTDOWN);
     if(rtr_socket->thread_id != 0) {
+        RTR_DBG1("pthread_kill()");
         pthread_kill(rtr_socket->thread_id, SIGUSR1);
+        RTR_DBG1("pthread_join()");
         pthread_join(rtr_socket->thread_id, NULL);
+        rtr_socket->thread_id = 0;
     }
     RTR_DBG1("Socket shut down");
 }

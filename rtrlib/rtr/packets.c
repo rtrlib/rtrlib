@@ -18,6 +18,7 @@
 #include "rtrlib/spki/hashtable/ht-spkitable.h"
 
 #define TEMPORARY_PDU_STORE_INCREMENT_VALUE 100
+#define MAX_SUPPORTED_PDU_TYPE 10
 
 enum pdu_error_type {
     CORRUPT_DATA = 0,
@@ -28,6 +29,7 @@ enum pdu_error_type {
     UNSUPPORTED_PDU_TYPE = 5,
     WITHDRAWAL_OF_UNKNOWN_RECORD = 6,
     DUPLICATE_ANNOUNCEMENT = 7,
+    UNEXPECTED_PROTOCOL_VERSION = 8,
     PDU_TOO_BIG = 32
 };
 
@@ -37,6 +39,7 @@ enum pdu_type {
     RESET_QUERY = 2,
     CACHE_RESPONSE = 3,
     IPV4_PREFIX = 4,
+    RESERVED = 5,
     IPV6_PREFIX = 6,
     EOD = 7,
     CACHE_RESET = 8,
@@ -192,6 +195,7 @@ void rtr_change_socket_state(struct rtr_socket *rtr_socket, const enum rtr_socke
 static void rtr_pdu_to_network_byte_order(void *pdu)
 {
     struct pdu_header *header = pdu;
+    struct pdu_error *err_pdu = NULL;
 
     header->reserved = htons(header->reserved);
     header->len = htonl(header->len);
@@ -202,7 +206,10 @@ static void rtr_pdu_to_network_byte_order(void *pdu)
         ((struct pdu_serial_query *) pdu)->sn = htonl(((struct pdu_serial_query *) pdu)->sn);
         break;
     case ERROR:
-        ((struct pdu_error *) pdu)->len_enc_pdu = htonl(((struct pdu_error *) pdu)->len_enc_pdu);
+        err_pdu = pdu;
+        *((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)) =
+            htonl(*((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)));
+        err_pdu->len_enc_pdu = htonl(err_pdu->len_enc_pdu);
         break;
     default:
         break;
@@ -213,6 +220,7 @@ static void rtr_pdu_footer_to_host_byte_order(void *pdu)
 {
     const enum pdu_type type = rtr_get_pdu_type(pdu);
     struct pdu_header *header = pdu;
+    struct pdu_error * err_pdu = NULL;
 
     uint32_t addr6[4];
 
@@ -255,8 +263,13 @@ static void rtr_pdu_footer_to_host_byte_order(void *pdu)
             ntohl(((struct pdu_router_key *) pdu)->asn);
         break;
     case ERROR:
-        ((struct pdu_error *) pdu)->len_enc_pdu =
-            ntohl(((struct pdu_error *) pdu)->len_enc_pdu);
+        err_pdu = pdu;
+
+        err_pdu->len_enc_pdu =
+            ntohl(err_pdu->len_enc_pdu);
+
+        *((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)) =
+            ntohl(*((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)));
         break;
     default:
         break;
@@ -277,6 +290,94 @@ static void rtr_pdu_header_to_host_byte_order(void *pdu)
     header->len = len_tmp;
 }
 
+/*
+ * Check if the PDU is big enough for the PDU type it
+ * pretend to be.
+ * @param pdu A pointer to a PDU that is at least pdu->len byte large.
+ * @return False if the check fails, else true
+ */
+static bool rtr_pdu_check_size (const struct pdu_header *pdu) {
+  const enum pdu_type type = rtr_get_pdu_type(pdu);
+  const struct pdu_error * err_pdu = NULL;
+  bool retval = true;
+  uint64_t min_size = 0;
+
+  switch (type) {
+  case SERIAL_NOTIFY:
+    if (sizeof(struct pdu_serial_notify) == pdu->len)
+      retval = true;
+  case CACHE_RESPONSE:
+    if (sizeof(struct pdu_cache_response) == pdu->len)
+      retval = true;
+    break;
+  case IPV4_PREFIX:
+    if (sizeof(struct pdu_ipv4) == pdu->len)
+      retval = true;
+    break;
+  case IPV6_PREFIX:
+    if (sizeof(struct pdu_ipv6) == pdu->len)
+      retval = true;
+    break;
+  case EOD:
+    if ((pdu->ver == RTR_PROTOCOL_VERSION_0
+         && sizeof(struct pdu_end_of_data_v0) != pdu->len)
+         ||
+         (pdu->ver == RTR_PROTOCOL_VERSION_1
+         && sizeof(struct pdu_end_of_data_v1) != pdu->len
+         )){
+      retval = false;
+    }
+    break;
+  case CACHE_RESET:
+    if (sizeof(struct pdu_header) == pdu->len)
+      retval = true;
+    break;
+  case ROUTER_KEY:
+    if (sizeof(struct pdu_router_key) == pdu->len)
+        retval = true;
+    break;
+  case ERROR:
+    err_pdu = (const struct pdu_error *) pdu;
+    // +4 because of the "Length of Error Text" field
+    min_size = 4 + sizeof(struct pdu_error);
+    if (err_pdu->len < min_size) {
+      RTR_DBG1("PDU it to small to contain \"Length of Error Text\" field!");
+      retval = false;
+      break;
+    }
+
+    //Check if the PDU really contains the error PDU
+    uint32_t enc_pdu_len = ntohl(err_pdu->len_enc_pdu);
+    RTR_DBG("enc_pdu_len: %u", enc_pdu_len);
+    min_size += enc_pdu_len;
+    if (err_pdu->len < min_size) {
+      RTR_DBG1("PDU is to small to contains errornouse PDU!");
+      retval = false;
+      break;
+    }
+
+    //Check if the the PDU really contains the error msg
+    uint32_t err_msg_len = ntohl(*((uint32_t *)(err_pdu->rest + enc_pdu_len)));
+    RTR_DBG("err_msg_len: %u", err_msg_len);
+    min_size += err_msg_len;
+    if (err_pdu->len != min_size) {
+      RTR_DBG1("PDU is to small to contain error_msg!");
+      retval = false;
+      break;
+    }
+
+    //TODO: Check the error msg 0 termination
+
+    break;
+  }
+
+#ifndef NDEBUG
+  if (!retval) {
+    RTR_DBG1("Received malformed PDU!");
+  }
+#endif
+  return retval;
+}
 
 static int rtr_send_pdu(const struct rtr_socket *rtr_socket, const void *pdu, const unsigned len)
 {
@@ -299,27 +400,26 @@ static int rtr_send_pdu(const struct rtr_socket *rtr_socket, const void *pdu, co
 }
 
 /*
- * if RTR_ERROR was returned a error pdu was sent, and the socket state changed
+ * if RTR_ERROR was returned a error PDU was sent, and the socket state changed
  * @param pdu_len must >= RTR_MAX_PDU_LEN Bytes
  * @return RTR_SUCCESS
  * @return RTR_ERROR, error pdu was sent and socket_state changed
  * @return TR_WOULDBLOCK
+ * \post
+ * If RTR_SUCCESS is returned PDU points to a well formed PDU that has
+ * the appropriate size for the PDU type it pretend to be. Thus, casting it to
+ * the PDU type struct and using it is save. Furthermore all PDU field are
+ * in host-byte-order.
  */
 static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_t pdu_len, const time_t timeout)
 {
-    //error values:
-    // 0 = no_err
-    // 1 = internal error
-    // 2 = unknown pdu type
-    // 4 = pdu to big
-    // 8 = corrupt data
-    // 16 = unknown pdu version
     int error = RTR_SUCCESS;
 
     assert(pdu_len >= RTR_MAX_PDU_LEN);
-    //receive packet header
+
     if (rtr_socket->state == RTR_SHUTDOWN)
         return RTR_ERROR;
+    //receive packet header
     error = tr_recv_all(rtr_socket->tr_socket, pdu, sizeof(struct pdu_header), timeout);
     if (error < 0)
         goto error;
@@ -331,28 +431,6 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
     memcpy(&header, pdu, sizeof(header));
     rtr_pdu_header_to_host_byte_order(&header);
 
-    //Do dont handle error PDUs here, leave this task to rtr_handle_error_pdu()
-    if (header.ver != rtr_socket->version && header.type != ERROR) {
-        //If this is the first PDU we have received -> Downgrade.
-        if (rtr_socket->request_session_id == true && rtr_socket->last_update == 0
-            && header.ver >= RTR_PROTOCOL_MIN_SUPPORTED_VERSION
-            && header.ver <= RTR_PROTOCOL_MAX_SUPPORTED_VERSION
-            && header.ver < rtr_socket->version) {
-            RTR_DBG("Downgrading current session from %u to %u", rtr_socket->version, header.ver);
-            rtr_socket->version = header.ver;
-        } else {
-            //If this isnt the first PDU we have received something is wrong with
-            //the server implementation -> Error
-            error = UNSUPPORTED_PROTOCOL_VER;
-            goto error;
-        }
-    }
-
-    if ((header.type > 10) || (header.ver == RTR_PROTOCOL_VERSION_0 && header.type == ROUTER_KEY)) {
-        error = UNSUPPORTED_PDU_TYPE;
-        goto error;
-    }
-
     //if header->len is < packet_header = corrupt data received
     if (header.len < sizeof(header)) {
         error = CORRUPT_DATA;
@@ -362,6 +440,32 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
         goto error;
     }
 
+    //Handle live downgrading
+    if (rtr_socket->has_received_pdus == false) {
+      if (rtr_socket->version == RTR_PROTOCOL_VERSION_1
+          && header.ver == RTR_PROTOCOL_VERSION_0
+          && header.type != ERROR) {
+        RTR_DBG("First received PDU is a version 0 PDU, downgrading to %u", RTR_PROTOCOL_VERSION_0);
+        rtr_socket->version = RTR_PROTOCOL_VERSION_0;
+      }
+      rtr_socket->has_received_pdus = true;
+    }
+
+    //Handle wrong protocol version
+    //If it is a error PDU, it will be handled by rtr_handle_error_pdu
+    if (header.ver != rtr_socket->version  && header.type != ERROR) {
+      error = UNEXPECTED_PROTOCOL_VERSION;
+      goto error;
+    }
+
+    if ((header.type > MAX_SUPPORTED_PDU_TYPE)
+        || (header.ver == RTR_PROTOCOL_VERSION_0 && header.type == ROUTER_KEY)
+        || header.type == RESET_QUERY
+        || header.type == SERIAL_QUERY
+        || header.type == RESERVED) {
+        error = UNSUPPORTED_PDU_TYPE;
+        goto error;
+    }
 
     //receive packet payload
     const unsigned int remaining_len = header.len - sizeof(header);
@@ -374,8 +478,21 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
         else
             error = RTR_SUCCESS;
     }
-    memcpy(pdu, &header, sizeof(header)); //copy header in host_byte_order to pdu
+    //copy header in host_byte_order to pdu
+    memcpy(pdu, &header, sizeof(header));
+
+    //Check if the header len value is valid
+    if (rtr_pdu_check_size(pdu) == false) {
+      //TODO Restore byteorder for sending error PDU
+      error = CORRUPT_DATA;
+      goto error;
+    }
+    //At this point it is save to cast and use the PDU
+
     rtr_pdu_footer_to_host_byte_order(pdu);
+
+    //Here we should handle error PDUs instead of doing it in
+    //several other places...
 
     if (header.type == IPV4_PREFIX || header.type == IPV6_PREFIX) {
         if (((struct pdu_ipv4 *) pdu)->zero != 0)
@@ -410,11 +527,15 @@ error:
         RTR_DBG("%s", txt);
         rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), CORRUPT_DATA, txt, sizeof(txt));
     } else if (error == UNSUPPORTED_PDU_TYPE) {
-        RTR_DBG1("Unsupported PDU type received");
-        rtr_send_error_pdu(rtr_socket, pdu, header.len, UNSUPPORTED_PDU_TYPE, NULL, 0);
+        RTR_DBG("Unsupported PDU type (%u) received", header.type);
+        rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), UNSUPPORTED_PDU_TYPE, NULL, 0);
     } else if (error == UNSUPPORTED_PROTOCOL_VER) {
-        RTR_DBG1("PDU with unsupported Protocol version received");
-        rtr_send_error_pdu(rtr_socket, pdu, header.len, UNSUPPORTED_PROTOCOL_VER, NULL, 0);
+        RTR_DBG("PDU with unsupported Protocol version (%u) received", header.ver);
+        rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), UNSUPPORTED_PROTOCOL_VER, NULL, 0);
+        return RTR_ERROR;
+    } else if (error == UNEXPECTED_PROTOCOL_VERSION) {
+        RTR_DBG("PDU with unexpected Protocol version (%u) received", header.ver);
+        rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), UNEXPECTED_PROTOCOL_VERSION, NULL, 0);
         return RTR_ERROR;
     }
 
@@ -470,7 +591,7 @@ static int rtr_handle_error_pdu(struct rtr_socket *rtr_socket, const void *buf)
         break;
     }
 
-    const uint32_t len_err_txt = ntohl(*((uint32_t *) (pdu->rest + pdu->len_enc_pdu)));
+    const uint32_t len_err_txt = (*((uint32_t *) (pdu->rest + pdu->len_enc_pdu)));
     if (len_err_txt > 0) {
         if ((sizeof(pdu->ver) + sizeof(pdu->type) + sizeof(pdu->error_code) + sizeof(pdu->len) + sizeof(pdu->len_enc_pdu) + pdu->len_enc_pdu + 4 + len_err_txt) != pdu->len)
             RTR_DBG1("error: Length of error text contains an incorrect value");
@@ -753,9 +874,13 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
         retval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
         if (retval == TR_WOULDBLOCK) {
             rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
-            return RTR_ERROR;
-        } else if (retval < 0)
-            return RTR_ERROR;
+            retval = RTR_ERROR;
+            goto cleanup;
+        } else if (retval < 0) {
+            retval = RTR_ERROR;
+            goto cleanup;
+        }
+        
         type = rtr_get_pdu_type(pdu);
         if (type == IPV4_PREFIX) {
             if (rtr_store_prefix_pdu(rtr_socket, pdu, sizeof(*ipv4_pdus), (void **) &ipv4_pdus, &ipv4_pdus_nindex, &ipv4_pdus_size) == RTR_ERROR){
