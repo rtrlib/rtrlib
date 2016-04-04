@@ -18,6 +18,7 @@
 #include "rtrlib/spki/hashtable/ht-spkitable.h"
 
 #define TEMPORARY_PDU_STORE_INCREMENT_VALUE 100
+#define MAX_SUPPORTED_PDU_TYPE 10
 
 enum pdu_error_type {
     CORRUPT_DATA = 0,
@@ -28,6 +29,7 @@ enum pdu_error_type {
     UNSUPPORTED_PDU_TYPE = 5,
     WITHDRAWAL_OF_UNKNOWN_RECORD = 6,
     DUPLICATE_ANNOUNCEMENT = 7,
+    UNEXPECTED_PROTOCOL_VERSION = 8,
     PDU_TOO_BIG = 32
 };
 
@@ -37,6 +39,7 @@ enum pdu_type {
     RESET_QUERY = 2,
     CACHE_RESPONSE = 3,
     IPV4_PREFIX = 4,
+    RESERVED = 5,
     IPV6_PREFIX = 6,
     EOD = 7,
     CACHE_RESET = 8,
@@ -277,6 +280,94 @@ static void rtr_pdu_header_to_host_byte_order(void *pdu)
     header->len = len_tmp;
 }
 
+/*
+ * Check if the PDU is big enough for the PDU type it
+ * pretend to be.
+ * @param pdu A pointer to a PDU that is at least pdu->len byte large.
+ * @return False if the check fails, else true
+ */
+static bool rtr_pdu_check_size (const struct pdu_header *pdu) {
+  const enum pdu_type type = rtr_get_pdu_type(pdu);
+  const struct pdu_error * err_pdu = NULL;
+  bool retval = true;
+  uint64_t min_size = 0;
+
+  switch (type) {
+  case SERIAL_NOTIFY:
+    if (sizeof(struct pdu_serial_notify) == pdu->len)
+      retval = true;
+  case CACHE_RESPONSE:
+    if (sizeof(struct pdu_cache_response) == pdu->len)
+      retval = true;
+    break;
+  case IPV4_PREFIX:
+    if (sizeof(struct pdu_ipv4) == pdu->len)
+      retval = true;
+    break;
+  case IPV6_PREFIX:
+    if (sizeof(struct pdu_ipv6) == pdu->len)
+      retval = true;
+    break;
+  case EOD:
+    if ((pdu->ver == RTR_PROTOCOL_VERSION_0
+         && sizeof(struct pdu_end_of_data_v0) != pdu->len)
+         ||
+         (pdu->ver == RTR_PROTOCOL_VERSION_1
+         && sizeof(struct pdu_end_of_data_v1) != pdu->len
+         )){
+      retval = false;
+    }
+    break;
+  case CACHE_RESET:
+    if (sizeof(struct pdu_header) == pdu->len)
+      retval = true;
+    break;
+  case ROUTER_KEY:
+    if (sizeof(struct pdu_router_key) == pdu->len)
+        retval = true;
+    break;
+  case ERROR:
+    err_pdu = (const struct pdu_error *) pdu;
+    // +4 because of the "Length of Error Text" field
+    min_size = 4 + sizeof(struct pdu_error);
+    if (err_pdu->len < min_size) {
+      RTR_DBG1("PDU it to small to contain \"Length of Error Text\" field!");
+      retval = false;
+      break;
+    }
+
+    //Check if the PDU really contains the error PDU
+    uint32_t enc_pdu_len = ntohl(err_pdu->len_enc_pdu);
+    RTR_DBG("enc_pdu_len: %u", enc_pdu_len);
+    min_size += enc_pdu_len;
+    if (err_pdu->len < min_size) {
+      RTR_DBG1("PDU is to small to contains errornouse PDU!");
+      retval = false;
+      break;
+    }
+
+    //Check if the the PDU really contains the error msg
+    uint32_t err_msg_len = ntohl(*(err_pdu->rest + enc_pdu_len));
+    RTR_DBG("err_msg_len: %u", err_msg_len);
+    min_size += err_msg_len;
+    if (err_pdu->len != min_size) {
+      RTR_DBG1("PDU is to small to contain error_msg!");
+      retval = false;
+      break;
+    }
+
+    //TODO: Check the error msg 0 termination
+
+    break;
+  }
+
+#ifndef NDEBUG
+  if (!retval) {
+    RTR_DBG1("Received malformed PDU!");
+  }
+#endif
+  return retval;
+}
 
 static int rtr_send_pdu(const struct rtr_socket *rtr_socket, const void *pdu, const unsigned len)
 {
@@ -374,8 +465,21 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
         else
             error = RTR_SUCCESS;
     }
-    memcpy(pdu, &header, sizeof(header)); //copy header in host_byte_order to pdu
+    //copy header in host_byte_order to pdu
+    memcpy(pdu, &header, sizeof(header));
+
+    //Check if the header len value is valid
+    if (rtr_pdu_check_size(pdu) == false) {
+      //TODO Restore byteorder for sending error PDU
+      error = CORRUPT_DATA;
+      goto error;
+    }
+    //At this point it is save to cast and use the PDU
+
     rtr_pdu_footer_to_host_byte_order(pdu);
+
+    //Here we should handle error PDUs instead of doing it in
+    //several other places...
 
     if (header.type == IPV4_PREFIX || header.type == IPV6_PREFIX) {
         if (((struct pdu_ipv4 *) pdu)->zero != 0)
