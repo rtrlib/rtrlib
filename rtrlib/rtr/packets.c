@@ -195,6 +195,7 @@ void rtr_change_socket_state(struct rtr_socket *rtr_socket, const enum rtr_socke
 static void rtr_pdu_to_network_byte_order(void *pdu)
 {
     struct pdu_header *header = pdu;
+    struct pdu_error *err_pdu = NULL;
 
     header->reserved = htons(header->reserved);
     header->len = htonl(header->len);
@@ -205,7 +206,10 @@ static void rtr_pdu_to_network_byte_order(void *pdu)
         ((struct pdu_serial_query *) pdu)->sn = htonl(((struct pdu_serial_query *) pdu)->sn);
         break;
     case ERROR:
-        ((struct pdu_error *) pdu)->len_enc_pdu = htonl(((struct pdu_error *) pdu)->len_enc_pdu);
+        err_pdu = pdu;
+        *((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)) =
+            htonl(*((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)));
+        err_pdu->len_enc_pdu = htonl(err_pdu->len_enc_pdu);
         break;
     default:
         break;
@@ -514,11 +518,15 @@ error:
         RTR_DBG("%s", txt);
         rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), CORRUPT_DATA, txt, sizeof(txt));
     } else if (error == UNSUPPORTED_PDU_TYPE) {
-        RTR_DBG1("Unsupported PDU type received");
+        RTR_DBG("Unsupported PDU type (%u) received", header.type);
         rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), UNSUPPORTED_PDU_TYPE, NULL, 0);
     } else if (error == UNSUPPORTED_PROTOCOL_VER) {
-        RTR_DBG1("PDU with unsupported Protocol version received");
+        RTR_DBG("PDU with unsupported Protocol version (%u) received", header.ver);
         rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), UNSUPPORTED_PROTOCOL_VER, NULL, 0);
+        return RTR_ERROR;
+    } else if (error == UNEXPECTED_PROTOCOL_VERSION) {
+        RTR_DBG("PDU with unexpected Protocol version (%u) received", header.ver);
+        rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), UNEXPECTED_PROTOCOL_VERSION, NULL, 0);
         return RTR_ERROR;
     }
 
