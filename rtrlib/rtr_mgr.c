@@ -213,9 +213,9 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
                 void *status_fp_data)
 {
     int err_code = RTR_ERROR;
-    struct pfx_table *pfxt;
-    struct spki_table *spki_table;
-    struct rtr_mgr_config *config;
+    struct pfx_table *pfxt = NULL;
+    struct spki_table *spki_table = NULL;
+    struct rtr_mgr_config *config = NULL;
     *config_out = NULL;
 
     *config_out = config = malloc(sizeof(*config));
