@@ -73,6 +73,7 @@ void rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_ta
     rtr_socket->connection_state_fp_param = fp_param;
     rtr_socket->thread_id = 0;
     rtr_socket->version = RTR_PROTOCOL_MAX_SUPPORTED_VERSION;
+    rtr_socket->has_received_pdus = false;
 }
 
 int rtr_start(struct rtr_socket *rtr_socket)
@@ -112,6 +113,8 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket)
     while(1) {
         if(rtr_socket->state == RTR_CONNECTING) {
             RTR_DBG1("State: RTR_CONNECTING");
+            rtr_socket->has_received_pdus = false;
+
             //old pfx_record could exists in the pfx_table, check if they are too old and must be removed
             //old key_entry could exists in the spki_table, check if they are too old and must be removed
             rtr_purge_outdated_records(rtr_socket);
