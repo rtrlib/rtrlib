@@ -181,6 +181,7 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket)
             RTR_DBG1("State: RTR_ERROR_TRANSPORT");
             tr_close(rtr_socket->tr_socket);
             rtr_change_socket_state(rtr_socket, RTR_CONNECTING);
+            RTR_DBG("Waiting %u", rtr_socket->retry_interval);
             sleep(rtr_socket->retry_interval);
         }
 
@@ -188,6 +189,7 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket)
             RTR_DBG1("State: RTR_ERROR_FATAL");
             tr_close(rtr_socket->tr_socket);
             rtr_change_socket_state(rtr_socket, RTR_CONNECTING);
+            RTR_DBG("Waiting %u", rtr_socket->retry_interval);
             sleep(rtr_socket->retry_interval);
         }
 
@@ -207,9 +209,12 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket)
 
 void rtr_stop(struct rtr_socket *rtr_socket)
 {
+    RTR_DBG1("rtr_stop()");
     rtr_change_socket_state(rtr_socket, RTR_SHUTDOWN);
     if(rtr_socket->thread_id != 0) {
+        RTR_DBG1("pthread_kill()");
         pthread_kill(rtr_socket->thread_id, SIGUSR1);
+        RTR_DBG1("pthread_join()");
         pthread_join(rtr_socket->thread_id, NULL);
     }
     RTR_DBG1("Socket shut down");

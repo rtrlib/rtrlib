@@ -28,6 +28,7 @@ enum pdu_error_type {
     UNSUPPORTED_PDU_TYPE = 5,
     WITHDRAWAL_OF_UNKNOWN_RECORD = 6,
     DUPLICATE_ANNOUNCEMENT = 7,
+    UNEXPECTED_PROTOCOL_VERSION = 8,
     PDU_TOO_BIG = 32
 };
 
@@ -410,11 +411,15 @@ error:
         RTR_DBG("%s", txt);
         rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), CORRUPT_DATA, txt, sizeof(txt));
     } else if (error == UNSUPPORTED_PDU_TYPE) {
-        RTR_DBG1("Unsupported PDU type received");
-        rtr_send_error_pdu(rtr_socket, pdu, header.len, UNSUPPORTED_PDU_TYPE, NULL, 0);
+        RTR_DBG("Unsupported PDU type (%u) received", header.type);
+        rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), UNSUPPORTED_PDU_TYPE, NULL, 0);
     } else if (error == UNSUPPORTED_PROTOCOL_VER) {
-        RTR_DBG1("PDU with unsupported Protocol version received");
-        rtr_send_error_pdu(rtr_socket, pdu, header.len, UNSUPPORTED_PROTOCOL_VER, NULL, 0);
+        RTR_DBG("PDU with unsupported Protocol version (%u) received", header.ver);
+        rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), UNSUPPORTED_PROTOCOL_VER, NULL, 0);
+        return RTR_ERROR;
+    } else if (error == UNEXPECTED_PROTOCOL_VERSION) {
+        RTR_DBG("PDU with unexpected Protocol version (%u) received", header.ver);
+        rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), UNEXPECTED_PROTOCOL_VERSION, NULL, 0);
         return RTR_ERROR;
     }
 
