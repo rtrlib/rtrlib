@@ -202,7 +202,6 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket)
             rtr_socket->last_update = 0;
             pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
             spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
-            rtr_socket->thread_id = 0;
             pthread_exit(NULL);
         }
     }
@@ -214,6 +213,7 @@ void rtr_stop(struct rtr_socket *rtr_socket)
     if(rtr_socket->thread_id != 0) {
         pthread_kill(rtr_socket->thread_id, SIGUSR1);
         pthread_join(rtr_socket->thread_id, NULL);
+        rtr_socket->thread_id = 0;
     }
     RTR_DBG1("Socket shut down");
 }
