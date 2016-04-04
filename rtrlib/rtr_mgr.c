@@ -267,7 +267,6 @@ err:
 
 int rtr_mgr_start(struct rtr_mgr_config *config)
 {
-    MGR_DBG1("rtr_mgr_start()");
     return rtr_mgr_start_sockets(&(config->groups[0]));
 }
 
@@ -287,7 +286,6 @@ bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config)
 
 void rtr_mgr_free(struct rtr_mgr_config *config)
 {
-    MGR_DBG1("rtr_mgr_free()");
     pthread_mutex_lock(&(config->mutex));
     pfx_table_free(config->groups[0].sockets[0]->pfx_table);
     spki_table_free(config->groups[0].sockets[0]->spki_table);
@@ -311,7 +309,6 @@ inline int rtr_mgr_get_spki(struct rtr_mgr_config *config, const uint32_t asn, u
 
 void rtr_mgr_stop(struct rtr_mgr_config *config)
 {
-    MGR_DBG1("rtr_mgr_stop()");
     for(unsigned int i = 0; i < config->len; i++) {
         for(unsigned int j = 0; j < config->groups[i].sockets_len; j++) {
             rtr_stop(config->groups[i].sockets[j]);
