@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
     groups[0].sockets[0] = &rtr_tcp;
     groups[0].preference = 1;
 
-    conf = rtr_mgr_init(groups, 1, 30, 520, NULL, NULL,
+    int ret = rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL,
                         &connectionStatusCallback, NULL);
     rtr_mgr_start(conf);
 

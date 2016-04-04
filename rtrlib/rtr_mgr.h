@@ -85,6 +85,7 @@ struct rtr_mgr_config {
 
 /**
  * @brief Initializes a rtr_mgr_config.
+ * @param[out] config_out The rtr_mgr_config that will be initialized by this function. On error, *config_out will be NULL!
  * @param[in] groups Array of rtr_mgr_group. Every RTR socket in an
  *		     rtr_mgr_group must be assoziated with an initialized
  *		     transport socket. A Transport socket is only allowed to be
@@ -92,11 +93,14 @@ struct rtr_mgr_config {
  *		     be unique in the group array. More than one rtr_mgr_group
  *		     with the same preference value isn't allowed.
  * @param[in] groups_len Number of elements in the groups array.
- * @param[in] refresh_interval Interval in seconds between serial queries that are sent to the server.
- * The maximum value is 86400 seconds (one day). If 0 is specified the refresh_interval is set to 3600 seconds.
- * @param[in] expire_interval Time period in seconds. Received pfx_records are deleted if the client was unable to refresh data for this time period.
- * The maximum value is 172800 seconds (two days). If 0 is specified, the expire_interval is twice as large as refresh_interval.
- * The default value is twice the refresh_interval.
+ * @param[in] refresh_interval Interval in seconds between serial queries that are sent to the server. Must be >= 1 and <= 86400s (one day),
+ * recommended default is 3600s (one hour).
+ * @param[in] expire_interval Stored validation records will be deleted if cache was unable to refresh data for this period.
+ * The value should be twice the refresh_interval. The value must be >= 600s (ten minutes) and <= 172800s (two days).
+ * The recommanded default is 7200s (two hours).
+ * @param[in] retry_interval This parameter tells the router how long to wait (in seconds) before retrying
+ * a failed Serial Query or Reset Query. The value must be >= 1s and <= 7200s (two hours).
+ * The recommanded default is 600 seconds (ten minutes).
  * @param[in] update_fp A Pointer to a pfx_update_fp callback, that is executed for every added and removed pfx_record.
  * @param[in] spki_update_fp A Pointer to a spki_update_fp callback, that is executed for every added and removed spki_record.
  * @param[in] status_fp Pointer to a function that is called if the connection
@@ -105,11 +109,12 @@ struct rtr_mgr_config {
  *			     status_fp function. Memory area can be freely used
  *			     to pass user-defined data to the status_fp
  *			     callback.
- * @return !NULL On success
- * @return NULL On error
+ * @return RTR_ERROR If an error occurred
+ * @return RTR_INVALID_PARAM If the refresh_interval or the expire_interval is invalid.
+ * @return RTR_SUCCESS On success.
  */
-struct rtr_mgr_config *rtr_mgr_init(struct rtr_mgr_group groups[], const unsigned int groups_len,
-                                    const unsigned int refresh_interval, const unsigned int expire_interval,
+int rtr_mgr_init(struct rtr_mgr_config **config_out, struct rtr_mgr_group groups[], const unsigned int groups_len,
+                                    const unsigned int refresh_interval, const unsigned int expire_interval, const unsigned int retry_interval,
                                     const pfx_update_fp update_fp,
                                     const spki_update_fp spki_update_fp,
                                     const rtr_mgr_status_fp status_fp,

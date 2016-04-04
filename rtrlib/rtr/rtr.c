@@ -52,30 +52,36 @@ static int install_sig_handler()
     return sigaction(SIGUSR1, &sa, NULL);
 }
 
-void rtr_init(struct rtr_socket *rtr_socket,
+int rtr_init(struct rtr_socket *rtr_socket,
               struct tr_socket *tr,
               struct pfx_table *pfx_table,
               struct spki_table *spki_table,
               const unsigned int refresh_interval,
               const unsigned int expire_interval,
+              const unsigned int retry_interval,
               rtr_connection_state_fp fp, void *fp_param)
 {
     if(tr != NULL)
         rtr_socket->tr_socket = tr;
-    if(refresh_interval == 0 || refresh_interval > 86400) {
-        rtr_socket->refresh_interval = 3600;
+
+    if(refresh_interval > 86400 || refresh_interval < 1) {
+        return RTR_INVALID_PARAM;
     } else {
         rtr_socket->refresh_interval = refresh_interval;
     }
 
-    if (expire_interval == 0 || expire_interval > 172800
-            || expire_interval < rtr_socket->refresh_interval) {
-        rtr_socket->expire_interval = rtr_socket->refresh_interval * 2;
+    if ((expire_interval < 600) || (expire_interval > 172800)) {
+        return RTR_INVALID_PARAM;
     } else {
         rtr_socket->expire_interval = expire_interval;
     }
 
-    rtr_socket->retry_interval = 600;
+    if ((retry_interval > 7200) || (retry_interval < 1)) {
+        return RTR_INVALID_PARAM;
+    } else {
+        rtr_socket->retry_interval = retry_interval;
+    }
+
     rtr_socket->state = RTR_SHUTDOWN;
     rtr_socket->request_session_id = true;
     rtr_socket->serial_number = 0;
@@ -87,6 +93,7 @@ void rtr_init(struct rtr_socket *rtr_socket,
     rtr_socket->thread_id = 0;
     rtr_socket->version = RTR_PROTOCOL_MAX_SUPPORTED_VERSION;
     rtr_socket->has_received_pdus = false;
+    return RTR_SUCCESS;
 }
 
 int rtr_start(struct rtr_socket *rtr_socket)
