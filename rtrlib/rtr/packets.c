@@ -523,10 +523,6 @@ error:
         RTR_DBG("PDU with unexpected Protocol version (%u) received", header.ver);
         rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), UNEXPECTED_PROTOCOL_VERSION, NULL, 0);
         return RTR_ERROR;
-    } else if (error == UNEXPECTED_PROTOCOL_VERSION) {
-        RTR_DBG1("PDU with unexpected Protocol version received");
-        rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), UNEXPECTED_PROTOCOL_VERSION, NULL, 0);
-        return RTR_ERROR;
     }
 
     rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
