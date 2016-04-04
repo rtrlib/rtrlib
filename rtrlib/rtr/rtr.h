@@ -113,6 +113,7 @@ struct rtr_socket {
     rtr_connection_state_fp connection_state_fp;
     void *connection_state_fp_param;
     unsigned int version;
+    bool has_received_pdus;
     struct spki_table *spki_table;
 };
 

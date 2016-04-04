@@ -28,6 +28,7 @@ enum pdu_error_type {
     UNSUPPORTED_PDU_TYPE = 5,
     WITHDRAWAL_OF_UNKNOWN_RECORD = 6,
     DUPLICATE_ANNOUNCEMENT = 7,
+    UNEXPECTED_PROTOCOL_VERSION = 8,
     PDU_TOO_BIG = 32
 };
 
@@ -299,27 +300,26 @@ static int rtr_send_pdu(const struct rtr_socket *rtr_socket, const void *pdu, co
 }
 
 /*
- * if RTR_ERROR was returned a error pdu was sent, and the socket state changed
+ * if RTR_ERROR was returned a error PDU was sent, and the socket state changed
  * @param pdu_len must >= RTR_MAX_PDU_LEN Bytes
  * @return RTR_SUCCESS
  * @return RTR_ERROR, error pdu was sent and socket_state changed
  * @return TR_WOULDBLOCK
+ * \post
+ * If RTR_SUCCESS is returned PDU points to a well formed PDU that has
+ * the appropriate size for the PDU type it pretend to be. Thus, casting it to
+ * the PDU type struct and using it is save. Furthermore all PDU field are
+ * in host-byte-order.
  */
 static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_t pdu_len, const time_t timeout)
 {
-    //error values:
-    // 0 = no_err
-    // 1 = internal error
-    // 2 = unknown pdu type
-    // 4 = pdu to big
-    // 8 = corrupt data
-    // 16 = unknown pdu version
     int error = RTR_SUCCESS;
 
     assert(pdu_len >= RTR_MAX_PDU_LEN);
-    //receive packet header
+
     if (rtr_socket->state == RTR_SHUTDOWN)
         return RTR_ERROR;
+    //receive packet header
     error = tr_recv_all(rtr_socket->tr_socket, pdu, sizeof(struct pdu_header), timeout);
     if (error < 0)
         goto error;
@@ -331,28 +331,6 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
     memcpy(&header, pdu, sizeof(header));
     rtr_pdu_header_to_host_byte_order(&header);
 
-    //Do dont handle error PDUs here, leave this task to rtr_handle_error_pdu()
-    if (header.ver != rtr_socket->version && header.type != ERROR) {
-        //If this is the first PDU we have received -> Downgrade.
-        if (rtr_socket->request_session_id == true && rtr_socket->last_update == 0
-            && header.ver >= RTR_PROTOCOL_MIN_SUPPORTED_VERSION
-            && header.ver <= RTR_PROTOCOL_MAX_SUPPORTED_VERSION
-            && header.ver < rtr_socket->version) {
-            RTR_DBG("Downgrading current session from %u to %u", rtr_socket->version, header.ver);
-            rtr_socket->version = header.ver;
-        } else {
-            //If this isnt the first PDU we have received something is wrong with
-            //the server implementation -> Error
-            error = UNSUPPORTED_PROTOCOL_VER;
-            goto error;
-        }
-    }
-
-    if ((header.type > 10) || (header.ver == RTR_PROTOCOL_VERSION_0 && header.type == ROUTER_KEY)) {
-        error = UNSUPPORTED_PDU_TYPE;
-        goto error;
-    }
-
     //if header->len is < packet_header = corrupt data received
     if (header.len < sizeof(header)) {
         error = CORRUPT_DATA;
@@ -360,6 +338,24 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
     } else if (header.len > RTR_MAX_PDU_LEN) { //PDU too big, > than MAX_PDU_LEN Bytes
         error = PDU_TOO_BIG;
         goto error;
+    }
+
+    //Handle live downgrading
+    if (rtr_socket->has_received_pdus == false) {
+      if (rtr_socket->version == RTR_PROTOCOL_VERSION_1
+          && header.ver == RTR_PROTOCOL_VERSION_0
+          && header.type != ERROR) {
+        RTR_DBG("First received PDU is a version 0 PDU, downgrading to %u", RTR_PROTOCOL_VERSION_0);
+        rtr_socket->version = RTR_PROTOCOL_VERSION_0;
+      }
+      rtr_socket->has_received_pdus = true;
+    }
+
+    //Handle wrong protocol version
+    //If it is a error PDU, it will be handled by rtr_handle_error_pdu
+    if (header.ver != rtr_socket->version  && header.type != ERROR) {
+      error = UNEXPECTED_PROTOCOL_VERSION;
+      goto error;
     }
 
 
@@ -415,6 +411,10 @@ error:
     } else if (error == UNSUPPORTED_PROTOCOL_VER) {
         RTR_DBG1("PDU with unsupported Protocol version received");
         rtr_send_error_pdu(rtr_socket, pdu, header.len, UNSUPPORTED_PROTOCOL_VER, NULL, 0);
+        return RTR_ERROR;
+    } else if (error == UNEXPECTED_PROTOCOL_VERSION) {
+        RTR_DBG1("PDU with unexpected Protocol version received");
+        rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), UNEXPECTED_PROTOCOL_VERSION, NULL, 0);
         return RTR_ERROR;
     }
 
