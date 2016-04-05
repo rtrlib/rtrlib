@@ -1,5 +1,20 @@
 Release History:
 
+* Version 0.3.6
+    - rtrlib/lib/*: Change API and add lrtr_ prefix to prevent namespace
+      conflicts with third party applications
+    - Change API for rtr_mgr_init and rtr_init to improve error handling
+    - Change preference order of finding cache servers, according to
+      RFC 6810
+    - Improve behavior of cache server groups, switch to preferred
+      group as soon as cache server is online again
+    - Improve error handling in rtr_mgr_init
+    - Improve timing behavior (expire interval, refresh interval etc.)
+    - Fix bug in rtr_mgr_close_all_groups_except_one to prevent deadlock
+    - Fix memory leaks, race condition, and buffer overflow/underflow
+    - Improve debugging and status values
+    - Update SSH transport to new LibSSH API
+
 * Version 0.3.5
     - Change license from LGPLv3 to MIT license
     - Fix bug in pfx_table_src_remove, a lock was not released
