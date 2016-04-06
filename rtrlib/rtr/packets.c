@@ -369,6 +369,19 @@ static bool rtr_pdu_check_size (const struct pdu_header *pdu) {
     //TODO: Check the error msg 0 termination
 
     break;
+  case SERIAL_QUERY:
+    if (sizeof(struct pdu_serial_query) == pdu->len)
+      retval = true;
+    break;
+  case RESET_QUERY:
+    if (sizeof(struct pdu_reset_query) == pdu->len)
+      retval = true;
+    break;
+  case RESERVED:
+  default:
+    RTR_DBG1("PDU type is unknown or reserved!");
+    retval = false;
+    break;
   }
 
 #ifndef NDEBUG
@@ -704,8 +717,8 @@ static int rtr_undo_update_spki_table(struct rtr_socket *rtr_socket, void *pdu)
 static int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, const unsigned int pdu_size, void **ary,
                                 unsigned int *ind, unsigned int *size)
 {
-    const enum pdu_type pdu_type = rtr_get_pdu_type(pdu);
-    assert(pdu_type  == IPV4_PREFIX || pdu_type == IPV6_PREFIX);
+    const enum pdu_type type = rtr_get_pdu_type(pdu);
+    assert(type  == IPV4_PREFIX || type == IPV6_PREFIX);
     if ((*ind) >= *size) {
         *size += TEMPORARY_PDU_STORE_INCREMENT_VALUE;
         void *tmp = realloc(*ary, *size * pdu_size);
@@ -720,9 +733,9 @@ static int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, 
         }
         *ary = tmp;
     }
-    if (pdu_type == IPV4_PREFIX)
+    if (type == IPV4_PREFIX)
         memcpy((struct pdu_ipv4 *) *ary + *ind, pdu, pdu_size);
-    else if (pdu_type == IPV6_PREFIX)
+    else if (type == IPV6_PREFIX)
         memcpy((struct pdu_ipv6 *) *ary + *ind, pdu, pdu_size);
     (*ind)++;
     return RTR_SUCCESS;
@@ -731,8 +744,7 @@ static int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, 
 static int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *pdu, const unsigned int pdu_size, void **ary,
                                     unsigned int *ind, unsigned int *size)
 {
-    const enum pdu_type pdu_type = rtr_get_pdu_type(pdu);
-    assert(pdu_type == ROUTER_KEY);
+    assert(rtr_get_pdu_type(pdu) == ROUTER_KEY);
 
     if ((*ind) >= *size) {
         *size += TEMPORARY_PDU_STORE_INCREMENT_VALUE;
@@ -872,7 +884,7 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
             retval = RTR_ERROR;
             goto cleanup;
         }
-        
+
         type = rtr_get_pdu_type(pdu);
         if (type == IPV4_PREFIX) {
             if (rtr_store_prefix_pdu(rtr_socket, pdu, sizeof(*ipv4_pdus), (void **) &ipv4_pdus, &ipv4_pdus_nindex, &ipv4_pdus_size) == RTR_ERROR){

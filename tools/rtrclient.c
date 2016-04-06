@@ -106,7 +106,7 @@ static void update_spki(struct spki_table* s __attribute__((unused)), const stru
 
 int main(int argc, char** argv)
 {
-    enum mode_t { TCP, SSH } mode;
+    enum mode_t { TCP, SSH } mode = TCP;
     char* host = NULL;
     char* port = NULL;
     spki_update_fp spki_update_fp = NULL;
@@ -127,6 +127,10 @@ int main(int argc, char** argv)
     }
     else if(strncasecmp(argv[1], "ssh", strlen(argv[1])) == 0){
         mode = SSH;
+    }
+    else {
+        print_usage(argv);
+        return(EXIT_FAILURE);
     }
 
     //Optional args
@@ -170,12 +174,6 @@ int main(int argc, char** argv)
             hostkey = NULL;
         }
 #endif
-    else {
-        print_usage(argv);
-        return(EXIT_FAILURE);
-    }
-
-
 
     struct tr_socket tr_sock;
     struct tr_tcp_config tcp_config;

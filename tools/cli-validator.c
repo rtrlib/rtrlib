@@ -22,8 +22,8 @@ int connectionError(enum rtr_mgr_status status)
         // Wait for input before printing error to avoid "broken pipe" error while communicating
         // with the Python program.
         char input[256];
-        int inputLength;
-        fgets(input, 256, stdin);
+        if(fgets(input, 256, stdin))
+            ;;
 
         printf("error\n");
         fflush(stdout);
@@ -57,8 +57,10 @@ int main(int argc, char *argv[])
     groups[0].sockets[0] = &rtr_tcp;
     groups[0].preference = 1;
 
-    int ret = rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL,
-                        &connectionStatusCallback, NULL);
+    if( rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL,
+                        &connectionStatusCallback, NULL) < 0) {
+        return(EXIT_FAILURE);
+    }
     rtr_mgr_start(conf);
 
     char input[256];
@@ -75,7 +77,8 @@ int main(int argc, char *argv[])
         if (sleepCounter >= connection_timeout) {
             // Wait for input before printing "timeout",to avoid "broken pipe"
             // error while communicating with the Python program
-            fgets(input, 256, stdin);
+            if(fgets(input, 256, stdin))
+                ;;
             printf("timeout\n");
             fflush(stdout);
             return(EXIT_FAILURE);

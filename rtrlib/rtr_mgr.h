@@ -69,12 +69,6 @@ struct rtr_mgr_group {
 
 typedef void (*rtr_mgr_status_fp)(const struct rtr_mgr_group *, enum rtr_mgr_status, const struct rtr_socket *, void *);
 
-
-/**
- * Type alias \c pfx_for_each_fp for function signature: \code (*)(const struct pfx_record *pfx_record, void *data) \endcode
- */
-typedef void (*pfx_for_each_fp)(const struct pfx_record *pfx_record, void *data);
-
 struct rtr_mgr_config {
     struct rtr_mgr_group *groups;
     unsigned int len;
