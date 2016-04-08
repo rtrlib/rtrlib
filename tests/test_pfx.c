@@ -348,5 +348,6 @@ int main()
     pfx_table_free(&pfxt);
     remove_src_test();
     mass_test();
-}
 
+    return EXIT_SUCCESS;
+}

@@ -20,12 +20,7 @@
 #include <time.h>
 #include <stdlib.h>
 
-
 static struct spki_record *create_record(int ASN, int ski_offset, int spki_offset, struct rtr_socket *socket);
-
-
-
-
 
 static bool compare_spki_records(struct spki_record *r1, struct spki_record *r2)
 {
