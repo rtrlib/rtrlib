@@ -207,29 +207,47 @@ struct lpfst_node *lpfst_remove(struct lpfst_node *root,
 	return lpfst_remove(root->rchild, prefix, mask_len, lvl + 1);
 }
 
+static int append_node_to_array(struct lpfst_node ***ary,
+				unsigned int *len,
+				struct lpfst_node *n)
+{
+	struct lpfst_node **new;
+
+	new = realloc(*ary, *len * sizeof(n));
+	if (!new)
+		return -1;
+
+	*ary = new;
+	(*ary)[*len - 1] = n;
+	return 0;
+}
+
 int lpfst_get_children(const struct lpfst_node *root_node,
 		       struct lpfst_node ***array, unsigned int *len)
 {
 	if (root_node->lchild) {
 		*len += 1;
-		*array = realloc(*array, *len * sizeof(struct lpfst_node *));
-		if (!*array)
-			return -1;
-		(*array)[*len - 1] = root_node->lchild;
+		if (append_node_to_array(array, len, root_node->lchild))
+			goto err;
+
 		if (lpfst_get_children(root_node->lchild, array, len) == -1)
-			return -1;
+			goto err;
 	}
 
 	if (root_node->rchild) {
 		*len += 1;
-		*array = realloc(*array, *len * sizeof(struct lpfst_node *));
-		if (!*array)
-			return -1;
-		(*array)[*len - 1] = root_node->rchild;
+		if (append_node_to_array(array, len, root_node->rchild))
+			goto err;
+
 		if (lpfst_get_children(root_node->rchild, array, len) == -1)
-			return -1;
+			goto err;
 	}
+
 	return 0;
+
+err:
+	free(*array);
+	return -1;
 }
 
 inline bool lpfst_is_leaf(const struct lpfst_node *node)
