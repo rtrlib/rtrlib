@@ -8,151 +8,231 @@
 */
 
 #include <stdlib.h>
+#include <assert.h>
 #include "rtrlib/pfx/lpfst/lpfst.h"
 
-void lpfst_insert(struct lpfst_node *root_node, struct lpfst_node *new_node, const unsigned int level)
+static void swap_nodes(struct lpfst_node *a, struct lpfst_node *b)
 {
-    if(new_node->len > root_node->len) {
-        //switch node data
-        struct lpfst_node tmp;
-        tmp.prefix = root_node->prefix;
-        tmp.len = root_node->len;
-        tmp.data = root_node->data;
-        root_node->prefix = new_node->prefix;
-        root_node->len = new_node->len;
-        root_node->data = new_node->data;
-        new_node->prefix = tmp.prefix;
-        new_node->len = tmp.len;
-        new_node->data = tmp.data;
-    }
-    if(lrtr_ip_addr_is_zero(lrtr_ip_addr_get_bits(&(new_node->prefix), level, 1))) {
-        if(root_node->lchild == NULL) {
-            root_node->lchild = new_node;
-            new_node->parent = root_node;
-        } else
-            lpfst_insert(root_node->lchild, new_node, level+1);
-    } else {
-        if(root_node->rchild == NULL) {
-            root_node->rchild = new_node;
-            new_node->parent = root_node;
-        } else
-            lpfst_insert(root_node->rchild, new_node, level+1);
-    }
+	struct lpfst_node tmp;
+
+	tmp.prefix = a->prefix;
+	tmp.len = a->len;
+	tmp.data = a->data;
+
+	a->prefix = b->prefix;
+	a->len = b->len;
+	a->data = b->data;
+
+	b->prefix = tmp.prefix;
+	b->len = tmp.len;
+	b->data = tmp.data;
 }
 
-struct lpfst_node *lpfst_lookup(const struct lpfst_node *root_node, const struct lrtr_ip_addr *prefix, const uint8_t mask_len, unsigned int *level)
+enum child_node_rel {
+	LEFT,
+	RIGHT
+};
+
+static void add_child_node(struct lpfst_node *parent, struct lpfst_node *child,
+			   enum child_node_rel rel)
 {
-    while(root_node != NULL) {
-        if(root_node->len <= mask_len && lrtr_ip_addr_equal(lrtr_ip_addr_get_bits(&(root_node->prefix), 0, root_node->len), lrtr_ip_addr_get_bits(prefix, 0, root_node->len)))
-            return (struct lpfst_node *) root_node;
+	assert(rel == LEFT || rel == RIGHT);
 
-        if(lrtr_ip_addr_is_zero(lrtr_ip_addr_get_bits(prefix, *level, 1)))
-            root_node = root_node->lchild;
-        else
-            root_node = root_node->rchild;
+	if (rel == LEFT)
+		parent->lchild = child;
+	else
+		parent->rchild = child;
 
-        (*level)++;
-    }
-    return NULL;
+	child->parent = parent;
 }
 
-struct lpfst_node *lpfst_lookup_exact(struct lpfst_node *root_node, const struct lrtr_ip_addr *prefix, const uint8_t mask_len, unsigned int *level, bool *found)
+static inline bool is_left_child(const struct lrtr_ip_addr *addr,
+				 unsigned int lvl)
 {
-    *found = false;
-    while(root_node != NULL) {
-        if(*level > 0 && root_node->len < mask_len) {
-            (*level)--;
-            return root_node->parent;
-        }
-        if(root_node->len == mask_len && lrtr_ip_addr_equal(root_node->prefix, *prefix)) {
-            *found = true;
-            return (struct lpfst_node *) root_node;
-        }
-
-        if(lrtr_ip_addr_is_zero(lrtr_ip_addr_get_bits(prefix, *level, 1))) {
-            if(root_node->lchild == NULL)
-                return root_node;
-            else
-                root_node = root_node->lchild;
-        } else {
-            if(root_node->rchild == NULL)
-                return root_node;
-            else
-                root_node = root_node->rchild;
-        }
-
-        (*level)++;
-    }
-    return NULL;
+	/* A node must be inserted as left child if bit <lvl> of the IP address
+	 * is 0 otherwise as right child
+	 */
+	return lrtr_ip_addr_is_zero(lrtr_ip_addr_get_bits(addr, lvl, 1));
 }
 
-//returns node that isnt used anymore in the tree
-struct lpfst_node *lpfst_remove(struct lpfst_node *root_node, const struct lrtr_ip_addr *prefix, const uint8_t mask_len, const unsigned int level)
+void lpfst_insert(struct lpfst_node *root, struct lpfst_node *new,
+		  const unsigned int lvl)
 {
-    if(root_node->len == mask_len && lrtr_ip_addr_equal(root_node->prefix, *prefix)) {
-        if(lpfst_is_leaf(root_node)) {
-            if(level != 0) {
-                if(root_node->parent->lchild == root_node)
-                    root_node->parent->lchild = NULL;
-                else if(root_node->parent->rchild == root_node)
-                    root_node->parent->rchild = NULL;
-            }
-            return root_node;
-        } else {
-            if(root_node->lchild != NULL && (root_node->rchild == NULL || (root_node->lchild->len > root_node->rchild->len))) {
-                root_node->prefix = root_node->lchild->prefix;
-                root_node->len = root_node->lchild->len;
-                void *tmp = root_node->data;
-                root_node->data = root_node->lchild->data;
-                root_node->lchild->data = tmp;
-                return lpfst_remove(root_node->lchild, &(root_node->lchild->prefix), root_node->lchild->len, level+1);
-            } else {
-                root_node->prefix = root_node->rchild->prefix;
-                root_node->len = root_node->rchild->len;
-                void *tmp = root_node->data;
-                tmp = root_node->data;
-                root_node->data = root_node->rchild->data;
-                root_node->rchild->data = tmp;
-                return lpfst_remove(root_node->rchild, &(root_node->rchild->prefix), root_node->rchild->len, level+1);
-            }
-        }
-    }
-    if(lrtr_ip_addr_is_zero(lrtr_ip_addr_get_bits(prefix, level, 1))) {
-        if(root_node->lchild == NULL)
-            return NULL;
-        return lpfst_remove(root_node->lchild, prefix, mask_len, level+1);
-    } else {
-        if(root_node->rchild == NULL)
-            return NULL;
-        return lpfst_remove(root_node->rchild, prefix, mask_len, level+1);
-    }
+	if (new->len > root->len)
+		swap_nodes(root, new);
+
+	if (is_left_child(&new->prefix, lvl)) {
+		if (!root->lchild)
+			return add_child_node(root, new, LEFT);
+
+		return lpfst_insert(root->lchild, new, lvl + 1);
+	}
+
+	if (!root->rchild)
+		return add_child_node(root, new, RIGHT);
+
+	lpfst_insert(root->rchild, new, lvl + 1);
 }
 
-int lpfst_get_children(const struct lpfst_node *root_node, struct lpfst_node ***array, unsigned int *len)
+struct lpfst_node *lpfst_lookup(const struct lpfst_node *root,
+				const struct lrtr_ip_addr *prefix,
+				const uint8_t mask_len, unsigned int *lvl)
 {
-    if(root_node->lchild != NULL) {
-        *len += 1;
-        *array = realloc(*array, *len * sizeof(struct lpfst_node *));
-        if(*array == NULL)
-            return -1;
-        (*array)[*len - 1] = root_node->lchild;
-        if(lpfst_get_children(root_node->lchild, array, len) == -1)
-            return -1;
-    }
+	while (root) {
+		if (root->len <= mask_len &&
+		    lrtr_ip_addr_equal(lrtr_ip_addr_get_bits(&root->prefix, 0,
+							     root->len),
+				       lrtr_ip_addr_get_bits(prefix, 0,
+							     root->len)))
+			return (struct lpfst_node *)root;
 
-    if(root_node->rchild != NULL) {
-        *len += 1;
-        *array = realloc(*array, *len * sizeof(struct lpfst_node *));
-        if(*array == NULL)
-            return -1;
-        (*array)[*len - 1] = root_node->rchild;
-        if(lpfst_get_children(root_node->rchild, array, len) == -1)
-            return -1;
-    }
-    return 0;
+		if (is_left_child(prefix, *lvl))
+			root = root->lchild;
+		else
+			root = root->rchild;
+
+		(*lvl)++;
+	}
+	return NULL;
 }
 
-inline int lpfst_is_leaf(const struct lpfst_node *node)
+struct lpfst_node *lpfst_lookup_exact(struct lpfst_node *root_node,
+				      const struct lrtr_ip_addr *prefix,
+				      const uint8_t mask_len,
+				      unsigned int *lvl, bool *found)
 {
-    return node->lchild == NULL && node->rchild == NULL;
+	*found = false;
+
+	while (root_node) {
+		if (*lvl > 0 && root_node->len < mask_len) {
+			(*lvl)--;
+			return root_node->parent;
+		}
+
+		if (root_node->len == mask_len &&
+		    lrtr_ip_addr_equal(root_node->prefix, *prefix)) {
+			*found = true;
+			return root_node;
+		}
+
+		if (is_left_child(prefix, *lvl)) {
+			if (!root_node->lchild)
+				return root_node;
+			root_node = root_node->lchild;
+		} else {
+			if (!root_node->rchild)
+				return root_node;
+			root_node = root_node->rchild;
+		}
+
+		(*lvl)++;
+	}
+	return NULL;
+}
+
+static void deref_node(struct lpfst_node *n)
+{
+	if (!n->parent)
+		return;
+
+	if (n->parent->lchild == n) {
+		n->parent->lchild = NULL;
+		return;
+	}
+
+	n->parent->rchild = NULL;
+}
+
+static inline bool prefix_is_same(const struct lpfst_node *n,
+				  const struct lrtr_ip_addr *p,
+				  uint8_t mask_len)
+{
+	return n->len == mask_len && lrtr_ip_addr_equal(n->prefix, *p);
+}
+
+static void replace_node_data(struct lpfst_node *a, struct lpfst_node *b)
+{
+	a->prefix = b->prefix;
+	a->len = b->len;
+	a->data = b->data;
+}
+
+struct lpfst_node *lpfst_remove(struct lpfst_node *root,
+				const struct lrtr_ip_addr *prefix,
+				const uint8_t mask_len,
+				const unsigned int lvl)
+{
+	/* If the node has no children we can simply remove it
+	 * If the node has children, we swap the node with the child that
+	 * has the bigger prefix length and drop the child.
+	 */
+	if (prefix_is_same(root, prefix, mask_len)) {
+		void *tmp;
+
+		if (lpfst_is_leaf(root)) {
+			deref_node(root);
+			return root;
+		}
+
+		/* swap with the left child and drop the child */
+		if (root->lchild && (!root->rchild ||
+				     root->lchild->len > root->rchild->len)) {
+			tmp = root->data;
+			replace_node_data(root, root->lchild);
+			root->lchild->data = tmp;
+
+			return lpfst_remove(root->lchild,
+					    &root->lchild->prefix,
+					    root->lchild->len, lvl + 1);
+		}
+
+		/* swap with the right child and drop the child */
+		tmp = root->data;
+		replace_node_data(root, root->rchild);
+		root->rchild->data = tmp;
+
+		return lpfst_remove(root->rchild,
+				    &root->rchild->prefix,
+				    root->rchild->len, lvl + 1);
+	}
+
+	if (is_left_child(prefix, lvl)) {
+		if (!root->lchild)
+			return NULL;
+		return lpfst_remove(root->lchild, prefix, mask_len, lvl + 1);
+	}
+
+	if (!root->rchild)
+		return NULL;
+	return lpfst_remove(root->rchild, prefix, mask_len, lvl + 1);
+}
+
+int lpfst_get_children(const struct lpfst_node *root_node,
+		       struct lpfst_node ***array, unsigned int *len)
+{
+	if (root_node->lchild) {
+		*len += 1;
+		*array = realloc(*array, *len * sizeof(struct lpfst_node *));
+		if (!*array)
+			return -1;
+		(*array)[*len - 1] = root_node->lchild;
+		if (lpfst_get_children(root_node->lchild, array, len) == -1)
+			return -1;
+	}
+
+	if (root_node->rchild) {
+		*len += 1;
+		*array = realloc(*array, *len * sizeof(struct lpfst_node *));
+		if (!*array)
+			return -1;
+		(*array)[*len - 1] = root_node->rchild;
+		if (lpfst_get_children(root_node->rchild, array, len) == -1)
+			return -1;
+	}
+	return 0;
+}
+
+inline bool lpfst_is_leaf(const struct lpfst_node *node)
+{
+	return !node->lchild && !node->rchild;
 }
