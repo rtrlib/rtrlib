@@ -38,6 +38,7 @@ void lrtr_dbg(const char *frmt, ...)
 
     vprintf(frmt, argptr);
     printf("\n");
+    va_end(argptr);
 #endif
     return;
 }
