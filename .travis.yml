@@ -1,6 +1,10 @@
 language: c
 
+install:
+    - sudo apt-get install cppcheck -y
 script:
+    - scripts/cppcheck.sh
+
     - cmake -D CMAKE_BUILD_TYPE=Release .
     - make
 
