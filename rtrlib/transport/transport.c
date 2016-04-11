@@ -43,13 +43,14 @@ inline const char *tr_ident(struct tr_socket *sock)
 int tr_send_all(const struct tr_socket *socket, const void *pdu, const size_t len, const time_t timeout)
 {
     unsigned int total_send = 0;
-    int rtval = 0;
     time_t end_time;
     lrtr_get_monotonic_time(&end_time);
     end_time = end_time + timeout;
 
     while(total_send < len) {
         time_t cur_time;
+        int rtval;
+
         lrtr_get_monotonic_time(&cur_time);
 
         rtval = tr_send(socket, ((char *) pdu) + total_send, (len - total_send), (end_time - cur_time));
@@ -63,13 +64,14 @@ int tr_send_all(const struct tr_socket *socket, const void *pdu, const size_t le
 int tr_recv_all(const struct tr_socket *socket, const void *pdu, const size_t len, const time_t timeout)
 {
     size_t total_recv = 0;
-    int rtval = 0;
     time_t end_time;
     lrtr_get_monotonic_time(&end_time);
     end_time += timeout;
 
     while(total_recv < len) {
         time_t cur_time;
+        int rtval;
+
         lrtr_get_monotonic_time(&cur_time);
 
         rtval = tr_recv(socket, ((char *) pdu)+total_recv, (len - total_recv), end_time - cur_time);
