@@ -733,16 +733,21 @@ static int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, 
         }
         *ary = tmp;
     }
-    if (type == IPV4_PREFIX)
-        memcpy((struct pdu_ipv4 *) *ary + *ind, pdu, pdu_size);
-    else if (type == IPV6_PREFIX)
-        memcpy((struct pdu_ipv6 *) *ary + *ind, pdu, pdu_size);
+    if (type == IPV4_PREFIX) {
+        struct pdu_ipv4 *ary_ipv4 = *ary;
+
+        memcpy(ary_ipv4 + *ind, pdu, pdu_size);
+    } else if (type == IPV6_PREFIX) {
+        struct pdu_ipv6 *ary_ipv6 = *ary;
+
+        memcpy(ary_ipv6 + *ind, pdu, pdu_size);
+    }
     (*ind)++;
     return RTR_SUCCESS;
 }
 
-static int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *pdu, const unsigned int pdu_size, void **ary,
-                                    unsigned int *ind, unsigned int *size)
+static int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *pdu, const unsigned int pdu_size, 
+				    struct pdu_router_key **ary, unsigned int *ind, unsigned int *size)
 {
     assert(rtr_get_pdu_type(pdu) == ROUTER_KEY);
 
@@ -899,7 +904,7 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
                 goto cleanup;
             }
         } else if (type == ROUTER_KEY) {
-            if (rtr_store_router_key_pdu(rtr_socket, pdu, sizeof(*router_key_pdus), (void **) &router_key_pdus, &router_key_pdus_nindex, &router_key_pdus_size) == RTR_ERROR){
+            if (rtr_store_router_key_pdu(rtr_socket, pdu, sizeof(*router_key_pdus), &router_key_pdus, &router_key_pdus_nindex, &router_key_pdus_size) == RTR_ERROR){
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
                 retval = RTR_ERROR;
                 goto cleanup;

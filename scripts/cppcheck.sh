@@ -2,8 +2,8 @@
 
 cppcheck --error-exitcode=1 --enable=all \
 	--template='{id}:{file}({line}):({severity}) {message}' \
-	--suppress="duplicateExpression:rtrlib/rtr/packets.c:974" \
-	--suppress="duplicateExpression:rtrlib/rtr/packets.c:976" \
+	--suppress="duplicateExpression:rtrlib/rtr/packets.c:979" \
+	--suppress="duplicateExpression:rtrlib/rtr/packets.c:981" \
 	--suppress="unusedFunction:rtrlib/lib/ip.c:66" \
 	--suppress="unusedFunction:rtrlib/transport/transport.c:23" \
 	--suppress="unusedFunction:rtrlib/rtr_mgr.c:327" \
