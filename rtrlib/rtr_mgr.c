@@ -185,7 +185,6 @@ static void rtr_mgr_cb(const struct rtr_socket *sock, const enum rtr_socket_stat
         set_status(config, &config->groups[ind], config->groups[ind].status, sock);
     }
 
-out:
     pthread_mutex_unlock(&(config->mutex));
     return;
 }
