@@ -9,4 +9,5 @@ cppcheck --error-exitcode=1 --enable=all \
 	--suppress="unusedFunction:rtrlib/rtr_mgr.c:332" \
 	--suppress="unusedFunction:rtrlib/rtr_mgr.c:352" \
 	--suppress="unusedFunction:rtrlib/rtr_mgr.c:357" \
+	--suppress="unusedFunction:rtrlib/spki/hashtable/ht-spkitable.c:188" \
 	-i rtrlib/spki/hashtable/tommyds-1.8/ tools/ rtrlib/
