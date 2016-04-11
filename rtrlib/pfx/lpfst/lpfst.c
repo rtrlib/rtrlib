@@ -110,7 +110,6 @@ struct lpfst_node *lpfst_remove(struct lpfst_node *root_node, const struct lrtr_
                 root_node->prefix = root_node->rchild->prefix;
                 root_node->len = root_node->rchild->len;
                 void *tmp = root_node->data;
-                tmp = root_node->data;
                 root_node->data = root_node->rchild->data;
                 root_node->rchild->data = tmp;
                 return lpfst_remove(root_node->rchild, &(root_node->rchild->prefix), root_node->rchild->len, level+1);
