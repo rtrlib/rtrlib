@@ -1,6 +1,7 @@
 #!/bin/bash
 
 cppcheck --error-exitcode=1 --enable=all \
+	--template='{id}:{file}({line}):({severity}) {message}' \
 	--suppress="duplicateExpression:rtrlib/rtr/packets.c:974" \
 	--suppress="duplicateExpression:rtrlib/rtr/packets.c:976" \
 	--suppress="unusedFunction:rtrlib/lib/ip.c:66" \
