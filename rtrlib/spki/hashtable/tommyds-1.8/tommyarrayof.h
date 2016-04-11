@@ -111,6 +111,7 @@ tommy_inline void* tommy_arrayof_ref(tommy_arrayof* array, unsigned pos)
 		base = tommy_cast(unsigned char*, array->bucket[bsr - TOMMY_ARRAYOF_BIT + 1]);
 	}
 
+// cppcheck-suppress CastIntegerToAddressAtReturn
 	return base + pos * array->element_size;
 }
 

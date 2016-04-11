@@ -185,6 +185,7 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn,
     return SPKI_SUCCESS;
 }
 
+// cppcheck-suppress unusedFunction
 int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski,
                              struct spki_record **result,
                              unsigned int *result_size)
