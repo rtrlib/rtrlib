@@ -54,8 +54,9 @@ void pfx_table_free(struct pfx_table *pfx_table)
 {
     for(int i = 0; i < 2; i++) {
         struct lpfst_node *root = (i == 0 ? pfx_table->ipv4 : pfx_table->ipv6);
-        struct lpfst_node *rm_node;
         if(root != NULL) {
+            struct lpfst_node *rm_node;
+
             pthread_rwlock_wrlock(&(pfx_table->lock));
             do {
                 struct node_data *data = (struct node_data *) (root->data);
