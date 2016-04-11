@@ -32,7 +32,7 @@ int lrtr_ipv4_addr_to_str(const struct lrtr_ipv4_addr *ip, char *str, unsigned i
 int lrtr_ipv4_str_to_addr(const char *str, struct lrtr_ipv4_addr *ip)
 {
     unsigned char *t =  (unsigned char *) &(ip->addr);
-    if(sscanf(str, "%hhu.%hhu.%hhu.%hhu", &(t[3]), &(t[2]), &(t[1]), &(t[0])) != 4)
+    if(sscanf(str, "%3hhu.%3hhu.%3hhu.%3hhu", &(t[3]), &(t[2]), &(t[1]), &(t[0])) != 4)
         return -1;
     return 0;
 }
