@@ -140,7 +140,6 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn,
 {
     uint32_t hash = tommy_inthash_u32(asn);
     tommy_node *result_bucket;
-    struct key_entry *element;
     void *tmp;
 
     *result = NULL;
@@ -163,6 +162,8 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn,
 
     /* Build the result array */
     while (result_bucket) {
+        struct key_entry *element;
+
         element = result_bucket->data;
         if (element->asn == asn &&
             memcmp(element->ski, ski, sizeof(element->ski)) == 0) {
@@ -188,7 +189,6 @@ int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski,
                              struct spki_record **result,
                              unsigned int *result_size)
 {
-    struct key_entry *current_entry;
     tommy_node *current_node;
     void *tmp;
     *result = NULL;
@@ -198,7 +198,9 @@ int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski,
 
     current_node = tommy_list_head(&spki_table->list);
     while (current_node) {
-        current_entry = (struct key_entry *)current_node->data;
+        struct key_entry *current_entry;
+
+	current_entry = (struct key_entry *)current_node->data;
 
         if (memcmp(current_entry->ski, ski, sizeof(current_entry->ski)) == 0) {
             (*result_size)++;
