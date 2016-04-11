@@ -92,6 +92,7 @@ tommy_inline void* tommy_arrayblkof_ref(tommy_arrayblkof* array, unsigned pos)
 
 	base = tommy_cast(unsigned char*, tommy_array_get(&array->block, pos / TOMMY_ARRAYBLKOF_SIZE));
 
+// cppcheck-suppress CastIntegerToAddressAtReturn
 	return base + (pos % TOMMY_ARRAYBLKOF_SIZE) * array->element_size;
 }
 

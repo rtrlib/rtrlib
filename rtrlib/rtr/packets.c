@@ -976,8 +976,10 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
                         retval = rtr_undo_update_pfx_table(rtr_socket, &(ipv4_pdus[j]));
                     for (unsigned int j = 0; j < ipv6_pdus_nindex && retval == PFX_SUCCESS; j++)
                         retval = rtr_undo_update_pfx_table(rtr_socket, &(ipv6_pdus[j]));
+		     // cppcheck-suppress duplicateExpression
                     for (unsigned int j = 0; j < i && (retval == PFX_SUCCESS || retval == SPKI_SUCCESS); j++)
                         retval = rtr_undo_update_spki_table(rtr_socket, &(router_key_pdus[j]));
+		     // cppcheck-suppress duplicateExpression
                     if (retval == RTR_ERROR || retval == SPKI_ERROR) {
                         RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all key entries");
                         spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
