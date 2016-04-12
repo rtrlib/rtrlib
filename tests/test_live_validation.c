@@ -25,15 +25,16 @@ struct test_validity_query {
 
 /*
  * Verification is based on ROAs for RIPE RIS Routing Beacons, see:
- * https://www.ripe.net/analyse/internet-measurements/routing-information-service-ris/current-ris-routing-beacons
+ * (https://www.ripe.net/analyse/internet-measurements/
+ *  routing-information-service-ris/current-ris-routing-beacons)
  */
 const struct test_validity_query queries[] = {
 	{"93.175.146.0",	24, 12654, BGP_PFXV_STATE_VALID},
-	{"2001:7fb:fd02::", 48, 12654, BGP_PFXV_STATE_VALID},
+	{"2001:7fb:fd02::",	48, 12654, BGP_PFXV_STATE_VALID},
 	{"93.175.147.0",	24, 12654, BGP_PFXV_STATE_INVALID},
-	{"2001:7fb:fd03::", 48, 12654, BGP_PFXV_STATE_INVALID},
-	{"84.205.83.0",	 24, 12654, BGP_PFXV_STATE_NOT_FOUND},
-	{"2001:7fb:ff03::", 48, 12654, BGP_PFXV_STATE_NOT_FOUND},
+	{"2001:7fb:fd03::",	48, 12654, BGP_PFXV_STATE_INVALID},
+	{"84.205.83.0",		24, 12654, BGP_PFXV_STATE_NOT_FOUND},
+	{"2001:7fb:ff03::",	48, 12654, BGP_PFXV_STATE_NOT_FOUND},
 	{NULL, 0, 0, 0}
 };
 

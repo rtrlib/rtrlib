@@ -9,6 +9,7 @@ before_install:
 
 script:
     - scripts/cppcheck.sh
+    - scripts/check-coding-style.sh
     - cmake -D CMAKE_BUILD_TYPE=NoSSH .
     - make
     - make test
