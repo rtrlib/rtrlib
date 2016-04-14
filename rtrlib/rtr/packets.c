@@ -299,7 +299,7 @@ static void rtr_pdu_header_to_host_byte_order(void *pdu)
 static bool rtr_pdu_check_size (const struct pdu_header *pdu) {
   const enum pdu_type type = rtr_get_pdu_type(pdu);
   const struct pdu_error * err_pdu = NULL;
-  bool retval = true;
+  bool retval = false;
   uint64_t min_size = 0;
 
   switch (type) {
@@ -320,12 +320,12 @@ static bool rtr_pdu_check_size (const struct pdu_header *pdu) {
     break;
   case EOD:
     if ((pdu->ver == RTR_PROTOCOL_VERSION_0
-         && sizeof(struct pdu_end_of_data_v0) != pdu->len)
+         && (sizeof(struct pdu_end_of_data_v0) == pdu->len))
          ||
          (pdu->ver == RTR_PROTOCOL_VERSION_1
-         && sizeof(struct pdu_end_of_data_v1) != pdu->len
+         && (sizeof(struct pdu_end_of_data_v1) == pdu->len)
          )){
-      retval = false;
+        retval = true;
     }
     break;
   case CACHE_RESET:
@@ -341,8 +341,7 @@ static bool rtr_pdu_check_size (const struct pdu_header *pdu) {
     // +4 because of the "Length of Error Text" field
     min_size = 4 + sizeof(struct pdu_error);
     if (err_pdu->len < min_size) {
-      RTR_DBG1("PDU it to small to contain \"Length of Error Text\" field!");
-      retval = false;
+      RTR_DBG1("PDU is too small to contain \"Length of Error Text\" field!");
       break;
     }
 
@@ -351,8 +350,7 @@ static bool rtr_pdu_check_size (const struct pdu_header *pdu) {
     RTR_DBG("enc_pdu_len: %u", enc_pdu_len);
     min_size += enc_pdu_len;
     if (err_pdu->len < min_size) {
-      RTR_DBG1("PDU is to small to contains errornouse PDU!");
-      retval = false;
+      RTR_DBG1("PDU is too small to contain erroneous PDU!");
       break;
     }
 
@@ -361,13 +359,15 @@ static bool rtr_pdu_check_size (const struct pdu_header *pdu) {
     RTR_DBG("err_msg_len: %u", err_msg_len);
     min_size += err_msg_len;
     if (err_pdu->len != min_size) {
-      RTR_DBG1("PDU is to small to contain error_msg!");
-      retval = false;
+      RTR_DBG1("PDU is too small to contain error_msg!");
       break;
     }
 
-    //TODO: Check the error msg 0 termination
-
+    if ((err_msg_len > 0) && (((uint8_t*)err_pdu)[min_size-1] != 0)) {
+        RTR_DBG1("Error msg is not null terminated!");
+        break;
+    }
+    retval = true;
     break;
   case SERIAL_QUERY:
     if (sizeof(struct pdu_serial_query) == pdu->len)
@@ -389,6 +389,7 @@ static bool rtr_pdu_check_size (const struct pdu_header *pdu) {
     RTR_DBG1("Received malformed PDU!");
   }
 #endif
+
   return retval;
 }
 
