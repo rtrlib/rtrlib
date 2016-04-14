@@ -50,6 +50,12 @@ static void connection_status_callback(const struct rtr_mgr_group *group,
 		connection_status = status;
 }
 
+/**
+ * @brief live prefix validation test
+ * This test requires an active network connection. It runs an on-line live
+ * validation of specific IP prefixes, i.e., RIPE BGP beacons, that have known
+ * RPKI validation states. This tests uses a TCP transport connection.
+ */
 int main(void)
 {
 	/* create a TCP transport socket */
@@ -57,17 +63,15 @@ int main(void)
 	struct tr_tcp_config tcp_config = { RPKI_CACHE_HOST,
 					    RPKI_CACHE_POST,
 					    NULL };
-	tr_tcp_init(&tcp_config, &tr_tcp);
-
-	/* create an rtr_socket and associate it with the transport socket */
 	struct rtr_socket rtr_tcp;
 	struct rtr_mgr_config *conf;
+	struct rtr_mgr_group groups[1];
 
+	/* init a TCP transport and create rtr socket */
+	tr_tcp_init(&tcp_config, &tr_tcp);
 	rtr_tcp.tr_socket = &tr_tcp;
 
 	/* create a rtr_mgr_group array with 1 element */
-	struct rtr_mgr_group groups[1];
-
 	groups[0].sockets = malloc(1 * sizeof(struct rtr_socket *));
 	groups[0].sockets_len = 1;
 	groups[0].sockets[0] = &rtr_tcp;
@@ -78,9 +82,8 @@ int main(void)
 		return EXIT_FAILURE;
 
 	rtr_mgr_start(conf);
-
 	int sleep_counter = 0;
-
+	/* wait for connection, or timeout and exit eventually */
 	while (!rtr_mgr_conf_in_sync(conf)) {
 		if (connection_status == RTR_MGR_ERROR)
 			return EXIT_FAILURE;
@@ -93,7 +96,7 @@ int main(void)
 
 	int i = 0;
 	struct test_validity_query q = queries[i];
-
+	/* test validity of entries in queries[] */
 	while (q.pfx) {
 		struct lrtr_ip_addr pref;
 		enum pfxv_state result;
@@ -101,7 +104,6 @@ int main(void)
 		unsigned int reason_len = 0;
 
 		lrtr_ip_str_to_addr(q.pfx, &pref);
-		/* do validation */
 		pfx_table_validate_r(groups[0].sockets[0]->pfx_table, &reason,
 				     &reason_len, q.asn, &pref, q.len, &result);
 		if (result != q.val) {
