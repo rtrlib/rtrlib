@@ -5,179 +5,188 @@
 #include "rtrlib/rtrlib.h"
 
 const int connection_timeout = 20;
-enum rtr_mgr_status connectionStatus = -1;
+enum rtr_mgr_status connection_status = -1;
 
-static void connectionStatusCallback(const struct rtr_mgr_group *group,
-                                     enum rtr_mgr_status status,
-                                     const struct rtr_socket *socket,
-                                     void *data)
+static void connection_status_callback(const struct rtr_mgr_group *group,
+				       enum rtr_mgr_status status,
+				       const struct rtr_socket *socket,
+				       void *data)
 {
-    if(status == RTR_MGR_ERROR)
-        connectionStatus = status;
+	if (status == RTR_MGR_ERROR)
+		connection_status = status;
 }
 
-int connectionError(enum rtr_mgr_status status)
+int connection_error(enum rtr_mgr_status status)
 {
-    if(status == RTR_MGR_ERROR) {
-        // Wait for input before printing error to avoid "broken pipe" error while communicating
-        // with the Python program.
-        char input[256];
-        if(fgets(input, 256, stdin))
-            ;;
+	if (status == RTR_MGR_ERROR) {
+	/*
+	 * Wait for input before printing error to avoid "broken pipe" error
+	 * while communicating with the Python program.
+	 */
+		char input[256];
 
-        printf("error\n");
-        fflush(stdout);
-        return 1;
-    }
-    return 0;
+		if (fgets(input, 256, stdin))
+			;
+		printf("error\n");
+		fflush(stdout);
+		return 1;
+	}
+	return 0;
 }
 
 int main(int argc, char *argv[])
 {
-    // check arguments, need hostname/IP and port of cache-server
-    if (argc < 3) {
-        printf("Usage: %s [host] [port]\n", argv[0]);
-        return(EXIT_FAILURE);
-    }
+	/* check arguments, need hostname/IP and port of cache-server */
+	if (argc < 3) {
+		printf("Usage: %s [host] [port]\n", argv[0]);
+		return EXIT_FAILURE;
+	}
 
-    // create a TCP transport socket
-    struct tr_socket tr_tcp;
-    struct tr_tcp_config tcp_config = { argv[1], argv[2], NULL };
-    tr_tcp_init(&tcp_config, &tr_tcp);
+	struct tr_socket tr_tcp;
+	struct tr_tcp_config tcp_config = { argv[1], argv[2], NULL };
+	struct rtr_socket rtr_tcp;
+	struct rtr_mgr_config *conf;
+	struct rtr_mgr_group groups[1];
 
-    // create an rtr_socket and associate it with the transport socket
-    struct rtr_socket rtr_tcp;
-    rtr_tcp.tr_socket = &tr_tcp;
-    struct rtr_mgr_config *conf;
+	/* init a TCP transport and create rtr socket */
+	tr_tcp_init(&tcp_config, &tr_tcp);
+	rtr_tcp.tr_socket = &tr_tcp;
 
-    // create a rtr_mgr_group array with 1 element
-    struct rtr_mgr_group groups[1];
-    groups[0].sockets = malloc(1 * sizeof(struct rtr_socket*));
-    groups[0].sockets_len = 1;
-    groups[0].sockets[0] = &rtr_tcp;
-    groups[0].preference = 1;
+	/* create a rtr_mgr_group array with 1 element */
+	groups[0].sockets = malloc(1 * sizeof(struct rtr_socket *));
+	groups[0].sockets_len = 1;
+	groups[0].sockets[0] = &rtr_tcp;
+	groups[0].preference = 1;
 
-    if( rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL,
-                        &connectionStatusCallback, NULL) < 0) {
-        return(EXIT_FAILURE);
-    }
-    rtr_mgr_start(conf);
+	if (rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL,
+			 &connection_status_callback, NULL) < 0)
+		return EXIT_FAILURE;
 
-    char input[256];
-    int sleepCounter = 0;
+	rtr_mgr_start(conf);
 
-    // wait till at least one rtr_mgr_group is fully synchronized with server
-    while (!rtr_mgr_conf_in_sync(conf)) {
-        if(connectionError(connectionStatus))
-            return(EXIT_FAILURE);
+	char input[256];
+	int sleep_counter = 0;
 
-        sleep(1);
-        sleepCounter++;
-        if (sleepCounter >= connection_timeout) {
-            // Wait for input before printing "timeout",to avoid "broken pipe"
-            // error while communicating with the Python program
-            if(fgets(input, 256, stdin))
-                ;;
-            printf("timeout\n");
-            fflush(stdout);
-            return(EXIT_FAILURE);
-        }
-    }
+	/* wait till at least one rtr_mgr_group is synchronized with server */
+	while (!rtr_mgr_conf_in_sync(conf)) {
+		if (connection_error(connection_status))
+			return EXIT_FAILURE;
 
-    char ip[128];
-    int mask;
-    int asn;
-    int counter;
-    // loop for input
-    while (1) {
-        int inputLength;
-	int spaces;
+		sleep(1);
+		sleep_counter++;
+		if (sleep_counter >= connection_timeout) {
+			/*
+			 * Wait for input before printing "timeout",
+			 * to avoid "broken pipee error while communicating
+			 * with the Python program
+			 */
+			if (fgets(input, 256, stdin))
+				;
+			printf("timeout\n");
+			fflush(stdout);
+			return EXIT_FAILURE;
+		}
+	}
 
-        // recheck connection, exit on failure
-        if(connectionError(connectionStatus))
-            return(EXIT_FAILURE);
+	char ip[128];
+	int mask;
+	int asn;
+	int counter;
+	/* loop for input */
+	while (1) {
+		int input_len;
+		int spaces;
 
-        // try reading from stdin, exit on failure
-        if(!fgets(input, 256, stdin)) {
-            printf("input error\n");
-            return(EXIT_FAILURE);
-        }
+		/* recheck connection, exit on failure */
+		if (connection_error(connection_status))
+			return EXIT_FAILURE;
 
-        // remove newline, if present
-        inputLength = strlen(input) - 1;
-        if (input[inputLength] == '\n')
-            input[inputLength] = '\0';
+		/* try reading from stdin, exit on failure */
+		if (!fgets(input, 256, stdin)) {
+			printf("input error\n");
+			return EXIT_FAILURE;
+		}
 
-        // check if there are exactly 3 arguments
-        spaces = 0;
-        for (counter = 0; counter < inputLength; counter++) {
-            if (input[counter] == ' ' && input[counter + 1] != ' ' &&
-                input[counter + 1] != '\0' && counter != 0) {
-                spaces++;
-            }
-        }
+		/* remove newline, if present */
+		input_len = strlen(input) - 1;
+		if (input[input_len] == '\n')
+			input[input_len] = '\0';
 
-        // check input matching pattern
-        if (spaces != 2) {
-            printf("Arguments required: IP Mask ASN\n");
-            fflush(stdout);
-            continue;
-        }
+		/* check if there are exactly 3 arguments */
+		spaces = 0;
+		for (counter = 0; counter < input_len; counter++) {
+			if (input[counter] == ' ' &&
+			    input[counter + 1] != ' ' &&
+			    input[counter + 1] != '\0' && counter != 0)
+				spaces++;
+		}
 
-        char delims[] = " ";
-        char *inputToken = NULL;
-        inputToken = strtok(input, delims);
-        strcpy(ip, inputToken);
-        inputToken = strtok(NULL, delims);
-        mask = atoi(inputToken);
-        inputToken = strtok(NULL, delims); asn = atoi(inputToken);
+		/* check input matching pattern */
+		if (spaces != 2) {
+			printf("Arguments required: IP Mask ASN\n");
+			fflush(stdout);
+			continue;
+		}
 
-        struct lrtr_ip_addr pref;
-        lrtr_ip_str_to_addr(ip, &pref);
-        enum pfxv_state result;
-        struct pfx_record* reason = NULL;
-        unsigned int reason_len = 0;
+		char delims[] = " ";
+		char *input_tok = NULL;
 
-        // do validation
-        pfx_table_validate_r(groups[0].sockets[0]->pfx_table, &reason,
-                             &reason_len, asn, &pref, mask, &result);
-        // translate validation result
-        int validity_code = -1;
-        if (result == BGP_PFXV_STATE_VALID) {
-            validity_code = 0;
-        } else if (result == BGP_PFXV_STATE_NOT_FOUND) {
-            validity_code = 1;
-        } else if (result == BGP_PFXV_STATE_INVALID) {
-            validity_code = 2;
-        }
+		input_tok = strtok(input, delims);
+		strcpy(ip, input_tok);
+		input_tok = strtok(NULL, delims);
+		mask = atoi(input_tok);
+		input_tok = strtok(NULL, delims); asn = atoi(input_tok);
 
-        // IP Mask BGP-ASN|
-        printf("%s %d %d|", ip, mask, asn);
+		struct lrtr_ip_addr pref;
+		enum pfxv_state result;
+		struct pfx_record *reason = NULL;
+		unsigned int reason_len = 0;
 
-        // ROA-ASN IP MaskMin MaskMax, ..
-        if (reason != NULL && reason_len > 0) {
-            unsigned int i;
-            for (i = 0; i < reason_len; i++) {
-                char tmp[100];
-                lrtr_ip_addr_to_str(&(reason[i].prefix), tmp, sizeof(tmp));
-                printf("%u %s %u %u",   reason[i].asn, tmp,
-                                        reason[i].min_len,
-                                        reason[i].max_len);
-                if ((i + 1) < reason_len)
-                printf(",");
-            }
-        }
+		lrtr_ip_str_to_addr(ip, &pref);
+		/* do validation */
+		pfx_table_validate_r(groups[0].sockets[0]->pfx_table, &reason,
+				     &reason_len, asn, &pref, mask, &result);
 
-        // |validity_code
-        printf("|%d", validity_code);
+		int validity_code = -1;
+		/* translate validation result */
+		if (result == BGP_PFXV_STATE_VALID)
+			validity_code = 0;
+		else if (result == BGP_PFXV_STATE_NOT_FOUND)
+			validity_code = 1;
+		else if (result == BGP_PFXV_STATE_INVALID)
+			validity_code = 2;
 
-        printf("\n");
-        fflush(stdout);
-    }
+		/* IP Mask BGP-ASN| */
+		printf("%s %d %d|", ip, mask, asn);
 
-    rtr_mgr_stop(conf);
-    rtr_mgr_free(conf);
-    free(groups[0].sockets);
+		/* ROA-ASN IP MaskMin MaskMax, ... */
+		if (reason && (reason_len > 0)) {
+			unsigned int i;
 
-    return(EXIT_SUCCESS);
+			for (i = 0; i < reason_len; i++) {
+				char tmp[100];
+
+				lrtr_ip_addr_to_str(&reason[i].prefix,
+						    tmp, sizeof(tmp));
+				printf("%u %s %u %u",
+				       reason[i].asn, tmp,
+				       reason[i].min_len,
+				       reason[i].max_len);
+				if ((i + 1) < reason_len)
+					printf(",");
+			}
+		}
+
+		/* |validity_code */
+		printf("|%d", validity_code);
+
+		printf("\n");
+		fflush(stdout);
+	}
+
+	rtr_mgr_stop(conf);
+	rtr_mgr_free(conf);
+	free(groups[0].sockets);
+
+	return EXIT_SUCCESS;
 }
