@@ -165,4 +165,6 @@ int main()
         pthread_join(threads[i], NULL);
         printf("Thread %i returned\n", i);
     }
+
+    return EXIT_SUCCESS;
 }

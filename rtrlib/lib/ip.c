@@ -63,6 +63,7 @@ int lrtr_ip_str_to_addr(const char *str, struct lrtr_ip_addr *ip)
     return lrtr_ipv6_str_to_addr(str, &(ip->u.addr6));
 }
 
+// cppcheck-suppress unusedFunction
 bool lrtr_ip_str_cmp(const struct lrtr_ip_addr *addr1, const char *addr2)
 {
     struct lrtr_ip_addr tmp;

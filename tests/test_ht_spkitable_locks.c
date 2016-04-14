@@ -162,6 +162,5 @@ static void lock_test1()
 int main()
 {
     lock_test1();
-
-
+    return EXIT_SUCCESS;
 }

@@ -318,4 +318,5 @@ int main()
     get_bits_testv6();
     lpfst_test();
     printf("Test successfull\n");
+    return EXIT_SUCCESS;
 }

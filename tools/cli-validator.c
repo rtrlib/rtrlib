@@ -64,7 +64,6 @@ int main(int argc, char *argv[])
     rtr_mgr_start(conf);
 
     char input[256];
-    int inputLength;
     int sleepCounter = 0;
 
     // wait till at least one rtr_mgr_group is fully synchronized with server
@@ -89,9 +88,11 @@ int main(int argc, char *argv[])
     int mask;
     int asn;
     int counter;
-    int spaces;
     // loop for input
     while (1) {
+        int inputLength;
+	int spaces;
+
         // recheck connection, exit on failure
         if(connectionError(connectionStatus))
             return(EXIT_FAILURE);

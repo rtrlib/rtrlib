@@ -1,10 +1,19 @@
+sudo: required
+dist: trusty
+
 language: c
 
-install:
-    - sudo apt-get install cppcheck -y
+before_install:
+    - sudo apt-get -qq update
+    - sudo apt-get -y install cppcheck doxygen libssh-dev
+
 script:
     - scripts/cppcheck.sh
-
+    - scripts/check-coding-style.sh
+    - cmake -D CMAKE_BUILD_TYPE=NoSSH .
+    - make
+    - make test
+    - make clean
     - cmake -D CMAKE_BUILD_TYPE=Release .
     - make
-
+    - make test

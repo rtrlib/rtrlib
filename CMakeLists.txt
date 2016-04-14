@@ -3,7 +3,6 @@ project(rtrlib)
 cmake_minimum_required(VERSION 2.6)
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
-
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=gnu99 -fstack-protector-all")
 if(CMAKE_BUILD_TYPE STREQUAL Debug)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -Wall -Wextra -Wfree-nonheap-object -Wformat-security -Wmissing-prototypes -Wmissing-declarations -Wdeclaration-after-statement -Winit-self -Waggregate-return -Wmissing-format-attribute -Wundef -Wbad-function-cast -Wwrite-strings -Wformat=2")
@@ -23,7 +22,7 @@ set(RTRLIB_SRC rtrlib/rtr_mgr.c rtrlib/lib/utils.c rtrlib/lib/ip.c rtrlib/lib/ip
 set(RTRLIB_LINK ${RT_LIB} ${CMAKE_THREAD_LIBS_INIT})
 
 find_package(LibSSH 0.6.0)
-if(LIBSSH_FOUND)
+if(LIBSSH_FOUND AND NOT NOSSH)
     set(RTRLIB_HAVE_LIBSSH 1)
     message(STATUS "libssh found, building librtr with SSH support")
 
@@ -32,13 +31,13 @@ if(LIBSSH_FOUND)
     set(RTRLIB_LINK ${RTRLIB_LINK} ${LIBSSH_LIBRARIES})
 else()
     message(WARNING "libssh not found, building librtr without SSH support")
-endif(LIBSSH_FOUND)
+endif(LIBSSH_FOUND AND NOT NOSSH)
 
 #doxygen target
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
-	add_custom_target(doc ALL ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/doxygen/Doxyfile
-	    COMMENT "Generating doxygen API documentation" VERBATIM)
+    add_custom_target(doc ALL ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/doxygen/Doxyfile
+        COMMENT "Generating doxygen API documentation" VERBATIM)
     install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/docs DESTINATION share/doc/rtrlib)
 endif(DOXYGEN_FOUND)
 
@@ -53,11 +52,12 @@ ADD_SUBDIRECTORY(tests)
 ENABLE_TESTING()
 ADD_TEST(test_pfx tests/test_pfx)
 ADD_TEST(test_lpfst tests/test_lpfst)
-ADD_TEST(test_pfx_locks tests/test_pfx_locks)
+#ADD_TEST(test_pfx_locks tests/test_pfx_locks)
 
 ADD_TEST(test_ht_spkitable tests/test_ht_spkitable)
 ADD_TEST(test_ht_spkitable_locks tests/test_ht_spkitable_locks)
 
+ADD_TEST(test_live_validation tests/test_live_validation)
 
 #install lib
 set (RTRLIB_VERSION_MAJOR 0)
