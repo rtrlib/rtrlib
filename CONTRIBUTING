@@ -1,0 +1,62 @@
+We are very much looking forward to your contribution to the RTRlib.
+Before you start, please consider the advice below.
+
+
+Code Contributions
+------------------
+
+If you intend to submit a major code contribution (e.g., new feature,
+extended modification of existing code), we highly encourage you to
+discuss this contribution with the RTRlib community using the Github
+Issue Tracker before you submit your pull request.
+
+In any case, proceed along the steps:
+
+1. Fork the RTRlib Git repository (if you haven't done this already)
+
+2. Create a branch
+
+3. Make commits (details see below)
+
+4. Make sure your code complies with Kernel Coding Style
+
+   * You can check this by running scripts/check-coding-style.sh <your file>
+
+5. Submit a pull request
+
+  * If necessary, squash unnecessary commits before submitting the PR.
+
+  * We use a Continuous Integration system, which is linked in Github.
+    The results of the automatic tests are shown at the bottom of your
+    pull request.
+
+6. Other RTRlib members will provide feedback
+
+7. Address the feedback
+
+  * If necessary, squash unnecessary commits.
+
+
+Commit Messages
+---------------
+
+Commit messages should follow the structure
+
+  First line: modulename: brief description (max 50 chars)
+  Second line: <The second line is empty>
+  Further lines: More detailed description
+
+The description should be written in imperative and not in the past
+tense (e.g., "Remove unnecessary includes from header file" instead of
+"Unnecessary includes from header file removed"). Please be precise in
+the detailed description. For an example of a nice commit message see
+https://github.com/rtrlib/rtrlib/commit/f79471e43aa3eee8772360300661f8ead21f15f2.
+
+General information about good commits is available here
+
+  * http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
+
+  * http://git-scm.com/book/ch5-2.html
+
+
+/* vim: set tw=72 sts=2 sw=2 ts=2 expandtab: */
