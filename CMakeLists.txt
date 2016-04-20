@@ -10,6 +10,9 @@ else()
 endif(CMAKE_BUILD_TYPE STREQUAL Debug)
 
 include_directories(.)
+
+find_package(codecov)
+
 find_package(Threads REQUIRED)
 if(NOT APPLE)
     find_library(RT_LIB rt)
@@ -42,6 +45,7 @@ if(DOXYGEN_FOUND)
 endif(DOXYGEN_FOUND)
 
 add_library(rtrlib SHARED ${RTRLIB_SRC})
+add_coverage(rtrlib)
 target_link_libraries(rtrlib ${RTRLIB_LINK})
 
 ADD_SUBDIRECTORY(tools)
@@ -99,3 +103,5 @@ configure_file(
     IMMEDIATE @ONLY)
 add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+
+coverage_evaluate()

@@ -14,6 +14,10 @@ script:
     - make
     - make test
     - make clean
-    - cmake -D CMAKE_BUILD_TYPE=Release .
+    - cmake -D CMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=On .
     - make
     - make test
+    - make gcov
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
