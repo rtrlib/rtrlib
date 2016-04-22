@@ -1,4 +1,4 @@
-project(rtrlib)
+project(rtrlib C)
 
 cmake_minimum_required(VERSION 2.6)
 
