@@ -8,7 +8,7 @@ CFLAGS+=$(CPPFLAGS)
 CXXFLAGS+=$(CPPFLAGS)
 
 override_dh_installchangelogs:
-        dh_installchangelogs CHANGELOG
+	dh_installchangelogs CHANGELOG
 override_dh_auto_configure:
 	dh_auto_configure -- -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_SKIP_RPATH=True
 override_dh_strip:
