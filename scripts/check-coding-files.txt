@@ -1,5 +1,7 @@
-rtrlib/pfx/lpfst/lpfst.c
+rtrlib/rtr_mgr.h
+rtrlib/rtr_mgr.c
 rtrlib/pfx/lpfst/lpfst.h
+rtrlib/pfx/lpfst/lpfst.c
 tests/test_ht_spkitable.c
 tests/test_ht_spkitable_locks.c
 tests/test_live_validation.c
