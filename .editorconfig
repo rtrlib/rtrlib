@@ -1,0 +1,14 @@
+# EditorConfig is awesome: http://EditorConfig.org
+root = true
+
+[*.{c,h}]
+indent_style = tab
+tab_width = 8
+
+[*.sh]
+indent_style = space
+indent_size = 4
+
+[{.travis.yml,CMakeLists.txt}]
+indent_style = space
+indent_size = 4
