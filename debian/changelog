@@ -14,7 +14,7 @@ librtr0 (0.3.6-1) stable; urgency=low
   * Improve debugging and status values
   * Update SSH transport to new LibSSH API
 
--- Matthias Waehlisch <waehlisch@ieee.org>  Tue,  5 Apr 2016 12:55:56 -0700
+ -- Matthias Waehlisch <waehlisch@ieee.org>  Tue,  5 Apr 2016 12:55:56 -0700
 
 librtr0 (0.3.5-1) stable; urgency=low
 
@@ -27,7 +27,7 @@ librtr0 (0.3.5-1) stable; urgency=low
   * Add support for OS X (10.10)
   * Add new tool cli-validator
 
--- Matthias Waehlisch <waehlisch@ieee.org>  Thu, 20 Aug 2015 04:05:48 -0700
+ -- Matthias Waehlisch <waehlisch@ieee.org>  Thu, 20 Aug 2015 04:05:48 -0700
 
 librtr0 (0.3.0-1) stable; urgency=low
 
