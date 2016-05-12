@@ -1,5 +1,10 @@
 rtrlib/pfx/lpfst/lpfst.c
 rtrlib/pfx/lpfst/lpfst.h
+tests/test_ht_spkitable.c
+tests/test_ht_spkitable_locks.c
 tests/test_live_validation.c
+tests/test_lpfst.c
+tests/test_pfx.c
+tests/test_pfx_locks.c
 tools/cli-validator.c
 tools/rtrclient.c
