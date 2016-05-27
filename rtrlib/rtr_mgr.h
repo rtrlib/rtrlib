@@ -5,7 +5,7 @@
  * See the file LICENSE in the top level directory for more details.
  *
  * Website: http://rtrlib.realmv6.org/
-*/
+ */
 
 /**
  * @defgroup mod_rtr_mgr_h RTR connection manager

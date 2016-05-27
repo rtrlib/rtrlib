@@ -5,7 +5,7 @@
  * See the file LICENSE in the top level directory for more details.
  *
  * Website: http://rtrlib.realmv6.org/
-*/
+ */
 
 #include "rtrlib/lib/ipv6.h"
 #include "rtrlib/lib/ipv4.h"

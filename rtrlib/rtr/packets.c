@@ -5,7 +5,7 @@
  * See the file LICENSE in the top level directory for more details.
  *
  * Website: http://rtrlib.realmv6.org/
-*/
+ */
 
 #include <stdlib.h>
 #include <string.h>
@@ -747,7 +747,7 @@ static int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, 
     return RTR_SUCCESS;
 }
 
-static int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *pdu, const unsigned int pdu_size, 
+static int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *pdu, const unsigned int pdu_size,
 				    struct pdu_router_key **ary, unsigned int *ind, unsigned int *size)
 {
     assert(rtr_get_pdu_type(pdu) == ROUTER_KEY);

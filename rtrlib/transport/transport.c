@@ -5,7 +5,7 @@
  * See the file LICENSE in the top level directory for more details.
  *
  * Website: http://rtrlib.realmv6.org/
-*/
+ */
 
 #include "rtrlib/transport/transport.h"
 #include "rtrlib/lib/utils.h"

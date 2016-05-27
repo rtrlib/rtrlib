@@ -5,7 +5,7 @@
  * See the file LICENSE in the top level directory for more details.
  *
  * Website: http://rtrlib.realmv6.org/
-*/
+ */
 
 #include "rtrlib/rtr_mgr.h"
 #include "rtrlib/pfx/lpfst/lpfst-pfx.h"

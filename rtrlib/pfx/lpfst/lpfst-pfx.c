@@ -5,7 +5,7 @@
  * See the file LICENSE in the top level directory for more details.
  *
  * Website: http://rtrlib.realmv6.org/
-*/
+ */
 
 #include "rtrlib/pfx/lpfst/lpfst-pfx.h"
 #include <assert.h>
