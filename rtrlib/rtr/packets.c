@@ -524,7 +524,7 @@ error:
         return TR_INTR;
     } else if (error == CORRUPT_DATA) {
         RTR_DBG1("corrupt PDU received");
-        const char *txt = "corrupt data received, length value in PDU is too small";
+        const char txt[] = "corrupt data received, length value in PDU is too small";
         rtr_send_error_pdu(rtr_socket, pdu, sizeof(header), CORRUPT_DATA, txt, sizeof(txt));
     } else if (error == PDU_TOO_BIG) {
         RTR_DBG1("PDU too big");
@@ -630,7 +630,7 @@ static int rtr_handle_cache_response_pdu(struct rtr_socket *rtr_socket, char *pd
         rtr_socket->session_id = cr_pdu->session_id;
     } else {
         if (rtr_socket->session_id != cr_pdu->session_id) {
-            const char *txt = "Wrong session_id in Cache Response PDU"; //TODO: Appendrtr_socket->session_id to string
+            const char txt[] = "Wrong session_id in Cache Response PDU"; //TODO: Appendrtr_socket->session_id to string
             rtr_send_error_pdu(rtr_socket, NULL, 0, CORRUPT_DATA, txt, sizeof(txt));
             rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
             return RTR_ERROR;
@@ -724,7 +724,7 @@ static int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, 
         *size += TEMPORARY_PDU_STORE_INCREMENT_VALUE;
         void *tmp = realloc(*ary, *size * pdu_size);
         if (tmp == NULL) {
-            const char *txt = "Realloc failed";
+            const char txt[] = "Realloc failed";
             RTR_DBG("%s", txt);
             rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
             rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
@@ -756,7 +756,7 @@ static int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *p
         *size += TEMPORARY_PDU_STORE_INCREMENT_VALUE;
         void *tmp = realloc(*ary, *size * pdu_size);
         if (tmp == NULL) {
-            const char *txt = "Realloc failed";
+            const char txt[] = "Realloc failed";
             RTR_DBG("%s", txt);
             rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
             rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
@@ -787,7 +787,7 @@ static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, const void *pdu)
     else if (((struct pdu_ipv4 *) pdu)->flags == 0)
         rtval = pfx_table_remove(rtr_socket->pfx_table, &pfxr);
     else {
-        const char *txt = "Prefix PDU with invalid flags value received";
+        const char txt[] = "Prefix PDU with invalid flags value received";
         RTR_DBG("%s", txt);
         rtr_send_error_pdu(rtr_socket, pdu, pdu_size, CORRUPT_DATA, txt, sizeof(txt));
         return RTR_ERROR;
@@ -806,7 +806,7 @@ static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, const void *pdu)
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
         return RTR_ERROR;
     } else if (rtval == PFX_ERROR) {
-        const char *txt = "PFX_TABLE Error";
+        const char txt[] = "PFX_TABLE Error";
         RTR_DBG("%s", txt);
         rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
@@ -834,7 +834,7 @@ static int rtr_update_spki_table(struct rtr_socket* rtr_socket, const void* pdu)
         rtval = spki_table_remove_entry(rtr_socket->spki_table, &entry);
 
     else {
-        const char* txt = "Router Key PDU with invalid flags value received";
+        const char txt[] = "Router Key PDU with invalid flags value received";
         RTR_DBG("%s", txt);
         rtr_send_error_pdu(rtr_socket, pdu, pdu_size, CORRUPT_DATA, txt, sizeof(txt));
         return RTR_ERROR;
@@ -852,7 +852,7 @@ static int rtr_update_spki_table(struct rtr_socket* rtr_socket, const void* pdu)
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
         return RTR_ERROR;
     } else if (rtval == SPKI_ERROR) {
-        const char* txt = "spki_table Error";
+        const char txt[] = "spki_table Error";
         RTR_DBG("%s", txt);
         rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
@@ -1002,7 +1002,7 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
             RTR_DBG1("Ignoring Serial Notify");
         } else {
             RTR_DBG("Received unexpected PDU (Type: %u)", ((struct pdu_header *) pdu)->type);
-            const char *txt = "Unexpected PDU received during data synchronisation";
+            const char txt[] = "Unexpected PDU received during data synchronisation";
             rtr_send_error_pdu(rtr_socket, pdu, sizeof(struct pdu_header), CORRUPT_DATA, txt, sizeof(txt));
             retval = RTR_ERROR;
             goto cleanup;
@@ -1065,7 +1065,7 @@ int rtr_sync(struct rtr_socket *rtr_socket)
         return RTR_ERROR;
     } else {
         RTR_DBG("Expected Cache Response PDU but received PDU Type (Type: %u)", ((struct pdu_header *) pdu)->type);
-        const char *txt = "Unexpected PDU received in data synchronisation";
+        const char txt[] = "Unexpected PDU received in data synchronisation";
         rtr_send_error_pdu(rtr_socket, pdu, sizeof(struct pdu_header), CORRUPT_DATA, txt, sizeof(txt));
         return RTR_ERROR;
     }
