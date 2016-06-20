@@ -914,21 +914,21 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
             RTR_DBG1("EOD PDU received.");
             struct pdu_end_of_data_v0 *eod_pdu = (struct pdu_end_of_data_v0 *) pdu;
 
-            if (eod_pdu->ver == RTR_PROTOCOL_VERSION_1) {
-                rtr_socket->expire_interval = ((struct pdu_end_of_data_v1 *) pdu)->expire_interval;
-                rtr_socket->refresh_interval = ((struct pdu_end_of_data_v1 *) pdu)->refresh_interval;
-                rtr_socket->retry_interval = ((struct pdu_end_of_data_v1 *) pdu)->retry_interval;
-                RTR_DBG("New interval values: expire_interval:%u, refresh_interval:%u, retry_interval:%u",
-                        rtr_socket->expire_interval, rtr_socket->refresh_interval, rtr_socket->retry_interval);
-            }
-
-            if (eod_pdu->session_id !=rtr_socket->session_id) {
+            if (eod_pdu->session_id != rtr_socket->session_id) {
                 char txt[67];
                 snprintf(txt, sizeof(txt),"Expected session_id: %u, received session_id. %u in EOD PDU",rtr_socket->session_id, eod_pdu->session_id);
                 rtr_send_error_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, CORRUPT_DATA, txt, strlen(txt) + 1);
                 rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
                 retval = RTR_ERROR;
                 goto cleanup;
+            }
+
+            if (eod_pdu->ver == RTR_PROTOCOL_VERSION_1) {
+                rtr_socket->expire_interval = ((struct pdu_end_of_data_v1 *) pdu)->expire_interval;
+                rtr_socket->refresh_interval = ((struct pdu_end_of_data_v1 *) pdu)->refresh_interval;
+                rtr_socket->retry_interval = ((struct pdu_end_of_data_v1 *) pdu)->retry_interval;
+                RTR_DBG("New interval values: expire_interval:%u, refresh_interval:%u, retry_interval:%u",
+                        rtr_socket->expire_interval, rtr_socket->refresh_interval, rtr_socket->retry_interval);
             }
 
             int retval = PFX_SUCCESS;
