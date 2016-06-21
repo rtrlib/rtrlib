@@ -1107,30 +1107,37 @@ int rtr_wait_for_sync(struct rtr_socket *rtr_socket)
     return RTR_ERROR;
 }
 
-int rtr_send_error_pdu(const struct rtr_socket *rtr_socket, const void *erroneous_pdu, const uint32_t pdu_len, const enum pdu_error_type error, const char *text, const uint32_t text_len)
+int rtr_send_error_pdu(const struct rtr_socket *rtr_socket, const void *erroneous_pdu,
+		       const uint32_t erroneous_pdu_len, const enum pdu_error_type error,
+		       const char *err_text, const uint32_t err_text_len)
 {
-    //dont send errors for erroneous error PDUs
-    if (pdu_len >= 2) {
-        if (rtr_get_pdu_type(erroneous_pdu) == ERROR)
-            return RTR_SUCCESS;
-    }
+	struct pdu_error *err_pdu;
+	unsigned int msg_size = sizeof(struct pdu_error) + 4 + erroneous_pdu_len + err_text_len;
+	uint8_t msg[msg_size];
 
-    unsigned int msg_size = 16 + pdu_len + text_len;
-    char msg[msg_size];
-    struct pdu_header *header = (struct pdu_header *) msg;
-    header->ver = rtr_socket->version;
-    header->type = 10;
-    header->reserved = error;
-    header->len = msg_size;
+	//dont send errors for erroneous error PDUs
+	if (erroneous_pdu_len >= 2) {
+		if (rtr_get_pdu_type(erroneous_pdu) == ERROR) {
+		    RTR_DBG1("Dont send errors for erroneous error PDUs");
+		    return RTR_SUCCESS;
+		}
+	}
 
-    memcpy(msg+8, &pdu_len, sizeof(pdu_len));
-    if (pdu_len > 0)
-        memcpy(msg + 12, erroneous_pdu, pdu_len);
-    *(msg + 12 + pdu_len) = htonl(text_len);
-    if (text_len > 0)
-        memcpy(msg+16+pdu_len, text, text_len);
+	err_pdu = (struct pdu_error*) msg;
+	err_pdu->ver = rtr_socket->version;
+	err_pdu->type = ERROR;
+	err_pdu->error_code = error;
+	err_pdu->len = msg_size;
 
-    return rtr_send_pdu(rtr_socket, msg, msg_size);
+	err_pdu->len_enc_pdu = erroneous_pdu_len;
+	if (erroneous_pdu_len > 0)
+		memcpy(err_pdu->rest, erroneous_pdu, erroneous_pdu_len);
+
+	*(err_pdu->rest + erroneous_pdu_len) = err_text_len;
+	if (err_text_len > 0)
+		memcpy(err_pdu->rest + erroneous_pdu_len + 4, err_text, err_text_len);
+
+	return rtr_send_pdu(rtr_socket, msg, msg_size);
 }
 
 int rtr_send_serial_query(struct rtr_socket *rtr_socket)
