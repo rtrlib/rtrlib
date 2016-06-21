@@ -1,0 +1,16 @@
+codecov:
+  token: 8ee1ecb1-4ff3-4aa4-b9c1-61c70a0afbe6
+  branch: master
+
+coverage:
+  precision: 2
+  round: down
+  range: "50...80"
+
+  ignore:
+  - rtrlib/spki/hashtable/tommyds-1.8/.*
+
+  status: {}
+
+comment:
+  layout: header, changes, diff
