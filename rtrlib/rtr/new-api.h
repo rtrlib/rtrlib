@@ -105,3 +105,30 @@ int rtr_mgr_stop(rtr_mgr_t *mgr);
  * @param mgr The rtr_mgr_t that should be freed.
  */
 void rtr_mgr_free(rtr_mgr_t *mgr);
+
+
+//Example calling code
+rtr_transport_socket_t *tpc = rtr_transport_tcp_socket_create(
+                              "6.6.6.6",
+                              1234,
+                              NULL);
+
+rtr_mgr_group_t *group = rtr_group_add_cache_socket(
+                         NULL,
+                         tcp,
+                         0,
+                         600,
+                         600,
+                         600);
+
+rtr_mgr_t *mgr = rtr_mgr_init(NULL, NULL, NULL, NULL);
+
+rtr_mgr_start(mgr);
+
+//....
+
+rtr_mgr_stop(mgr);
+
+rtr_mgr_free(mgr);
+rtr_group_free(group);
+rtr_transport_free(tcp);
