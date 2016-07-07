@@ -123,6 +123,8 @@ rtr_mgr_group_t *group = rtr_group_add_cache_socket(
 
 rtr_mgr_t *mgr = rtr_mgr_init(NULL, NULL, NULL, NULL);
 
+rtr_mgr_add_group(mgr, group);
+
 rtr_mgr_start(mgr);
 
 //....
