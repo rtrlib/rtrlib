@@ -75,7 +75,7 @@ occurs, the location of the library can be passed explicitly as a parameter
 
     -L<path_to_librtr.so>
 
-eg.,
+e.g.,
     -L/usr/local/lib64/
 
 
