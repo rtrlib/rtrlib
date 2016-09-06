@@ -17,14 +17,14 @@
 #include "../../lib/utils.h"
 #include "ssh_transport.h"
 
-#define SSH_DBG(fmt, sock, ...) lrtr_dbg("SSH Transport(%s@%s:%u): " fmt, (sock)->config.username, (sock)->config.host, (sock)->config.port, ## __VA_ARGS__)
-#define SSH_DBG1(a, sock) lrtr_dbg("SSH Transport(%s@%s:%u): " a, (sock)->config.username, (sock)->config.host, (sock)->config.port)
+#define SSH_DBG(fmt, sock, ...) lrtr_dbg("SSH Transport(%s@%s:%s): " fmt, (sock)->config.username, (sock)->config.host, (sock)->config.port, ## __VA_ARGS__)
+#define SSH_DBG1(a, sock) lrtr_dbg("SSH Transport(%s@%s:%s): " a, (sock)->config.username, (sock)->config.host, (sock)->config.port)
 
 struct tr_ssh_socket {
-    ssh_session session;
-    ssh_channel channel;
-    struct tr_ssh_config config;
-    char *ident;
+        ssh_session session;
+        ssh_channel channel;
+        struct tr_ssh_config config;
+        char *ident;
 };
 
 static int tr_ssh_open(void *tr_ssh_sock);
@@ -52,7 +52,7 @@ int tr_ssh_open(void *socket)
     ssh_options_set(ssh_socket->session, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
 
     ssh_options_set(ssh_socket->session, SSH_OPTIONS_HOST, config->host);
-    ssh_options_set(ssh_socket->session, SSH_OPTIONS_PORT, &(config->port));
+    ssh_options_set(ssh_socket->session, SSH_OPTIONS_PORT_STR, &(config->port));
     ssh_options_set(ssh_socket->session, SSH_OPTIONS_BINDADDR, config->bindaddr);
     ssh_options_set(ssh_socket->session, SSH_OPTIONS_USER, config->username);
 
@@ -184,7 +184,7 @@ const char *tr_ssh_ident(void *tr_ssh_sock)
     sock->ident = malloc(len);
     if (sock->ident == NULL)
         return NULL;
-    snprintf(sock->ident, len, "%s@%s:%u", sock->config.username,
+    snprintf(sock->ident, len, "%s@%s:%s", sock->config.username,
              sock->config.host, sock->config.port);
     return sock->ident;
 }
