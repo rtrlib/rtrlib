@@ -66,6 +66,18 @@ pass the following parameter to gcc:
 
     -lrtr
 
+In case an error such as
+
+    -/usr/bin/ld: cannot find -lrtr
+    -collect2: error: ld returned 1 exit status
+
+occurs, the location of the library can be passed explicitly as a parameter
+
+    -L<path_to_librtr.so>
+
+e.g.,
+    -L/usr/local/lib64/
+
 
 API Documentation
 -----------------
