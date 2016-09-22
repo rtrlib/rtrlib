@@ -61,7 +61,7 @@ enum pfxv_state {
  * @param prefix IP prefix.
  * @param min_len Minimum prefix length.
  * @param max_len Maximum prefix length.
- * @param socket_id unique id of the rtr_socket that received this record.
+ * @param socket The rtr_socket that received this record.
  */
 struct pfx_record {
     uint32_t asn;
