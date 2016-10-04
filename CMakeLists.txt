@@ -63,6 +63,8 @@ ADD_TEST(test_ht_spkitable_locks tests/test_ht_spkitable_locks)
 
 ADD_TEST(test_live_validation tests/test_live_validation)
 
+ADD_TEST(test_ipaddr tests/test_ipaddr)
+
 #install lib
 set (RTRLIB_VERSION_MAJOR 0)
 set (RTRLIB_VERSION_MINOR 3)
