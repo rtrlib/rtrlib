@@ -69,95 +69,95 @@ static void test_v6(void) {
 	char buf[INET6_ADDRSTRLEN];
 
 	lrtr_ip_str_to_addr("fdf8:f53b:82e4::53", &addr);
-	assert(addr.u.addr6.addr[0] == 4260951355);
-	assert(addr.u.addr6.addr[1] == 2195980288);
+	assert(addr.u.addr6.addr[0] == 0xfdf8f53b);
+	assert(addr.u.addr6.addr[1] == 0x82e40000);
 	assert(addr.u.addr6.addr[2] == 0);
-	assert(addr.u.addr6.addr[3] == 83);
+	assert(addr.u.addr6.addr[3] == 0x53);
 	lrtr_ip_addr_to_str(&addr, buf, sizeof(buf));
 	assert(strcmp("fdf8:f53b:82e4::53", buf) == 0);
 
 	lrtr_ip_str_to_addr("fe80::200:5aee:feaa:20a2", &addr);
-	assert(addr.u.addr6.addr[0] == 4269801472);
+	assert(addr.u.addr6.addr[0] == 0xfe800000);
 	assert(addr.u.addr6.addr[1] == 0);
-	assert(addr.u.addr6.addr[2] == 33577710);
-	assert(addr.u.addr6.addr[3] == 4272562338);
+	assert(addr.u.addr6.addr[2] == 0x2005aee);
+	assert(addr.u.addr6.addr[3] == 0xfeaa20a2);
 	lrtr_ip_addr_to_str(&addr, buf, sizeof(buf));
 	assert(strcmp("fe80::200:5aee:feaa:20a2", buf) == 0);
 
 	lrtr_ip_str_to_addr("2001::1", &addr);
-	assert(addr.u.addr6.addr[0] == 536936448);
+	assert(addr.u.addr6.addr[0] == 0x20010000);
 	assert(addr.u.addr6.addr[1] == 0);
 	assert(addr.u.addr6.addr[2] == 0);
-	assert(addr.u.addr6.addr[3] == 1);
+	assert(addr.u.addr6.addr[3] == 0x1);
 	lrtr_ip_addr_to_str(&addr, buf, sizeof(buf));
 	assert(strcmp("2001::1", buf) == 0);
 
 	lrtr_ip_str_to_addr("2001:0:4136:e378:8000:63bf:3fff:fdd2", &addr);
-	assert(addr.u.addr6.addr[0] == 536936448);
-	assert(addr.u.addr6.addr[1] == 1094116216);
-	assert(addr.u.addr6.addr[2] == 2147509183);
-	assert(addr.u.addr6.addr[3] == 1073741266);
+	assert(addr.u.addr6.addr[0] == 0x20010000);
+	assert(addr.u.addr6.addr[1] == 0x4136e378);
+	assert(addr.u.addr6.addr[2] == 0x800063bf);
+	assert(addr.u.addr6.addr[3] == 0x3ffffdd2);
 	lrtr_ip_addr_to_str(&addr, buf, sizeof(buf));
 	assert(strcmp("2001:0:4136:e378:8000:63bf:3fff:fdd2", buf) == 0);
 
 	lrtr_ip_str_to_addr("2001:2:6c::430", &addr);
-	assert(addr.u.addr6.addr[0] == 536936450);
-	assert(addr.u.addr6.addr[1] == 7077888);
+	assert(addr.u.addr6.addr[0] == 0x20010002);
+	assert(addr.u.addr6.addr[1] == 0x6C0000);
 	assert(addr.u.addr6.addr[2] == 0);
-	assert(addr.u.addr6.addr[3] == 1072);
+	assert(addr.u.addr6.addr[3] == 0x430);
 	lrtr_ip_addr_to_str(&addr, buf, sizeof(buf));
 	assert(strcmp("2001:2:6c::430", buf) == 0);
 
 	lrtr_ip_str_to_addr("2001:10:240:ab::a", &addr);
-	assert(addr.u.addr6.addr[0] == 536936464);
-	assert(addr.u.addr6.addr[1] == 37748907);
+	assert(addr.u.addr6.addr[0] == 0x20010010);
+	assert(addr.u.addr6.addr[1] == 0x24000AB);
 	assert(addr.u.addr6.addr[2] == 0);
-	assert(addr.u.addr6.addr[3] == 10);
+	assert(addr.u.addr6.addr[3] == 0xa);
 	lrtr_ip_addr_to_str(&addr, buf, sizeof(buf));
 	assert(strcmp("2001:10:240:ab::a", buf) == 0);
 
 	lrtr_ip_str_to_addr("2002:cb0a:3cdd:1::1", &addr);
-	assert(addr.u.addr6.addr[0] == 537053962);
-	assert(addr.u.addr6.addr[1] == 1021116417);
+	assert(addr.u.addr6.addr[0] == 0x2002cb0a);
+	assert(addr.u.addr6.addr[1] == 0x3cdd0001);
 	assert(addr.u.addr6.addr[2] == 0);
-	assert(addr.u.addr6.addr[3] == 1);
+	assert(addr.u.addr6.addr[3] == 0x1);
 	lrtr_ip_addr_to_str(&addr, buf, sizeof(buf));
 	assert(strcmp("2002:cb0a:3cdd:1::1", buf) == 0);
 
 	lrtr_ip_str_to_addr("2001:db8:8:4::2", &addr);
-	assert(addr.u.addr6.addr[0] == 536939960);
-	assert(addr.u.addr6.addr[1] == 524292);
+	assert(addr.u.addr6.addr[0] == 0x20010db8);
+	assert(addr.u.addr6.addr[1] == 0x80004);
 	assert(addr.u.addr6.addr[2] == 0);
-	assert(addr.u.addr6.addr[3] == 2);
+	assert(addr.u.addr6.addr[3] == 0x2);
 	lrtr_ip_addr_to_str(&addr, buf, sizeof(buf));
 	assert(strcmp("2001:db8:8:4::2", buf) == 0);
 
 	lrtr_ip_str_to_addr("FF01:0:0:0:0:0:0:2", &addr);
-	assert(addr.u.addr6.addr[0] == 4278255616);
+	assert(addr.u.addr6.addr[0] == 0xff010000);
 	assert(addr.u.addr6.addr[1] == 0);
 	assert(addr.u.addr6.addr[2] == 0);
-	assert(addr.u.addr6.addr[3] == 2);
+	assert(addr.u.addr6.addr[3] == 0x2);
 	lrtr_ip_addr_to_str(&addr, buf, sizeof(buf));
 	assert(strcmp("ff01::2", buf) == 0);
 
 	lrtr_ip_str_to_addr("fdf8:f53b:82e4::53", &addr);
-	assert(addr.u.addr6.addr[0] == 4260951355);
-	assert(addr.u.addr6.addr[1] == 2195980288);
+	assert(addr.u.addr6.addr[0] == 0xfdf8f53b);
+	assert(addr.u.addr6.addr[1] == 0x82e40000);
 	assert(addr.u.addr6.addr[2] == 0);
-	assert(addr.u.addr6.addr[3] == 83);
+	assert(addr.u.addr6.addr[3] == 0x53);
 	lrtr_ip_addr_to_str(&addr, buf, sizeof(buf));
 	assert(strcmp("fdf8:f53b:82e4::53", buf) == 0);
 
 	lrtr_ip_str_to_addr("fe80::200:5aee:feaa:20a2", &addr);
-	assert(addr.u.addr6.addr[0] == 4269801472);
+	assert(addr.u.addr6.addr[0] == 0xfe800000);
 	assert(addr.u.addr6.addr[1] == 0);
-	assert(addr.u.addr6.addr[2] == 33577710);
-	assert(addr.u.addr6.addr[3] == 4272562338);
+	assert(addr.u.addr6.addr[2] == 0x2005aee);
+	assert(addr.u.addr6.addr[3] == 0xfeaa20a2);
 	lrtr_ip_addr_to_str(&addr, buf, sizeof(buf));
 	assert(strcmp("fe80::200:5aee:feaa:20a2", buf) == 0);
 
 	lrtr_ip_str_to_addr("2001::1", &addr);
-	assert(addr.u.addr6.addr[0] == 536936448);
+	assert(addr.u.addr6.addr[0] == 0x20010000);
 	assert(addr.u.addr6.addr[1] == 0);
 	assert(addr.u.addr6.addr[2] == 0);
 	assert(addr.u.addr6.addr[3] == 1);
@@ -165,10 +165,10 @@ static void test_v6(void) {
 	assert(strcmp("2001::1", buf) == 0);
 
 	lrtr_ip_str_to_addr("2001:0:4136:e378:8000:63bf:3fff:fdd2", &addr);
-	assert(addr.u.addr6.addr[0] == 536936448);
-	assert(addr.u.addr6.addr[1] == 1094116216);
-	assert(addr.u.addr6.addr[2] == 2147509183);
-	assert(addr.u.addr6.addr[3] == 1073741266);
+	assert(addr.u.addr6.addr[0] == 0x20010000);
+	assert(addr.u.addr6.addr[1] == 0x4136e378);
+	assert(addr.u.addr6.addr[2] == 0x800063bf);
+	assert(addr.u.addr6.addr[3] == 0x3ffffdd2);
 	lrtr_ip_addr_to_str(&addr, buf, sizeof(buf));
 	assert(strcmp("2001:0:4136:e378:8000:63bf:3fff:fdd2", buf) == 0);
 
@@ -199,6 +199,9 @@ static void test_v6(void) {
 
 	/* test multiple double colons check */
 	assert(lrtr_ip_str_to_addr("::ffff::ffff", &addr) == -1);
+
+	/* test check for to long addresses */
+	assert(lrtr_ip_str_to_addr("2001:0:4136:e378:8000:63bf:3fff:fdd2:55", &addr) == -1);
 
 }
 
