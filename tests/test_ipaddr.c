@@ -61,6 +61,9 @@ static void test_v4(void) {
 	lrtr_ip_addr_to_str(&addr, buf, sizeof(buf));
 	assert(strcmp("8.9.6.3", buf) == 0);
 
+	/* check some mallformed addreses */
+	assert(lrtr_ip_str_to_addr("8,3,4,5", &addr) == -1);
+	assert(lrtr_ip_str_to_addr("8.4.5", &addr) == -1);
 
 }
 
@@ -190,6 +193,9 @@ static void test_v6(void) {
 	lrtr_ip_addr_to_str(&addr, buf, sizeof(buf));
 	assert(strcmp("::10.58.64.34", buf) == 0);
 
+	/* test check for mallformed embedded ipv4 */
+	assert(lrtr_ip_str_to_addr("::ffff:192.0,2.128", &addr) == -1);
+
 
 	/* buffer size check*/
 	assert(lrtr_ip_addr_to_str(&addr, buf, 10) == -1);
@@ -202,6 +208,12 @@ static void test_v6(void) {
 
 	/* test check for to long addresses */
 	assert(lrtr_ip_str_to_addr("2001:0:4136:e378:8000:63bf:3fff:fdd2:55", &addr) == -1);
+
+	/* test check for to big groups */
+	assert(lrtr_ip_str_to_addr("::fffff", &addr) == -1);
+
+	/* check for null byte in address string */
+	assert(lrtr_ip_str_to_addr("2001:\0:4136:e378:8000:63bf:3fff:fdd2", &addr) == -1);
 
 }
 
