@@ -15,6 +15,9 @@
 #include <string.h>
 #include "rtrlib/lib/ip.h"
 
+/*
+ * @brief test ipv4 parsing
+ */
 static void test_v4(void) {
 	struct lrtr_ip_addr addr;
 	char buf[INET_ADDRSTRLEN];
@@ -67,6 +70,9 @@ static void test_v4(void) {
 
 }
 
+/*
+ * @brief test ipv6 parsing
+ */
 static void test_v6(void) {
 	struct lrtr_ip_addr addr;
 	char buf[INET6_ADDRSTRLEN];
@@ -217,10 +223,35 @@ static void test_v6(void) {
 
 }
 
+/*
+ * @brief test ip comparsions
+ */
+void test_cmp(void) {
+	struct lrtr_ip_addr addr1, addr2;
+
+	lrtr_ip_str_to_addr("2001:0:4136:e378:8000:63bf:3fff:fdd2", &addr1);
+	lrtr_ip_str_to_addr("2001:0:4136:e378:8000:63bf:3fff:fdd2", &addr2);
+
+	assert(lrtr_ip_addr_equal(addr1, addr2) == true);
+
+	lrtr_ip_str_to_addr("2001:0:4136:e378:8000:63bf:3fff:fdd3", &addr2);
+	assert(lrtr_ip_addr_equal(addr1, addr2) == false);
+
+
+	lrtr_ip_str_to_addr("141.22.5.22", &addr2);
+	assert(lrtr_ip_addr_equal(addr1, addr2) == false);
+
+	lrtr_ip_str_to_addr("141.22.5.22", &addr1);
+	assert(lrtr_ip_addr_equal(addr1, addr2) == true);
+
+	lrtr_ip_str_to_addr("141.26.5.23", &addr1);
+}
+
 
 int main(void) {
 	test_v4();
 	test_v6();
+	test_cmp();
 	printf("Test successful\n");
 	return EXIT_SUCCESS;
 }
