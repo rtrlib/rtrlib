@@ -96,8 +96,12 @@ typedef void (*rtr_connection_state_fp)(const struct rtr_socket *rtr_socket, con
  * @param request_session_id True, if the rtr_client have to request a new none from the server.
  * @param serial_number Last serial number of the obtained validation records.
  * @param pfx_table pfx_table that stores the validation records obtained from the connected rtr server.
+ * @param thread_id Handle of the thread this socket is running in.
  * @param connection_state_fp A callback function that is executed when the state of the socket changes.
  * @param connection_state_fp_param Parameter that is passed to the connection_state_fp callback.
+ * @param version Protocol version used by this socket
+ * @param has_received_pdus True, if this socket has already recieved PDUs
+ * @param spki_table spki_table that stores the router keys obtaiend from the connected rtr server
  */
 struct rtr_socket {
     struct tr_socket *tr_socket;

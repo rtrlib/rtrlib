@@ -43,6 +43,7 @@ int lrtr_ipv4_str_to_addr(const char *str, struct lrtr_ipv4_addr *ip);
  * Converts the passed ipv4_addr to string representation.
  * @param[in] ip ipv4_addr
  * @param[out] str Pointer to a string buffer must be at least INET_ADDRSTRLEN bytes long.
+ * @param[in] length of *str
  * @result 0 on success
  * @result -1 on error
 */
