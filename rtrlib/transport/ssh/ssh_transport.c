@@ -73,7 +73,11 @@ int tr_ssh_open(void *socket)
         goto error;
     }
 
+#ifdef LIBSSH_060
     const int rtval = ssh_userauth_publickey_auto(ssh_socket->session, NULL, NULL);
+#else // else use libSSH version 0.5.0
+    const int rtval = ssh_userauth_autopubkey(ssh_socket->session, NULL);
+#endif
     if(rtval != SSH_AUTH_SUCCESS) {
         SSH_DBG1("tr_ssh_init: Authentication failed", ssh_socket);
         goto error;
