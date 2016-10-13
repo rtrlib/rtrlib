@@ -18,7 +18,8 @@
 /*
  * @brief test ipv4 parsing
  */
-static void test_v4(void) {
+static void test_v4(void)
+{
 	struct lrtr_ip_addr addr;
 	char buf[INET_ADDRSTRLEN];
 
@@ -64,16 +65,16 @@ static void test_v4(void) {
 	lrtr_ip_addr_to_str(&addr, buf, sizeof(buf));
 	assert(strcmp("8.9.6.3", buf) == 0);
 
-	/* check some mallformed addreses */
+	/* check some malformed addresses */
 	assert(lrtr_ip_str_to_addr("8,3,4,5", &addr) == -1);
 	assert(lrtr_ip_str_to_addr("8.4.5", &addr) == -1);
-
 }
 
 /*
  * @brief test ipv6 parsing
  */
-static void test_v6(void) {
+static void test_v6(void)
+{
 	struct lrtr_ip_addr addr;
 	char buf[INET6_ADDRSTRLEN];
 
@@ -181,7 +182,6 @@ static void test_v6(void) {
 	lrtr_ip_addr_to_str(&addr, buf, sizeof(buf));
 	assert(strcmp("2001:0:4136:e378:8000:63bf:3fff:fdd2", buf) == 0);
 
-
 	/* test embedded ipv4 */
 	lrtr_ip_str_to_addr("::ffff:192.0.2.128", &addr);
 	assert(addr.u.addr6.addr[0] == 0);
@@ -202,7 +202,6 @@ static void test_v6(void) {
 	/* test check for mallformed embedded ipv4 */
 	assert(lrtr_ip_str_to_addr("::ffff:192.0,2.128", &addr) == -1);
 
-
 	/* buffer size check*/
 	assert(lrtr_ip_addr_to_str(&addr, buf, 10) == -1);
 
@@ -213,20 +212,20 @@ static void test_v6(void) {
 	assert(lrtr_ip_str_to_addr("::ffff::ffff", &addr) == -1);
 
 	/* test check for to long addresses */
-	assert(lrtr_ip_str_to_addr("2001:0:4136:e378:8000:63bf:3fff:fdd2:55", &addr) == -1);
+	assert(lrtr_ip_str_to_addr("2001:0:6:8:0:f:3fff:fdd2:55", &addr) == -1);
 
 	/* test check for to big groups */
 	assert(lrtr_ip_str_to_addr("::fffff", &addr) == -1);
 
 	/* check for null byte in address string */
-	assert(lrtr_ip_str_to_addr("2001:\0:4136:e378:8000:63bf:3fff:fdd2", &addr) == -1);
-
+	assert(lrtr_ip_str_to_addr("2001:\0::", &addr) == -1);
 }
 
 /*
  * @brief test ip comparsions
  */
-void test_cmp(void) {
+void test_cmp(void)
+{
 	struct lrtr_ip_addr addr1, addr2;
 
 	lrtr_ip_str_to_addr("2001:0:4136:e378:8000:63bf:3fff:fdd2", &addr1);
@@ -237,7 +236,6 @@ void test_cmp(void) {
 	lrtr_ip_str_to_addr("2001:0:4136:e378:8000:63bf:3fff:fdd3", &addr2);
 	assert(lrtr_ip_addr_equal(addr1, addr2) == false);
 
-
 	lrtr_ip_str_to_addr("141.22.5.22", &addr2);
 	assert(lrtr_ip_addr_equal(addr1, addr2) == false);
 
@@ -247,8 +245,8 @@ void test_cmp(void) {
 	lrtr_ip_str_to_addr("141.26.5.23", &addr1);
 }
 
-
-int main(void) {
+int main(void)
+{
 	test_v4();
 	test_v6();
 	test_cmp();
