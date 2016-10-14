@@ -4,6 +4,7 @@ rtrlib/pfx/lpfst/lpfst.h
 rtrlib/pfx/lpfst/lpfst.c
 tests/test_ht_spkitable.c
 tests/test_ht_spkitable_locks.c
+tests/test_ipaddr.c
 tests/test_live_validation.c
 tests/test_lpfst.c
 tests/test_pfx.c
