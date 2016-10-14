@@ -14,3 +14,10 @@ add_executable(test_live_validation test_live_validation.c)
 target_link_libraries(test_live_validation rtrlib)
 add_executable(test_ipaddr test_ipaddr.c)
 target_link_libraries(test_ipaddr rtrlib)
+
+
+if(UNIT_TESTING)
+    find_package(CMocka REQUIRED)
+    add_subdirectory(unittests)
+endif(UNIT_TESTING)
+
