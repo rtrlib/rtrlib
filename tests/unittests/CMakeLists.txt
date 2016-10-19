@@ -4,4 +4,4 @@ add_rtr_unit_test(test_packets_static test_packets_static.c rtrlib_static cmocka
 wrap_functions(test_packets_static lrtr_get_monotonic_time)
 
 add_rtr_unit_test(test_packets test_packets.c rtrlib_static cmocka)
-wrap_functions(test_packets rtr_send_pdu rtr_change_socket_state tr_send_all)
+wrap_functions(test_packets rtr_change_socket_state tr_send_all)

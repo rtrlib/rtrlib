@@ -58,11 +58,14 @@ if(DOXYGEN_FOUND)
 endif(DOXYGEN_FOUND)
 
 add_library(rtrlib SHARED ${RTRLIB_SRC})
-add_library(rtrlib_static STATIC ${RTRLIB_SRC})
 add_coverage(rtrlib)
-add_coverage(rtrlib_static)
 target_link_libraries(rtrlib ${RTRLIB_LINK})
-target_link_libraries(rtrlib_static ${RTRLIB_LINK})
+
+if(UNIT_TESTING)
+    add_library(rtrlib_static STATIC ${RTRLIB_SRC})
+    add_coverage(rtrlib_static)
+    target_link_libraries(rtrlib_static ${RTRLIB_LINK})
+endif(UNIT_TESTING)
 
 ADD_SUBDIRECTORY(tools)
 
