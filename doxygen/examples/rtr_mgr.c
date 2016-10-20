@@ -20,43 +20,29 @@ int main(){
     tr_ssh_init(&config, &tr_ssh);
 
     //create a TCP transport socket
-    struct tr_socket tr_tcp1;
-	char tcp1_host[]	= "rpki-validator.realmv6.org";
-	char tcp1_port[]	= "8282";
+    struct tr_socket tr_tcp;
+    char tcp_host[]	= "rpki-validator.realmv6.org";
+    char tcp_port[]	= "8282";
 
-    struct tr_tcp_config tcp_config1 = {
-	tcp1_host,	//IP
-	tcp1_port,	//Port
+    struct tr_tcp_config tcp_config = {
+	tcp_host,	//IP
+	tcp_port,	//Port
 	NULL		//Source address
     };
-    tr_tcp_init(&tcp_config1, &tr_tcp1);
-
-    //create another TCP transport socket
-    //this one requires a locally running rpki-validator
-    struct tr_socket tr_tcp2;
-	char tcp2_host[]	= "localhost";
-	char tcp2_port[]	= "8282";
-    struct tr_tcp_config tcp_config2 = {
-	tcp2_host,                //IP
-	tcp2_port,                //Port
-	NULL                      //Source address
-    };
-    tr_tcp_init(&tcp_config2, &tr_tcp2);
+    tr_tcp_init(&tcp_config, &tr_tcp);
 
     //create 3 rtr_sockets and associate them with the transprort sockets
-    struct rtr_socket rtr_ssh, rtr_tcp1, rtr_tcp2;
+    struct rtr_socket rtr_ssh, rtr_tcp;
     rtr_ssh.tr_socket = &tr_ssh;
-    rtr_tcp1.tr_socket = &tr_tcp1;
-    rtr_tcp2.tr_socket = &tr_tcp2;
+    rtr_tcp.tr_socket = &tr_tcp;
 
     //create a rtr_mgr_group array with 2 elements
     struct rtr_mgr_group groups[2];
 
     //The first group contains both TCP RTR sockets
-    groups[0].sockets = malloc(2 * sizeof(struct rtr_socket*));
-    groups[0].sockets_len = 2;
-    groups[0].sockets[0] = &rtr_tcp1;
-    groups[0].sockets[1] = &rtr_tcp2;
+    groups[0].sockets = malloc(sizeof(struct rtr_socket*));
+    groups[0].sockets_len = 1;
+    groups[0].sockets[0] = &rtr_tcp;
     groups[0].preference = 1;       //Preference value of this group
 
     //The seconds group contains only the SSH RTR socket
@@ -69,14 +55,15 @@ int main(){
 
     //initialize all rtr_sockets in the server pool with the same settings
     struct rtr_mgr_config *conf;
-    int ret = rtr_mgr_init(&conf ,groups, 2, 30, 600, 600, NULL, NULL, NULL, NULL);
+    int ret = rtr_mgr_init(&conf, groups, 2, 30, 600, 600, NULL, NULL, NULL, NULL);
 
     //start the connection manager
     rtr_mgr_start(conf);
 
     //wait till at least one rtr_mgr_group is fully synchronized with the server
-    while(!rtr_mgr_conf_in_sync(conf))
+    while(!rtr_mgr_conf_in_sync(conf)) {
         sleep(1);
+    }
     
     //validate the BGP-Route 10.10.0.0/24, origin ASN: 12345
     struct lrtr_ip_addr pref;

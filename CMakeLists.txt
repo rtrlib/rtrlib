@@ -5,7 +5,11 @@ cmake_minimum_required(VERSION 2.6)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=gnu99 -fstack-protector-all")
 if(CMAKE_BUILD_TYPE STREQUAL Debug)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -Wall -Wextra -Wfree-nonheap-object -Wformat-security -Wmissing-prototypes -Wmissing-declarations -Wdeclaration-after-statement -Winit-self -Waggregate-return -Wmissing-format-attribute -Wundef -Wbad-function-cast -Wwrite-strings -Wformat=2")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -Wall -Wextra -Wformat-security -Wmissing-prototypes -Wmissing-declarations -Wdeclaration-after-statement -Winit-self -Waggregate-return -Wmissing-format-attribute -Wundef -Wbad-function-cast -Wwrite-strings -Wformat=2")
+    execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+    if(GCC_VERSION VERSION_GREATER 4.8 OR GCC_VERSION VERSION_EQUAL 4.8)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wfree-nonheap-object")
+    endif()
 else()
 endif(CMAKE_BUILD_TYPE STREQUAL Debug)
 
@@ -24,17 +28,26 @@ set(RTRLIB_SRC rtrlib/rtr_mgr.c rtrlib/lib/utils.c rtrlib/lib/ip.c rtrlib/lib/ip
     rtrlib/transport/tcp/tcp_transport.c rtrlib/rtr/rtr.c rtrlib/rtr/packets.c rtrlib/spki/hashtable/ht-spkitable.c rtrlib/spki/hashtable/tommyds-1.8/tommy.c)
 set(RTRLIB_LINK ${RT_LIB} ${CMAKE_THREAD_LIBS_INIT})
 
-find_package(LibSSH 0.6.0)
+find_package(LibSSH 0.6.0 QUIET)
 if(LIBSSH_FOUND AND NOT NOSSH)
-    set(RTRLIB_HAVE_LIBSSH 1)
-    message(STATUS "libssh found, building librtr with SSH support")
-
-    include_directories(${LIBSSH_INCLUDE_DIRS})
-    set(RTRLIB_SRC ${RTRLIB_SRC} rtrlib/transport/ssh/ssh_transport.c)
-    set(RTRLIB_LINK ${RTRLIB_LINK} ${LIBSSH_LIBRARIES})
+    set(LIBSSH_060 1)
+    message(STATUS "libssh found, building librtr with SSH 0.6.0 support")
 else()
-    message(WARNING "libssh not found, building librtr without SSH support")
+    find_package(LibSSH 0.5.0)
+    if(LIBSSH_FOUND AND NOT NOSSH)
+        set(LIBSSH_050 1)
+        message(STATUS "libssh found, building librtr with SSH 0.5.0 support")
+    endif(LIBSSH_FOUND AND NOT NOSSH)
 endif(LIBSSH_FOUND AND NOT NOSSH)
+
+if(LIBSSH_050 OR LIBSSH_060)
+        set(RTRLIB_HAVE_LIBSSH 1)
+        include_directories(${LIBSSH_INCLUDE_DIRS})
+        set(RTRLIB_SRC ${RTRLIB_SRC} rtrlib/transport/ssh/ssh_transport.c)
+        set(RTRLIB_LINK ${RTRLIB_LINK} ${LIBSSH_LIBRARIES})
+else()
+        message(WARNING "libssh not found, building librtr without SSH support")
+endif(LIBSSH_050 OR LIBSSH_060)
 
 #doxygen target
 find_package(Doxygen)
@@ -82,7 +95,7 @@ install(DIRECTORY rtrlib/ DESTINATION include/rtrlib
 
 #pkgconfig file
 if(LIBSSH_FOUND)
-    set (PKG_CONFIG_REQUIRES "libssh >= 0.6.0")
+    set (PKG_CONFIG_REQUIRES "libssh >= 0.5.0")
 endif(LIBSSH_FOUND)
 set (PKG_CONFIG_LIBDIR     "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
 # '#include <rtrlib/rtrlib.h>' includes the "rtrlib/"
