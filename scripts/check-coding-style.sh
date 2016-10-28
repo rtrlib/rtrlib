@@ -15,6 +15,7 @@ READLINK=$(which greadlink)
 }
 SCRIPT_DIR=$(dirname "$($READLINK -f "$0")")
 SCRIPT_FILE="$SCRIPT_DIR/check-coding-files.txt"
+EXIT_CODE=0
 if [ -z "$1" ] ; then
 	if [ -f "$SCRIPT_FILE" ]; then
 		CHECKSOURCE=$(cat "$SCRIPT_FILE")
@@ -30,4 +31,10 @@ for i in $CHECKSOURCE; do
 	echo "> check coding style of $i ..."
 	$SCRIPT_DIR/checkpatch.pl -f --strict --no-tree --terse --show-types \
 		--ignore PREFER_KERNEL_TYPES $i
+
+	if [ $? -ne "0" ]; then
+		EXIT_CODE=1
+	fi
 done
+
+exit $EXIT_CODE
