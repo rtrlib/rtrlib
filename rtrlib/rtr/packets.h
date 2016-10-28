@@ -24,5 +24,13 @@ int rtr_sync(struct rtr_socket *rtr_socket);
 int rtr_wait_for_sync(struct rtr_socket *rtr_socket);
 int rtr_send_serial_query(struct rtr_socket *rtr_socket);
 int rtr_send_reset_query(struct rtr_socket *rtr_socket);
-
+int rtr_check_interval_range(uint32_t interval, uint32_t minimum,
+			     uint32_t maximum);
+void apply_interval_value(struct rtr_socket *rtr_socket,
+			  uint32_t interval,
+			  enum interval_type type);
+int rtr_check_interval_option(struct rtr_socket *rtr_socket,
+			      int interval_mode,
+			      uint32_t interval,
+			      enum interval_type type);
 #endif

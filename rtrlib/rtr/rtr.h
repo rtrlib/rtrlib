@@ -27,6 +27,18 @@
 #define RTR_DBG(fmt, ...) lrtr_dbg("RTR Socket: " fmt, ## __VA_ARGS__)
 #define RTR_DBG1(a) lrtr_dbg("RTR Socket: " a)
 
+static const uint32_t RTR_EXPIRATION_MIN = 600;     // ten minutes
+static const uint32_t RTR_EXPIRATION_MAX = 172800;  // two days
+static const uint32_t RTR_EXPIRATION_DEFAULT = 7200;// two hours
+
+static const uint32_t RTR_REFRESH_MIN = 1;           // one second
+static const uint32_t RTR_REFRESH_MAX = 86400;      // one day
+static const uint32_t RTR_REFRESH_DEFAULT = 3600;   // one hour
+
+static const uint32_t RTR_RETRY_MIN = 1;             // one second
+static const uint32_t RTR_RETRY_MAX = 7200;         // two hours
+static const uint32_t RTR_RETRY_DEFAULT = 600;      // ten minutes
+
 static const uint8_t RTR_PROTOCOL_VERSION_0 = 0;
 static const uint8_t RTR_PROTOCOL_VERSION_1 = 1;
 
@@ -37,6 +49,28 @@ enum rtr_rtvals {
     RTR_SUCCESS = 0,
     RTR_ERROR = -1,
     RTR_INVALID_PARAM = -2
+};
+
+enum interval_range {
+    BELOW_INTERVAL_RANGE = -1,
+    INSIDE_INTERVAL_RANGE = 0,
+    ABOVE_INTERVAL_RANGE = 1
+};
+
+enum interval_type {
+    EXPIRATION,
+    REFRESH,
+    RETRY
+};
+
+/**
+ * @brief These modes let the user configure how received intervals should be handled.
+ */
+enum interval_mode {
+    IGNORE_ANY,         /*< Ignore appliance of interval values at all. */
+    ACCEPT_ANY,         /*< Accept any interval values, even if outside of range. */
+    DEFAULT_MIN_MAX,    /*< If interval value is outside of range, apply min (if below range) or max (if above range). */
+    IGNORE_ON_FAILURE   /*< Ignore any interval values that are outside of range. */
 };
 
 /**
@@ -94,6 +128,7 @@ typedef void (*rtr_connection_state_fp)(const struct rtr_socket *rtr_socket, con
  * @param expire_interval Time period in seconds. Received records are deleted if the client was unable to refresh data for this time period.
  * If 0 is specified, the expire_interval is twice the refresh_interval.
  * @param retry_interval Time period in seconds between a faild quary and the next attempt.
+ * @param iv_mode Defines handling of incoming intervals.
  * @param state Current state of the socket.
  * @param session_id session_id of the RTR session.
  * @param request_session_id True, if the rtr_client have to request a new none from the server.
@@ -113,6 +148,7 @@ struct rtr_socket {
     time_t last_update;
     unsigned int expire_interval;
     unsigned int retry_interval;
+    enum interval_mode iv_mode;
     enum rtr_socket_state state;
     uint32_t session_id;
     bool request_session_id;
@@ -142,6 +178,7 @@ struct rtr_socket {
  * @param[in] retry_interval This parameter tells the router how long to wait (in seconds) before retrying
  * a failed Serial Query or Reset Query. The value must be >= 1s and <= 7200s (two hours).
  * The recommanded default is 600 seconds (ten minutes).
+ * @param[in] iv_mode The interval mode that controls how new interval values are applied.
  * @param[in] fp A callback function that is executed when the state of the socket changes.
  * @param[in] fp_data_config Parameter that is passed to the connection_state_fp callback.
  * Expects rtr_mgr_config.
@@ -153,7 +190,8 @@ struct rtr_socket {
 int rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr_socket, struct pfx_table *pfx_table,
              struct spki_table *spki_table, const unsigned int refresh_interval,
              const unsigned int expire_interval, const unsigned int retry_interval,
-             rtr_connection_state_fp fp, void *fp_data_config, void *fp_data_group);
+             enum interval_mode iv_mode, rtr_connection_state_fp fp, void *fp_data_config,
+	     void *fp_data_group);
 
 /**
  * @brief Starts the RTR protocol state machine in a pthread. Connection to the rtr_server will be established and the
@@ -177,6 +215,5 @@ void rtr_stop(struct rtr_socket *rtr_socket);
  * @return !=NULL The rtr_socket_state as String.
  */
 const char *rtr_state_to_str(enum rtr_socket_state state);
-
 #endif
 /* @} */
