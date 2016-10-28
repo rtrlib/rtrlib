@@ -178,6 +178,12 @@ static int rtr_send_error_pdu_from_host(const struct rtr_socket *rtr_socket,
                                         const char *err_text,
                                         const uint32_t err_text_len);
 
+static int interval_send_error_pdu(struct rtr_socket *rtr_socket,
+                                   void *pdu,
+                                   uint32_t interval,
+                                   uint16_t minimum,
+                                   uint32_t maximum);
+
 static inline enum pdu_type rtr_get_pdu_type(const void *pdu)
 {
     return *((char *) pdu + 1);
@@ -190,6 +196,78 @@ static int rtr_set_last_update(struct rtr_socket *rtr_socket)
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
         return RTR_ERROR;
     }
+    return RTR_SUCCESS;
+}
+
+int rtr_check_interval_range(uint32_t interval, uint32_t minimum,
+			     uint32_t maximum)
+{
+    if (interval < minimum) {
+        return BELOW_INTERVAL_RANGE;
+    } else if (interval > maximum) {
+        return ABOVE_INTERVAL_RANGE;
+    }
+
+    return INSIDE_INTERVAL_RANGE;
+}
+
+void apply_interval_value(struct rtr_socket *rtr_socket,
+			  uint32_t interval,
+			  enum interval_type type)
+{
+    if (type == EXPIRATION) {
+        rtr_socket->expire_interval = interval;
+    } else if (type == REFRESH) {
+        rtr_socket->refresh_interval = interval;
+    } else if (type == RETRY) {
+        rtr_socket->retry_interval = interval;
+    }
+}
+
+int rtr_check_interval_option(struct rtr_socket *rtr_socket,
+			      int interval_mode,
+			      uint32_t interval,
+			      enum interval_type type)
+{
+    uint16_t minimum;
+    uint32_t maximum;
+
+    int interv_retval;
+
+    switch (type) {
+    case EXPIRATION:
+        minimum = RTR_EXPIRATION_MIN;
+        maximum = RTR_EXPIRATION_MAX;
+        interv_retval = rtr_check_interval_range(interval, minimum, maximum);
+        break;
+    case REFRESH:
+        minimum = RTR_REFRESH_MIN;
+        maximum = RTR_REFRESH_MAX;
+        interv_retval = rtr_check_interval_range(interval, minimum, maximum);
+        break;
+    case RETRY:
+        minimum = RTR_RETRY_MIN;
+        maximum = RTR_RETRY_MAX;
+        interv_retval = rtr_check_interval_range(interval, minimum, maximum);
+        break;
+    default:
+        RTR_DBG("Invalid interval type: %u.", type);
+        return RTR_ERROR;
+    }
+
+    if (interv_retval == INSIDE_INTERVAL_RANGE ||
+	interval_mode == ACCEPT_ANY) {
+        apply_interval_value(rtr_socket, interval, type);
+    } else if (interval_mode == DEFAULT_MIN_MAX) {
+        if (interv_retval == BELOW_INTERVAL_RANGE)
+            apply_interval_value(rtr_socket, minimum, type);
+        else
+            apply_interval_value(rtr_socket, maximum, type);
+    } else {
+        RTR_DBG("Received expiration value out of range. Was %u. "
+                    "It will be ignored.", interval);
+    }
+
     return RTR_SUCCESS;
 }
 
@@ -797,7 +875,7 @@ static int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, 
  * @attention ary is not freed in this case, because it might contain data that is still needed
  */
 static int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *pdu, const unsigned int pdu_size,
-				    struct pdu_router_key **ary, unsigned int *ind, unsigned int *size)
+                    struct pdu_router_key **ary, unsigned int *ind, unsigned int *size)
 {
     assert(rtr_get_pdu_type(pdu) == ROUTER_KEY);
 
@@ -919,8 +997,8 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
     unsigned int ipv6_pdus_size = 0;
 
     struct pdu_ipv4 *ipv4_pdus = NULL;
-    unsigned int ipv4_pdus_size = 0; //next free index in ipv4_pdus
-    unsigned int ipv4_pdus_nindex = 0;
+    unsigned int ipv4_pdus_size = 0; 
+    unsigned int ipv4_pdus_nindex = 0; //next free index in ipv4_pdus
 
     struct pdu_router_key *router_key_pdus = NULL;
     unsigned int router_key_pdus_size = 0;
@@ -970,10 +1048,34 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
                 goto cleanup;
             }
 
-            if (eod_pdu->ver == RTR_PROTOCOL_VERSION_1) {
-                rtr_socket->expire_interval = ((struct pdu_end_of_data_v1 *) pdu)->expire_interval;
-                rtr_socket->refresh_interval = ((struct pdu_end_of_data_v1 *) pdu)->refresh_interval;
-                rtr_socket->retry_interval = ((struct pdu_end_of_data_v1 *) pdu)->retry_interval;
+            if (eod_pdu->ver == RTR_PROTOCOL_VERSION_1
+                    && rtr_socket->iv_mode != IGNORE_ANY) {
+
+                int interv_retval;
+                interv_retval = rtr_check_interval_option(rtr_socket, rtr_socket->iv_mode, ((struct pdu_end_of_data_v1 *) pdu)->expire_interval, EXPIRATION);
+
+                if(interv_retval == RTR_ERROR) {
+                    interval_send_error_pdu(rtr_socket, pdu, ((struct pdu_end_of_data_v1 *) pdu)->expire_interval, RTR_EXPIRATION_MIN, RTR_EXPIRATION_MAX);
+                    retval = RTR_ERROR;
+                    goto cleanup;
+                }
+
+                interv_retval = rtr_check_interval_option(rtr_socket, rtr_socket->iv_mode, ((struct pdu_end_of_data_v1 *) pdu)->refresh_interval, REFRESH);
+
+                if(interv_retval == RTR_ERROR) {
+                    interval_send_error_pdu(rtr_socket, pdu, ((struct pdu_end_of_data_v1 *) pdu)->refresh_interval, RTR_REFRESH_MIN, RTR_REFRESH_MAX);
+                    retval = RTR_ERROR;
+                    goto cleanup;
+                }
+
+                interv_retval = rtr_check_interval_option(rtr_socket, rtr_socket->iv_mode, ((struct pdu_end_of_data_v1 *) pdu)->retry_interval, RETRY);
+
+                if(interv_retval == RTR_ERROR) {
+                    interval_send_error_pdu(rtr_socket, pdu, ((struct pdu_end_of_data_v1 *) pdu)->retry_interval, RTR_RETRY_MIN, RTR_RETRY_MAX);
+                    retval = RTR_ERROR;
+                    goto cleanup;
+                }
+
                 RTR_DBG("New interval values: expire_interval:%u, refresh_interval:%u, retry_interval:%u",
                         rtr_socket->expire_interval, rtr_socket->refresh_interval, rtr_socket->retry_interval);
             }
@@ -1024,10 +1126,10 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
                         retval = rtr_undo_update_pfx_table(rtr_socket, &(ipv4_pdus[j]));
                     for (unsigned int j = 0; j < ipv6_pdus_nindex && retval == PFX_SUCCESS; j++)
                         retval = rtr_undo_update_pfx_table(rtr_socket, &(ipv6_pdus[j]));
-		     // cppcheck-suppress duplicateExpression
+             // cppcheck-suppress duplicateExpression
                     for (unsigned int j = 0; j < i && (retval == PFX_SUCCESS || retval == SPKI_SUCCESS); j++)
                         retval = rtr_undo_update_spki_table(rtr_socket, &(router_key_pdus[j]));
-		     // cppcheck-suppress duplicateExpression
+             // cppcheck-suppress duplicateExpression
                     if (retval == RTR_ERROR || retval == SPKI_ERROR) {
                         RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all key entries");
                         spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
@@ -1151,7 +1253,6 @@ int rtr_wait_for_sync(struct rtr_socket *rtr_socket)
     return RTR_ERROR;
 }
 
-
 static int rtr_send_error_pdu(const struct rtr_socket *rtr_socket, const void *erroneous_pdu,
 		       const uint32_t erroneous_pdu_len, const enum pdu_error_type error,
 		       const char *err_text, const uint32_t err_text_len)
@@ -1183,6 +1284,13 @@ static int rtr_send_error_pdu(const struct rtr_socket *rtr_socket, const void *e
 		memcpy(err_pdu->rest + erroneous_pdu_len + 4, err_text, err_text_len);
 
 	return rtr_send_pdu(rtr_socket, msg, msg_size);
+}
+
+static int interval_send_error_pdu(struct rtr_socket *rtr_socket, void *pdu, uint32_t interval, uint16_t minimum, uint32_t maximum) {
+    RTR_DBG("Received expiration value out of range. Was %u, must be between %u and %u.",
+            interval, minimum, maximum);
+    const char txt[] = "Interval value out of range";
+    return rtr_send_error_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, CORRUPT_DATA, txt, strlen(txt) + 1);
 }
 
 static int rtr_send_error_pdu_from_network(const struct rtr_socket *rtr_socket,

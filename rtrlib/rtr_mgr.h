@@ -270,6 +270,13 @@ void rtr_mgr_for_each_ipv4_record(struct rtr_mgr_config *config,
 void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config,
 				  pfx_for_each_fp fp,
 				  void *data);
+/**
+ * @brief Set the interval option to the desired one. It's either IGNORE_ANY,
+ * APPLY_ANY, DEFAULT_MIN_MAX or IGNORE_ON_FAILURE.
+ * @param[in] rtr_socket The target socket.
+ * @param[in] option The new interval option that should be applied.
+ */
+void set_interval_mode(struct rtr_socket *rtr_socket, int option);
 
 /**
  * @brief Returns the first, thus active group.
@@ -282,5 +289,11 @@ int rtr_mgr_for_each_group(struct rtr_mgr_config *config,
 			   void (*fp)(const struct rtr_mgr_group *group,
 				      void *data),
 			   void *data);
+/**
+ * @brief Get the current interval mode.
+ * @param[in] rtr_socket The target socket.
+ * @return The value of the interval_option variable.
+ */
+int get_interval_mode(struct rtr_socket *rtr_socket);
 #endif
 /* @} */

@@ -59,29 +59,24 @@ int rtr_init(struct rtr_socket *rtr_socket,
               const unsigned int refresh_interval,
               const unsigned int expire_interval,
               const unsigned int retry_interval,
+	      enum interval_mode iv_mode,
               rtr_connection_state_fp fp, void *fp_param_config,
 	      void *fp_param_group)
 {
     if(tr != NULL)
         rtr_socket->tr_socket = tr;
 
-    if(refresh_interval > 86400 || refresh_interval < 1) {
+    // Check if one of the intervals is not in range of the predefined values.
+    if(rtr_check_interval_range(refresh_interval, RTR_REFRESH_MIN, RTR_REFRESH_MAX) != INSIDE_INTERVAL_RANGE ||
+       rtr_check_interval_range(expire_interval, RTR_EXPIRATION_MIN, RTR_EXPIRATION_MAX) != INSIDE_INTERVAL_RANGE ||
+       rtr_check_interval_range(retry_interval, RTR_RETRY_MIN, RTR_RETRY_MAX) != INSIDE_INTERVAL_RANGE) {
+        RTR_DBG("Interval value not in range.");
         return RTR_INVALID_PARAM;
-    } else {
-        rtr_socket->refresh_interval = refresh_interval;
     }
-
-    if ((expire_interval < 600) || (expire_interval > 172800)) {
-        return RTR_INVALID_PARAM;
-    } else {
-        rtr_socket->expire_interval = expire_interval;
-    }
-
-    if ((retry_interval > 7200) || (retry_interval < 1)) {
-        return RTR_INVALID_PARAM;
-    } else {
-        rtr_socket->retry_interval = retry_interval;
-    }
+    rtr_socket->refresh_interval = refresh_interval;
+    rtr_socket->expire_interval = expire_interval;
+    rtr_socket->retry_interval = retry_interval;
+    rtr_socket->iv_mode = iv_mode;
 
     rtr_socket->state = RTR_CLOSED;
     rtr_socket->request_session_id = true;
