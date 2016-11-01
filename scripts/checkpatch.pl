@@ -1735,6 +1735,10 @@ sub report {
 
 	push(our @report, $output);
 
+	if ($level eq 'CHECK') {
+		return 0;
+	}
+
 	return 1;
 }
 
