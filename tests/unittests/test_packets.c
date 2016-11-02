@@ -7,29 +7,33 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#include <stdlib.h>
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
-#include <cmocka.h>
+#include "rtrlib_unittests.h"
 #include "rtrlib/rtr/packets.h"
+#include "test_packets.h"
 
 int __wrap_tr_send_all(const struct tr_socket *socket,
 		       const void *pdu, const size_t len,
 		       const time_t timeout)
 {
+	UNUSED(socket);
+	UNUSED(pdu);
+	UNUSED(len);
+	UNUSED(timeout);
 	return (int)mock();
 }
 
 void __wrap_rtr_change_socket_state(struct rtr_socket *rtr_socket,
 				    const enum rtr_socket_state new_state)
 {
-	;
+	UNUSED(rtr_socket);
+	UNUSED(new_state);
 }
 
-void test_rtr_send_reset_query(void)
+static void test_rtr_send_reset_query(void **state)
 {
 	struct rtr_socket socket;
+
+	UNUSED(state);
 
 	socket.connection_state_fp = NULL;
 
@@ -40,9 +44,11 @@ void test_rtr_send_reset_query(void)
 	assert_int_equal(rtr_send_reset_query(&socket), RTR_SUCCESS);
 }
 
-void test_rtr_change_socket_state(void)
+static void test_rtr_change_socket_state(void **state)
 {
 	struct rtr_socket socket;
+
+	UNUSED(state);
 
 	socket.connection_state_fp = NULL;
 	socket.state = RTR_RESET;

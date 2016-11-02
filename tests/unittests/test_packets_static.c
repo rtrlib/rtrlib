@@ -7,21 +7,21 @@
  * Website; http://rtrlib.realmv6.org/
  */
 
-#include <stdlib.h>
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
-#include <cmocka.h>
+#include "rtrlib_unittests.h"
 #include "rtrlib/rtr/packets.c"
+#include "test_packets_static.h"
 
 int __wrap_lrtr_get_monotonic_time(time_t *seconds)
 {
+	UNUSED(seconds);
 	return mock_type(int);
 }
 
-void test_set_last_update(void)
+static void test_set_last_update(void **state)
 {
 	struct rtr_socket socket;
+
+	UNUSED(state);
 
 	socket.connection_state_fp = NULL;
 
@@ -32,9 +32,11 @@ void test_set_last_update(void)
 	assert_int_equal(rtr_set_last_update(&socket), RTR_SUCCESS);
 }
 
-void test_rtr_get_pdu_type(void)
+static void test_rtr_get_pdu_type(void **state)
 {
 	struct pdu_header pdu;
+
+	UNUSED(state);
 
 	pdu.type = SERIAL_NOTIFY;
 	assert_int_equal(rtr_get_pdu_type(&pdu), SERIAL_NOTIFY);
@@ -67,9 +69,11 @@ void test_rtr_get_pdu_type(void)
 	assert_int_equal(rtr_get_pdu_type(&pdu), ERROR);
 }
 
-void test_pdu_to_network_byte_order(void)
+static void test_pdu_to_network_byte_order(void **state)
 {
 	struct pdu_serial_query pdu;
+
+	UNUSED(state);
 
 	pdu.ver = 0;
 	pdu.type = SERIAL_QUERY;
@@ -86,10 +90,12 @@ void test_pdu_to_network_byte_order(void)
 	assert_int_equal(pdu.sn, 0xBBE956CC);
 }
 
-void test_pdu_to_host_byte_order(void)
+static void test_pdu_to_host_byte_order(void **state)
 {
 	struct pdu_serial_notify pdu_serial;
 	struct pdu_end_of_data_v1 pdu_eod;
+
+	UNUSED(state);
 
 	pdu_serial.ver = 1;
 	pdu_serial.type = SERIAL_NOTIFY;
@@ -127,10 +133,12 @@ void test_pdu_to_host_byte_order(void)
 	assert_int_equal(pdu_eod.expire_interval, 0xCF0C0000);
 }
 
-void test_rtr_pdu_check_size(void)
+static void test_rtr_pdu_check_size(void **state)
 {
 	struct pdu_header pdu;
 	struct pdu_error *error = malloc(30);
+
+	UNUSED(state);
 
 	memset(error, 0, 30);
 
@@ -196,19 +204,19 @@ void test_rtr_pdu_check_size(void)
 	error->type = ERROR;
 	error->len = 14;
 	error->len_enc_pdu = 0;
-	assert_false(rtr_pdu_check_size(error));
+	assert_false(rtr_pdu_check_size((struct pdu_header *)error));
 	error->len = 20;
 	error->len_enc_pdu = 0x8000000;
-	assert_false(rtr_pdu_check_size(error));
+	assert_false(rtr_pdu_check_size((struct pdu_header *)error));
 	error->len = 24;
 	error->rest[11] = 0xA;
-	assert_false(rtr_pdu_check_size(error));
+	assert_false(rtr_pdu_check_size((struct pdu_header *)error));
 
 	/* test error pdu error string termination test */
 	error->len = 25;
 	error->rest[11] = 0x1;
 	error->rest[12] = 0x20;
-	assert_false(rtr_pdu_check_size(error));
+	assert_false(rtr_pdu_check_size((struct pdu_header *)error));
 }
 
 int main(void)
