@@ -9,5 +9,7 @@ tests/test_live_validation.c
 tests/test_lpfst.c
 tests/test_pfx.c
 tests/test_pfx_locks.c
+tests/unittests/test_packets_static.c
+tests/unittests/test_packets.c
 tools/cli-validator.c
 tools/rtrclient.c

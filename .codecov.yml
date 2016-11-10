@@ -9,6 +9,7 @@ coverage:
 
   ignore:
   - rtrlib/spki/hashtable/tommyds-1.8/.*
+  - tests/*
 
   status: {}
 

@@ -20,6 +20,7 @@ To build the RTRlib, the CMake build system must be installed.
 To establish an SSH connection between RTR-Client and RTR-Server, the
 libssh 0.6.x or higher library must also be installed.
 
+cmocka (optional) is required for unit tests
 Doxygen (optional) is required to create the HTML documentation.
 
 
