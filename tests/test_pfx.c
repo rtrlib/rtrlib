@@ -416,14 +416,15 @@ static void pfx_table_test(void)
 	pfx.asn = 200;
 	assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
-	assert(pfx_table_validate(&pfxt, 100,
-				  &pfx.prefix, 24,
-				  &res) == PFX_SUCCESS);
+	assert(lrtr_ip_str_to_addr("10.100.200.0", &pfx.prefix) == 0);
+	assert(pfx_table_validate_r(&pfxt, &r, &r_len, 100,
+				    &pfx.prefix, 24,
+				    &res) == PFX_SUCCESS);
 	assert(res == BGP_PFXV_STATE_VALID);
-	
-	assert(pfx_table_validate(&pfxt, 200,
-				  &pfx.prefix, 24,
-				  &res) == PFX_SUCCESS);
+
+	assert(pfx_table_validate_r(&pfxt, &r, &r_len, 200,
+				    &pfx.prefix, 24,
+				    &res) == PFX_SUCCESS);
 	assert(res == BGP_PFXV_STATE_VALID);
 
 	/* cleanup: free record and table */
