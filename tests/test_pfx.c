@@ -410,13 +410,13 @@ static void pfx_table_test(void)
 	pfx.asn = 100;
 	assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
-	assert(lrtr_ip_str_to_addr("10.100.200.0", &pfx.prefix) == 0);
+	assert(lrtr_ip_str_to_addr("10.100.255.0", &pfx.prefix) == 0);
 	pfx.min_len = 24;
 	pfx.max_len = 24;
 	pfx.asn = 200;
 	assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
-	assert(lrtr_ip_str_to_addr("10.100.200.0", &pfx.prefix) == 0);
+	assert(lrtr_ip_str_to_addr("10.100.255.0", &pfx.prefix) == 0);
 	assert(pfx_table_validate_r(&pfxt, &r, &r_len, 100,
 				    &pfx.prefix, 24,
 				    &res) == PFX_SUCCESS);
@@ -427,6 +427,22 @@ static void pfx_table_test(void)
 				    &res) == PFX_SUCCESS);
 	assert(res == BGP_PFXV_STATE_VALID);
 
+	assert(lrtr_ip_str_to_addr("255.0.0.0", &pfx.prefix) == 0);
+	pfx.min_len = 24;
+	pfx.max_len = 24;
+	pfx.asn = 300;
+	assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
+	assert(lrtr_ip_str_to_addr("128.0.0.0", &pfx.prefix) == 0);
+	pfx.min_len = 1;
+	pfx.max_len = 24;
+	pfx.asn = 400;
+	assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
+
+	assert(lrtr_ip_str_to_addr("255.0.0.0", &pfx.prefix) == 0);
+	assert(pfx_table_validate_r(&pfxt, &r, &r_len, 400,
+				    &pfx.prefix, 24,
+				    &res) == PFX_SUCCESS);
+	assert(res == BGP_PFXV_STATE_VALID);
 	/* cleanup: free record and table */
 	free(r);
 	pfx_table_free(&pfxt);
