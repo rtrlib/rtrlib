@@ -17,6 +17,58 @@ int __wrap_lrtr_get_monotonic_time(time_t *seconds)
 	return mock_type(int);
 }
 
+int __wrap_tr_send_all(const struct tr_socket *socket,
+		       const void *pdu, const size_t len,
+		       const time_t timeout)
+{
+	check_expected(socket);
+	check_expected(pdu);
+	check_expected(len);
+	check_expected(timeout);
+	return (int)mock();
+}
+
+static int cmp_serial_in_error_pdu(const LargestIntegralType test,
+				   const LargestIntegralType reference)
+{
+	struct pdu_error *test_pdu =
+		(struct pdu_error *)test;
+	struct pdu_serial_query *reference_pdu =
+		(struct pdu_serial_query *)reference;
+	struct pdu_serial_query *encapsulated_pdu =
+		(struct pdu_serial_query *)test_pdu->rest;
+
+	if (encapsulated_pdu->ver != reference_pdu->ver ||
+	    encapsulated_pdu->type != reference_pdu->type ||
+	    encapsulated_pdu->session_id != reference_pdu->session_id ||
+	    encapsulated_pdu->len != reference_pdu->len ||
+	    encapsulated_pdu->sn != reference_pdu->sn) {
+		return 0;
+	}
+
+	return 1;
+}
+
+static int cmp_header_in_error_pdu(const LargestIntegralType test,
+				   const LargestIntegralType reference)
+{
+	struct pdu_error *test_pdu =
+		(struct pdu_error *)test;
+	struct pdu_serial_query *reference_pdu =
+		(struct pdu_serial_query *)reference;
+	struct pdu_serial_query *encapsulated_pdu =
+		(struct pdu_serial_query *)test_pdu->rest;
+
+	if (encapsulated_pdu->ver != reference_pdu->ver ||
+	    encapsulated_pdu->type != reference_pdu->type ||
+	    encapsulated_pdu->session_id != reference_pdu->session_id ||
+	    encapsulated_pdu->len != reference_pdu->len) {
+		return 0;
+	}
+
+	return 1;
+}
+
 static void test_set_last_update(void **state)
 {
 	struct rtr_socket socket;
@@ -212,11 +264,93 @@ static void test_rtr_pdu_check_size(void **state)
 	error->rest[11] = 0xA;
 	assert_false(rtr_pdu_check_size((struct pdu_header *)error));
 
-	/* test error pdu error string termination test */
+	/* test error pdu error string termination */
 	error->len = 25;
 	error->rest[11] = 0x1;
 	error->rest[12] = 0x20;
 	assert_false(rtr_pdu_check_size((struct pdu_header *)error));
+}
+
+static void test_rtr_send_error_pdu(void **state)
+{
+	struct pdu_serial_query pdu_serial, pdu_serial_network;
+	struct rtr_socket socket;
+	int ret;
+
+	UNUSED(state);
+
+	pdu_serial.ver = 1;
+	pdu_serial.type = SERIAL_NOTIFY;
+	pdu_serial.session_id = 0xDDFF;
+	pdu_serial.len = sizeof(struct pdu_serial_query);
+	pdu_serial.sn = 0xDF;
+
+	memcpy(&pdu_serial_network,
+	       &pdu_serial,
+	       sizeof(struct pdu_serial_query));
+	rtr_pdu_to_network_byte_order(&pdu_serial_network);
+
+	expect_any_count(__wrap_tr_send_all, socket, 1);
+	expect_any_count(__wrap_tr_send_all, len, 1);
+	expect_any_count(__wrap_tr_send_all, timeout, 1);
+	expect_check(__wrap_tr_send_all,
+		     pdu,
+		     cmp_serial_in_error_pdu,
+		     &pdu_serial_network);
+	will_return(__wrap_tr_send_all,
+		    sizeof(pdu_serial) + sizeof(struct pdu_error));
+
+	ret = rtr_send_error_pdu_from_host(&socket,
+					   &pdu_serial,
+					   pdu_serial.len,
+					   INTERNAL_ERROR,
+					   NULL,
+					   0);
+	assert_int_equal(ret, RTR_SUCCESS);
+
+	expect_any_count(__wrap_tr_send_all, socket, 1);
+	expect_any_count(__wrap_tr_send_all, len, 1);
+	expect_any_count(__wrap_tr_send_all, timeout, 1);
+	expect_check(__wrap_tr_send_all,
+		     pdu,
+		     cmp_serial_in_error_pdu,
+		     &pdu_serial_network);
+	will_return(__wrap_tr_send_all,
+		    sizeof(pdu_serial_network) + sizeof(struct pdu_error));
+
+	ret = rtr_send_error_pdu_from_network(&socket,
+					      &pdu_serial_network,
+					      pdu_serial.len,
+					      INTERNAL_ERROR,
+					      NULL,
+					      0);
+	assert_int_equal(ret, RTR_SUCCESS);
+
+	expect_any_count(__wrap_tr_send_all, socket, 1);
+	expect_any_count(__wrap_tr_send_all, len, 1);
+	expect_any_count(__wrap_tr_send_all, timeout, 1);
+	expect_check(__wrap_tr_send_all,
+		     pdu,
+		     cmp_header_in_error_pdu,
+		     &pdu_serial_network);
+	will_return(__wrap_tr_send_all,
+		    sizeof(pdu_serial) + sizeof(struct pdu_error));
+
+	ret = rtr_send_error_pdu_from_host(&socket,
+					   &pdu_serial,
+					   sizeof(struct pdu_header),
+					   INTERNAL_ERROR,
+					   NULL,
+					   0);
+	assert_int_equal(ret, RTR_SUCCESS);
+
+	ret = rtr_send_error_pdu_from_host(&socket,
+					   &pdu_serial,
+					   2,
+					   INTERNAL_ERROR,
+					   NULL,
+					   0);
+	assert_int_equal(ret, RTR_ERROR);
 }
 
 int main(void)
@@ -227,6 +361,7 @@ int main(void)
 		cmocka_unit_test(test_pdu_to_network_byte_order),
 		cmocka_unit_test(test_pdu_to_host_byte_order),
 		cmocka_unit_test(test_rtr_pdu_check_size),
+		cmocka_unit_test(test_rtr_send_error_pdu),
 	};
 	return cmocka_run_group_tests(tests, NULL, NULL);
 }
