@@ -320,10 +320,13 @@ int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason
     }
 
     while(!pfx_table_elem_matches(node->data, asn, prefix_len)) {
-        if(lrtr_ip_addr_is_zero(lrtr_ip_addr_get_bits(prefix, lvl++, 1))) //post-incr lvl, lpfst_lookup is performed on child_nodes => parent lvl + 1
-            node = lpfst_lookup(node->lchild, prefix, prefix_len, &lvl);
-        else
-            node = lpfst_lookup(node->rchild, prefix, prefix_len, &lvl);
+	//post-incr lvl, lpfst_lookup is performed on child_nodes => parent lvl + 1
+        if(lrtr_ip_addr_is_zero(lrtr_ip_addr_get_bits(prefix, lvl++, 1))) {
+	    node = lpfst_lookup_fallback(node->lchild, node->rchild, prefix, prefix_len, &lvl);
+	}
+	else {
+	    node = lpfst_lookup_fallback(node->rchild, node->lchild, prefix, prefix_len, &lvl);
+	}
 
         if(node == NULL) {
             pthread_rwlock_unlock(&pfx_table->lock);

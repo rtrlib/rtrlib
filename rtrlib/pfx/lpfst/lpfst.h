@@ -57,6 +57,25 @@ struct lpfst_node *lpfst_lookup(const struct lpfst_node *root_node,
 				const uint8_t mask_len, unsigned int *level);
 
 /**
+ * @brief Searches for the node with the longest prefix, matching the passed ip
+ *	  prefix and prefix length.
+ * @param[in] first_node Node were the lookup process starts.
+ * @param[in] second_node Fallback node, if lookup on first node fails.
+ * @param[in] lrtr_ip_addr IP-Prefix.
+ * @param[in] mask_len Length of the network mask of the prefix.
+ * @param[in,out] level of the the node root in the tree. Is set to the level of
+ *		  the node that is returned.
+ * @returns The lpfst_node with the longest prefix in the tree matching the
+ *	    passed ip prefix and prefix length.
+ * @returns NULL if no node that matches the passed prefix and prefix length
+ *	    could be found.
+ */
+struct lpfst_node *lpfst_lookup_fallback(const struct lpfst_node *first_node,
+					 const struct lpfst_node *second_node,
+					 const struct lrtr_ip_addr *prefix,
+					 const uint8_t mask_len,
+					 unsigned int *level);
+/**
  * @brief Search for a node with the same prefix and prefix length.
  * @param[in] root_node Node were the lookup process starts.
  * @param[in] lrtr_ip_addr IP-Prefix.

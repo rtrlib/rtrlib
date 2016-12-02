@@ -86,14 +86,31 @@ struct lpfst_node *lpfst_lookup(const struct lpfst_node *root,
 							     root->len)))
 			return (struct lpfst_node *)root;
 
-		if (is_left_child(prefix, *lvl))
+		if ((is_left_child(prefix, *lvl) && root->lchild) ||
+		    (!is_left_child(prefix, *lvl) && !root->rchild)) {
 			root = root->lchild;
-		else
+		}
+		else {
 			root = root->rchild;
+		}
 
 		(*lvl)++;
 	}
 	return NULL;
+}
+
+struct lpfst_node *lpfst_lookup_fallback(const struct lpfst_node *first,
+					 const struct lpfst_node *second,
+					 const struct lrtr_ip_addr *prefix,
+					 const uint8_t mask_len,
+					 unsigned int *lvl)
+{
+	unsigned int tmp_lvl = *lvl;
+	struct lpfst_node *tmp_node;
+	if((tmp_node = lpfst_lookup(first, prefix, mask_len, lvl)))
+		return (struct lpfst_node *)tmp_node;
+	*lvl = tmp_lvl;
+	return lpfst_lookup(second, prefix, mask_len, lvl);
 }
 
 struct lpfst_node *lpfst_lookup_exact(struct lpfst_node *root_node,
