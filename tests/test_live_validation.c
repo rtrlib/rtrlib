@@ -35,6 +35,9 @@ const struct test_validity_query queries[] = {
 	{"2001:7fb:fd03::",	48, 12654, BGP_PFXV_STATE_INVALID},
 	{"84.205.83.0",		24, 12654, BGP_PFXV_STATE_NOT_FOUND},
 	{"2001:7fb:ff03::",	48, 12654, BGP_PFXV_STATE_NOT_FOUND},
+	/* verify issue #99 solved */
+	{"1.9.0.0",		16, 4788,  BGP_PFXV_STATE_VALID},
+	{"1.9.23.0",		24, 4788,  BGP_PFXV_STATE_VALID},
 	{NULL, 0, 0, 0}
 };
 
