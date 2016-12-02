@@ -420,7 +420,7 @@ static void pfx_table_test(void)
 				  &pfx.prefix, 24,
 				  &res) == PFX_SUCCESS);
 	assert(res == BGP_PFXV_STATE_VALID);
-	
+
 	assert(pfx_table_validate(&pfxt, 200,
 				  &pfx.prefix, 24,
 				  &res) == PFX_SUCCESS);
