@@ -726,7 +726,7 @@ static int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, 
         if (tmp == NULL) {
             const char txt[] = "Realloc failed";
             RTR_DBG("%s", txt);
-            rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
+            rtr_send_error_pdu(rtr_socket, NULL, 0, INTERNAL_ERROR, txt, sizeof(txt));
             rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
             free(*ary);
             ary = NULL;
@@ -758,7 +758,7 @@ static int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *p
         if (tmp == NULL) {
             const char txt[] = "Realloc failed";
             RTR_DBG("%s", txt);
-            rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
+            rtr_send_error_pdu(rtr_socket, NULL, 0, INTERNAL_ERROR, txt, sizeof(txt));
             rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
             free(*ary);
             ary = NULL;
@@ -808,7 +808,7 @@ static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, const void *pdu)
     } else if (rtval == PFX_ERROR) {
         const char txt[] = "PFX_TABLE Error";
         RTR_DBG("%s", txt);
-        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
+        rtr_send_error_pdu(rtr_socket, NULL, 0, INTERNAL_ERROR, txt, sizeof(txt));
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
         return RTR_ERROR;
     }
@@ -854,7 +854,7 @@ static int rtr_update_spki_table(struct rtr_socket* rtr_socket, const void* pdu)
     } else if (rtval == SPKI_ERROR) {
         const char txt[] = "spki_table Error";
         RTR_DBG("%s", txt);
-        rtr_send_error_pdu(rtr_socket, pdu, pdu_size, INTERNAL_ERROR, txt, sizeof(txt));
+        rtr_send_error_pdu(rtr_socket, NULL, 0, INTERNAL_ERROR, txt, sizeof(txt));
         rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
         return RTR_ERROR;
     }
