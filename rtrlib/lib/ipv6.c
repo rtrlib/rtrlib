@@ -195,8 +195,10 @@ int lrtr_ipv6_addr_to_str(const struct lrtr_ipv6_addr *ip_addr, char *b, const u
     return 0;
 }
 
-void lrtr_ipv6_addr_to_host_byte_order(const uint32_t *src, uint32_t *dest)
+void lrtr_ipv6_addr_convert_byte_order(const uint32_t *src,
+                                       uint32_t *dest,
+                                       uint32_t (*convert_fp)(uint32_t))
 {
     for(int i = 0; i < 4; i++)
-        dest[i] = ntohl(src[i]);
+        dest[i] = convert_fp(src[i]);
 }

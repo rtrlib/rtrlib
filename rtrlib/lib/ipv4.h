@@ -58,4 +58,17 @@ int lrtr_ipv4_addr_to_str(const struct lrtr_ipv4_addr *ip, char *str, const unsi
 */
 bool lrtr_ipv4_addr_equal(const struct lrtr_ipv4_addr *a, const struct lrtr_ipv4_addr *b);
 
+
+/**
+ * @ingroup util_h[{
+ * Converts the passed IPv4 address byte order with the given function.
+ * @param[in] src ipv4 address in source byte order.
+ * @param[out] dest ipv4 address in target byte order.
+ * @param[in] convert_fp Pointer to the function used for conversion.
+ * }
+*/
+void lrtr_ipv4_addr_convert_byte_order(const uint32_t src,
+                                       uint32_t *dest,
+                                       uint32_t (*convert_fp)(uint32_t));
+
 #endif
