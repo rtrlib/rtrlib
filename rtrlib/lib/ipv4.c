@@ -43,3 +43,10 @@ bool lrtr_ipv4_addr_equal(const struct lrtr_ipv4_addr *a, const struct lrtr_ipv4
         return true;
     return false;
 }
+
+void lrtr_ipv4_addr_convert_byte_order(const uint32_t src,
+                                       uint32_t *dest,
+                                       uint32_t (*convert_fp)(uint32_t))
+{
+	*dest = convert_fp(src);
+}
