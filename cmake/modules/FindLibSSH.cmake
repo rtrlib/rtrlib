@@ -28,6 +28,7 @@ if (NOT NoSSH)
         NAMES
           libssh/libssh.h
         PATHS
+          ${LIBSSH_INCLUDE}
           /usr/include
           /usr/local/include
           /opt/local/include
@@ -41,6 +42,7 @@ if (NOT NoSSH)
           ssh
           libssh
         PATHS
+          ${LIBSSH_LIBRARY}
           /usr/lib
           /usr/local/lib
           /opt/local/lib
