@@ -58,7 +58,7 @@ static inline bool is_left_child(const struct lrtr_ip_addr *addr,
 void lpfst_insert(struct lpfst_node *root, struct lpfst_node *new,
 		  const unsigned int lvl)
 {
-	if (new->len > root->len)
+	if (new->len < root->len)
 		swap_nodes(root, new);
 
 	if (is_left_child(&new->prefix, lvl)) {
@@ -104,7 +104,7 @@ struct lpfst_node *lpfst_lookup_exact(struct lpfst_node *root_node,
 	*found = false;
 
 	while (root_node) {
-		if (*lvl > 0 && root_node->len < mask_len) {
+		if (*lvl > 0 && root_node->len > mask_len) {
 			(*lvl)--;
 			return root_node->parent;
 		}
