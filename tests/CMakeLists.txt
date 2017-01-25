@@ -14,6 +14,8 @@ add_executable(test_live_validation test_live_validation.c)
 target_link_libraries(test_live_validation rtrlib)
 add_executable(test_ipaddr test_ipaddr.c)
 target_link_libraries(test_ipaddr rtrlib)
+add_executable(test_getbits test_getbits.c)
+target_link_libraries(test_getbits rtrlib)
 
 
 if(UNIT_TESTING)
