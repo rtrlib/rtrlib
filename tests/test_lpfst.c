@@ -24,39 +24,44 @@ static void lpfst_test(void)
 {
 	struct lrtr_ip_addr addr;
 	struct lpfst_node *result;
+	struct lpfst_node n1, n2, n3, n4;
 	unsigned int lvl = 0;
-	/* set IP to version 4 */
+	bool found;
+
 	addr.ver = LRTR_IPV4;
 
-	struct lpfst_node n1;
-	/* init  node n1 */
+	/* node 1
+	 * Tree after insert should be:
+	 * 100.200.0.0/16
+	 */
+
 	n1.len = 16;
 	n1.lchild = NULL;
 	n1.rchild = NULL;
 	n1.parent = NULL;
 	n1.data = NULL;
-
 	lrtr_ip_str_to_addr("100.200.0.0", &n1.prefix);
-	lrtr_ip_str_to_addr("100.200.0.0", &addr);
-	lvl = 0;
+	addr = n1.prefix;
 	result = lpfst_lookup(&n1, &addr, 16, &lvl);
 	assert(result);
 	assert(lrtr_ip_str_cmp(&result->prefix, "100.200.0.0"));
 
 	lrtr_ip_str_to_addr("100.200.30.0", &addr);
-	lvl = 0;
 	result = lpfst_lookup(&n1, &addr, 16, &lvl);
 	assert(result);
 	assert(lrtr_ip_str_cmp(&result->prefix, "100.200.0.0"));
 
-	struct lpfst_node n2;
-	/* init node n2 */
+	/* node 2
+	 * Tree after insert should be:
+	 * 100.200.0.0/16
+	 *               \
+	 *                132.200.0.0/16
+	 */
 	n2.len = 16;
 	n2.lchild = NULL;
 	n2.rchild = NULL;
 	n2.parent = NULL;
 	n2.data = NULL;
-
 	lrtr_ip_str_to_addr("132.200.0.0", &n2.prefix);
 	lpfst_insert(&n1, &n2, 0);
 	lrtr_ip_str_to_addr("132.200.0.0", &addr);
@@ -66,8 +71,12 @@ static void lpfst_test(void)
 	assert(lrtr_ip_str_cmp(&result->prefix, "132.200.0.0"));
 	assert(n1.rchild == &n2);
 
-	struct lpfst_node n3;
-	/* init node n3 */
+	/* node 3
+	 * Tree after insert should be:
+	 *		 100.200.0.0/16
+	 *               /             \
+	 * 101.200.0.0/16               132.200.0.0/16
+	 */
 	n3.len = 16;
 	n3.lchild = NULL;
 	n3.rchild = NULL;
@@ -83,29 +92,40 @@ static void lpfst_test(void)
 	assert(lrtr_ip_str_cmp(&result->prefix, "101.200.0.0"));
 	assert(n1.lchild == &n3);
 
-	struct lpfst_node n4;
-	/* init node n4 */
+	/* node 4
+	 * Tree after insert should be:
+	 *		 100.200.0.0/16
+	 *               /             \
+	 * 101.200.0.0/16               132.200.0.0/16
+	 *                              /
+	 *                      132.201.3.0/24
+	 */
 	n4.len = 24;
 	n4.lchild = NULL;
 	n4.rchild = NULL;
 	n4.parent = NULL;
 	n4.data = NULL;
 
-	lrtr_ip_str_to_addr("132.200.3.0", &n4.prefix);
+	lrtr_ip_str_to_addr("132.201.3.0", &n4.prefix);
 	lpfst_insert(&n1, &n4, 0);
-	lrtr_ip_str_to_addr("132.200.3.0", &addr);
+	lrtr_ip_str_to_addr("132.201.3.0", &addr);
 	lvl = 0;
 	result = lpfst_lookup(&n1, &addr, 24, &lvl);
 	assert(result);
-	assert(lrtr_ip_str_cmp(&result->prefix, "132.200.3.0"));
-	assert(lrtr_ip_str_cmp(&n1.prefix, "132.200.3.0"));
-	assert(n1.len == 24);
+	assert(lrtr_ip_str_cmp(&result->prefix, "132.201.3.0"));
+
+	assert(lrtr_ip_str_cmp(&n1.prefix, "100.200.0.0"));
+	assert(n1.len == 16);
+
+	/* verify tree structure */
 	assert(lrtr_ip_str_cmp(&n1.lchild->prefix, "101.200.0.0"));
 	assert(n1.lchild->len == 16);
+
 	assert(lrtr_ip_str_cmp(&n1.rchild->prefix, "132.200.0.0"));
 	assert(n1.rchild->len == 16);
-	assert(lrtr_ip_str_cmp(&n1.lchild->rchild->prefix, "100.200.0.0"));
-	assert(n1.lchild->rchild->len == 16);
+
+	assert(lrtr_ip_str_cmp(&n1.rchild->lchild->prefix, "132.201.3.0"));
+	assert(n1.rchild->lchild->len == 24);
 
 	lrtr_ip_str_to_addr("132.200.0.0", &addr);
 	lvl = 0;
@@ -113,42 +133,59 @@ static void lpfst_test(void)
 	assert(result);
 	assert(lrtr_ip_str_cmp(&result->prefix, "132.200.0.0"));
 
+	/* verify that a search for 132.200.3.0 returns 132.200/16 */
 	lrtr_ip_str_to_addr("132.200.3.0", &addr);
 	lvl = 0;
 	result = lpfst_lookup(&n1, &addr, 16, &lvl);
 	assert(result);
 	assert(lrtr_ip_str_cmp(&result->prefix, "132.200.0.0"));
 
+	/* verify no result for prefix 132.0.0.0/16 is found */
 	lvl = 0;
 	lrtr_ip_str_to_addr("132.0.0.0", &addr);
-
-	bool found;
-	/* verify prefix 132.0.0.0/16 is not found */
 	result = lpfst_lookup_exact(&n1, &addr, 16, &lvl, &found);
 	assert(!found);
 
+	/* verify lpfst_lookup_exact for prefix 132.201.3.0/24 is found */
 	lvl = 0;
-	lrtr_ip_str_to_addr("132.200.3.0", &addr);
-	/* verify prefix 132.200.3.0/24 is found */
+	lrtr_ip_str_to_addr("132.201.3.0", &addr);
 	result = lpfst_lookup_exact(&n1, &addr, 24, &lvl, &found);
 	assert(found);
-	assert(lrtr_ip_str_cmp(&result->prefix, "132.200.3.0"));
+	assert(lrtr_ip_str_cmp(&result->prefix, "132.201.3.0"));
 
-	result = lpfst_remove(&n1, &addr, 24, 0);
+	/* remove root->rchild
+	 * Tree after remove should be:
+	 *		 100.200.0.0/16
+	 *               /             \
+	 * 101.200.0.0/16               132.201.3.0/24
+	 */
+	lrtr_ip_str_to_addr("132.200.0.0", &addr);
+	result = lpfst_remove(&n1, &addr, 16, 0);
 	assert(result);
-	assert(lrtr_ip_str_cmp(&n1.prefix, "132.200.0.0"));
+	assert(lrtr_ip_str_cmp(&n1.prefix, "100.200.0.0"));
 	assert(lrtr_ip_str_cmp(&n1.lchild->prefix, "101.200.0.0"));
-	assert(lrtr_ip_str_cmp(&n1.lchild->rchild->prefix, "100.200.0.0"));
-	assert(!n1.rchild);
+	assert(lrtr_ip_str_cmp(&n1.rchild->prefix, "132.201.3.0"));
+	assert(!n1.rchild->lchild);
 
+	/* remove root->lchild
+	 * Tree after remove should be:
+	 *		 100.200.0.0/16
+	 *                             \
+	 *                        132.201.3.0/24
+	 */
 	lrtr_ip_str_to_addr("101.200.0.0", &addr);
 	result = lpfst_remove(&n1, &addr, 16, 0);
 	assert(result);
-	assert(lrtr_ip_str_cmp(&n1.lchild->prefix, "100.200.0.0"));
-	assert(!n1.rchild);
+	assert(lrtr_ip_str_cmp(&n1.rchild->prefix, "132.201.3.0"));
+	assert(!n1.lchild);
 
+	/* remove root node
+	 * Tree after remove should be:
+	 *		 132.201.3.0/24
+	 */
 	lrtr_ip_str_to_addr("100.200.0.0", &addr);
 	result = lpfst_remove(&n1, &addr, 16, 0);
+	assert(lrtr_ip_str_cmp(&n1.prefix, "132.201.3.0"));
 	assert(result);
 	assert(!n1.lchild);
 	assert(!n1.rchild);
