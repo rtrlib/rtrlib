@@ -83,10 +83,11 @@ void pfx_table_free(struct pfx_table *pfx_table)
 
 int pfx_table_append_elem(struct node_data *data, const struct pfx_record *record)
 {
-    data->len++;
-    data->ary = realloc(data->ary, sizeof(struct data_elem) * data->len);
-    if(data->ary == NULL)
+    struct data_elem *tmp  = realloc(data->ary, sizeof(struct data_elem) * ((data->len) + 1));
+    if(tmp == NULL)
         return PFX_ERROR;
+    data->len++;
+    data->ary = tmp;
     data->ary[data->len - 1].asn = record->asn;
     data->ary[data->len - 1].max_len = record->max_len;
     data->ary[data->len - 1].socket = record->socket;
@@ -105,8 +106,10 @@ int pfx_table_create_node(struct trie_node **node, const struct pfx_record *reco
     (*node)->parent = NULL;
 
     (*node)->data = malloc(sizeof(struct node_data));
-    if((*node)->data == NULL)
+    if((*node)->data == NULL) {
+        free(*node);
         return PFX_ERROR;
+    }
     ((struct node_data *) (*node)->data)->len = 0;
     ((struct node_data *) (*node)->data)->ary = NULL;
 
@@ -141,8 +144,10 @@ int pfx_table_del_elem(struct node_data *data, const unsigned int index)
     }
     data->len--;
     data->ary = realloc(data->ary, sizeof(struct data_elem) * data->len);
-    if(data->len != 0 && data->ary == NULL)
+    if(data->len != 0 && data->ary == NULL) {
+        free(&data->ary[data->len]);
         return PFX_ERROR;
+    }
     else if(data->len == 0)
         data->ary = NULL;
 
