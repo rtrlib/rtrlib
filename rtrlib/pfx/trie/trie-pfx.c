@@ -366,9 +366,9 @@ int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const st
 
 int pfx_table_src_remove(struct pfx_table *pfx_table, const struct rtr_socket *socket)
 {
+    pthread_rwlock_wrlock(&(pfx_table->lock));
     for(unsigned int i = 0; i < 2; i++) {
         struct trie_node **root = (i == 0 ? &(pfx_table->ipv4) : &(pfx_table->ipv6));
-        pthread_rwlock_wrlock(&(pfx_table->lock));
         if(*root != NULL) {
             int rtval = pfx_table_remove_id(pfx_table, root, *root, socket, 0);
             if(rtval == PFX_ERROR) {
@@ -376,8 +376,8 @@ int pfx_table_src_remove(struct pfx_table *pfx_table, const struct rtr_socket *s
                 return PFX_ERROR;
             }
         }
-        pthread_rwlock_unlock(&pfx_table->lock);
     }
+    pthread_rwlock_unlock(&pfx_table->lock);
     return PFX_SUCCESS;
 }
 
