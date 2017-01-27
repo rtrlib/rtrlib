@@ -261,7 +261,7 @@ static void trie_test(void)
 	lvl = 0;
 	result = trie_lookup(&n1, &addr, 24, &lvl);
 	assert(result);
-	assert(lrtr_ip_str_cmp(&result->prefix, "132.200.3.0"));
+	assert(lrtr_ip_str_cmp(&result->prefix, "132.200.0.0"));
 
 	assert(lrtr_ip_str_cmp(&n2.prefix, "132.200.0.0"));
 	assert(n2.len == 16);
@@ -320,7 +320,7 @@ static void trie_test(void)
 	assert(result);
 	assert(!n1.lchild);
 	assert(!n1.rchild);
-    assert(lrtr_ip_str_cmp(&n1.prefix, "132.200.0.0"));
+    	assert(lrtr_ip_str_cmp(&n1.prefix, "132.200.0.0"));
 }
 
 int main(void)
