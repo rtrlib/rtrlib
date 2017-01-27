@@ -74,7 +74,7 @@ void trie_insert(struct trie_node *root, struct trie_node *new,
 	trie_insert(root->rchild, new, lvl + 1);
 }
 
-struct trie_node *trie_lookup_first_match(const struct trie_node *root,
+struct trie_node *trie_lookup(const struct trie_node *root,
 					    const struct lrtr_ip_addr *prefix,
 					    const uint8_t mask_len,
 					    unsigned int *lvl)
@@ -91,46 +91,11 @@ struct trie_node *trie_lookup_first_match(const struct trie_node *root,
 
 	if (is_left_child(prefix, *lvl)) {
 		(*lvl)++;
-		return trie_lookup_first_match(root->lchild, prefix, mask_len,
+		return trie_lookup(root->lchild, prefix, mask_len,
 						lvl);
 	}
 	(*lvl)++;
-	return trie_lookup_first_match(root->rchild, prefix, mask_len, lvl);
-}
-
-struct trie_node *trie_lookup(const struct trie_node *root,
-				const struct lrtr_ip_addr *prefix,
-				const uint8_t mask_len, unsigned int *lvl)
-{
-	unsigned int my_lvl = *lvl;
-
-	if (!root)
-		return NULL;
-
-	bool is_match = false;
-	struct trie_node *better_match = NULL;
-
-	if (root->len <= mask_len && lrtr_ip_addr_equal(lrtr_ip_addr_get_bits(
-							&root->prefix, 0,
-							root->len),
-							lrtr_ip_addr_get_bits(
-							prefix, 0, root->len)))
-		is_match = true;
-	if (is_left_child(prefix, *lvl)) {
-		(*lvl)++;
-		better_match = trie_lookup(root->lchild, prefix, mask_len,
-					    lvl);
-	} else {
-		(*lvl)++;
-		better_match = trie_lookup(root->rchild, prefix, mask_len,
-					    lvl);
-	}
-	if (!better_match && is_match) {
-		*lvl = my_lvl;
-		return (struct trie_node *)root;
-	} else {
-		return better_match;
-	}
+	return trie_lookup(root->rchild, prefix, mask_len, lvl);
 }
 
 struct trie_node *trie_lookup_exact(struct trie_node *root_node,

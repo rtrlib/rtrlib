@@ -301,7 +301,7 @@ int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason
     }
 
     unsigned int lvl = 0;
-    struct trie_node *node = trie_lookup_first_match(root, prefix, prefix_len, &lvl);
+    struct trie_node *node = trie_lookup(root, prefix, prefix_len, &lvl);
     if(node == NULL) {
         pthread_rwlock_unlock(&pfx_table->lock);
         *result = BGP_PFXV_STATE_NOT_FOUND;
@@ -326,9 +326,9 @@ int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason
 
     while(!pfx_table_elem_matches(node->data, asn, prefix_len)) {
         if(lrtr_ip_addr_is_zero(lrtr_ip_addr_get_bits(prefix, lvl++, 1))) //post-incr lvl, trie_lookup is performed on child_nodes => parent lvl + 1
-            node = trie_lookup_first_match(node->lchild, prefix, prefix_len, &lvl);
+            node = trie_lookup(node->lchild, prefix, prefix_len, &lvl);
         else
-            node = trie_lookup_first_match(node->rchild, prefix, prefix_len, &lvl);
+            node = trie_lookup(node->rchild, prefix, prefix_len, &lvl);
 
         if(node == NULL) {
             pthread_rwlock_unlock(&pfx_table->lock);
