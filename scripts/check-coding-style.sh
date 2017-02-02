@@ -29,8 +29,12 @@ fi
 cd $SCRIPT_DIR/..
 for i in $CHECKSOURCE; do
 	echo "> check coding style of $i ..."
-	$SCRIPT_DIR/checkpatch.pl -f --strict --no-tree --terse --show-types \
-		--ignore PREFER_KERNEL_TYPES $i
+    IGNORE="PREFER_KERNEL_TYPES,CONST_STRUCT"
+    if [[ $i == *"unittest"* ]]; then
+        IGNORE="${IGNORE},CAMELCASE"
+    fi
+        $SCRIPT_DIR/checkpatch.pl -f --strict --no-tree --terse --show-types \
+               --ignore ${IGNORE} $i
 
 	if [ $? -ne "0" ]; then
 		EXIT_CODE=1
