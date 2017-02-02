@@ -69,7 +69,7 @@ struct lpfst_node *lpfst_lookup(const struct lpfst_node *root_node,
  * @return The parent of the node where the lookup operation
  *	   stopped (found==false).
  * @return NULL if root_node is NULL.
-*/
+ */
 struct lpfst_node *lpfst_lookup_exact(struct lpfst_node *root_node,
 				      const struct lrtr_ip_addr *prefix,
 				      const uint8_t mask_len,
