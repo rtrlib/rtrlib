@@ -27,7 +27,7 @@
  * @brief Compare SPKI records for equality
  *
  * @return true if r1 == r2, false otherwise
-  */
+ */
 static bool spki_records_are_equal(struct spki_record *r1,
 				   struct spki_record *r2)
 {
