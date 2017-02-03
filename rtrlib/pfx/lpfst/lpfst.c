@@ -11,6 +11,13 @@
 #include <assert.h>
 #include "rtrlib/pfx/lpfst/lpfst.h"
 
+#include <stdio.h>
+#include <sys/types.h>
+#include <assert.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include "rtrlib/lib/ipv6.h"
+
 static void swap_nodes(struct lpfst_node *a, struct lpfst_node *b)
 {
 	struct lpfst_node tmp;
@@ -78,22 +85,43 @@ struct lpfst_node *lpfst_lookup(const struct lpfst_node *root,
 				const struct lrtr_ip_addr *prefix,
 				const uint8_t mask_len, unsigned int *lvl)
 {
+	char ip[INET6_ADDRSTRLEN];
 	while (root) {
-		if (root->len <= mask_len &&
-		    lrtr_ip_addr_equal(lrtr_ip_addr_get_bits(&root->prefix, 0,
-							     root->len),
-				       lrtr_ip_addr_get_bits(prefix, 0,
-							     root->len)))
+		lrtr_ip_addr_to_str(&root->prefix, ip, INET6_ADDRSTRLEN);
+		//fprintf(stderr, "lpfst_lookup: prefix %s/%d\n", ip, root->len);
+		if ((root->len <= mask_len) && lrtr_ip_addr_equal(
+				lrtr_ip_addr_get_bits(&root->prefix, 0,mask_len-1),
+				lrtr_ip_addr_get_bits(prefix, 0, mask_len-1))
+		   )
 			return (struct lpfst_node *)root;
 
-		if (is_left_child(prefix, *lvl))
+		if (is_left_child(prefix, *lvl)) {
+			//fprintf(stderr, "lpfst_lookup: look left\n");
 			root = root->lchild;
-		else
+		} else {
+			//fprintf(stderr, "lpfst_lookup: look right\n");
 			root = root->rchild;
+		}
 
 		(*lvl)++;
 	}
 	return NULL;
+}
+
+struct lpfst_node *lpfst_lookup_fallback(const struct lpfst_node *first,
+					 const struct lpfst_node *second,
+					 const struct lrtr_ip_addr *prefix,
+					 const uint8_t mask_len,
+					 unsigned int *lvl)
+{
+	unsigned int tmp_lvl = *lvl;
+	struct lpfst_node *tmp_node;
+
+	tmp_node = lpfst_lookup(first, prefix, mask_len, lvl);
+	if (tmp_node)
+		return (struct lpfst_node *)tmp_node;
+	*lvl = tmp_lvl;
+	return lpfst_lookup(second, prefix, mask_len, lvl);
 }
 
 struct lpfst_node *lpfst_lookup_exact(struct lpfst_node *root_node,
