@@ -1,5 +1,7 @@
 rtrlib/rtr_mgr.h
 rtrlib/rtr_mgr.c
+rtrlib/pfx/trie/trie.h
+rtrlib/pfx/trie/trie.c
 rtrlib/pfx/lpfst/lpfst.h
 rtrlib/pfx/lpfst/lpfst.c
 tests/test_ht_spkitable.c

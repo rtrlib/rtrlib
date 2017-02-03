@@ -16,15 +16,23 @@
 #include <arpa/inet.h>
 #include "rtrlib/lib/ip.h"
 #include "rtrlib/lib/utils.h"
-#include "rtrlib/pfx/lpfst/lpfst-pfx.h"
 
+#ifdef RTRLIB_USE_LPFST
+#include "rtrlib/pfx/lpfst/lpfst-pfx.h"
+#else
+#include "rtrlib/pfx/trie/trie-pfx.h"
+#endif
+
+
+
+#ifdef RTRLIB_USE_LPFST
 /**
- * @brief remove_src_test
+ * @brief remove_src_test_lpfst
  * This test verfies pfx_table_src_remove function. It first adds certain
  * records with different sockets into a pfx_table. Afterwards entries with
  * socket tr1 are removed, and the remaining records are verfified.
  */
-static void remove_src_test(void)
+static void remove_src_test_lpfst(void)
 {
 	struct pfx_table pfxt;
 	struct rtr_socket tr1;
@@ -90,6 +98,80 @@ static void remove_src_test(void)
 	pfx_table_free(&pfxt);
 	printf("remove_src_test successful\n");
 }
+#else
+/**
+ * @brief remove_src_test_trie
+ * This test verfies pfx_table_src_remove function. It first adds certain
+ * records with different sockets into a pfx_table. Afterwards entries with
+ * socket tr1 are removed, and the remaining records are verfified.
+ */
+static void remove_src_test_trie(void)
+{
+	struct pfx_table pfxt;
+	struct rtr_socket tr1;
+	struct pfx_record pfx;
+	/* TEST1: init prefix table ----------------------------------------- */
+	pfx_table_init(&pfxt, NULL);
+	pfx.min_len = 32;
+	pfx.max_len = 32;
+	/* TEST2: add and verify differnt prefixes -------------------------- */
+	pfx.asn = 80;
+	pfx.socket = &tr1;
+	lrtr_ip_str_to_addr("10.11.10.0", &pfx.prefix);
+	assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
+
+	pfx.asn = 90;
+	pfx.socket = NULL;
+	lrtr_ip_str_to_addr("10.11.10.0", &pfx.prefix);
+	assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
+
+	pfx.socket = NULL;
+	pfx.min_len = 24;
+	lrtr_ip_str_to_addr("192.168.0.0", &pfx.prefix);
+	assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
+
+	pfx.socket = &tr1;
+	pfx.min_len = 8;
+	lrtr_ip_str_to_addr("10.0.0.0", &pfx.prefix);
+	assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
+
+	unsigned int len = 0;
+	struct trie_node **array = NULL;
+	enum pfxv_state res;
+	/* verify that table has 3 distinct prefix entries */
+	assert(trie_get_children(pfxt.ipv4, &array, &len) != -1);
+	free(array);
+	array = NULL;
+	assert((len + 1) == 3);
+
+	/* remove entries with socket tr1, verify remaining 2 records */
+	pfx_table_src_remove(&pfxt, &tr1);
+	len = 0;
+	assert(trie_get_children(pfxt.ipv4, &array, &len) != -1);
+	free(array);
+	assert((len + 1) == 2);
+
+	/* verify validation of prefixes */
+	assert(pfx_table_validate(&pfxt, 90,
+				  &pfx.prefix, 8,
+				  &res) == PFX_SUCCESS);
+	assert(res == BGP_PFXV_STATE_NOT_FOUND);
+	lrtr_ip_str_to_addr("10.11.10.0", &pfx.prefix);
+
+	assert(pfx_table_validate(&pfxt, 90,
+				  &pfx.prefix, 32,
+				  &res) == PFX_SUCCESS);
+	assert(res == BGP_PFXV_STATE_VALID);
+	assert(pfx_table_validate(&pfxt, 80,
+				  &pfx.prefix, 32,
+				  &res) == PFX_SUCCESS);
+	assert(res == BGP_PFXV_STATE_INVALID);
+
+	/* cleanup: free table */
+	pfx_table_free(&pfxt);
+	printf("remove_src_test successful\n");
+}
+#endif
 
 /**
  * @brief Test pfx_table operations with many records
@@ -412,7 +494,11 @@ static void pfx_table_test(void)
 int main(void)
 {
 	pfx_table_test();
-	remove_src_test();
+	#ifdef RTRLIB_USE_LPFST
+	remove_src_test_lpfst();
+	#else
+	remove_src_test_trie();
+	#endif
 	mass_test();
 
 	return EXIT_SUCCESS;

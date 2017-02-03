@@ -18,7 +18,13 @@
 #include "rtrlib/transport/transport.h"
 #include "rtrlib/transport/tcp/tcp_transport.h"
 #include "rtrlib/rtr_mgr.h"
+
+#ifdef RTRLIB_USE_LPFST
 #include "rtrlib/pfx/lpfst/lpfst-pfx.h"
+#else
+#include "rtrlib/pfx/trie/trie-pfx.h"
+#endif
+
 #include "rtrlib/rtr/rtr.h"
 #include "rtrlib/lib/utils.h"
 #ifdef RTRLIB_HAVE_LIBSSH

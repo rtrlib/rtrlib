@@ -17,7 +17,11 @@
 #include <pthread.h>
 #include <time.h>
 #include "rtrlib/lib/ip.h"
+#ifdef RTRLIB_USE_LPFST
 #include "rtrlib/pfx/lpfst/lpfst-pfx.h"
+#else
+#include "rtrlib/pfx/trie/trie-pfx.h"
+#endif
 
 uint32_t min_i = 0xFF000000;
 uint32_t max_i = 0xFFFFFFF0;
