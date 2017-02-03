@@ -187,11 +187,9 @@ int main(int argc, char **argv)
 	}
 	#ifdef RTRLIB_HAVE_LIBSSH
 	else {
-		unsigned int iport = atoi(port);
-
 		ssh_config = (struct tr_ssh_config) {
 			host,
-			iport,
+			port,
 			NULL,
 			user,
 			hostkey,
