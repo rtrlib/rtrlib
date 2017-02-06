@@ -330,11 +330,45 @@ static void pfx_table_test(void)
 	printf("pfx_table_test successful\n");
 }
 
+static void add_ip4_pfx_record(struct pfx_table *pfxt, uint32_t asn,
+			       const char *ip, uint8_t min_mask_len,
+			       uint8_t max_mask_len)
+{
+	struct pfx_record pfx;
+	enum pfxv_state val_res;
+
+	pfx.asn = asn;
+	pfx.min_len = min_mask_len;
+	pfx.max_len = max_mask_len;
+
+	assert(!lrtr_ip_str_to_addr(ip, &pfx.prefix));
+	assert(pfx_table_add(pfxt, &pfx) == PFX_SUCCESS);
+
+	assert(pfx_table_validate(pfxt, pfx.asn, &pfx.prefix, pfx.min_len,
+				  &val_res) == PFX_SUCCESS);
+	assert(val_res == BGP_PFXV_STATE_VALID);
+}
+
+static void test_issue99(void)
+{
+	struct pfx_table pfxt;
+
+	pfx_table_init(&pfxt, NULL);
+
+	add_ip4_pfx_record(&pfxt, 200, "10.100.255.0", 24, 24);
+	add_ip4_pfx_record(&pfxt, 300, "255.0.0.0", 24, 24);
+	add_ip4_pfx_record(&pfxt, 400, "128.0.0.0", 1, 24);
+
+	validate(&pfxt, 400, "255.0.0.0", 24, BGP_PFXV_STATE_VALID);
+	pfx_table_free(&pfxt);
+}
+
 int main(void)
 {
 	pfx_table_test();
 	remove_src_test();
 	mass_test();
+	test_issue99();
 
 	return EXIT_SUCCESS;
 }
