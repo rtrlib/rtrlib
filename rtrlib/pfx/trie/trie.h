@@ -7,13 +7,13 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#ifndef RTR_LPFST
-#define RTR_LPFST
+#ifndef RTR_trie
+#define RTR_trie
 #include <inttypes.h>
 #include "rtrlib/lib/ip.h"
 
 /**
- * @brief lpfst_node
+ * @brief trie_node
  * @param prefix
  * @param rchild
  * @param lchild
@@ -21,11 +21,11 @@
  * @param data
  * @param len number of elements in data array
  */
-struct lpfst_node {
+struct trie_node {
 	struct lrtr_ip_addr prefix;
-	struct lpfst_node *rchild;
-	struct lpfst_node *lchild;
-	struct lpfst_node *parent;
+	struct trie_node *rchild;
+	struct trie_node *lchild;
+	struct trie_node *parent;
 	void *data;
 	uint8_t len;
 };
@@ -36,24 +36,25 @@ struct lpfst_node {
  * @param[in] new_node Node that will be inserted.
  * @param[in] level Level of the the root node in the tree.
  */
-void lpfst_insert(struct lpfst_node *root, struct lpfst_node *new_node,
-		  const unsigned int level);
+void trie_insert(struct trie_node *root, struct trie_node *new_node,
+		 const unsigned int level);
 
 /**
- * @brief Searches for the node with the longest prefix, matching the passed ip
- *	  prefix and prefix length.
+ * @brief Searches for a matching node matching the passed ip
+ *	  prefix and prefix length. If multiple matching nodes exist, the one
+ *	  with the shortest prefix is returned.
  * @param[in] root_node Node were the lookup process starts.
  * @param[in] lrtr_ip_addr IP-Prefix.
  * @param[in] mask_len Length of the network mask of the prefix.
  * @param[in,out] level of the the node root in the tree. Is set to the level of
  *		  the node that is returned.
- * @returns The lpfst_node with the longest prefix in the tree matching the
+ * @returns The trie_node with the short prefix in the tree matching the
  *	    passed ip prefix and prefix length.
  * @returns NULL if no node that matches the passed prefix and prefix length
  *	    could be found.
  */
-struct lpfst_node *lpfst_lookup(const struct lpfst_node *root_node,
-				const struct lrtr_ip_addr *prefix,
+struct trie_node *trie_lookup(const struct trie_node *root_node,
+			      const struct lrtr_ip_addr *prefix,
 				const uint8_t mask_len, unsigned int *level);
 
 /**
@@ -70,10 +71,10 @@ struct lpfst_node *lpfst_lookup(const struct lpfst_node *root_node,
  *	   stopped (found==false).
  * @return NULL if root_node is NULL.
  */
-struct lpfst_node *lpfst_lookup_exact(struct lpfst_node *root_node,
-				      const struct lrtr_ip_addr *prefix,
-				      const uint8_t mask_len,
-				      unsigned int *level, bool *found);
+struct trie_node *trie_lookup_exact(struct trie_node *root_node,
+				    const struct lrtr_ip_addr *prefix,
+				    const uint8_t mask_len,
+				    unsigned int *level, bool *found);
 
 /**
  * @brief Removes the node with the passed IP prefix and mask_len from the tree.
@@ -84,10 +85,10 @@ struct lpfst_node *lpfst_lookup_exact(struct lpfst_node *root_node,
  * @returns Node that was removed from the tree. The caller has to free it.
  * @returns NULL If the Prefix could'nt be found in the tree.
  */
-struct lpfst_node *lpfst_remove(struct lpfst_node *root_node,
-				const struct lrtr_ip_addr *prefix,
-				const uint8_t mask_len,
-				const unsigned int level);
+struct trie_node *trie_remove(struct trie_node *root_node,
+			      const struct lrtr_ip_addr *prefix,
+			      const uint8_t mask_len,
+			      const unsigned int level);
 
 /**
  * @brief Detects if a node is a leaf in the tree.
@@ -95,8 +96,8 @@ struct lpfst_node *lpfst_remove(struct lpfst_node *root_node,
  * @returns true if node is a leaf.
  * @returns false if node isn't a leaf.
  */
-bool lpfst_is_leaf(const struct lpfst_node *node);
+bool trie_is_leaf(const struct trie_node *node);
 
-int lpfst_get_children(const struct lpfst_node *root_node,
-		       struct lpfst_node ***array, unsigned int *len);
+int trie_get_children(const struct trie_node *root_node,
+		      struct trie_node ***array, unsigned int *len);
 #endif

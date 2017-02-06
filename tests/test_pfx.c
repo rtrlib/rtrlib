@@ -16,7 +16,7 @@
 #include <arpa/inet.h>
 #include "rtrlib/lib/ip.h"
 #include "rtrlib/lib/utils.h"
-#include "rtrlib/pfx/lpfst/lpfst-pfx.h"
+#include "rtrlib/pfx/trie/trie-pfx.h"
 
 /**
  * @brief remove_src_test
@@ -55,10 +55,10 @@ static void remove_src_test(void)
 	assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
 
 	unsigned int len = 0;
-	struct lpfst_node **array = NULL;
+	struct trie_node **array = NULL;
 	enum pfxv_state res;
 	/* verify that table has 3 distinct prefix entries */
-	assert(lpfst_get_children(pfxt.ipv4, &array, &len) != -1);
+	assert(trie_get_children(pfxt.ipv4, &array, &len) != -1);
 	free(array);
 	array = NULL;
 	assert((len + 1) == 3);
@@ -66,7 +66,7 @@ static void remove_src_test(void)
 	/* remove entries with socket tr1, verify remaining 2 records */
 	pfx_table_src_remove(&pfxt, &tr1);
 	len = 0;
-	assert(lpfst_get_children(pfxt.ipv4, &array, &len) != -1);
+	assert(trie_get_children(pfxt.ipv4, &array, &len) != -1);
 	free(array);
 	assert((len + 1) == 2);
 

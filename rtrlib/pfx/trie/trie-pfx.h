@@ -8,26 +8,22 @@
  */
 
 /**
- * @defgroup mod_lpfst_pfx_h Longest prefix first search tree
+ * @defgroup mod_trie_pfx_h Trie
  * @ingroup mod_pfx_h
  * @brief An implementation of a \ref mod_pfx_h "pfx_table" data structure
- * using longest prefix first trees (lpfst) for storing @ref pfx_record "pfx_records".
+ * using a shortest prefix first tree (trie) for storing @ref pfx_record "pfx_records".
  * @details This implementation uses two separate lpfs-trees, one for IPv4
  * validation records and one for IPv6 records.\n
  * See \ref mod_pfx_h "pfx_table" for a list of supported operations of
  * this data structure.\n
- * For general details about the data structure see: <a
- * href="http://dx.doi.org/10.1016/j.comnet.2007.01.023">Wuu et al. "A
- * longest prefix first search tree for IP lookup", Computer Networks,
- * 51(12), pp. 3354-3367, 2007</a>.
  *
  * @{
  */
 
-#ifndef RTR_LPFST_PFX
-#define RTR_LPFST_PFX
+#ifndef RTR_trie_PFX
+#define RTR_trie_PFX
 #include "rtrlib/pfx/pfx.h"
-#include "rtrlib/pfx/lpfst/lpfst.h"
+#include "rtrlib/pfx/trie/trie.h"
 
 /**
  * @brief pfx_table.
@@ -37,8 +33,8 @@
  * @param lock
  */
 struct pfx_table {
-    struct lpfst_node *ipv4;
-    struct lpfst_node *ipv6;
+    struct trie_node *ipv4;
+    struct trie_node *ipv6;
     pfx_update_fp update_fp;
     pthread_rwlock_t lock;
 };
