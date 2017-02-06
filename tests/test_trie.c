@@ -13,18 +13,18 @@
 #include <assert.h>
 #include "rtrlib/lib/log.h"
 #include "rtrlib/lib/utils.h"
-#include "rtrlib/pfx/lpfst/lpfst.c"
+#include "rtrlib/pfx/trie/trie.c"
 
 /*
- * @brief Test lpfst core operations such as add and remove
- * This test validates core operations of the longest prefix first search tree
- * (lpfst), namely insert, remove, lookup, and lookup_exact.
+ * @brief Test trie core operations such as add and remove
+ * This test validates core operations of the trie,
+ * namely insert, remove, lookup, and lookup_exact.
  */
-static void lpfst_test(void)
+static void trie_test(void)
 {
 	struct lrtr_ip_addr addr;
-	struct lpfst_node *result;
-	struct lpfst_node n1, n2, n3, n4;
+	struct trie_node *result;
+	struct trie_node n1, n2, n3, n4;
 	unsigned int lvl = 0;
 	bool found;
 
@@ -42,12 +42,12 @@ static void lpfst_test(void)
 	n1.data = NULL;
 	lrtr_ip_str_to_addr("100.200.0.0", &n1.prefix);
 	addr = n1.prefix;
-	result = lpfst_lookup(&n1, &addr, 16, &lvl);
+	result = trie_lookup(&n1, &addr, 16, &lvl);
 	assert(result);
 	assert(lrtr_ip_str_cmp(&result->prefix, "100.200.0.0"));
 
 	lrtr_ip_str_to_addr("100.200.30.0", &addr);
-	result = lpfst_lookup(&n1, &addr, 16, &lvl);
+	result = trie_lookup(&n1, &addr, 16, &lvl);
 	assert(result);
 	assert(lrtr_ip_str_cmp(&result->prefix, "100.200.0.0"));
 
@@ -63,10 +63,10 @@ static void lpfst_test(void)
 	n2.parent = NULL;
 	n2.data = NULL;
 	lrtr_ip_str_to_addr("132.200.0.0", &n2.prefix);
-	lpfst_insert(&n1, &n2, 0);
+	trie_insert(&n1, &n2, 0);
 	lrtr_ip_str_to_addr("132.200.0.0", &addr);
 	lvl = 0;
-	result = lpfst_lookup(&n1, &addr, 16, &lvl);
+	result = trie_lookup(&n1, &addr, 16, &lvl);
 	assert(result);
 	assert(lrtr_ip_str_cmp(&result->prefix, "132.200.0.0"));
 	assert(n1.rchild == &n2);
@@ -84,10 +84,10 @@ static void lpfst_test(void)
 	n3.data = NULL;
 
 	lrtr_ip_str_to_addr("101.200.0.0", &n3.prefix);
-	lpfst_insert(&n1, &n3, 0);
+	trie_insert(&n1, &n3, 0);
 	lrtr_ip_str_to_addr("101.200.0.0", &addr);
 	lvl = 0;
-	result = lpfst_lookup(&n1, &addr, 16, &lvl);
+	result = trie_lookup(&n1, &addr, 16, &lvl);
 	assert(result);
 	assert(lrtr_ip_str_cmp(&result->prefix, "101.200.0.0"));
 	assert(n1.lchild == &n3);
@@ -107,10 +107,10 @@ static void lpfst_test(void)
 	n4.data = NULL;
 
 	lrtr_ip_str_to_addr("132.201.3.0", &n4.prefix);
-	lpfst_insert(&n1, &n4, 0);
+	trie_insert(&n1, &n4, 0);
 	lrtr_ip_str_to_addr("132.201.3.0", &addr);
 	lvl = 0;
-	result = lpfst_lookup(&n1, &addr, 24, &lvl);
+	result = trie_lookup(&n1, &addr, 24, &lvl);
 	assert(result);
 	assert(lrtr_ip_str_cmp(&result->prefix, "132.201.3.0"));
 
@@ -129,27 +129,27 @@ static void lpfst_test(void)
 
 	lrtr_ip_str_to_addr("132.200.0.0", &addr);
 	lvl = 0;
-	result = lpfst_lookup(&n1, &addr, 16, &lvl);
+	result = trie_lookup(&n1, &addr, 16, &lvl);
 	assert(result);
 	assert(lrtr_ip_str_cmp(&result->prefix, "132.200.0.0"));
 
 	/* verify that a search for 132.200.3.0 returns 132.200/16 */
 	lrtr_ip_str_to_addr("132.200.3.0", &addr);
 	lvl = 0;
-	result = lpfst_lookup(&n1, &addr, 16, &lvl);
+	result = trie_lookup(&n1, &addr, 16, &lvl);
 	assert(result);
 	assert(lrtr_ip_str_cmp(&result->prefix, "132.200.0.0"));
 
 	/* verify no result for prefix 132.0.0.0/16 is found */
 	lvl = 0;
 	lrtr_ip_str_to_addr("132.0.0.0", &addr);
-	result = lpfst_lookup_exact(&n1, &addr, 16, &lvl, &found);
+	result = trie_lookup_exact(&n1, &addr, 16, &lvl, &found);
 	assert(!found);
 
-	/* verify lpfst_lookup_exact for prefix 132.201.3.0/24 is found */
+	/* verify trie_lookup_exact for prefix 132.201.3.0/24 is found */
 	lvl = 0;
 	lrtr_ip_str_to_addr("132.201.3.0", &addr);
-	result = lpfst_lookup_exact(&n1, &addr, 24, &lvl, &found);
+	result = trie_lookup_exact(&n1, &addr, 24, &lvl, &found);
 	assert(found);
 	assert(lrtr_ip_str_cmp(&result->prefix, "132.201.3.0"));
 
@@ -160,7 +160,7 @@ static void lpfst_test(void)
 	 * 101.200.0.0/16               132.201.3.0/24
 	 */
 	lrtr_ip_str_to_addr("132.200.0.0", &addr);
-	result = lpfst_remove(&n1, &addr, 16, 0);
+	result = trie_remove(&n1, &addr, 16, 0);
 	assert(result);
 	assert(lrtr_ip_str_cmp(&n1.prefix, "100.200.0.0"));
 	assert(lrtr_ip_str_cmp(&n1.lchild->prefix, "101.200.0.0"));
@@ -174,7 +174,7 @@ static void lpfst_test(void)
 	 *                        132.201.3.0/24
 	 */
 	lrtr_ip_str_to_addr("101.200.0.0", &addr);
-	result = lpfst_remove(&n1, &addr, 16, 0);
+	result = trie_remove(&n1, &addr, 16, 0);
 	assert(result);
 	assert(lrtr_ip_str_cmp(&n1.rchild->prefix, "132.201.3.0"));
 	assert(!n1.lchild);
@@ -184,7 +184,7 @@ static void lpfst_test(void)
 	 *		 132.201.3.0/24
 	 */
 	lrtr_ip_str_to_addr("100.200.0.0", &addr);
-	result = lpfst_remove(&n1, &addr, 16, 0);
+	result = trie_remove(&n1, &addr, 16, 0);
 	assert(lrtr_ip_str_cmp(&n1.prefix, "132.201.3.0"));
 	assert(result);
 	assert(!n1.lchild);
@@ -193,7 +193,7 @@ static void lpfst_test(void)
 
 int main(void)
 {
-	lpfst_test();
+	trie_test();
 	printf("Test successful\n");
 	return EXIT_SUCCESS;
 }

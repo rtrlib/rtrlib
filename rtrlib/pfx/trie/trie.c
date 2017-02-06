@@ -9,11 +9,11 @@
 
 #include <stdlib.h>
 #include <assert.h>
-#include "rtrlib/pfx/lpfst/lpfst.h"
+#include "rtrlib/pfx/trie/trie.h"
 
-static void swap_nodes(struct lpfst_node *a, struct lpfst_node *b)
+static void swap_nodes(struct trie_node *a, struct trie_node *b)
 {
-	struct lpfst_node tmp;
+	struct trie_node tmp;
 
 	tmp.prefix = a->prefix;
 	tmp.len = a->len;
@@ -33,7 +33,7 @@ enum child_node_rel {
 	RIGHT
 };
 
-static void add_child_node(struct lpfst_node *parent, struct lpfst_node *child,
+static void add_child_node(struct trie_node *parent, struct trie_node *child,
 			   enum child_node_rel rel)
 {
 	assert(rel == LEFT || rel == RIGHT);
@@ -55,8 +55,8 @@ static inline bool is_left_child(const struct lrtr_ip_addr *addr,
 	return lrtr_ip_addr_is_zero(lrtr_ip_addr_get_bits(addr, lvl, 1));
 }
 
-void lpfst_insert(struct lpfst_node *root, struct lpfst_node *new,
-		  const unsigned int lvl)
+void trie_insert(struct trie_node *root, struct trie_node *new,
+		 const unsigned int lvl)
 {
 	if (new->len < root->len)
 		swap_nodes(root, new);
@@ -65,17 +65,17 @@ void lpfst_insert(struct lpfst_node *root, struct lpfst_node *new,
 		if (!root->lchild)
 			return add_child_node(root, new, LEFT);
 
-		return lpfst_insert(root->lchild, new, lvl + 1);
+		return trie_insert(root->lchild, new, lvl + 1);
 	}
 
 	if (!root->rchild)
 		return add_child_node(root, new, RIGHT);
 
-	lpfst_insert(root->rchild, new, lvl + 1);
+	trie_insert(root->rchild, new, lvl + 1);
 }
 
-struct lpfst_node *lpfst_lookup(const struct lpfst_node *root,
-				const struct lrtr_ip_addr *prefix,
+struct trie_node *trie_lookup(const struct trie_node *root,
+			      const struct lrtr_ip_addr *prefix,
 				const uint8_t mask_len, unsigned int *lvl)
 {
 	while (root) {
@@ -84,7 +84,7 @@ struct lpfst_node *lpfst_lookup(const struct lpfst_node *root,
 							     root->len),
 				       lrtr_ip_addr_get_bits(prefix, 0,
 							     root->len)))
-			return (struct lpfst_node *)root;
+			return (struct trie_node *)root;
 
 		if (is_left_child(prefix, *lvl))
 			root = root->lchild;
@@ -96,10 +96,10 @@ struct lpfst_node *lpfst_lookup(const struct lpfst_node *root,
 	return NULL;
 }
 
-struct lpfst_node *lpfst_lookup_exact(struct lpfst_node *root_node,
-				      const struct lrtr_ip_addr *prefix,
-				      const uint8_t mask_len,
-				      unsigned int *lvl, bool *found)
+struct trie_node *trie_lookup_exact(struct trie_node *root_node,
+				    const struct lrtr_ip_addr *prefix,
+				    const uint8_t mask_len,
+				    unsigned int *lvl, bool *found)
 {
 	*found = false;
 
@@ -130,7 +130,7 @@ struct lpfst_node *lpfst_lookup_exact(struct lpfst_node *root_node,
 	return NULL;
 }
 
-static void deref_node(struct lpfst_node *n)
+static void deref_node(struct trie_node *n)
 {
 	if (!n->parent)
 		return;
@@ -143,24 +143,24 @@ static void deref_node(struct lpfst_node *n)
 	n->parent->rchild = NULL;
 }
 
-static inline bool prefix_is_same(const struct lpfst_node *n,
+static inline bool prefix_is_same(const struct trie_node *n,
 				  const struct lrtr_ip_addr *p,
 				  uint8_t mask_len)
 {
 	return n->len == mask_len && lrtr_ip_addr_equal(n->prefix, *p);
 }
 
-static void replace_node_data(struct lpfst_node *a, struct lpfst_node *b)
+static void replace_node_data(struct trie_node *a, struct trie_node *b)
 {
 	a->prefix = b->prefix;
 	a->len = b->len;
 	a->data = b->data;
 }
 
-struct lpfst_node *lpfst_remove(struct lpfst_node *root,
-				const struct lrtr_ip_addr *prefix,
-				const uint8_t mask_len,
-				const unsigned int lvl)
+struct trie_node *trie_remove(struct trie_node *root,
+			      const struct lrtr_ip_addr *prefix,
+			      const uint8_t mask_len,
+			      const unsigned int lvl)
 {
 	/* If the node has no children we can simply remove it
 	 * If the node has children, we swap the node with the child that
@@ -169,7 +169,7 @@ struct lpfst_node *lpfst_remove(struct lpfst_node *root,
 	if (prefix_is_same(root, prefix, mask_len)) {
 		void *tmp;
 
-		if (lpfst_is_leaf(root)) {
+		if (trie_is_leaf(root)) {
 			deref_node(root);
 			return root;
 		}
@@ -181,7 +181,7 @@ struct lpfst_node *lpfst_remove(struct lpfst_node *root,
 			replace_node_data(root, root->lchild);
 			root->lchild->data = tmp;
 
-			return lpfst_remove(root->lchild,
+			return trie_remove(root->lchild,
 					    &root->lchild->prefix,
 					    root->lchild->len, lvl + 1);
 		}
@@ -191,7 +191,7 @@ struct lpfst_node *lpfst_remove(struct lpfst_node *root,
 		replace_node_data(root, root->rchild);
 		root->rchild->data = tmp;
 
-		return lpfst_remove(root->rchild,
+		return trie_remove(root->rchild,
 				    &root->rchild->prefix,
 				    root->rchild->len, lvl + 1);
 	}
@@ -199,19 +199,19 @@ struct lpfst_node *lpfst_remove(struct lpfst_node *root,
 	if (is_left_child(prefix, lvl)) {
 		if (!root->lchild)
 			return NULL;
-		return lpfst_remove(root->lchild, prefix, mask_len, lvl + 1);
+		return trie_remove(root->lchild, prefix, mask_len, lvl + 1);
 	}
 
 	if (!root->rchild)
 		return NULL;
-	return lpfst_remove(root->rchild, prefix, mask_len, lvl + 1);
+	return trie_remove(root->rchild, prefix, mask_len, lvl + 1);
 }
 
-static int append_node_to_array(struct lpfst_node ***ary,
+static int append_node_to_array(struct trie_node ***ary,
 				unsigned int *len,
-				struct lpfst_node *n)
+				struct trie_node *n)
 {
-	struct lpfst_node **new;
+	struct trie_node **new;
 
 	new = realloc(*ary, *len * sizeof(n));
 	if (!new)
@@ -222,15 +222,15 @@ static int append_node_to_array(struct lpfst_node ***ary,
 	return 0;
 }
 
-int lpfst_get_children(const struct lpfst_node *root_node,
-		       struct lpfst_node ***array, unsigned int *len)
+int trie_get_children(const struct trie_node *root_node,
+		      struct trie_node ***array, unsigned int *len)
 {
 	if (root_node->lchild) {
 		*len += 1;
 		if (append_node_to_array(array, len, root_node->lchild))
 			goto err;
 
-		if (lpfst_get_children(root_node->lchild, array, len) == -1)
+		if (trie_get_children(root_node->lchild, array, len) == -1)
 			goto err;
 	}
 
@@ -239,7 +239,7 @@ int lpfst_get_children(const struct lpfst_node *root_node,
 		if (append_node_to_array(array, len, root_node->rchild))
 			goto err;
 
-		if (lpfst_get_children(root_node->rchild, array, len) == -1)
+		if (trie_get_children(root_node->rchild, array, len) == -1)
 			goto err;
 	}
 
@@ -250,7 +250,7 @@ err:
 	return -1;
 }
 
-inline bool lpfst_is_leaf(const struct lpfst_node *node)
+inline bool trie_is_leaf(const struct trie_node *node)
 {
 	return !node->lchild && !node->rchild;
 }

@@ -6,7 +6,7 @@
 #include <string.h>
 
 /*
- * @brief Test IPv4 address bit operations required by lpfst
+ * @brief Test IPv4 address bit operations required by trie
  */
 static void get_bits_testv4(void)
 {
@@ -81,7 +81,7 @@ static void get_bits_testv4(void)
 }
 
 /*
- * @brief Test IPv6 address bit operations required by lpfst
+ * @brief Test IPv6 address bit operations required by trie
  */
 static void get_bits_testv6(void)
 {

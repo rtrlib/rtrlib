@@ -8,7 +8,7 @@
  */
 
 #include "rtrlib/rtr_mgr.h"
-#include "rtrlib/pfx/lpfst/lpfst-pfx.h"
+#include "rtrlib/pfx/trie/trie-pfx.h"
 #include "rtrlib/spki/hashtable/ht-spkitable.h"
 #include <stdlib.h>
 #include <pthread.h>

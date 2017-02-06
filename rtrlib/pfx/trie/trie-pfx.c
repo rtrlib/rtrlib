@@ -7,7 +7,7 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#include "rtrlib/pfx/lpfst/lpfst-pfx.h"
+#include "rtrlib/pfx/trie/trie-pfx.h"
 #include <assert.h>
 #include <pthread.h>
 #include <stdlib.h>
@@ -24,15 +24,15 @@ struct node_data {
     struct data_elem *ary;
 };
 
-static struct lpfst_node *pfx_table_get_root(const struct pfx_table *pfx_table, const enum lrtr_ip_version ver);
+static struct trie_node *pfx_table_get_root(const struct pfx_table *pfx_table, const enum lrtr_ip_version ver);
 static int pfx_table_del_elem(struct node_data *data, const unsigned int index);
-static int pfx_table_create_node(struct lpfst_node **node, const struct pfx_record *record);
+static int pfx_table_create_node(struct trie_node **node, const struct pfx_record *record);
 static int pfx_table_append_elem(struct node_data *data, const struct pfx_record *record);
 static struct data_elem *pfx_table_find_elem(const struct node_data *data, const struct pfx_record *record, unsigned int *index);
 static bool pfx_table_elem_matches(struct node_data *data, const uint32_t asn, const uint8_t prefix_len);
 static void pfx_table_notify_clients(struct pfx_table *pfx_table, const struct pfx_record *record, const bool added);
-static int pfx_table_remove_id(struct pfx_table *pfx_table, struct lpfst_node **root, struct lpfst_node *node, const struct rtr_socket *socket, const unsigned int level);
-static int pfx_table_node2pfx_record(struct lpfst_node *node, struct pfx_record records[], const unsigned int ary_len);
+static int pfx_table_remove_id(struct pfx_table *pfx_table, struct trie_node **root, struct trie_node *node, const struct rtr_socket *socket, const unsigned int level);
+static int pfx_table_node2pfx_record(struct trie_node *node, struct pfx_record records[], const unsigned int ary_len);
 static void pfx_table_free_reason(struct pfx_record **reason, unsigned int *reason_len);
 
 
@@ -53,9 +53,9 @@ void pfx_table_init(struct pfx_table *pfx_table, pfx_update_fp update_fp)
 void pfx_table_free(struct pfx_table *pfx_table)
 {
     for(int i = 0; i < 2; i++) {
-        struct lpfst_node *root = (i == 0 ? pfx_table->ipv4 : pfx_table->ipv6);
+        struct trie_node *root = (i == 0 ? pfx_table->ipv4 : pfx_table->ipv6);
         if(root != NULL) {
-            struct lpfst_node *rm_node;
+            struct trie_node *rm_node;
 
             pthread_rwlock_wrlock(&(pfx_table->lock));
             do {
@@ -64,7 +64,7 @@ void pfx_table_free(struct pfx_table *pfx_table)
                     struct pfx_record record = { data->ary[i].asn, (root->prefix), root->len, data->ary[i].max_len, data->ary[i].socket};
                     pfx_table_notify_clients(pfx_table, &record, false);
                 }
-                rm_node = (lpfst_remove(root, &(root->prefix), root->len, 0));
+                rm_node = (trie_remove(root, &(root->prefix), root->len, 0));
                 assert(rm_node != NULL);
                 free(((struct node_data *) rm_node->data)->ary);
                 free(rm_node->data);
@@ -93,9 +93,9 @@ int pfx_table_append_elem(struct node_data *data, const struct pfx_record *recor
     return PFX_SUCCESS;
 }
 
-int pfx_table_create_node(struct lpfst_node **node, const struct pfx_record *record)
+int pfx_table_create_node(struct trie_node **node, const struct pfx_record *record)
 {
-    *node = malloc(sizeof(struct lpfst_node));
+    *node = malloc(sizeof(struct trie_node));
     if(*node == NULL)
         return PFX_ERROR;
     (*node)->prefix = record->prefix;
@@ -126,7 +126,7 @@ struct data_elem *pfx_table_find_elem(const struct node_data *data, const struct
 }
 
 //returns pfx_table->ipv4 if record version is LRTR_IPV4 else pfx_table->ipv6
-inline struct lpfst_node *pfx_table_get_root(const struct pfx_table *pfx_table, const enum lrtr_ip_version ver)
+inline struct trie_node *pfx_table_get_root(const struct pfx_table *pfx_table, const enum lrtr_ip_version ver)
 {
     return ver == LRTR_IPV4 ? pfx_table->ipv4 : pfx_table->ipv6;
 }
@@ -153,11 +153,11 @@ int pfx_table_add(struct pfx_table *pfx_table, const struct pfx_record *record)
 {
     pthread_rwlock_wrlock(&(pfx_table->lock));
 
-    struct lpfst_node *root = pfx_table_get_root(pfx_table, record->prefix.ver);
+    struct trie_node *root = pfx_table_get_root(pfx_table, record->prefix.ver);
     unsigned int lvl = 0;
     if(root != NULL) {
         bool found;
-        struct lpfst_node *node = lpfst_lookup_exact(root, &(record->prefix), record->min_len, &lvl, &found);
+        struct trie_node *node = trie_lookup_exact(root, &(record->prefix), record->min_len, &lvl, &found);
         if(found) { //node with prefix exists
             if(pfx_table_find_elem(node->data, record, NULL) != NULL) {
                 pthread_rwlock_unlock(&pfx_table->lock);
@@ -170,19 +170,19 @@ int pfx_table_add(struct pfx_table *pfx_table, const struct pfx_record *record)
             return rtval;
         } else {
             //no node with same prefix and prefix_len found
-            struct lpfst_node *new_node = NULL;
+            struct trie_node *new_node = NULL;
             if(pfx_table_create_node(&new_node, record) == PFX_ERROR) {
                 pthread_rwlock_unlock(&pfx_table->lock);
                 return PFX_ERROR;
             }
-            lpfst_insert(node, new_node, lvl);
+            trie_insert(node, new_node, lvl);
             pthread_rwlock_unlock(&pfx_table->lock);
             pfx_table_notify_clients(pfx_table, record, true);
             return PFX_SUCCESS;
         }
     } else {
         //tree is empty, record will be the root_node
-        struct lpfst_node *new_node = NULL;
+        struct trie_node *new_node = NULL;
         if(pfx_table_create_node(&new_node, record) == PFX_ERROR) {
             pthread_rwlock_unlock(&pfx_table->lock);
             return PFX_ERROR;
@@ -201,11 +201,11 @@ int pfx_table_add(struct pfx_table *pfx_table, const struct pfx_record *record)
 int pfx_table_remove(struct pfx_table *pfx_table, const struct pfx_record *record)
 {
     pthread_rwlock_wrlock(&(pfx_table->lock));
-    struct lpfst_node *root = pfx_table_get_root(pfx_table, record->prefix.ver);
+    struct trie_node *root = pfx_table_get_root(pfx_table, record->prefix.ver);
 
     unsigned int lvl = 0; //tree depth were node was found
     bool found;
-    struct lpfst_node *node = lpfst_lookup_exact(root, &(record->prefix), record->min_len, &lvl, &found);
+    struct trie_node *node = trie_lookup_exact(root, &(record->prefix), record->min_len, &lvl, &found);
     if(!found) {
         pthread_rwlock_unlock(&pfx_table->lock);
         return PFX_RECORD_NOT_FOUND;
@@ -226,7 +226,7 @@ int pfx_table_remove(struct pfx_table *pfx_table, const struct pfx_record *recor
     }
 
     if(ndata->len == 0) {
-        node = lpfst_remove(node, &(record->prefix), record->min_len, lvl);
+        node = trie_remove(node, &(record->prefix), record->min_len, lvl);
         assert(node != NULL);
 
         if(node == root) {
@@ -255,7 +255,7 @@ bool pfx_table_elem_matches(struct node_data *data, const uint32_t asn, const ui
     return false;
 }
 
-int pfx_table_node2pfx_record(struct lpfst_node *node, struct pfx_record *records, const unsigned int ary_len)
+int pfx_table_node2pfx_record(struct trie_node *node, struct pfx_record *records, const unsigned int ary_len)
 {
     struct node_data *data = node->data;
     if(ary_len < data->len)
@@ -287,7 +287,7 @@ int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason
     //assert(reason == NULL || *reason == NULL);
 
     pthread_rwlock_rdlock(&(pfx_table->lock));
-    struct lpfst_node *root = pfx_table_get_root(pfx_table, prefix->ver);
+    struct trie_node *root = pfx_table_get_root(pfx_table, prefix->ver);
     if(root == NULL) {
         pthread_rwlock_unlock(&pfx_table->lock);
         *result = BGP_PFXV_STATE_NOT_FOUND;
@@ -296,7 +296,7 @@ int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason
     }
 
     unsigned int lvl = 0;
-    struct lpfst_node *node = lpfst_lookup(root, prefix, prefix_len, &lvl);
+    struct trie_node *node = trie_lookup(root, prefix, prefix_len, &lvl);
     if(node == NULL) {
         pthread_rwlock_unlock(&pfx_table->lock);
         *result = BGP_PFXV_STATE_NOT_FOUND;
@@ -320,10 +320,10 @@ int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason
     }
 
     while(!pfx_table_elem_matches(node->data, asn, prefix_len)) {
-        if(lrtr_ip_addr_is_zero(lrtr_ip_addr_get_bits(prefix, lvl++, 1))) //post-incr lvl, lpfst_lookup is performed on child_nodes => parent lvl + 1
-            node = lpfst_lookup(node->lchild, prefix, prefix_len, &lvl);
+        if(lrtr_ip_addr_is_zero(lrtr_ip_addr_get_bits(prefix, lvl++, 1))) //post-incr lvl, trie_lookup is performed on child_nodes => parent lvl + 1
+            node = trie_lookup(node->lchild, prefix, prefix_len, &lvl);
         else
-            node = lpfst_lookup(node->rchild, prefix, prefix_len, &lvl);
+            node = trie_lookup(node->rchild, prefix, prefix_len, &lvl);
 
         if(node == NULL) {
             pthread_rwlock_unlock(&pfx_table->lock);
@@ -362,7 +362,7 @@ int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const st
 int pfx_table_src_remove(struct pfx_table *pfx_table, const struct rtr_socket *socket)
 {
     for(unsigned int i = 0; i < 2; i++) {
-        struct lpfst_node **root = (i == 0 ? &(pfx_table->ipv4) : &(pfx_table->ipv6));
+        struct trie_node **root = (i == 0 ? &(pfx_table->ipv4) : &(pfx_table->ipv6));
         pthread_rwlock_wrlock(&(pfx_table->lock));
         if(*root != NULL) {
             int rtval = pfx_table_remove_id(pfx_table, root, *root, socket, 0);
@@ -376,7 +376,7 @@ int pfx_table_src_remove(struct pfx_table *pfx_table, const struct rtr_socket *s
     return PFX_SUCCESS;
 }
 
-int pfx_table_remove_id(struct pfx_table *pfx_table, struct lpfst_node **root, struct lpfst_node *node, const struct rtr_socket *socket, const unsigned int level)
+int pfx_table_remove_id(struct pfx_table *pfx_table, struct trie_node **root, struct trie_node *node, const struct rtr_socket *socket, const unsigned int level)
 {
     assert(node != NULL);
     assert(root != NULL);
@@ -395,7 +395,7 @@ int pfx_table_remove_id(struct pfx_table *pfx_table, struct lpfst_node **root, s
             }
         }
         if(data->len == 0) {
-            struct lpfst_node *rm_node = lpfst_remove(node, &(node->prefix), node->len, level);
+            struct trie_node *rm_node = trie_remove(node, &(node->prefix), node->len, level);
             assert(rm_node != NULL);
             assert(((struct node_data *) rm_node->data)->len == 0);
             free(((struct node_data *) rm_node->data));
@@ -419,7 +419,7 @@ int pfx_table_remove_id(struct pfx_table *pfx_table, struct lpfst_node **root, s
     return PFX_SUCCESS;
 }
 
-static void pfx_table_for_each_rec(struct lpfst_node *n, pfx_for_each_fp fp,
+static void pfx_table_for_each_rec(struct trie_node *n, pfx_for_each_fp fp,
                                    void *data)
 {
     struct pfx_record pfxr;

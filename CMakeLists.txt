@@ -24,7 +24,7 @@ endif(NOT APPLE)
 include(UseMultiArch) # needed for debian packaging
 
 set(RTRLIB_SRC rtrlib/rtr_mgr.c rtrlib/lib/utils.c rtrlib/lib/ip.c rtrlib/lib/ipv4.c rtrlib/lib/ipv6.c rtrlib/lib/log.c
-    rtrlib/pfx/lpfst/lpfst.c rtrlib/pfx/lpfst/lpfst-pfx.c rtrlib/transport/transport.c
+    rtrlib/pfx/trie/trie.c rtrlib/pfx/trie/trie-pfx.c rtrlib/transport/transport.c
     rtrlib/transport/tcp/tcp_transport.c rtrlib/rtr/rtr.c rtrlib/rtr/packets.c rtrlib/spki/hashtable/ht-spkitable.c rtrlib/spki/hashtable/tommyds-1.8/tommy.c)
 set(RTRLIB_LINK ${RT_LIB} ${CMAKE_THREAD_LIBS_INIT})
 
@@ -75,7 +75,7 @@ include(AddTest)
 ADD_SUBDIRECTORY(tests)
 ENABLE_TESTING()
 ADD_TEST(test_pfx tests/test_pfx)
-ADD_TEST(test_lpfst tests/test_lpfst)
+ADD_TEST(test_trie tests/test_trie)
 #ADD_TEST(test_pfx_locks tests/test_pfx_locks)
 
 ADD_TEST(test_ht_spkitable tests/test_ht_spkitable)
