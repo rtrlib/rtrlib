@@ -1,16 +1,17 @@
 Release History:
 
 * Version 0.4.0-draft
-    - Change prefix storage structure from LPFST to Trie to fix bug
-      in prefix origin validation
+    - Fix bug in prefix origin AS validation caused by LPFST, and change
+      prefix storage structure to Trie
+    - Fix memory leaks in lpfst_get_children
     - Fix byte order for encapsulated error PDUs
-    - Improve error PDU handling according to standard specification
+    - Fix error PDU handling, do not send encapsulated PDUs for internal errors
     - Improve testing:
         - add extensive unit tests based on the Cmocka framework
         - add runtime tests, e.g. live validation of RIPE RIS BGP beacons
-    - Add static code analysis (cppcheck, codecov.io) to Travis CI config
     - Improve overall coding style and documentation
-    - Provide backward compatibility for libssh 0.5.0 and Ubuntu 12.04 LTS
+    - Add static code analysis (cppcheck, codecov.io) to Travis CI config
+    - Add backward compatibility for libssh 0.5.0 and Ubuntu 12.04 LTS
     - Update Debian package build files
 
 * Version 0.3.6
