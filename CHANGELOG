@@ -5,7 +5,7 @@ Release History:
       prefix storage structure to Trie
     - Fix memory leaks in lpfst_get_children
     - Fix byte order for encapsulated error PDUs
-    - Fix error PDU handling, do not send encapsulated PDUs for internal errors
+    - Fix error PDU handling, do not send encapsulated PDUs on internal errors
     - Improve testing:
         - add extensive unit tests based on the Cmocka framework
         - add runtime tests, e.g. live validation of RIPE RIS BGP beacons
