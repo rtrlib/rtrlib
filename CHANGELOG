@@ -1,5 +1,17 @@
 Release History:
 
+* Version 0.4.0-draft
+    - Change prefix storage structure from LPFST to Trie to fix bug
+      in prefix origin validation
+    - Fix error PDU handling according to standard specification
+    - Improve testing:
+        - add extensive unit tests based on the Cmocka framework
+        - add runtime tests, e.g. live validation of RIPE RIS BGP beacons
+    - Add static code analysis (cppcheck, codecov.io) to Travis CI config
+    - Improve overall coding style and documentation
+    - Provide backward compatibility for libssh 0.5.0 and Ubuntu 12.04 LTS
+    - Update Debian package build files
+
 * Version 0.3.6
     - rtrlib/lib/*: Change API and add lrtr_ prefix to prevent namespace
       conflicts with third party applications
