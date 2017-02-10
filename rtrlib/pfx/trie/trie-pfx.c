@@ -153,18 +153,31 @@ inline struct trie_node *pfx_table_get_root(const struct pfx_table *pfx_table, c
 
 int pfx_table_del_elem(struct node_data *data, const unsigned int index)
 {
+    struct data_elem *tmp;
+    struct data_elem deleted_elem = data->ary[index];
+
     //if index is not the last elem in the list, move all other elems backwards in the array
     if(index != data->len - 1) {
         for(unsigned int i = index; i < data->len - 1; i++) {
             data->ary[i] = data->ary[i+1];
         }
     }
+
     data->len--;
-    data->ary = realloc(data->ary, sizeof(struct data_elem) * data->len);
-    if(data->len != 0 && data->ary == NULL)
-        return PFX_ERROR;
-    else if(data->len == 0)
+    if (!data->len) {
+        free(data->ary);
         data->ary = NULL;
+        return PFX_SUCCESS;
+    }
+
+    tmp = realloc(data->ary, sizeof(struct data_elem) * data->len);
+    if (!tmp) {
+        data->ary[data->len] = deleted_elem;
+        data->len++;
+        return PFX_ERROR;
+    }
+
+    data->ary = tmp;
 
     return PFX_SUCCESS;
 }
