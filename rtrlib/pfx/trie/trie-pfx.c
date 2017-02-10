@@ -186,7 +186,8 @@ int pfx_table_add(struct pfx_table *pfx_table, const struct pfx_record *record)
             //append record to note_data array
             int rtval = pfx_table_append_elem(node->data, record);
             pthread_rwlock_unlock(&pfx_table->lock);
-            pfx_table_notify_clients(pfx_table, record, true);
+            if (rtval == PFX_SUCCESS)
+                pfx_table_notify_clients(pfx_table, record, true);
             return rtval;
         } else {
             //no node with same prefix and prefix_len found
