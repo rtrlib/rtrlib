@@ -1,0 +1,7 @@
+XML_OUTPUT       = doxyxml
+INPUT            = ../rtrlib
+GENERATE_HTML = NO
+GENERATE_XML = YES
+EXAMPLE_PATH           = ./examples/
+IMAGE_PATH             = ./graphics/
+EXCLUDE_PATTERNS       = */rtrlib/spki/hashtable/*
