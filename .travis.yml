@@ -16,6 +16,22 @@ install:
     - sudo make install
     - popd && popd
 
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "esfY0Q8S2UMLS3V0B/dSqIFQYChACXwJRBmtHTh87dvYMIS9NC2Bv/CVA7UAVIPSP2S1Az2TW1uNtXg3Xa5FjRY/25Zzls3jdeC83HtH6JPd+Hu55V7kq9j3P5ekPr6N7J+bwQosWISGgOsMkh1sbfgtLqsWRCabdLyIzBQpQfuvpP/7MZkL/QeghDOP1WW9I9MFib6w2drcxyI+QItPZ/xTcZc/XIeuDCLynqH9Fzyvy0FnhR1M5xJf7VCDa1whR7l3N2wLZvYtoByMp9wIS8RctW6dPWquQ7vpqzLdMm9fz7jpbrX0WOTUApXu6pPtP1IJAcBvyzmq9NE7ypxha/reJM8ESINg5Gb8MvTHwUKmf1aTLp8DqqjF6hhMRMjAHG8cCnbry+AdA5gpfSz5BLsfe4OvIpV3XiladRTY9vBuv5XMgJWq+r/ONaTURrd8bNZqW+qcck+yfPMVyzQKqo/xkzPBApcSseoain/loE4vhlRo73SqByrTYyt+qiJd22zBBFEpZGSHtCpF7XKrxj9tkyNteSUReXqxH4hQfnTQMKDbtV/A1Ki9p40NIpj+EGeSsTULZBv8FKo4OJ5odq+EkEig/GEgB55ZB+1j7A7oXo5u/UDKDegIJ5DfbJ+fu0xN543cmV4X0USBQ2jgYiHhFhpmRwhv75O3iNsbEWM="
+
+addons:
+  coverity_scan:
+    project:
+      name: "rtrlib/rtrlib"
+      description: "Build submitted via Travis CI"
+    notification_email: rtrlib@googlegroups.com
+    build_command_prepend: "cmake -D CMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=On -DUNIT_TESTING=On ."
+    build_command:   "make"
+    branch_pattern: coverity_scan
+
 script:
     - scripts/cppcheck.sh
     - scripts/check-coding-style.sh
