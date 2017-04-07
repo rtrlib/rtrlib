@@ -33,16 +33,7 @@ addons:
     branch_pattern: coverity_scan
 
 script:
-    - scripts/cppcheck.sh
-    - scripts/check-coding-style.sh
-    - cmake -D CMAKE_BUILD_TYPE=NoSSH .
-    - make
-    - make test
-    - make clean
-    - cmake -D CMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=On -DUNIT_TESTING=On .
-    - make
-    - make test
-    - make gcov
+  - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then scripts/travis.sh; fi
 
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then bash <(curl -s https://codecov.io/bash); fi
