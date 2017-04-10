@@ -304,7 +304,7 @@ static void rtr_pdu_header_to_network_byte_order(void *pdu)
 	rtr_pdu_convert_header_byte_order(pdu, TO_NETWORK_BYTE_ORDER);
 }
 
-static void rtr_pdu_footer_to_netwotk_byte_order(void *pdu)
+static void rtr_pdu_footer_to_network_byte_order(void *pdu)
 {
 	rtr_pdu_convert_footer_byte_order(pdu, TO_NETWORK_BYTE_ORDER);
 }
@@ -312,7 +312,7 @@ static void rtr_pdu_footer_to_netwotk_byte_order(void *pdu)
 static void rtr_pdu_to_network_byte_order(void *pdu)
 {
 	rtr_pdu_header_to_network_byte_order(pdu);
-	rtr_pdu_footer_to_netwotk_byte_order(pdu);
+	rtr_pdu_footer_to_network_byte_order(pdu);
 }
 
 static void rtr_pdu_footer_to_host_byte_order(void *pdu)
