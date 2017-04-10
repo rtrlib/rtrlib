@@ -749,6 +749,10 @@ static int rtr_undo_update_spki_table(struct rtr_socket *rtr_socket, void *pdu)
 
 /*
  * @brief Appends the Prefix PDU pdu to ary.
+ *
+ * @return RTR_SUCCESS On success
+ * @return RTR_ERROR On realloc failure
+ * @attention ary is not freed in this case, because it might contain data that is still needed
  */
 static int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, const unsigned int pdu_size, void **ary,
                                 unsigned int *ind, unsigned int *size)
@@ -763,8 +767,6 @@ static int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, 
             RTR_DBG("%s", txt);
             rtr_send_error_pdu_from_host(rtr_socket, NULL, 0, INTERNAL_ERROR, txt, sizeof(txt));
             rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-            free(*ary);
-            ary = NULL;
             return RTR_ERROR;
         }
         *ary = tmp;
@@ -782,6 +784,13 @@ static int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, 
     return RTR_SUCCESS;
 }
 
+/*
+ * @brief Appends the router key to ary.
+ *
+ * @return RTR_SUCCESS On success
+ * @return RTR_ERROR On realloc failure
+ * @attention ary is not freed in this case, because it might contain data that is still needed
+ */
 static int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *pdu, const unsigned int pdu_size,
 				    struct pdu_router_key **ary, unsigned int *ind, unsigned int *size)
 {
@@ -795,8 +804,6 @@ static int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *p
             RTR_DBG("%s", txt);
             rtr_send_error_pdu_from_host(rtr_socket, NULL, 0, INTERNAL_ERROR, txt, sizeof(txt));
             rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-            free(*ary);
-            ary = NULL;
             return RTR_ERROR;
         }
         *ary = tmp;
