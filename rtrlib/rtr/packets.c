@@ -11,6 +11,8 @@
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
+
+#include "rtrlib/lib/convert_byte_order.h"
 #include "rtrlib/transport/transport.h"
 #include "rtrlib/rtr/packets.h"
 #include "rtrlib/lib/utils.h"
@@ -19,11 +21,6 @@
 
 #define TEMPORARY_PDU_STORE_INCREMENT_VALUE 100
 #define MAX_SUPPORTED_PDU_TYPE 10
-
-enum target_byte_order {
-	TO_NETWORK_BYTE_ORDER,
-	TO_HOST_HOST_BYTE_ORDER,
-};
 
 enum pdu_error_type {
     CORRUPT_DATA = 0,
@@ -209,110 +206,91 @@ void rtr_change_socket_state(struct rtr_socket *rtr_socket, const enum rtr_socke
         rtr_socket->connection_state_fp(rtr_socket, new_state,rtr_socket->connection_state_fp_param);
 }
 
-static uint16_t (*get_convert_short_fp(enum target_byte_order target_byte_order))(uint16_t)
+static void rtr_pdu_convert_header_byte_order(void *pdu, const enum target_byte_order target_byte_order)
 {
-	if (target_byte_order == TO_NETWORK_BYTE_ORDER)
-		return &htons;
-	else if (target_byte_order == TO_HOST_HOST_BYTE_ORDER)
-		return &ntohs;
-	else
-		assert(0);
-}
-
-static uint32_t (*get_convert_long_fp(enum target_byte_order target_byte_order))(uint32_t)
-{
-	if (target_byte_order == TO_NETWORK_BYTE_ORDER)
-		return &htonl;
-	else if (target_byte_order == TO_HOST_HOST_BYTE_ORDER)
-		return &ntohl;
-	else
-		assert(0);
-}
-
-static void rtr_pdu_convert_header_byte_order(void *pdu, enum target_byte_order target_byte_order)
-{
-	uint16_t (*convert_short)(uint16_t) = get_convert_short_fp(target_byte_order);
-	uint32_t (*convert_long)(uint32_t) = get_convert_long_fp(target_byte_order);
 	struct pdu_header *header = pdu;
 
 	//The ROUTER_KEY PDU has two 1 Byte fields instead of the 2 Byte reserved field.
 	if (header->type != ROUTER_KEY)
-		header->reserved = convert_short(header->reserved);
+		header->reserved = lrtr_convert_short(target_byte_order, header->reserved);
 
-	header->len = convert_long(header->len);
+	header->len = lrtr_convert_long(target_byte_order, header->len);
 }
 
-static void rtr_pdu_convert_footer_byte_order(void *pdu, enum target_byte_order target_byte_order) {
-	uint32_t (*convert_long)(uint32_t) = get_convert_long_fp(target_byte_order);
+static void rtr_pdu_convert_footer_byte_order(void *pdu, const enum target_byte_order target_byte_order) {
 	struct pdu_error *err_pdu;
 	struct pdu_header *header = pdu;
 	uint32_t addr6[4];
 	const enum pdu_type type = rtr_get_pdu_type(pdu);
 
-
-
 	switch (type) {
 	case SERIAL_QUERY:
-		((struct pdu_serial_query *) pdu)->sn = convert_long(((struct pdu_serial_query *) pdu)->sn);
+		((struct pdu_serial_query *) pdu)->sn =
+			lrtr_convert_long(target_byte_order, ((struct pdu_serial_query *) pdu)->sn);
 		break;
 
 	case ERROR:
 		err_pdu = (struct pdu_error *) pdu;
 		if (target_byte_order == TO_NETWORK_BYTE_ORDER) {
 			*((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)) =
-			    convert_long(*((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)));
-			err_pdu->len_enc_pdu = convert_long(err_pdu->len_enc_pdu);
+			    lrtr_convert_long(target_byte_order, *((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)));
+			err_pdu->len_enc_pdu = lrtr_convert_long(target_byte_order, err_pdu->len_enc_pdu);
 		} else {
-			err_pdu->len_enc_pdu = convert_long(err_pdu->len_enc_pdu);
+			err_pdu->len_enc_pdu = lrtr_convert_long(target_byte_order, err_pdu->len_enc_pdu);
 			*((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)) =
-			    convert_long(*((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)));
+			    lrtr_convert_long(target_byte_order, *((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)));
 		}
 		break;
 
 	case SERIAL_NOTIFY:
 		((struct pdu_serial_notify *) pdu)->sn =
-		    convert_long(((struct pdu_serial_notify *) pdu)->sn);
+		    lrtr_convert_long(target_byte_order, ((struct pdu_serial_notify *) pdu)->sn);
 		break;
 
 	case EOD:
 		if (header->ver == RTR_PROTOCOL_VERSION_1) {
 			((struct pdu_end_of_data_v1 *) pdu)->expire_interval =
-			    convert_long(((struct pdu_end_of_data_v1 *) pdu)->expire_interval);
+			    lrtr_convert_long(target_byte_order,
+				    	 ((struct pdu_end_of_data_v1 *) pdu)->expire_interval);
 
 			((struct pdu_end_of_data_v1 *) pdu)->refresh_interval =
-			    convert_long(((struct pdu_end_of_data_v1 *) pdu)->refresh_interval);
+			    lrtr_convert_long(target_byte_order,
+				    	 ((struct pdu_end_of_data_v1 *) pdu)->refresh_interval);
 
 			((struct pdu_end_of_data_v1 *) pdu)->retry_interval =
-			    convert_long(((struct pdu_end_of_data_v1 *) pdu)->retry_interval);
+			    lrtr_convert_long(target_byte_order,
+				    	 ((struct pdu_end_of_data_v1 *) pdu)->retry_interval);
 
 			((struct pdu_end_of_data_v1 *) pdu)->sn =
-			    convert_long(((struct pdu_end_of_data_v1 *) pdu)->sn);
+			    lrtr_convert_long(target_byte_order,
+				    	 ((struct pdu_end_of_data_v1 *) pdu)->sn);
 		} else {
 			((struct pdu_end_of_data_v0 *) pdu)->sn =
-			    convert_long(((struct pdu_end_of_data_v0 *) pdu)->sn);
+			    lrtr_convert_long(target_byte_order,
+				    	 ((struct pdu_end_of_data_v0 *) pdu)->sn);
 		}
 		break;
 
 	case IPV4_PREFIX:
 		lrtr_ipv4_addr_convert_byte_order(((struct pdu_ipv4 *) pdu)->prefix,
 		                                  &((struct pdu_ipv4 *) pdu)->prefix,
-		                                  convert_long);
+					  	  target_byte_order);
 		((struct pdu_ipv4 *) pdu)->asn =
-		    convert_long(((struct pdu_ipv4 *) pdu)->asn);
+			lrtr_convert_long(target_byte_order, ((struct pdu_ipv4 *) pdu)->asn);
 		break;
 
 	case IPV6_PREFIX:
 		lrtr_ipv6_addr_convert_byte_order(((struct pdu_ipv6 *) pdu)->prefix,
 		                                  addr6,
-		                                  convert_long);
+		                                  target_byte_order);
 		memcpy(((struct pdu_ipv6 *) pdu)->prefix, addr6, sizeof(addr6));
 		((struct pdu_ipv6 *) pdu)->asn =
-		    convert_long(((struct pdu_ipv6 *) pdu)->asn);
+		    lrtr_convert_long(target_byte_order, ((struct pdu_ipv6 *) pdu)->asn);
 		break;
 
 	case ROUTER_KEY:
 		((struct pdu_router_key *) pdu)->asn =
-		    convert_long(((struct pdu_router_key *) pdu)->asn);
+		    lrtr_convert_long(target_byte_order, ((struct pdu_router_key *) pdu)->asn);
 		break;
 
 	default:
