@@ -9,6 +9,9 @@
 
 #ifndef LRTR_IPV4_H
 #define LRTR_IPV4_H
+
+#include "rtrlib/lib/convert_byte_order.h"
+
 #include <inttypes.h>
 #include <stdbool.h>
 
@@ -58,7 +61,6 @@ int lrtr_ipv4_addr_to_str(const struct lrtr_ipv4_addr *ip, char *str, const unsi
 */
 bool lrtr_ipv4_addr_equal(const struct lrtr_ipv4_addr *a, const struct lrtr_ipv4_addr *b);
 
-
 /**
  * @ingroup util_h[{
  * Converts the passed IPv4 address byte order with the given function.
@@ -69,6 +71,6 @@ bool lrtr_ipv4_addr_equal(const struct lrtr_ipv4_addr *a, const struct lrtr_ipv4
 */
 void lrtr_ipv4_addr_convert_byte_order(const uint32_t src,
                                        uint32_t *dest,
-                                       uint32_t (*convert_fp)(uint32_t));
+				       const enum target_byte_order tbo);
 
 #endif

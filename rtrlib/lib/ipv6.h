@@ -9,10 +9,12 @@
 
 #ifndef LRTR_IPV6_H
 #define LRTR_IPV6_H
+
+#include "rtrlib/lib/convert_byte_order.h"
+
 #include <sys/types.h>
 #include <stdbool.h>
 #include <stdint.h>
-
 
 /**
  * @brief Struct holding an IPv6 address in host byte order.
@@ -69,6 +71,6 @@ int lrtr_ipv6_str_to_addr(const char *a, struct lrtr_ipv6_addr *ip);
 */
 void lrtr_ipv6_addr_convert_byte_order(const uint32_t *src,
                                        uint32_t *dest,
-                                       uint32_t (*convert_fp)(uint32_t));
+				       const enum target_byte_order tbo);
 
 #endif
