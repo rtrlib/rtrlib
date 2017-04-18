@@ -7,10 +7,16 @@ include /usr/share/dpkg/buildflags.mk
 CFLAGS+=$(CPPFLAGS)
 CXXFLAGS+=$(CPPFLAGS)
 
+CBT = "Release"
+
+ifneq (,$(filter nossh,$(DEB_BUILD_PROFILES)))
+    CBT = "NoSSH"
+endif
+
 override_dh_installchangelogs:
 	dh_installchangelogs CHANGELOG
 override_dh_auto_configure:
-	dh_auto_configure -- -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_SKIP_RPATH=True
+	dh_auto_configure -- -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=$(CBT) -DCMAKE_SKIP_RPATH=True
 override_dh_strip:
 	dh_strip -prtrclient --dbg-package=rtrclient-dbg
 	dh_strip -pcli-validator --dbg-package=cli-validator-dbg
@@ -18,4 +24,4 @@ override_dh_strip:
 override_dh_auto_test:
 
 %:
-	dh $@ 
+	dh $@
