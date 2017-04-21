@@ -424,11 +424,11 @@ inline int rtr_mgr_validate(struct rtr_mgr_config *config,
 inline int rtr_mgr_get_spki(struct rtr_mgr_config *config,
 			    const uint32_t asn,
 			    uint8_t *ski,
-			    struct spki_record *result,
+			    struct spki_record **result,
 			    unsigned int *result_count)
 {
 	return spki_table_get_all(config->groups[0].sockets[0]->spki_table,
-				  asn, ski, &result, result_count);
+				  asn, ski, result, result_count);
 }
 
 void rtr_mgr_stop(struct rtr_mgr_config *config)

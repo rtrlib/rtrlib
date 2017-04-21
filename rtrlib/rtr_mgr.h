@@ -192,7 +192,7 @@ int rtr_mgr_validate(struct rtr_mgr_config *config,
 int rtr_mgr_get_spki(struct rtr_mgr_config *config,
 		     const uint32_t asn,
 		     uint8_t *ski,
-		     struct spki_record *result,
+		     struct spki_record **result,
 		     unsigned int *result_count);
 
 /**
