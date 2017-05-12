@@ -293,27 +293,27 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 	struct pfx_table *pfxt = NULL;
 	struct spki_table *spki_table = NULL;
 	struct rtr_mgr_config *config = NULL;
-
 	*config_out = NULL;
-	*config_out = config = malloc(sizeof(*config));
-	if (!config)
-		return RTR_ERROR;
-
-	if (pthread_mutex_init(&config->mutex, NULL) != 0) {
-		MGR_DBG1("Mutex initialization failed");
-		goto err;
-	}
 
 	if (groups_len == 0) {
 		MGR_DBG1("Error Empty rtr_mgr_group array");
-		goto err;
+		return RTR_ERROR;
 	}
+
+	*config_out = config = malloc(sizeof(*config));
+	if (!config)
+		return RTR_ERROR;
 
 	config->len = groups_len;
 	config->groups = malloc(groups_len * sizeof(*groups));
 	if (!config->groups)
 		goto err;
 	memcpy(config->groups, groups, groups_len * sizeof(*groups));
+
+	if (pthread_mutex_init(&config->mutex, NULL) != 0) {
+		MGR_DBG1("Mutex initialization failed");
+		goto err;
+	}
 
 	/* sort array in asc preference order */
 	qsort(config->groups, config->len,
