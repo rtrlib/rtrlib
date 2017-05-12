@@ -90,7 +90,7 @@ struct rtr_mgr_config {
  *		     associated with one rtr socket. The preference values must
  *		     be unique in the group array. More than one rtr_mgr_group
  *		     with the same preference value isn't allowed.
- * @param[in] groups_len Number of elements in the groups array.
+ * @param[in] groups_len Number of elements in the groups array. Must be >= 1.
  * @param[in] refresh_interval Interval in seconds between serial queries that
  *			     are sent to the server. Must be >= 1 and <=
  *			     86400s (1d), recommended default is 3600s (1h).

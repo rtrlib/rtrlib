@@ -304,6 +304,11 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 		goto err;
 	}
 
+	if (groups_len == 0) {
+		MGR_DBG1("Error Empty rtr_mgr_group array");
+		goto err;
+	}
+
 	config->len = groups_len;
 	config->groups = malloc(groups_len * sizeof(*groups));
 	if (!config->groups)
@@ -370,6 +375,7 @@ err:
 	free(config->groups);
 	free(config);
 	config = NULL;
+	*config_out = NULL;
 	return err_code;
 }
 
