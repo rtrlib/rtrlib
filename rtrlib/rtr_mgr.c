@@ -293,6 +293,8 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 	struct pfx_table *pfxt = NULL;
 	struct spki_table *spki_table = NULL;
 	struct rtr_mgr_config *config = NULL;
+	uint8_t last_preference = UINT8_MAX;
+
 	*config_out = NULL;
 
 	if (groups_len == 0) {
@@ -319,20 +321,6 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 	qsort(config->groups, config->len,
 	      sizeof(struct rtr_mgr_group), &rtr_mgr_config_cmp);
 
-	for (unsigned int i = 0; i < config->len; i++) {
-		struct rtr_mgr_group cg = config->groups[i];
-
-		if (cg.sockets_len == 0) {
-			MGR_DBG1("Error Empty sockets array in socket group!");
-			goto err;
-		}
-		if (i > 0 &&
-		    config->groups[i - 1].preference == cg.preference) {
-			MGR_DBG1("Error Same preference for 2 socket groups!");
-			goto err;
-		}
-	}
-
 	pfxt = malloc(sizeof(*pfxt));
 	if (!pfxt)
 		goto err;
@@ -344,10 +332,19 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 	spki_table_init(spki_table, spki_update_fp);
 
 	for (unsigned int i = 0; i < config->len; i++) {
-		config->groups[i].status = RTR_MGR_CLOSED;
-		for (unsigned int j = 0;
-		     j < config->groups[i].sockets_len; j++) {
-			if (rtr_init(config->groups[i].sockets[j], NULL,
+		struct rtr_mgr_group cg = config->groups[i];
+
+		cg.status = RTR_MGR_CLOSED;
+		if ((i > 0) && (cg.preference == last_preference)) {
+			MGR_DBG1("Error Same preference for 2 socket groups!");
+			goto err;
+		}
+		if (cg.sockets_len == 0) {
+			MGR_DBG1("Error Empty sockets array in socket group!");
+			goto err;
+		}
+		for (unsigned int j = 0; j < cg.sockets_len; j++) {
+			if (rtr_init(cg.sockets[j], NULL,
 				     pfxt, spki_table, refresh_interval,
 				     expire_interval, retry_interval,
 				     rtr_mgr_cb, config) != RTR_SUCCESS) {
@@ -355,6 +352,7 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 				goto err;
 			}
 		}
+		last_preference = cg.preference;
 	}
 	config->status_fp_data = status_fp_data;
 	config->status_fp = status_fp;
