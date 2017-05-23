@@ -3,6 +3,7 @@ rtrlib/rtr_mgr.c
 rtrlib/lib/convert_byte_order.h
 rtrlib/lib/convert_byte_order.c
 rtrlib/lib/ipv4.c
+rtrlib/lib/ipv4.h
 rtrlib/pfx/trie/trie.h
 rtrlib/pfx/trie/trie.c
 tests/test_ht_spkitable.c
