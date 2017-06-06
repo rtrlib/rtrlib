@@ -77,11 +77,11 @@ bool lrtr_ipv4_addr_equal(const struct lrtr_ipv4_addr *a,
 
 /**
  * @ingroup util_h[{
- * @brief Converts the passed IPv4 address byte order with the given function.
+ * @brief Converts the passed IPv4 address to given byte order.
  *
- * @param[in] src ipv4 address in source byte order.
- * @param[out] dest ipv4 address in target byte order.
- * @param[in] convert_fp Pointer to the function used for conversion.
+ * @param[in] src       IPv4 address in source byte order.
+ * @param[out] dest     IPv4 address in target byte order.
+ * @param[in] tbo       Target byte order for address conversion.
  * }
  */
 void lrtr_ipv4_addr_convert_byte_order(const uint32_t src, uint32_t *dest,
