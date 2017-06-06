@@ -63,14 +63,14 @@ int lrtr_ipv6_str_to_addr(const char *a, struct lrtr_ipv6_addr *ip);
 
 /**
  * @ingroup util_h[{
- * Converts the passed IPv6 address byte order with the given function.
- * @param[in] src Pointer to a uint32_t array storing a ipv6 address in source byte order.
- * @param[out] dest Pointer a uint32_t array that will be used to store the ipv6 addr in target byte order.
- * @param[in] convert_fp Pointer to the function used for conversion
+ * @brief Converts the passed IPv6 address to given byte order.
+ *
+ * @param[in] src 	IPv6 address (uint32_t array) in source byte order.
+ * @param[out] dest 	IPv6 address (uint32_t array) in target byte order.
+ * @param[in] tbo	Target byte order for address conversion.
  * }
 */
-void lrtr_ipv6_addr_convert_byte_order(const uint32_t *src,
-                                       uint32_t *dest,
+void lrtr_ipv6_addr_convert_byte_order(const uint32_t *src, uint32_t *dest,
 				       const enum target_byte_order tbo);
 
 #endif
