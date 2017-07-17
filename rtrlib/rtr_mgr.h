@@ -80,7 +80,6 @@ typedef void (*rtr_mgr_status_fp)(const struct rtr_mgr_group *,
 
 struct rtr_mgr_config_ll {
     tommy_list groups;
-	//struct rtr_mgr_group *groups;
 	unsigned int len;
 	pthread_mutex_t mutex;
 	rtr_mgr_status_fp status_fp;
@@ -132,7 +131,7 @@ struct rtr_mgr_config {
  * @return RTR_INVALID_PARAM If refresh_interval or expire_interval is invalid.
  * @return RTR_SUCCESS On success.
  */
-int rtr_mgr_init(struct rtr_mgr_config **config_out,
+int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
 		 struct rtr_mgr_group groups[],
 		 const unsigned int groups_len,
 		 const unsigned int refresh_interval,
