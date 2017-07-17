@@ -71,10 +71,10 @@ typedef int tommy_bool_t; /**< Generic boolean type. */
  * Redefine them to what you need. By default they map to the C malloc(), realloc() and free().
  */
 #if !defined(tommy_malloc) && !defined(tommy_realloc) && !defined(tommy_free)
-#include <stdlib.h>
-#define tommy_malloc malloc
-#define tommy_realloc realloc
-#define tommy_free free
+#include "rtrlib/lib/alloc_utils.h"
+#define tommy_malloc lrtr_malloc
+#define tommy_realloc lrtr_realloc
+#define tommy_free lrtr_free
 #endif
 
 /******************************************************************************/

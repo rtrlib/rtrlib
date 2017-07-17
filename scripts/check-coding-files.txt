@@ -1,5 +1,7 @@
 rtrlib/rtr_mgr.h
 rtrlib/rtr_mgr.c
+rtrlib/lib/alloc_utils.c
+rtrlib/lib/alloc_utils.h
 rtrlib/lib/convert_byte_order.h
 rtrlib/lib/convert_byte_order.c
 rtrlib/lib/ipv4.c

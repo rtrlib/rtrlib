@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "rtrlib/lib/log.h"
+#include "rtrlib/lib/alloc_utils.h"
 
 #define MGR_DBG(fmt, ...) lrtr_dbg("RTR_MGR: " fmt, ## __VA_ARGS__)
 #define MGR_DBG1(a) lrtr_dbg("RTR_MGR: " a)
@@ -302,12 +303,12 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 		return RTR_ERROR;
 	}
 
-	*config_out = config = malloc(sizeof(*config));
+	*config_out = config = lrtr_malloc(sizeof(*config));
 	if (!config)
 		return RTR_ERROR;
 
 	config->len = groups_len;
-	config->groups = malloc(groups_len * sizeof(*groups));
+	config->groups = lrtr_malloc(groups_len * sizeof(*groups));
 	if (!config->groups)
 		goto err;
 	memcpy(config->groups, groups, groups_len * sizeof(*groups));
@@ -321,12 +322,12 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 	qsort(config->groups, config->len,
 	      sizeof(struct rtr_mgr_group), &rtr_mgr_config_cmp);
 
-	pfxt = malloc(sizeof(*pfxt));
+	pfxt = lrtr_malloc(sizeof(*pfxt));
 	if (!pfxt)
 		goto err;
 	pfx_table_init(pfxt, update_fp);
 
-	spki_table = malloc(sizeof(*spki_table));
+	spki_table = lrtr_malloc(sizeof(*spki_table));
 	if (!spki_table)
 		goto err;
 	spki_table_init(spki_table, spki_update_fp);
@@ -367,11 +368,11 @@ err:
 		spki_table_free(spki_table);
 	if (pfxt)
 		pfx_table_free(pfxt);
-	free(pfxt);
-	free(spki_table);
+	lrtr_free(pfxt);
+	lrtr_free(spki_table);
 
-	free(config->groups);
-	free(config);
+	lrtr_free(config->groups);
+	lrtr_free(config);
 	config = NULL;
 	*config_out = NULL;
 	return err_code;
@@ -405,12 +406,12 @@ void rtr_mgr_free(struct rtr_mgr_config *config)
 	pthread_mutex_lock(&config->mutex);
 	pfx_table_free(config->groups[0].sockets[0]->pfx_table);
 	spki_table_free(config->groups[0].sockets[0]->spki_table);
-	free(config->groups[0].sockets[0]->spki_table);
-	free(config->groups[0].sockets[0]->pfx_table);
-	free(config->groups);
+	lrtr_free(config->groups[0].sockets[0]->spki_table);
+	lrtr_free(config->groups[0].sockets[0]->pfx_table);
+	lrtr_free(config->groups);
 	pthread_mutex_unlock(&config->mutex);
 	pthread_mutex_destroy(&config->mutex);
-	free(config);
+	lrtr_free(config);
 }
 
 /* cppcheck-suppress unusedFunction */
