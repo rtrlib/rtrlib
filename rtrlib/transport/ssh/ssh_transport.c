@@ -16,6 +16,7 @@
 #include "../../lib/log.h"
 #include "../../lib/utils.h"
 #include "ssh_transport.h"
+#include "rtrlib/lib/alloc_utils.h"
 
 #define SSH_DBG(fmt, sock, ...) lrtr_dbg("SSH Transport(%s@%s:%u): " fmt, (sock)->config.username, (sock)->config.host, (sock)->config.port, ## __VA_ARGS__)
 #define SSH_DBG1(a, sock) lrtr_dbg("SSH Transport(%s@%s:%u): " a, (sock)->config.username, (sock)->config.host, (sock)->config.port)
@@ -127,9 +128,9 @@ void tr_ssh_free(struct tr_socket *tr_sock)
     assert(tr_ssh_sock->channel == NULL);
     assert(tr_ssh_sock->session == NULL);
     if (tr_ssh_sock->ident != NULL)
-        free(tr_ssh_sock->ident);
+        lrtr_free(tr_ssh_sock->ident);
     SSH_DBG1("Socket freed", tr_ssh_sock);
-    free(tr_ssh_sock);
+    lrtr_free(tr_ssh_sock);
     tr_sock->socket = NULL;
 }
 
@@ -185,7 +186,7 @@ const char *tr_ssh_ident(void *tr_ssh_sock)
 
     len = strlen(sock->config.username) + 1 + strlen(sock->config.host) + 1 +
           5 + 1;
-    sock->ident = malloc(len);
+    sock->ident = lrtr_malloc(len);
     if (sock->ident == NULL)
         return NULL;
     snprintf(sock->ident, len, "%s@%s:%u", sock->config.username,
@@ -203,7 +204,7 @@ int tr_ssh_init(const struct tr_ssh_config *config, struct tr_socket *socket)
     socket->send_fp = &tr_ssh_send;;
     socket->ident_fp = &tr_ssh_ident;
 
-    socket->socket = malloc(sizeof(struct tr_ssh_socket));
+    socket->socket = lrtr_malloc(sizeof(struct tr_ssh_socket));
     struct tr_ssh_socket *ssh_socket = socket->socket;
     ssh_socket->channel = NULL;
     ssh_socket->session = NULL;
