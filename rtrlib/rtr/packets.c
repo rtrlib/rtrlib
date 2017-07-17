@@ -19,6 +19,7 @@
 #include "rtrlib/lib/log.h"
 #include "rtrlib/spki/hashtable/ht-spkitable.h"
 
+#define MGR_DBG1(a) lrtr_dbg("RTR_MGR: " a)
 #define TEMPORARY_PDU_STORE_INCREMENT_VALUE 100
 #define MAX_SUPPORTED_PDU_TYPE 10
 
@@ -202,8 +203,12 @@ void rtr_change_socket_state(struct rtr_socket *rtr_socket, const enum rtr_socke
         return;
 
     rtr_socket->state = new_state;
+    if (new_state == RTR_SHUTDOWN) {
+        MGR_DBG1("Calling rtr_mgr_cb with RTR_SHUTDOWN");
+    }    
+
     if (rtr_socket->connection_state_fp != NULL)
-        rtr_socket->connection_state_fp(rtr_socket, new_state,rtr_socket->connection_state_fp_param);
+        rtr_socket->connection_state_fp(rtr_socket, new_state, rtr_socket->connection_state_fp_param_config, rtr_socket->connection_state_fp_param_group);
 }
 
 static void rtr_pdu_convert_header_byte_order(void *pdu, const enum target_byte_order target_byte_order)

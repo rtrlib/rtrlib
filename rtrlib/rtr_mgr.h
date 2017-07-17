@@ -35,6 +35,7 @@
 #include "rtrlib/pfx/pfx.h"
 #include "rtrlib/rtr/rtr.h"
 #include "rtrlib/spki/spkitable.h"
+#include "rtrlib/spki/hashtable/tommyds-1.8/tommy.h"
 
 /**
  * @brief Status of a rtr_mgr_group.
@@ -67,28 +68,37 @@ struct rtr_mgr_group {
 	enum rtr_mgr_status status;
 };
 
+//TODO Find a nicer way todo a linked list (without writing our own)
+struct rtr_mgr_group_node {
+	tommy_node node;
+	struct rtr_mgr_group *group;
+};
+
 typedef void (*rtr_mgr_status_fp)(const struct rtr_mgr_group *,
 				  enum rtr_mgr_status,
 				  const struct rtr_socket *,
 				  void *);
 
+//TODO Add refresh, expire, and retry intervals to config for easier access.
 struct rtr_mgr_config {
-	struct rtr_mgr_group *groups;
+	tommy_list groups;
 	unsigned int len;
 	pthread_mutex_t mutex;
 	rtr_mgr_status_fp status_fp;
 	void *status_fp_data;
+	struct pfx_table *pfx_table;
+	struct spki_table *spki_table;
 };
 
 /**
  * @brief Initializes a rtr_mgr_config.
  * @param[out] config_out The rtr_mgr_config that will be initialized by this
  *			function. On error, *config_out will be NULL!
- * @param[in] groups Array of rtr_mgr_group. Every RTR socket in an
+ * @param[in] groups Linked list of rtr_mgr_group. Every RTR socket in an
  *		     rtr_mgr_group must be assoziated with an initialized
  *		     transport socket. A Transport socket is only allowed to be
  *		     associated with one rtr socket. The preference values must
- *		     be unique in the group array. More than one rtr_mgr_group
+ *		     be unique in the linked list. More than one rtr_mgr_group
  *		     with the same preference value isn't allowed.
  * @param[in] groups_len Number of elements in the groups array. Must be >= 1.
  * @param[in] refresh_interval Interval in seconds between serial queries that
@@ -129,6 +139,40 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 		 const rtr_mgr_status_fp status_fp,
 		 void *status_fp_data);
 
+/**
+ * @brief Adds a new rtr_mgr_group to the linked list of a initialized config.
+ * @details A new group must have at least one rtr_socket associated
+ *          with it. This socket must have at least one initialized
+ *          transport socket associated with it. The new group must
+ *          have a preference value that is none of the already present
+ *          groups have. More than one rtr_mgr_group with the same
+ *          preference is not allowed.
+ * @param config A rtr_mgr_config struct that has been initialized
+ *           previously with rtr_mgr_init
+ * @param group A rtr_mgr_group with at least one rtr_socket and a
+ *           preference value that no existing group has.
+ * @return RTR_INVALID_PARAM If a group with the same preference value already
+ *           exists.
+ * @return RTR_ERROR If an error occurred while adding the group.
+ * @return RTR_SUCCESS If the group was successfully added.
+ *
+ */
+int rtr_mgr_add_group(struct rtr_mgr_config *config,
+		      const struct rtr_mgr_group *group);
+/**
+ * @brief Removes an existing rtr_mgr_group from the linked list of config.
+ * @details The group to be removed is identified by its preference value.
+ *          Should the group to be removed be currently active, it will be
+ *          shut down and the next best group will be spun up.
+ * @param config A rtr_mgr_config struct that has been initialized previously
+ *          with rtr_mgr_init
+ * @param preference The preference value of the group to be removed.
+ * @return RTR_ERROR If no group with this preference value exists.
+ * @return RTR_SUCCESS If group was successfully removed.
+ *
+ */
+int rtr_mgr_remove_group(struct rtr_mgr_config *config,
+			 unsigned int preference);
 /**
  * @brief Frees all resources that were allocated from the rtr_mgr.
  * @details rtr_mgr_stop must be called before, to shutdown all rtr_sockets.
@@ -227,5 +271,16 @@ void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config,
 				  pfx_for_each_fp fp,
 				  void *data);
 
+/**
+ * @brief Returns the first, thus active group.
+ * @param[in] config The rtr_mgr_config
+ * @return rtr_mgr_group The head of the linked list.
+ */
+struct rtr_mgr_group *rtr_mgr_get_first_group(struct rtr_mgr_config *conf);
+
+int rtr_mgr_for_each_group(struct rtr_mgr_config *config,
+			   void (fp)(const struct rtr_mgr_group *group,
+				     void *data),
+			   void *data);
 #endif
 /* @} */
