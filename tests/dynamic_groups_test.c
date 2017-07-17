@@ -25,15 +25,15 @@ int main(){
     groups[0].preference = 1;
 
     struct rtr_mgr_config_ll *conf;
-    int ret = rtr_mgr_init(&conf, groups, 2, 30, 600, 600, NULL, NULL, NULL, NULL);
+    int ret = rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL, NULL, NULL);
 
     //start the connection manager
-    //rtr_mgr_start(conf);
+    rtr_mgr_start(conf);
 
-    ////wait till at least one rtr_mgr_group is fully synchronized with the server
-    //while(!rtr_mgr_conf_in_sync(conf)) {
-    //    sleep(1);
-    //}
+    //wait till at least one rtr_mgr_group is fully synchronized with the server
+    while(!rtr_mgr_conf_in_sync(conf)) {
+        sleep(1);
+    }
     //
     ////validate the BGP-Route 10.10.0.0/24, origin ASN: 12345
     //struct lrtr_ip_addr pref;
@@ -64,6 +64,6 @@ int main(){
 
     //rtr_mgr_stop(conf);
     //rtr_mgr_free(conf);
-    free(groups[0].sockets);
-    free(groups[1].sockets);
+    //free(groups[0].sockets);
+    //free(groups[1].sockets);
 }
