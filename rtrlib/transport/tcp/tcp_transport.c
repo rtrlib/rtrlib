@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include "rtrlib/lib/log.h"
 #include "rtrlib/transport/tcp/tcp_transport.h"
+#include "rtrlib/lib/alloc_utils.h"
 
 #define TCP_DBG(fmt, sock, ...) lrtr_dbg("TCP Transport(%s:%s): " fmt, sock->config.host, sock->config.port, ## __VA_ARGS__)
 #define TCP_DBG1(a, sock) lrtr_dbg("TCP Transport(%s:%s): " a,sock->config.host, sock->config.port)
@@ -105,10 +106,10 @@ void tr_tcp_free(struct tr_socket *tr_sock)
     assert(tcp_sock->socket == -1);
 
     if (tcp_sock->ident != NULL)
-        free(tcp_sock->ident);
+        lrtr_free(tcp_sock->ident);
     tr_sock->socket = NULL;
     TCP_DBG1("Socket freed", tcp_sock);
-    free(tcp_sock);
+    lrtr_free(tcp_sock);
 }
 
 int tr_tcp_recv(const void *tr_tcp_sock, void *pdu, const size_t len, const time_t timeout)
@@ -178,7 +179,7 @@ const char *tr_tcp_ident(void *socket)
         return sock->ident;
 
     len = strlen(sock->config.port) + strlen(sock->config.host) + 2;
-    sock->ident = malloc(len);
+    sock->ident = lrtr_malloc(len);
     if (sock->ident== NULL)
         return NULL;
     snprintf(sock->ident, len, "%s:%s", sock->config.host, sock->config.port);
@@ -196,7 +197,7 @@ int tr_tcp_init(const struct tr_tcp_config *config, struct tr_socket *socket)
     socket->send_fp = &tr_tcp_send;
     socket->ident_fp = &tr_tcp_ident;
 
-    socket->socket = malloc(sizeof(struct tr_tcp_socket));
+    socket->socket = lrtr_malloc(sizeof(struct tr_tcp_socket));
     struct tr_tcp_socket *tcp_socket = socket->socket;
     tcp_socket->socket = -1;
     tcp_socket->config = *config;

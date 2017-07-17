@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "rtrlib/pfx/trie/trie.h"
+#include "rtrlib/lib/alloc_utils.h"
 
 static void swap_nodes(struct trie_node *a, struct trie_node *b)
 {
@@ -213,7 +214,7 @@ static int append_node_to_array(struct trie_node ***ary,
 {
 	struct trie_node **new;
 
-	new = realloc(*ary, *len * sizeof(n));
+	new = lrtr_realloc(*ary, *len * sizeof(n));
 	if (!new)
 		return -1;
 
@@ -246,7 +247,7 @@ int trie_get_children(const struct trie_node *root_node,
 	return 0;
 
 err:
-	free(*array);
+	lrtr_free(*array);
 	return -1;
 }
 
