@@ -80,6 +80,7 @@ typedef void (*rtr_mgr_status_fp)(const struct rtr_mgr_group *,
 
 struct rtr_mgr_config_ll {
     tommy_list groups;
+    struct rtr_mgr_group *active_group;
 	unsigned int len;
 	pthread_mutex_t mutex;
 	rtr_mgr_status_fp status_fp;
@@ -158,7 +159,7 @@ void rtr_mgr_free(struct rtr_mgr_config *config);
  * @return RTR_SUCCESS On success
  * @return RTR_ERROR On error
  */
-int rtr_mgr_start(struct rtr_mgr_config *config);
+int rtr_mgr_start(struct rtr_mgr_config_ll *config);
 
 /**
  * @brief Terminates rtr_socket connections
@@ -174,7 +175,7 @@ void rtr_mgr_stop(struct rtr_mgr_config *config);
  * @return true If pfx_table stores non-outdated pfx_records
  * @return false If pfx_table isn't fully synchronized with at least one group.
  */
-bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config);
+bool rtr_mgr_conf_in_sync(struct rtr_mgr_config_ll *config);
 
 /**
  * @brief Validates the origin of a BGP-Route.
