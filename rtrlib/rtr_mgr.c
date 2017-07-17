@@ -294,10 +294,11 @@ int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
 	struct pfx_table *pfxt = NULL;
 	struct spki_table *spki_table = NULL;
 	struct rtr_mgr_config_ll *config = NULL;
-	uint8_t last_preference = UINT8_MAX;
+    struct rtr_mgr_group *active_group = NULL;
+    uint8_t min_preference = UINT8_MAX;
+    uint8_t last_preference = UINT8_MAX;
 
 	*config_out = NULL;
-
 
 	if (groups_len == 0) {
 		MGR_DBG1("Error Empty rtr_mgr_group array");
@@ -318,10 +319,6 @@ int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
     //Init tommy_list that will hold our groups
     config->groups = NULL;
 
-	/* sort array in asc preference order */
-	//qsort(config->groups, config->len,
-	//      sizeof(struct rtr_mgr_group), &rtr_mgr_config_cmp);
-
 	pfxt = lrtr_malloc(sizeof(*pfxt));
 	if (!pfxt)
 		goto err;
@@ -335,8 +332,6 @@ int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
 	config->status_fp_data = status_fp_data;
 	config->status_fp = status_fp;
 
-    //Init groups and add to socket
-    //IMPORTANT: Copy the groups! Add the copies and not the original to list
 	for (unsigned int i = 0; i < config->len; i++) {
 		struct rtr_mgr_group cg = groups[i];
 		cg.status = RTR_MGR_CLOSED;
@@ -358,12 +353,19 @@ int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
 			}
 		}
 		last_preference = cg.preference;
+
         struct rtr_mgr_group_node *group_node = malloc(sizeof(struct rtr_mgr_group_node));
         struct rtr_mgr_group *group = malloc(sizeof(struct rtr_mgr_group));
         memcpy(group, &groups[i], sizeof(struct rtr_mgr_group));
         group_node->group = &groups[i];
         tommy_list_insert_tail(&config->groups, &group_node->node, group_node);
+
+        if (cg.preference < min_preference) {
+            min_preference = cg.preference;
+            active_group = group;
+        }
 	}
+    config->active_group = active_group;
 	return RTR_SUCCESS;
 
 err:
@@ -381,26 +383,21 @@ err:
 	return err_code;
 }
 
-int rtr_mgr_start(struct rtr_mgr_config *config)
+int rtr_mgr_start(struct rtr_mgr_config_ll *config)
 {
 	MGR_DBG1("rtr_mgr_start()");
-	return rtr_mgr_start_sockets(&config->groups[0]);
+	return rtr_mgr_start_sockets(config->active_group);
 }
 
-bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config)
+bool rtr_mgr_conf_in_sync(struct rtr_mgr_config_ll *config)
 {
-	for (unsigned int i = 0; i < config->len; i++) {
-		bool all_sync = true;
-
-		for (unsigned int j = 0;
-		     all_sync && (j < config->groups[i].sockets_len); j++) {
-			if (config->groups[i].sockets[j]->last_update == 0)
-				all_sync = false;
-		}
-		if (all_sync)
-			return true;
+    bool all_sync = true;
+	for (unsigned int j = 0;
+	     all_sync && (j < config->active_group->sockets_len); j++) {
+		if (config->active_group->sockets[j]->last_update == 0)
+			all_sync = false;
 	}
-	return false;
+	return all_sync;
 }
 
 void rtr_mgr_free(struct rtr_mgr_config *config)
