@@ -278,7 +278,7 @@ int rtr_mgr_config_cmp(const void *a, const void *b)
 	return 0;
 }
 
-int rtr_mgr_init(struct rtr_mgr_config **config_out,
+int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
 		 struct rtr_mgr_group groups[],
 		 const unsigned int groups_len,
 		 const unsigned int refresh_interval,
@@ -297,6 +297,11 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 
 	*config_out = NULL;
 
+	if (pthread_mutex_init(&config->mutex, NULL) != 0) {
+		MGR_DBG1("Mutex initialization failed");
+		goto err;
+	}
+
 	if (groups_len == 0) {
 		MGR_DBG1("Error Empty rtr_mgr_group array");
 		return RTR_ERROR;
@@ -307,15 +312,13 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 		return RTR_ERROR;
 
 	config->len = groups_len;
-	config->groups = malloc(groups_len * sizeof(*groups));
+
+
+    //Init tommy_list that will hold our groups
+    tommy_list_init(&config->groups);
 	if (!config->groups)
 		goto err;
-	memcpy(config->groups, groups, groups_len * sizeof(*groups));
 
-	if (pthread_mutex_init(&config->mutex, NULL) != 0) {
-		MGR_DBG1("Mutex initialization failed");
-		goto err;
-	}
 
 	/* sort array in asc preference order */
 	qsort(config->groups, config->len,
@@ -331,9 +334,13 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 		goto err;
 	spki_table_init(spki_table, spki_update_fp);
 
-	for (unsigned int i = 0; i < config->len; i++) {
-		struct rtr_mgr_group cg = config->groups[i];
+	config->status_fp_data = status_fp_data;
+	config->status_fp = status_fp;
 
+    //Init groups and add to socket
+    //IMPORTANT: Copy the groups! Add the copies and not the original to list
+	for (unsigned int i = 0; i < config->len; i++) {
+		struct rtr_mgr_group cg = groups[i];
 		cg.status = RTR_MGR_CLOSED;
 		if ((i > 0) && (cg.preference == last_preference)) {
 			MGR_DBG1("Error Same preference for 2 socket groups!");
@@ -353,13 +360,10 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 			}
 		}
 		last_preference = cg.preference;
+        struct rtr_mgr_group_node *group_node = malloc(sizeof(group_node));
+        group_node->group = groups[i];
+        tommy_list_insert_tail(&config->groups, &group_node->node, group_node); 
 	}
-	config->status_fp_data = status_fp_data;
-	config->status_fp = status_fp;
-
-	if (!*config_out)
-		printf("xyxyx");
-
 	return RTR_SUCCESS;
 
 err:

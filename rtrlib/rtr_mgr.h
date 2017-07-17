@@ -35,6 +35,7 @@
 #include "rtrlib/pfx/pfx.h"
 #include "rtrlib/rtr/rtr.h"
 #include "rtrlib/spki/spkitable.h"
+#include "rtrlib/spki/hashtable/tommyds-1.8/tommy.h"
 
 /**
  * @brief Status of a rtr_mgr_group.
@@ -67,10 +68,24 @@ struct rtr_mgr_group {
 	enum rtr_mgr_status status;
 };
 
+struct rtr_mgr_group_node {
+    tommy_node node;
+    struct rtr_mgr_group *group;
+};
+
 typedef void (*rtr_mgr_status_fp)(const struct rtr_mgr_group *,
 				  enum rtr_mgr_status,
 				  const struct rtr_socket *,
 				  void *);
+
+struct rtr_mgr_config_ll {
+    tommy_list groups;
+	//struct rtr_mgr_group *groups;
+	unsigned int len;
+	pthread_mutex_t mutex;
+	rtr_mgr_status_fp status_fp;
+	void *status_fp_data;
+};
 
 struct rtr_mgr_config {
 	struct rtr_mgr_group *groups;
@@ -79,7 +94,6 @@ struct rtr_mgr_config {
 	rtr_mgr_status_fp status_fp;
 	void *status_fp_data;
 };
-
 /**
  * @brief Initializes a rtr_mgr_config.
  * @param[out] config_out The rtr_mgr_config that will be initialized by this
