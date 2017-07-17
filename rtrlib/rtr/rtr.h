@@ -70,8 +70,11 @@ enum rtr_socket_state {
     /** Error on the transport socket occurred. */
     RTR_ERROR_TRANSPORT,
 
-    /** RTR Socket is stopped. */
+    /** RTR Socket was started, but now has shut down. */
     RTR_SHUTDOWN,
+
+    /** RTR Socket has not been started yet. Initial state after rtr_init */
+    RTR_CLOSED,
 };
 
 struct rtr_socket;
@@ -79,7 +82,7 @@ struct rtr_socket;
 /**
  * @brief A function pointer that is called if the state of the rtr socket has changed.
  */
-typedef void (*rtr_connection_state_fp)(const struct rtr_socket *rtr_socket, const enum rtr_socket_state state, void *connection_state_fp_param);
+typedef void (*rtr_connection_state_fp)(const struct rtr_socket *rtr_socket, const enum rtr_socket_state state, void *connection_state_fp_param_config, void *connection_state_fp_param_group);
 
 /**
  * @brief A RTR socket.
@@ -98,7 +101,8 @@ typedef void (*rtr_connection_state_fp)(const struct rtr_socket *rtr_socket, con
  * @param pfx_table pfx_table that stores the validation records obtained from the connected rtr server.
  * @param thread_id Handle of the thread this socket is running in.
  * @param connection_state_fp A callback function that is executed when the state of the socket changes.
- * @param connection_state_fp_param Parameter that is passed to the connection_state_fp callback.
+ * @param connection_state_fp_param_config Parameter that is passed to the connection_state_fp callback. Expects a pointer to a rtr_mgr_config struct.
+ * @param connection_state_fp_param_group Parameter that is passed to the connection_state_fp callback. Expects a pointer to the rtr_mgr_group this socket belongs to.
  * @param version Protocol version used by this socket
  * @param has_received_pdus True, if this socket has already recieved PDUs
  * @param spki_table spki_table that stores the router keys obtaiend from the connected rtr server
@@ -116,7 +120,8 @@ struct rtr_socket {
     struct pfx_table *pfx_table;
     pthread_t thread_id;
     rtr_connection_state_fp connection_state_fp;
-    void *connection_state_fp_param;
+    void *connection_state_fp_param_config;
+    void *connection_state_fp_param_group;
     unsigned int version;
     bool has_received_pdus;
     struct spki_table *spki_table;
@@ -138,14 +143,17 @@ struct rtr_socket {
  * a failed Serial Query or Reset Query. The value must be >= 1s and <= 7200s (two hours).
  * The recommanded default is 600 seconds (ten minutes).
  * @param[in] fp A callback function that is executed when the state of the socket changes.
- * @param[in] fp_data Parameter that is passed to the connection_state_fp callback.
+ * @param[in] fp_data_config Parameter that is passed to the connection_state_fp callback.
+ * Expects rtr_mgr_config.
+ * @param[in] fp_data_group Parameter that is passed to the connection_state_fp callback.
+ * Expects rtr_mgr_group.
  * @return RTR_INVALID_PARAM If the refresh_interval or the expire_interval is not valid.
  * @return RTR_SUCCESS On success.
  */
 int rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr_socket, struct pfx_table *pfx_table,
              struct spki_table *spki_table, const unsigned int refresh_interval,
              const unsigned int expire_interval, const unsigned int retry_interval,
-             rtr_connection_state_fp fp, void *fp_data);
+             rtr_connection_state_fp fp, void *fp_data_config, void *my_group);
 
 /**
  * @brief Starts the RTR protocol state machine in a pthread. Connection to the rtr_server will be established and the
