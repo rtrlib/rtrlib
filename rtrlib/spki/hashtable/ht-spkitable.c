@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <pthread.h>
 
+#include "rtrlib/lib/alloc_utils.h"
+
 struct key_entry {
     uint8_t ski[SKI_SIZE];
     uint32_t asn;
@@ -106,7 +108,7 @@ int spki_table_add_entry(struct spki_table *spki_table,
     uint32_t hash;
     struct key_entry *entry;
 
-    entry = malloc(sizeof(*entry));
+    entry = lrtr_malloc(sizeof(*entry));
     if (entry == NULL)
         return SPKI_ERROR;
 
@@ -117,7 +119,7 @@ int spki_table_add_entry(struct spki_table *spki_table,
     if (tommy_hashlin_search(&spki_table->hashtable,
                              spki_table->cmp_fp,
                              entry, hash)) {
-        free(entry);
+        lrtr_free(entry);
         pthread_rwlock_unlock(&spki_table->lock);
         return SPKI_DUPLICATE_RECORD;
     }
@@ -168,9 +170,9 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn,
         if (element->asn == asn &&
             memcmp(element->ski, ski, sizeof(element->ski)) == 0) {
             (*result_size)++;
-            tmp = realloc(*result, *result_size * sizeof(**result));
+            tmp = lrtr_realloc(*result, *result_size * sizeof(**result));
             if (tmp == NULL) {
-                free(*result);
+                lrtr_free(*result);
                 pthread_rwlock_unlock(&spki_table->lock);
                 return SPKI_ERROR;
             }
@@ -205,10 +207,10 @@ int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski,
 
         if (memcmp(current_entry->ski, ski, sizeof(current_entry->ski)) == 0) {
             (*result_size)++;
-            tmp = realloc(*result,
+            tmp = lrtr_realloc(*result,
                       sizeof(**result) * (*result_size));
             if (tmp == NULL) {
-                free(*result);
+                lrtr_free(*result);
                 pthread_rwlock_unlock(&spki_table->lock);
                 return SPKI_ERROR;
             }
@@ -246,7 +248,7 @@ int spki_table_remove_entry(struct spki_table *spki_table,
                                         &entry, hash);
         if (rmv_elem && tommy_list_remove_existing(&spki_table->list,
                                                    &rmv_elem->list_node)) {
-            free(rmv_elem);
+            lrtr_free(rmv_elem);
             spki_table_notify_clients(spki_table, spki_record, false);
             rtval = SPKI_SUCCESS;
         }
@@ -278,7 +280,7 @@ int spki_table_src_remove(struct spki_table *spki_table,
                 pthread_rwlock_unlock(&spki_table->lock);
                 return SPKI_ERROR;
             }
-            free(entry);
+            lrtr_free(entry);
         } else {
             current_node = current_node->next;
         }

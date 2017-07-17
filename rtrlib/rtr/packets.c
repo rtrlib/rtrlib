@@ -761,7 +761,7 @@ static int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, 
     assert(type  == IPV4_PREFIX || type == IPV6_PREFIX);
     if ((*ind) >= *size) {
         *size += TEMPORARY_PDU_STORE_INCREMENT_VALUE;
-        void *tmp = realloc(*ary, *size * pdu_size);
+        void *tmp = lrtr_realloc(*ary, *size * pdu_size);
         if (tmp == NULL) {
             const char txt[] = "Realloc failed";
             RTR_DBG("%s", txt);
@@ -798,7 +798,7 @@ static int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *p
 
     if ((*ind) >= *size) {
         *size += TEMPORARY_PDU_STORE_INCREMENT_VALUE;
-        void *tmp = realloc(*ary, *size * pdu_size);
+        void *tmp = lrtr_realloc(*ary, *size * pdu_size);
         if (tmp == NULL) {
             const char txt[] = "Realloc failed";
             RTR_DBG("%s", txt);
@@ -1052,9 +1052,9 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
     } while (type != EOD);
 
     cleanup:
-    free(router_key_pdus);
-    free(ipv6_pdus);
-    free(ipv4_pdus);
+    lrtr_free(router_key_pdus);
+    lrtr_free(ipv6_pdus);
+    lrtr_free(ipv4_pdus);
     return retval;
 }
 

@@ -8,6 +8,7 @@
  */
 
 #include "rtrlib/pfx/trie/trie-pfx.h"
+#include "rtrlib/lib/alloc_utils.h"
 #include <assert.h>
 #include <pthread.h>
 #include <stdlib.h>
@@ -66,9 +67,9 @@ void pfx_table_free(struct pfx_table *pfx_table)
                 }
                 rm_node = (trie_remove(root, &(root->prefix), root->len, 0));
                 assert(rm_node != NULL);
-                free(((struct node_data *) rm_node->data)->ary);
-                free(rm_node->data);
-                free(rm_node);
+                lrtr_free(((struct node_data *) rm_node->data)->ary);
+                lrtr_free(rm_node->data);
+                lrtr_free(rm_node);
             } while(rm_node != root);
             if(i == 0)
                 pfx_table->ipv4 = NULL;
@@ -83,7 +84,7 @@ void pfx_table_free(struct pfx_table *pfx_table)
 
 int pfx_table_append_elem(struct node_data *data, const struct pfx_record *record)
 {
-    struct data_elem *tmp  = realloc(data->ary, sizeof(struct data_elem) * ((data->len) + 1));
+    struct data_elem *tmp  = lrtr_realloc(data->ary, sizeof(struct data_elem) * ((data->len) + 1));
     if(tmp == NULL)
         return PFX_ERROR;
     data->len++;
@@ -99,7 +100,7 @@ int pfx_table_create_node(struct trie_node **node,
 {
     int err;
 
-    *node = malloc(sizeof(struct trie_node));
+    *node = lrtr_malloc(sizeof(struct trie_node));
     if(*node == NULL)
         return PFX_ERROR;
 
@@ -109,7 +110,7 @@ int pfx_table_create_node(struct trie_node **node,
     (*node)->rchild = NULL;
     (*node)->parent = NULL;
 
-    (*node)->data = malloc(sizeof(struct node_data));
+    (*node)->data = lrtr_malloc(sizeof(struct node_data));
     if((*node)->data == NULL) {
         err = PFX_ERROR;
         goto free_node;
@@ -126,9 +127,9 @@ int pfx_table_create_node(struct trie_node **node,
 
 
 free_node_data:
-    free((*node)->data);
+    lrtr_free((*node)->data);
 free_node:
-    free(*node);
+    lrtr_free(*node);
 
     return err;
 }
@@ -165,12 +166,12 @@ int pfx_table_del_elem(struct node_data *data, const unsigned int index)
 
     data->len--;
     if (!data->len) {
-        free(data->ary);
+        lrtr_free(data->ary);
         data->ary = NULL;
         return PFX_SUCCESS;
     }
 
-    tmp = realloc(data->ary, sizeof(struct data_elem) * data->len);
+    tmp = lrtr_realloc(data->ary, sizeof(struct data_elem) * data->len);
     if (!tmp) {
         data->ary[data->len] = deleted_elem;
         data->len++;
@@ -270,8 +271,8 @@ int pfx_table_remove(struct pfx_table *pfx_table, const struct pfx_record *recor
                 pfx_table->ipv6 = NULL;
         }
         assert(((struct node_data *) node->data)->len == 0);
-        free(node->data);
-        free(node);
+        lrtr_free(node->data);
+        lrtr_free(node);
     }
     pthread_rwlock_unlock(&pfx_table->lock);
 
@@ -308,7 +309,7 @@ int pfx_table_node2pfx_record(struct trie_node *node, struct pfx_record *records
 inline void pfx_table_free_reason(struct pfx_record **reason, unsigned int *reason_len)
 {
     if(reason != NULL) {
-        free(*reason);
+        lrtr_free(*reason);
         *reason = NULL;
     }
     if(reason_len != NULL)
@@ -340,7 +341,7 @@ int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason
 
     if(reason_len != NULL && reason != NULL) {
         *reason_len = ((struct node_data *) node->data)->len;
-        *reason = realloc(*reason, *reason_len * sizeof(struct pfx_record));
+        *reason = lrtr_realloc(*reason, *reason_len * sizeof(struct pfx_record));
         if(*reason == NULL) {
             pthread_rwlock_unlock(&pfx_table->lock);
             pfx_table_free_reason(reason, reason_len);
@@ -368,7 +369,7 @@ int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason
         if(reason_len != NULL && reason != NULL) {
             unsigned int r_len_old = *reason_len;
             *reason_len += ((struct node_data *) node->data)->len;
-            *reason = realloc(*reason, *reason_len * sizeof(struct pfx_record));
+            *reason = lrtr_realloc(*reason, *reason_len * sizeof(struct pfx_record));
             struct pfx_record *start = *reason + r_len_old;
             if(*reason == NULL) {
                 pthread_rwlock_unlock(&pfx_table->lock);
@@ -432,8 +433,8 @@ int pfx_table_remove_id(struct pfx_table *pfx_table, struct trie_node **root, st
             struct trie_node *rm_node = trie_remove(node, &(node->prefix), node->len, level);
             assert(rm_node != NULL);
             assert(((struct node_data *) rm_node->data)->len == 0);
-            free(((struct node_data *) rm_node->data));
-            free(rm_node);
+            lrtr_free(((struct node_data *) rm_node->data));
+            lrtr_free(rm_node);
 
             if(rm_node == *root) {
                 *root = NULL;

@@ -7,8 +7,8 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#ifndef LRTR_UTILS_H
-#define LRTR_UTILS_H
+#ifndef LRTR_ALLOC_UTILS_H
+#define LRTR_ALLOC_UTILS_H
 
 #include <stdlib.h>
 
@@ -37,28 +37,10 @@ void lrtr_set_free(void (free_ptr)(void* ptr));
 */
 void lrtr_set_realloc(void* (*realloc_ptr)(void* ptr, size_t size));
 
-inline void* lrtr_malloc(size_t size) {
-	if (MALLOC_PTR) {
-		return MALLOC_PTR(size);
-	} else {
-		return malloc(size);
-	}
-}
+void* lrtr_malloc(size_t size);
 
-inline void lrtr_free(void* ptr) {
-	if (FREE_PTR) {
-		return FREE_PTR(ptr);
-	} else {
-		return free(ptr);
-	}
-}
+void lrtr_free(void* ptr);
 
-inline void* lrtr_realloc(void* ptr, size_t size) {
-	if (REALLOC_PTR) {
-		return REALLOC_PTR(ptr, size);
-	}  else {
-		return realloc(ptr, size);
-	}
-}
+void* lrtr_realloc(void* ptr, size_t size);
 
 #endif
