@@ -292,15 +292,11 @@ int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
 	int err_code = RTR_ERROR;
 	struct pfx_table *pfxt = NULL;
 	struct spki_table *spki_table = NULL;
-	struct rtr_mgr_config *config = NULL;
+	struct rtr_mgr_config_ll *config = NULL;
 	uint8_t last_preference = UINT8_MAX;
 
 	*config_out = NULL;
 
-	if (pthread_mutex_init(&config->mutex, NULL) != 0) {
-		MGR_DBG1("Mutex initialization failed");
-		goto err;
-	}
 
 	if (groups_len == 0) {
 		MGR_DBG1("Error Empty rtr_mgr_group array");
@@ -311,18 +307,19 @@ int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
 	if (!config)
 		return RTR_ERROR;
 
+	if (pthread_mutex_init(&config->mutex, NULL) != 0) {
+		MGR_DBG1("Mutex initialization failed");
+		goto err;
+	}
 	config->len = groups_len;
 
 
     //Init tommy_list that will hold our groups
-    tommy_list_init(&config->groups);
-	if (!config->groups)
-		goto err;
-
+    config->groups = NULL;
 
 	/* sort array in asc preference order */
-	qsort(config->groups, config->len,
-	      sizeof(struct rtr_mgr_group), &rtr_mgr_config_cmp);
+	//qsort(config->groups, config->len,
+	//      sizeof(struct rtr_mgr_group), &rtr_mgr_config_cmp);
 
 	pfxt = malloc(sizeof(*pfxt));
 	if (!pfxt)
@@ -360,8 +357,10 @@ int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
 			}
 		}
 		last_preference = cg.preference;
-        struct rtr_mgr_group_node *group_node = malloc(sizeof(group_node));
-        group_node->group = groups[i];
+        struct rtr_mgr_group_node *group_node = malloc(sizeof(struct rtr_mgr_group_node));
+        struct rtr_mgr_group *group = malloc(sizeof(struct rtr_mgr_group));
+        memcpy(group, &groups[i], sizeof(struct rtr_mgr_group));
+        group_node->group = &groups[i];
         tommy_list_insert_tail(&config->groups, &group_node->node, group_node); 
 	}
 	return RTR_SUCCESS;
