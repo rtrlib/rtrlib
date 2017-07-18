@@ -34,12 +34,6 @@ static int rtr_mgr_config_cmp(const void *a, const void *b);
 static bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *config);
 static bool rtr_mgr_sock_in_group(const struct rtr_mgr_group* group, const struct rtr_socket* sock);
 
-static int rtr_mgr_add_group(const struct rtr_mgr_config_ll *config,
-                              const struct rtr_mgr_group *group);
-
-static int rtr_mgr_remove_group(const struct rtr_mgr_config_ll *config,
-                                 const struct rtr_mgr_group *group);
-
 static void set_status(const struct rtr_mgr_config_ll *conf,
 		       struct rtr_mgr_group *group,
 		       enum rtr_mgr_status mgr_status,
@@ -447,7 +441,7 @@ bool rtr_mgr_conf_in_sync(struct rtr_mgr_config_ll *config)
 	return all_sync;
 }
 
-static int rtr_mgr_add_group(const struct rtr_mgr_config_ll *config,
+int rtr_mgr_add_group(const struct rtr_mgr_config_ll *config,
                        const struct rtr_mgr_group *group)
 {
 		// check for existing preference.
@@ -475,7 +469,7 @@ static int rtr_mgr_add_group(const struct rtr_mgr_config_ll *config,
 	return RTR_SUCCESS;
 }
 
-static int rtr_mgr_remove_group(const struct rtr_mgr_config_ll *config,
+int rtr_mgr_remove_group(const struct rtr_mgr_config_ll *config,
                           const struct rtr_mgr_group *group)
 {
 	// TODO: make sure the group exists.

@@ -241,5 +241,11 @@ void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config,
 				  pfx_for_each_fp fp,
 				  void *data);
 
+int rtr_mgr_add_group(const struct rtr_mgr_config_ll *config,
+                              const struct rtr_mgr_group *group);
+
+int rtr_mgr_remove_group(const struct rtr_mgr_config_ll *config,
+                                 const struct rtr_mgr_group *group);
+
 #endif
 /* @} */
