@@ -480,7 +480,7 @@ int rtr_mgr_remove_group(const struct rtr_mgr_config_ll *config,
                          unsigned int preference)
 {
 	// make sure the group exists.
-	struct rtr_mgr_group *remove_group;
+	struct rtr_mgr_group *remove_group = lrtr_malloc(sizeof(struct rtr_mgr_group));
 	int group_exists = false;
 	tommy_node *node = tommy_list_head(&config->groups);
 	while(node) {
