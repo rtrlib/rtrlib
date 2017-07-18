@@ -89,8 +89,26 @@ bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *group)
 	return true;
 }
 
+static void rtr_mgr_close_inactive_groups(const struct rtr_socket *sock,
+						 struct rtr_mgr_config_ll *config,
+						 unsigned int my_group_idx)
+{
+	for (unsigned int i = 0; i < config->len; i++) {
+		struct rtr_mgr_group cg = config->groups[i];
+
+		if ((cg.status != RTR_MGR_CLOSED) && (i != my_group_idx) &&
+		    (cg.preference > config->groups[my_group_idx].preference)) {
+			for (unsigned int j = 0; j < cg.sockets_len; j++) {
+				pthread_mutex_unlock(&config->mutex);
+				rtr_stop(cg.sockets[j]);
+				pthread_mutex_lock(&config->mutex);
+			}
+			set_status(config, &cg, RTR_MGR_CLOSED, sock);
+		}
+	}
+}
 static void rtr_mgr_close_less_preferable_groups(const struct rtr_socket *sock,
-						 struct rtr_mgr_config *config,
+						 struct rtr_mgr_config_ll *config,
 						 unsigned int my_group_idx)
 {
 	for (unsigned int i = 0; i < config->len; i++) {
@@ -131,11 +149,10 @@ static bool is_some_rtr_mgr_group_established(struct rtr_mgr_config *config)
 }
 
 static inline void _rtr_mgr_cb_state_shutdown(const struct rtr_socket *sock,
-					      struct rtr_mgr_config *config,
+					      struct rtr_mgr_config_ll *config,
 					      unsigned int ind)
 {
 	bool all_down = true;
-
 	for (unsigned int i = 0; i < config->groups[ind].sockets_len; i++) {
 		if (config->groups[ind].sockets[i]->state != RTR_SHUTDOWN) {
 			all_down = false;
@@ -151,22 +168,28 @@ static inline void _rtr_mgr_cb_state_shutdown(const struct rtr_socket *sock,
 }
 
 static inline void _rtr_mgr_cb_state_established(const struct rtr_socket *sock,
-						 struct rtr_mgr_config *config,
+						 struct rtr_mgr_config_ll *config,
 						 unsigned int ind)
 {
+    /* Check that this socket is actually in the active group */
+    if (!rtr_mgr_sock_in_group(config->active_group, sock)) {
+        MGR_DBG1("Active Socket is not in active group");
+        return;
+    }
+
 	/* socket established a connection to the rtr_server */
-	if (config->groups[ind].status == RTR_MGR_CONNECTING) {
+	if (config->active_group->status == RTR_MGR_CONNECTING) {
 		/*
 		 * if previous state was CONNECTING, check if all
 		 * other sockets in the group also have a established
 		 * connection, if yes change group state to ESTABLISHED
 		 */
-		if (rtr_mgr_config_status_is_synced(&config->groups[ind])) {
-			set_status(config, &config->groups[ind],
+		if (rtr_mgr_config_status_is_synced(&config->active_group)) {
+			set_status(config, &config->active_group,
 				   RTR_MGR_ESTABLISHED, sock);
 			rtr_mgr_close_less_preferable_groups(sock, config, ind);
 		} else {
-			set_status(config, &config->groups[ind],
+			set_status(config, &config->active_group,
 				   RTR_MGR_CONNECTING, sock);
 		}
 	} else if (config->groups[ind].status == RTR_MGR_ERROR) {
@@ -199,7 +222,7 @@ static inline void _rtr_mgr_cb_state_established(const struct rtr_socket *sock,
 }
 
 static inline void _rtr_mgr_cb_state_connecting(const struct rtr_socket *sock,
-						struct rtr_mgr_config *config,
+						struct rtr_mgr_config_ll *config,
 						unsigned int ind)
 {
 	if (config->groups[ind].status == RTR_MGR_ERROR)
@@ -211,7 +234,7 @@ static inline void _rtr_mgr_cb_state_connecting(const struct rtr_socket *sock,
 }
 
 static inline void _rtr_mgr_cb_state_error(const struct rtr_socket *sock,
-					   struct rtr_mgr_config *config,
+					   struct rtr_mgr_config_ll *config,
 					   unsigned int ind)
 {
 	set_status(config, &config->groups[ind],
@@ -306,8 +329,6 @@ int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
 	struct pfx_table *pfxt = NULL;
 	struct spki_table *spki_table = NULL;
 	struct rtr_mgr_config_ll *config = NULL;
-    struct rtr_mgr_group *active_group = NULL;
-    uint8_t min_preference = UINT8_MAX;
     uint8_t last_preference = UINT8_MAX;
 
 	*config_out = NULL;
@@ -325,9 +346,12 @@ int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
 		MGR_DBG1("Mutex initialization failed");
 		goto err;
 	}
+
+    /* sort array in asc preference order, so we can check easily for duplicate preferences */
+    qsort(groups, groups_len,
+          sizeof(struct rtr_mgr_group), &rtr_mgr_config_cmp);
+
 	config->len = groups_len;
-
-
     //Init tommy_list that will hold our groups
     config->groups = NULL;
 
@@ -371,13 +395,12 @@ int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
         memcpy(group, &groups[i], sizeof(struct rtr_mgr_group));
         group_node->group = &groups[i];
         tommy_list_insert_tail(&config->groups, &group_node->node, group_node);
-
-        if (cg.preference < min_preference) {
-            min_preference = cg.preference;
-            active_group = group;
-        }
 	}
-    config->active_group = active_group;
+
+    /* This LL should be sorted already, since the groups array was sorted. However,
+     * for safety reasons we sort again
+     */
+    tommy_list_sort(config->groups, &rtr_mgr_config_cmp);
 	return RTR_SUCCESS;
 
 err:
@@ -393,6 +416,14 @@ err:
 	config = NULL;
 	*config_out = NULL;
 	return err_code;
+}
+
+struct rtr_mgr_group * rtr_mgr_get_best_group_rtr_mgr_group(struct rtr_mgr_config_ll *config)
+{
+    /* LL is sorted by preference. Head is the best group. */
+    tommy_node *head = tommy_list_head(&config->groups);
+    struct rtr_mgr_group_node *group_node = head->data;
+    return group_node->group;
 }
 
 int rtr_mgr_start(struct rtr_mgr_config_ll *config)
