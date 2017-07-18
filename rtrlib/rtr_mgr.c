@@ -33,7 +33,7 @@ static int rtr_mgr_find_group(const struct rtr_mgr_config *config,
 static int rtr_mgr_config_cmp(const void *a, const void *b);
 static bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *config);
 
-static void set_status(const struct rtr_mgr_config *conf,
+static void set_status(const struct rtr_mgr_config_ll *conf,
 		       struct rtr_mgr_group *group,
 		       enum rtr_mgr_status mgr_status,
 		       const struct rtr_socket *rtr_sock)
@@ -244,12 +244,6 @@ static void rtr_mgr_cb(const struct rtr_socket *sock,
 {
 	struct rtr_mgr_config_ll *config = data;
 
-	/*
-	 * find the index in the rtr_mgr_config struct,
-	 * for which this function was called
-	 */
-	unsigned int ind = 0;
-
 	if (rtr_mgr_sock_in_group(config->active_group, sock) != true) {
 		MGR_DBG1("Active Socket is not in active group");
 		return;
@@ -273,8 +267,8 @@ static void rtr_mgr_cb(const struct rtr_socket *sock,
 		_rtr_mgr_cb_state_error(sock, config, ind);
 		break;
 	default:
-		set_status(config, &config->groups[ind],
-			   config->groups[ind].status, sock);
+		set_status(config, config->active_group,
+			   config->active_group->status, sock);
 	}
 	pthread_mutex_unlock(&config->mutex);
 }
