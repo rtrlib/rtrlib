@@ -32,6 +32,7 @@ static int rtr_mgr_find_group(const struct rtr_mgr_config *config,
 			      unsigned int *ind);
 static int rtr_mgr_config_cmp(const void *a, const void *b);
 static bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *config);
+static bool rtr_mgr_sock_in_group(const struct rtr_mgr_group* group, const struct rtr_socket* sock);
 
 static void set_status(const struct rtr_mgr_config_ll *conf,
 		       struct rtr_mgr_group *group,
@@ -93,19 +94,22 @@ static void rtr_mgr_close_inactive_groups(const struct rtr_socket *sock,
 						 struct rtr_mgr_config_ll *config,
 						 unsigned int my_group_idx)
 {
-	for (unsigned int i = 0; i < config->len; i++) {
-		struct rtr_mgr_group cg = config->groups[i];
+	struct rtr_mgr_group* best_group = rtr_mgr_get_best_group_rtr_mgr_group(config);
+	tommy_node *element = tommy_list_head(&config->groups);
+	do {
+		struct rtr_mgr_group *cg = element->data;
 
-		if ((cg.status != RTR_MGR_CLOSED) && (i != my_group_idx) &&
-		    (cg.preference > config->groups[my_group_idx].preference)) {
-			for (unsigned int j = 0; j < cg.sockets_len; j++) {
+		if ((cg->status != RTR_MGR_CLOSED) &&
+		    (cg->preference != best_group->preference)) {
+			for (unsigned int j = 0; j < cg->sockets_len; j++) {
 				pthread_mutex_unlock(&config->mutex);
-				rtr_stop(cg.sockets[j]);
+				rtr_stop(cg->sockets[j]);
 				pthread_mutex_lock(&config->mutex);
 			}
-			set_status(config, &cg, RTR_MGR_CLOSED, sock);
+			set_status(config, cg, RTR_MGR_CLOSED, sock);
 		}
-	}
+//	}
+	} while ((element = element->next));
 }
 static void rtr_mgr_close_less_preferable_groups(const struct rtr_socket *sock,
 						 struct rtr_mgr_config_ll *config,
@@ -172,7 +176,7 @@ static inline void _rtr_mgr_cb_state_established(const struct rtr_socket *sock,
 						 unsigned int ind)
 {
     /* Check that this socket is actually in the active group */
-    if (!rtr_mgr_sock_in_group(config->active_group, sock)) { 
+    if (!rtr_mgr_sock_in_group(config->active_group, sock)) {
         MGR_DBG1("Active Socket is not in active group");
         return;
     }
@@ -341,13 +345,13 @@ int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
 		goto err;
 	}
 
-    /* sort array in asc preference order, so we can check easily for duplicate preferences */
-    qsort(groups, groups_len,
-          sizeof(struct rtr_mgr_group), &rtr_mgr_config_cmp);
+/* sort array in asc preference order, so we can check easily for duplicate preferences */
+	qsort(groups, groups_len,
+			sizeof(struct rtr_mgr_group), &rtr_mgr_config_cmp);
 
 	config->len = groups_len;
-    //Init tommy_list that will hold our groups
-    config->groups = NULL;
+	//Init tommy_list that will hold our groups
+	config->groups = NULL;
 
 	pfxt = lrtr_malloc(sizeof(*pfxt));
 	if (!pfxt)
@@ -387,14 +391,14 @@ int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
         struct rtr_mgr_group *group = lrtr_malloc(sizeof(struct rtr_mgr_group));
         memcpy(group, &groups[i], sizeof(struct rtr_mgr_group));
         group_node->group = &groups[i];
-        tommy_list_insert_tail(&config->groups, &group_node->node, group_node); 
+        tommy_list_insert_tail(&config->groups, &group_node->node, group_node);
         }
 	}
 
-    /* This LL should be sorted already, since the groups array was sorted. However, 
-     * for safety reasons we sort again 
-     */ 
-    tommy_list_sort(config->groups, &rtr_mgr_config_cmp);
+	/* This LL should be sorted already, since the groups array was sorted. However,
+	 * for safety reasons we sort again
+	 */
+	tommy_list_sort(config->groups, &rtr_mgr_config_cmp);
 	return RTR_SUCCESS;
 
 err:
@@ -412,7 +416,7 @@ err:
 	return err_code;
 }
 
-struct rtr_mgr_group * rtr_mgr_get_best_group_rtr_mgr_group(struct rtr_mgr_config_ll *config) 
+struct rtr_mgr_group * rtr_mgr_get_best_group_rtr_mgr_group(struct rtr_mgr_config_ll *config)
 {
     /* LL is sorted by preference. Head is the best group. */
     tommy_node *head = tommy_list_head(&config->groups);
