@@ -228,11 +228,21 @@ static inline void _rtr_mgr_cb_state_error(const struct rtr_socket *sock,
 	}
 }
 
+static bool rtr_mgr_sock_in_group(const struct rtr_mgr_group* group, const struct rtr_socket* sock)
+{
+	for(unsigned int i = 0; group->sockets_len > i; i++) {
+		if (group->sockets[i] == sock) {
+			return true;
+		}
+	}
+	return false;
+}
+
 static void rtr_mgr_cb(const struct rtr_socket *sock,
 		       const enum rtr_socket_state state,
 		       void *data)
 {
-	struct rtr_mgr_config *config = data;
+	struct rtr_mgr_config_ll *config = data;
 
 	/*
 	 * find the index in the rtr_mgr_config struct,
@@ -240,8 +250,10 @@ static void rtr_mgr_cb(const struct rtr_socket *sock,
 	 */
 	unsigned int ind = 0;
 
-	if (rtr_mgr_find_group(config, sock, &ind) == -1)
+	if (rtr_mgr_sock_in_group(config->active_group, sock) != true) {
+		MGR_DBG1("Active Socket is not in active group");
 		return;
+	}
 
 	pthread_mutex_lock(&config->mutex);
 
