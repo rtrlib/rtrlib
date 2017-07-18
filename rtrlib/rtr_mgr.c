@@ -108,7 +108,6 @@ static void rtr_mgr_close_inactive_groups(const struct rtr_socket *sock,
 			}
 			set_status(config, cg, RTR_MGR_CLOSED, sock);
 		}
-//	}
 	} while ((element = element->next));
 }
 static void rtr_mgr_close_less_preferable_groups(const struct rtr_socket *sock,
@@ -444,7 +443,7 @@ bool rtr_mgr_conf_in_sync(struct rtr_mgr_config_ll *config)
 int rtr_mgr_add_group(const struct rtr_mgr_config_ll *config,
                        const struct rtr_mgr_group *group)
 {
-		// check for existing preference.
+	// check for existing preference.
 	tommy_node *node = tommy_list_head(&config->groups);
 	while(node) {
 		struct rtr_mgr_group_node *group_node = node->data;
@@ -464,18 +463,38 @@ int rtr_mgr_add_group(const struct rtr_mgr_config_ll *config,
 
 	pthread_mutex_lock(&config->mutex);
 	tommy_list_insert_tail(&config->groups, &new_group_node->node, new_group_node);
-	// TODO: sort here.
+	tommy_list_sort(config->groups, &rtr_mgr_config_cmp);
 	pthread_mutex_unlock(&config->mutex);
+
 	return RTR_SUCCESS;
 }
 
 int rtr_mgr_remove_group(const struct rtr_mgr_config_ll *config,
-                          const struct rtr_mgr_group *group)
+                         unsigned int preference)
 {
-	// TODO: make sure the group exists.
+	// make sure the group exists.
+	struct rtr_mgr_group *remove_group;
+	int group_exists = false;
+	tommy_node *node = tommy_list_head(&config->groups);
+	while(node) {
+		struct rtr_mgr_group_node *group_node = node->data;
+		if (group_node->group->preference == preference) {
+			remove_group = group_node->group;
+			group_exists = true;
+		}
+		node = node->next;
+	}
+
+	if (!group_exists) {
+		RTR_DBG("The group that should be removed does not exist!");
+		return RTR_ERROR;
+	}
+
 	pthread_mutex_lock(&config->mutex);
-	tommy_list_remove_existing(&config->groups, &group);
+	tommy_list_remove_existing(&config->groups, &remove_group);
+	tommy_list_sort(config->groups, &rtr_mgr_config_cmp);
 	pthread_mutex_unlock(&config->mutex);
+
 	return RTR_SUCCESS;
 }
 
