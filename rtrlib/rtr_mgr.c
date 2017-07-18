@@ -34,6 +34,12 @@ static int rtr_mgr_config_cmp(const void *a, const void *b);
 static bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *config);
 static bool rtr_mgr_sock_in_group(const struct rtr_mgr_group* group, const struct rtr_socket* sock);
 
+static int rtr_mgr_add_group(const struct rtr_mgr_config_ll *config,
+                              const struct rtr_mgr_group *group);
+
+static int rtr_mgr_remove_group(const struct rtr_mgr_config_ll *config,
+                                 const struct rtr_mgr_group *group);
+
 static void set_status(const struct rtr_mgr_config_ll *conf,
 		       struct rtr_mgr_group *group,
 		       enum rtr_mgr_status mgr_status,
@@ -439,6 +445,44 @@ bool rtr_mgr_conf_in_sync(struct rtr_mgr_config_ll *config)
 			all_sync = false;
 	}
 	return all_sync;
+}
+
+static int rtr_mgr_add_group(const struct rtr_mgr_config_ll *config,
+                       const struct rtr_mgr_group *group)
+{
+		// check for existing preference.
+	tommy_node *node = tommy_list_head(&config->groups);
+	while(node) {
+		struct rtr_mgr_group_node *group_node = node->data;
+		if (group_node->group->preference == group->preference) {
+			RTR_DBG("Preference of group already exists!");
+			return RTR_ERROR;
+		}
+		node = node->next;
+	}
+
+	// TODO: check for successfull malloc.
+	struct rtr_mgr_group_node *new_group_node;
+	struct rtr_mgr_group *new_group = lrtr_malloc(sizeof(struct rtr_mgr_group));
+	memcpy(new_group, group, sizeof(struct rtr_mgr_group));
+
+	new_group_node->group = new_group;
+
+	pthread_mutex_lock(&config->mutex);
+	tommy_list_insert_tail(&config->groups, &new_group_node->node, new_group_node);
+	// TODO: sort here.
+	pthread_mutex_unlock(&config->mutex);
+	return RTR_SUCCESS;
+}
+
+static int rtr_mgr_remove_group(const struct rtr_mgr_config_ll *config,
+                          const struct rtr_mgr_group *group)
+{
+	// TODO: make sure the group exists.
+	pthread_mutex_lock(&config->mutex);
+	tommy_list_remove_existing(&config->groups, &group);
+	pthread_mutex_unlock(&config->mutex);
+	return RTR_SUCCESS;
 }
 
 void rtr_mgr_free(struct rtr_mgr_config *config)
