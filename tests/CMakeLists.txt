@@ -16,6 +16,8 @@ add_executable(test_ipaddr test_ipaddr.c)
 target_link_libraries(test_ipaddr rtrlib)
 add_executable(test_getbits test_getbits.c)
 target_link_libraries(test_getbits rtrlib)
+add_executable(test_dynamic_groups test_dynamic_groups.c)
+target_link_libraries(test_dynamic_groups rtrlib)
 
 
 if(UNIT_TESTING)
