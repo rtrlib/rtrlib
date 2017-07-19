@@ -27,18 +27,16 @@ static const char * const mgr_str_status[] = {
 	[RTR_MGR_ERROR] = "RTR_MGR_ERROR",
 };
 
-static int rtr_mgr_find_group(const struct rtr_mgr_config *config,
-			      const struct rtr_socket *sock,
-			      unsigned int *ind);
+static struct rtr_mgr_group * rtr_mgr_find_group(struct rtr_mgr_config_ll *config,
+			      const struct rtr_socket *sock);
 static int rtr_mgr_config_cmp(const void *a, const void *b);
-static bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *config);
+static bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *group);
 static bool rtr_mgr_sock_in_group(const struct rtr_mgr_group* group, const struct rtr_socket* sock);
 
-static int rtr_mgr_add_group(const struct rtr_mgr_config_ll *config,
-                              const struct rtr_mgr_group *group);
+static int rtr_mgr_add_group(struct rtr_mgr_config_ll *config,
+                              struct rtr_mgr_group *group);
 
-static int rtr_mgr_remove_group(const struct rtr_mgr_config_ll *config,
-                                 const struct rtr_mgr_group *group);
+static int rtr_mgr_remove_group(struct rtr_mgr_config_ll *config, struct rtr_mgr_group *group);
 
 static void set_status(const struct rtr_mgr_config_ll *conf,
 		       struct rtr_mgr_group *group,
@@ -66,21 +64,22 @@ static int rtr_mgr_start_sockets(struct rtr_mgr_group *group)
 	return RTR_SUCCESS;
 }
 
-int rtr_mgr_find_group(const struct rtr_mgr_config *config,
-		       const struct rtr_socket *sock,
-		       unsigned int *ind)
+static struct rtr_mgr_group * rtr_mgr_find_group(struct rtr_mgr_config_ll *config,
+                                const struct rtr_socket *sock)
 {
-	for (unsigned int i = 0; i < config->len; i++) {
-		for (unsigned int j = 0;
-		     j < config->groups[i].sockets_len; j++) {
-			if (config->groups[i].sockets[j] == sock) {
-				*ind = i;
-				return RTR_SUCCESS;
+	// check for existing preference.
+	tommy_node *node = tommy_list_head(&config->groups);
+    struct rtr_mgr_group_node *group_node;
+    while (node) {
+        group_node = node->data;
+		for (unsigned int j = 0;j < group_node->group->sockets_len; j++) {
+			if (group_node->group->sockets[j] == sock) {
+				return group_node->group;
 			}
-		}
-	}
-	MGR_DBG1("Error couldn't find a wanted rtr_socket in rtr_mgr_config");
-	return RTR_ERROR;
+        }
+        node = node->next;
+    }
+	return NULL;
 }
 
 bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *group)
@@ -96,58 +95,62 @@ bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *group)
 	return true;
 }
 
-static void rtr_mgr_close_inactive_groups(const struct rtr_socket *sock,
-						 struct rtr_mgr_config_ll *config,
-						 unsigned int my_group_idx)
-{
-	struct rtr_mgr_group* best_group = rtr_mgr_get_best_group_rtr_mgr_group(config);
-	tommy_node *element = tommy_list_head(&config->groups);
-	do {
-		struct rtr_mgr_group *cg = element->data;
+//static void rtr_mgr_close_inactive_groups(const struct rtr_socket *sock,
+//						 struct rtr_mgr_config_ll *config,
+//						 unsigned int my_group_idx)
+//{
+//	struct rtr_mgr_group* best_group = rtr_mgr_get_best_group_rtr_mgr_group(config);
+//	tommy_node *element = tommy_list_head(&config->groups);
+//	do {
+//		struct rtr_mgr_group *cg = element->data;
+//
+//		if ((cg->status != RTR_MGR_CLOSED) &&
+//		    (cg->preference != best_group->preference)) {
+//			for (unsigned int j = 0; j < cg->sockets_len; j++) {
+//				pthread_mutex_unlock(&config->mutex);
+//				rtr_stop(cg->sockets[j]);
+//				pthread_mutex_lock(&config->mutex);
+//			}
+//			set_status(config, cg, RTR_MGR_CLOSED, sock);
+//		}
+////	}
+//	} while ((element = element->next));
+//}
 
-		if ((cg->status != RTR_MGR_CLOSED) &&
-		    (cg->preference != best_group->preference)) {
-			for (unsigned int j = 0; j < cg->sockets_len; j++) {
-				pthread_mutex_unlock(&config->mutex);
-				rtr_stop(cg->sockets[j]);
-				pthread_mutex_lock(&config->mutex);
-			}
-			set_status(config, cg, RTR_MGR_CLOSED, sock);
-		}
-//	}
-	} while ((element = element->next));
-}
 static void rtr_mgr_close_less_preferable_groups(const struct rtr_socket *sock,
-						 struct rtr_mgr_config_ll *config,
-						 unsigned int my_group_idx)
+						 struct rtr_mgr_config_ll *config, struct rtr_mgr_group *my_group)
 {
-	for (unsigned int i = 0; i < config->len; i++) {
-		struct rtr_mgr_group cg = config->groups[i];
+    tommy_node *node = tommy_list_head(&config->groups);
+    struct rtr_mgr_group_node *group_node;
+    struct rtr_mgr_group *current_group;
 
-		if ((cg.status != RTR_MGR_CLOSED) && (i != my_group_idx) &&
-		    (cg.preference > config->groups[my_group_idx].preference)) {
-			for (unsigned int j = 0; j < cg.sockets_len; j++) {
+    while (node) {
+        group_node = node->data;
+        current_group = group_node->group;
+		if ((current_group->status != RTR_MGR_CLOSED) && (current_group != my_group) &&
+		    (current_group->preference > my_group->preference)) {
+			for (unsigned int j = 0; j < current_group->sockets_len; j++) {
 				pthread_mutex_unlock(&config->mutex);
-				rtr_stop(cg.sockets[j]);
+				rtr_stop(current_group->sockets[j]);
 				pthread_mutex_lock(&config->mutex);
 			}
-			set_status(config, &cg, RTR_MGR_CLOSED, sock);
+			set_status(config, current_group, RTR_MGR_CLOSED, sock);
 		}
-	}
+    }
 }
 
-static struct rtr_mgr_group
-*get_best_inactive_rtr_mgr_group(struct rtr_mgr_config *config,
-				 unsigned int my_group_idx)
-{
-	/* groups are sorted by preference */
-	for (int i = 0; i < config->len; i++) {
-		if ((i != my_group_idx) &&
-		    (config->groups[i].status == RTR_MGR_CLOSED))
-			return &config->groups[i];
-	}
-	return NULL;
-}
+//static struct rtr_mgr_group
+//*get_best_inactive_rtr_mgr_group(struct rtr_mgr_config *config,
+//				 unsigned int my_group_idx)
+//{
+//	/* groups are sorted by preference */
+//	for (int i = 0; i < config->len; i++) {
+//		if ((i != my_group_idx) &&
+//		    (config->groups[i].status == RTR_MGR_CLOSED))
+//			return &config->groups[i];
+//	}
+//	return NULL;
+//}
 
 static bool is_some_rtr_mgr_group_established(struct rtr_mgr_config *config)
 {
@@ -159,74 +162,74 @@ static bool is_some_rtr_mgr_group_established(struct rtr_mgr_config *config)
 }
 
 static inline void _rtr_mgr_cb_state_shutdown(const struct rtr_socket *sock,
-					      struct rtr_mgr_config_ll *config,
-					      unsigned int ind)
+					      struct rtr_mgr_config_ll *config, struct rtr_mgr_group *group)
 {
 	bool all_down = true;
-	for (unsigned int i = 0; i < config->groups[ind].sockets_len; i++) {
-		if (config->groups[ind].sockets[i]->state != RTR_SHUTDOWN) {
+	for (unsigned int i = 0; i < group->sockets_len; i++) {
+		if (group->sockets[i]->state != RTR_SHUTDOWN) {
 			all_down = false;
 			break;
 		}
 	}
 	if (all_down)
-		set_status(config, &config->groups[ind],
+		set_status(config, group,
 			   RTR_MGR_CLOSED, sock);
 	else
-		set_status(config, &config->groups[ind],
-			   config->groups[ind].status, sock);
+		set_status(config, group,
+			   group->status, sock);
 }
 
 static inline void _rtr_mgr_cb_state_established(const struct rtr_socket *sock,
-						 struct rtr_mgr_config_ll *config,
-						 unsigned int ind)
+						 struct rtr_mgr_config_ll *config, struct rtr_mgr_group *my_group)
 {
-    /* Check that this socket is actually in the active group */
-    if (!rtr_mgr_sock_in_group(config->active_group, sock)) {
-        MGR_DBG1("Active Socket is not in active group");
-        return;
-    }
 
 	/* socket established a connection to the rtr_server */
-	if (config->active_group->status == RTR_MGR_CONNECTING) {
+	if (my_group->status == RTR_MGR_CONNECTING) {
 		/*
 		 * if previous state was CONNECTING, check if all
 		 * other sockets in the group also have a established
 		 * connection, if yes change group state to ESTABLISHED
 		 */
-		if (rtr_mgr_config_status_is_synced(&config->active_group)) {
-			set_status(config, &config->active_group,
+		if (rtr_mgr_config_status_is_synced(my_group)) {
+			set_status(config, my_group,
 				   RTR_MGR_ESTABLISHED, sock);
-			rtr_mgr_close_less_preferable_groups(sock, config, ind);
+			rtr_mgr_close_less_preferable_groups(sock, config, my_group);
 		} else {
-			set_status(config, &config->active_group,
+			set_status(config, my_group,
 				   RTR_MGR_CONNECTING, sock);
 		}
-	} else if (config->groups[ind].status == RTR_MGR_ERROR) {
+	} else if (my_group->status == RTR_MGR_ERROR) {
+        
 		/*
 		 * if previous state was ERROR, only change state to
 		 * ESTABLISHED if all other more preferable socket
 		 * groups are also in ERROR or SHUTDOWN state
 		 */
-		bool all_error = true;
 
-		for (unsigned int i = 0; (i < config->len) && all_error; i++) {
-			struct rtr_mgr_group cg = config->groups[i];
+        bool all_error = true;
+        tommy_node *node = tommy_list_head(&config->groups);
+        struct rtr_mgr_group_node *group_node;
+        struct rtr_mgr_group *current_group;
+        while (node) {
+            group_node = node->data;
+            current_group = group_node->group;
 
-			if (i != ind &&
-			    cg.status != RTR_MGR_ERROR &&
-			    cg.status != RTR_MGR_CLOSED &&
-			    cg.preference < config->groups[ind].preference)
+            if (current_group != my_group && 
+			    current_group->status != RTR_MGR_ERROR &&
+			    current_group->status != RTR_MGR_CLOSED &&
+			    current_group->preference < my_group->preference) 
+            {
 				all_error = false;
-		}
-		if (all_error &&
-		    rtr_mgr_config_status_is_synced(&config->groups[ind])) {
-			set_status(config, &config->groups[ind],
-				   RTR_MGR_ESTABLISHED, sock);
-			rtr_mgr_close_less_preferable_groups(sock, config, ind);
+            }
+
+            node = node->next;
+        }
+
+		if (all_error && rtr_mgr_config_status_is_synced(my_group)) {
+			set_status(config, my_group,RTR_MGR_ESTABLISHED, sock);
+			rtr_mgr_close_less_preferable_groups(sock, config, my_group);
 		} else {
-			set_status(config, &config->groups[ind],
-				   RTR_MGR_ERROR, sock);
+			set_status(config, my_group, RTR_MGR_ERROR, sock);
 		}
 	}
 }
@@ -235,30 +238,30 @@ static inline void _rtr_mgr_cb_state_connecting(const struct rtr_socket *sock,
 						struct rtr_mgr_config_ll *config,
 						unsigned int ind)
 {
-	if (config->groups[ind].status == RTR_MGR_ERROR)
-		set_status(config, &config->groups[ind],
-			   RTR_MGR_ERROR, sock);
-	else
-		set_status(config, &config->groups[ind],
-			   RTR_MGR_CONNECTING, sock);
+//	if (config->groups[ind].status == RTR_MGR_ERROR)
+//		set_status(config, &config->groups[ind],
+//			   RTR_MGR_ERROR, sock);
+//	else
+//		set_status(config, &config->groups[ind],
+//			   RTR_MGR_CONNECTING, sock);
 }
 
 static inline void _rtr_mgr_cb_state_error(const struct rtr_socket *sock,
 					   struct rtr_mgr_config_ll *config,
 					   unsigned int ind)
 {
-	set_status(config, &config->groups[ind],
-		   RTR_MGR_ERROR, sock);
-
-	if (!is_some_rtr_mgr_group_established(config)) {
-		struct rtr_mgr_group *next_group =
-			get_best_inactive_rtr_mgr_group(config, ind);
-
-		if (next_group)
-			rtr_mgr_start_sockets(next_group);
-		else
-		      MGR_DBG1("No other inactive groups found");
-	}
+//	set_status(config, &config->groups[ind],
+//		   RTR_MGR_ERROR, sock);
+//
+//	if (!is_some_rtr_mgr_group_established(config)) {
+//		struct rtr_mgr_group *next_group =
+//			get_best_inactive_rtr_mgr_group(config, ind);
+//
+//		if (next_group)
+//			rtr_mgr_start_sockets(next_group);
+//		else
+//		      MGR_DBG1("No other inactive groups found");
+//	}
 }
 
 static bool rtr_mgr_sock_in_group(const struct rtr_mgr_group* group, const struct rtr_socket* sock)
@@ -276,32 +279,32 @@ static void rtr_mgr_cb(const struct rtr_socket *sock,
 		       void *data)
 {
 	struct rtr_mgr_config_ll *config = data;
-
-	if (rtr_mgr_sock_in_group(config->active_group, sock) != true) {
-		MGR_DBG1("Active Socket is not in active group");
-		return;
-	}
+    
+    struct rtr_mgr_group *group = rtr_mgr_find_group(config, sock);
+    if (!group) {
+        MGR_DBG1("ERROR: Socket has no group");
+        return;
+    }
 
 	pthread_mutex_lock(&config->mutex);
 
 	switch (state) {
 	case RTR_SHUTDOWN:
-		_rtr_mgr_cb_state_shutdown(sock, config, ind);
+		_rtr_mgr_cb_state_shutdown(sock, config, group);
 		break;
 	case RTR_ESTABLISHED:
-		_rtr_mgr_cb_state_established(sock, config, ind);
+		_rtr_mgr_cb_state_established(sock, config, group);
 		break;
 	case RTR_CONNECTING:
-		_rtr_mgr_cb_state_connecting(sock, config, ind);
+		//_rtr_mgr_cb_state_connecting(sock, config, ind);
 		break;
 	case RTR_ERROR_FATAL:
 	case RTR_ERROR_TRANSPORT:
 	case RTR_ERROR_NO_DATA_AVAIL:
-		_rtr_mgr_cb_state_error(sock, config, ind);
+		//_rtr_mgr_cb_state_error(sock, config, ind);
 		break;
 	default:
-		set_status(config, config->active_group,
-			   config->active_group->status, sock);
+		set_status(config, group, group->status, sock);
 	}
 	pthread_mutex_unlock(&config->mutex);
 }
@@ -351,12 +354,12 @@ int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
 		goto err;
 	}
 
-/* sort array in asc preference order, so we can check easily for duplicate preferences */
+    /* sort array in asc preference order, so we can check easily for duplicate preferences */
 	qsort(groups, groups_len,
 			sizeof(struct rtr_mgr_group), &rtr_mgr_config_cmp);
 
 	config->len = groups_len;
-	//Init tommy_list that will hold our groups
+	//Init list that will hold our groups
 	config->groups = NULL;
 
 	pfxt = lrtr_malloc(sizeof(*pfxt));
@@ -398,13 +401,12 @@ int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
         memcpy(group, &groups[i], sizeof(struct rtr_mgr_group));
         group_node->group = &groups[i];
         tommy_list_insert_tail(&config->groups, &group_node->node, group_node);
-        }
 	}
 
 	/* This LL should be sorted already, since the groups array was sorted. However,
 	 * for safety reasons we sort again
 	 */
-	tommy_list_sort(config->groups, &rtr_mgr_config_cmp);
+	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
 	return RTR_SUCCESS;
 
 err:
@@ -422,7 +424,7 @@ err:
 	return err_code;
 }
 
-struct rtr_mgr_group * rtr_mgr_get_best_group_rtr_mgr_group(struct rtr_mgr_config_ll *config)
+struct rtr_mgr_group * rtr_mgr_get_best_rtr_mgr_group(struct rtr_mgr_config_ll *config)
 {
     /* LL is sorted by preference. Head is the best group. */
     tommy_node *head = tommy_list_head(&config->groups);
@@ -433,24 +435,34 @@ struct rtr_mgr_group * rtr_mgr_get_best_group_rtr_mgr_group(struct rtr_mgr_confi
 int rtr_mgr_start(struct rtr_mgr_config_ll *config)
 {
 	MGR_DBG1("rtr_mgr_start()");
-	return rtr_mgr_start_sockets(config->active_group);
+    struct rtr_mgr_group *best_group = rtr_mgr_get_best_rtr_mgr_group(config);
+	return rtr_mgr_start_sockets(best_group);
 }
 
 bool rtr_mgr_conf_in_sync(struct rtr_mgr_config_ll *config)
 {
-    bool all_sync = true;
-	for (unsigned int j = 0;
-	     all_sync && (j < config->active_group->sockets_len); j++) {
-		if (config->active_group->sockets[j]->last_update == 0)
-			all_sync = false;
-	}
-	return all_sync;
+    bool all_sync;
+    tommy_node *node = tommy_list_head(&config->groups);
+    struct rtr_mgr_group_node *group_node;
+    while (node) {
+        all_sync = true;
+        group_node = node->data;
+        for (unsigned int j = 0;
+             all_sync && (j < group_node->group->sockets_len); j++) {
+            if (group_node->group->sockets[j]->last_update == 0)
+                all_sync = false;
+        }
+        if (all_sync)
+            return true;
+        node = node->next;
+    }
+	return false;
 }
 
-static int rtr_mgr_add_group(const struct rtr_mgr_config_ll *config,
-                       const struct rtr_mgr_group *group)
+static int rtr_mgr_add_group(struct rtr_mgr_config_ll *config,
+                       struct rtr_mgr_group *group)
 {
-		// check for existing preference.
+	// check for existing preference.
 	tommy_node *node = tommy_list_head(&config->groups);
 	while(node) {
 		struct rtr_mgr_group_node *group_node = node->data;
@@ -475,8 +487,8 @@ static int rtr_mgr_add_group(const struct rtr_mgr_config_ll *config,
 	return RTR_SUCCESS;
 }
 
-static int rtr_mgr_remove_group(const struct rtr_mgr_config_ll *config,
-                          const struct rtr_mgr_group *group)
+static int rtr_mgr_remove_group(struct rtr_mgr_config_ll *config,
+                          struct rtr_mgr_group *group)
 {
 	// TODO: make sure the group exists.
 	pthread_mutex_lock(&config->mutex);
