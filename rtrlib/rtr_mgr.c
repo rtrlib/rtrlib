@@ -374,6 +374,9 @@ int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
 	config->status_fp_data = status_fp_data;
 	config->status_fp = status_fp;
 
+	config->pfxt = pfxt;
+	config->spki_table = spki_table;
+
 	for (unsigned int i = 0; i < config->len; i++) {
         struct rtr_mgr_group *cg = lrtr_malloc(sizeof(struct rtr_mgr_group));
         memcpy(cg, &groups[i], sizeof(struct rtr_mgr_group));
@@ -456,6 +459,12 @@ bool rtr_mgr_conf_in_sync(struct rtr_mgr_config_ll *config)
 int rtr_mgr_add_group(struct rtr_mgr_config_ll *config,
                        const struct rtr_mgr_group *group)
 {
+	unsigned int refresh_interval = 3600;
+	unsigned int retry_interval = 600;
+	unsigned int expire_interval = 7200;
+
+	int err_code = RTR_ERROR;
+
     RTR_DBG("rtr_mgr_add_group()");
 	pthread_mutex_lock(&config->mutex);
 	// check for existing preference.
@@ -466,6 +475,15 @@ int rtr_mgr_add_group(struct rtr_mgr_config_ll *config,
 			RTR_DBG("Preference of group already exists!");
 			return RTR_ERROR;
 		}
+		if (group_node->group->sockets[0]->refresh_interval) {
+			refresh_interval = group_node->group->sockets[0]->refresh_interval;
+		}
+		if (group_node->group->sockets[0]->retry_interval) {
+			retry_interval = group_node->group->sockets[0]->retry_interval;
+		}
+		if (group_node->group->sockets[0]->expire_interval) {
+			expire_interval = group_node->group->sockets[0]->expire_interval;
+		}
 		node = node->next;
 	}
 
@@ -474,8 +492,8 @@ int rtr_mgr_add_group(struct rtr_mgr_config_ll *config,
 	memcpy(new_group, group, sizeof(struct rtr_mgr_group));
     //init sockets
 	for (unsigned int j = 0; j < new_group->sockets_len; j++) {
-		if (rtr_init(new_group->sockets[j], NULL, pfxt, spki_table, refresh_interval,
-			     expire_interval, retry_interval,rtr_mgr_cb, config) != RTR_SUCCESS) {
+		if (rtr_init(new_group->sockets[j], NULL, config->pfxt, config->spki_table, refresh_interval,
+			     expire_interval, retry_interval, rtr_mgr_cb, config) != RTR_SUCCESS) {
 			err_code = RTR_INVALID_PARAM;
             lrtr_free(new_group);
             return err_code;
@@ -492,6 +510,18 @@ int rtr_mgr_add_group(struct rtr_mgr_config_ll *config,
 	pthread_mutex_unlock(&config->mutex);
 
 	return RTR_SUCCESS;
+err:
+	if (config->spki_table)
+		spki_table_free(config->spki_table);
+	if (config->pfxt)
+		pfx_table_free(config->pfxt);
+	lrtr_free(config->pfxt);
+	lrtr_free(config->spki_table);
+
+	lrtr_free(config->groups);
+	lrtr_free(config);
+	config = NULL;
+	return err_code;
 }
 
 int rtr_mgr_remove_group(struct rtr_mgr_config_ll *config,
