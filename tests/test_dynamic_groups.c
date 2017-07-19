@@ -46,6 +46,8 @@ int main(){
 	sleep(1);
 	}
 
+	assert(conf->len == 1);
+
 	rtr_mgr_add_group(conf, &group2);
 
 	tommy_node* node = tommy_list_head(&conf->groups);
@@ -54,12 +56,14 @@ int main(){
 
 	assert(group_node->group->preference == 1);
 	assert(group_node2->group->preference == 2);
+	assert(conf->len == 2);
 
 	rtr_mgr_remove_group(conf, 1);
 
 	node = tommy_list_head(&conf->groups);
 	group_node = node->data;
 	assert(group_node->group->preference == 2);
+	assert(conf->len == 1);
 
 
 	rtr_mgr_stop(conf);
