@@ -80,7 +80,6 @@ typedef void (*rtr_mgr_status_fp)(const struct rtr_mgr_group *,
 
 struct rtr_mgr_config_ll {
     tommy_list groups;
-    struct rtr_mgr_group *active_group;
 	unsigned int len;
 	pthread_mutex_t mutex;
 	rtr_mgr_status_fp status_fp;
