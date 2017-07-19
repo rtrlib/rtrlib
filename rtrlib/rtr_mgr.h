@@ -246,5 +246,7 @@ int rtr_mgr_add_group(struct rtr_mgr_config_ll *config,
 int rtr_mgr_remove_group(struct rtr_mgr_config_ll *config,
                          unsigned int preference);
 
+struct rtr_mgr_group * rtr_mgr_get_best_rtr_mgr_group(struct rtr_mgr_config_ll *config);
+
 #endif
 /* @} */
