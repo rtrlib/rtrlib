@@ -455,8 +455,8 @@ bool rtr_mgr_conf_in_sync(struct rtr_mgr_config_ll *config)
 	return false;
 }
 
-static int rtr_mgr_add_group(struct rtr_mgr_config_ll *config,
-                       struct rtr_mgr_group *group)
+int rtr_mgr_add_group(struct rtr_mgr_config_ll *config,
+                       const struct rtr_mgr_group *group)
 {
 	// check for existing preference.
 	tommy_node *node = tommy_list_head(&config->groups);
@@ -478,36 +478,41 @@ static int rtr_mgr_add_group(struct rtr_mgr_config_ll *config,
 
 	pthread_mutex_lock(&config->mutex);
 	tommy_list_insert_tail(&config->groups, &new_group_node->node, new_group_node);
+	config->len++;
 	tommy_list_sort(config->groups, &rtr_mgr_config_cmp);
 	pthread_mutex_unlock(&config->mutex);
 
 	return RTR_SUCCESS;
 }
 
-static int rtr_mgr_remove_group(struct rtr_mgr_config_ll *config,
-                          struct rtr_mgr_group *group)
+int rtr_mgr_remove_group(struct rtr_mgr_config_ll *config,
+                         unsigned int preference)
 {
 	// make sure the group exists.
-	struct rtr_mgr_group *remove_group = malloc(sizeof(struct rtr_mgr_group));
-	int group_exists = false;
+	tommy_node *remove_node;
 	tommy_node *node = tommy_list_head(&config->groups);
 	while(node) {
 		struct rtr_mgr_group_node *group_node = node->data;
 		if (group_node->group->preference == preference) {
-			remove_group = group_node->group;
-			group_exists = true;
+			remove_node = node;
 		}
 		node = node->next;
 	}
 
-	if (!group_exists) {
+	if (!remove_node) {
 		RTR_DBG("The group that should be removed does not exist!");
 		return RTR_ERROR;
 	}
 
 	pthread_mutex_lock(&config->mutex);
-	tommy_list_remove_existing(&config->groups, &remove_group);
-	tommy_list_sort(config->groups, &rtr_mgr_config_cmp);
+	tommy_list_remove_existing(&config->groups, &remove_node);
+	config->len--;
+	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
+	// TODO: free group
+	pfx_table_free(remove_node->data->group.sockets[0]->pfx_table);
+	spki_table_free(remove_node->data->group.sockets[0]->spki_table);
+	lrtr_free(remove_node->data->group.sockets[0]->spki_table);
+	lrtr_free(remove_node->data->group.sockets[0]->pfx_table);
 	pthread_mutex_unlock(&config->mutex);
 
 	return RTR_SUCCESS;
