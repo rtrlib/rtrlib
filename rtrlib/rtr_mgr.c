@@ -62,6 +62,7 @@ static int rtr_mgr_start_sockets(struct rtr_mgr_group *group)
 static struct rtr_mgr_group * rtr_mgr_find_group(struct rtr_mgr_config_ll *config,
                                 const struct rtr_socket *sock)
 {
+	pthread_mutex_lock(&config->mutex);
 	// check for existing preference.
 	tommy_node *node = tommy_list_head(&config->groups);
     struct rtr_mgr_group_node *group_node;
@@ -69,11 +70,13 @@ static struct rtr_mgr_group * rtr_mgr_find_group(struct rtr_mgr_config_ll *confi
         group_node = node->data;
 		for (unsigned int j = 0;j < group_node->group->sockets_len; j++) {
 			if (group_node->group->sockets[j] == sock) {
+	            pthread_mutex_unlock(&config->mutex);
 				return group_node->group;
 			}
         }
         node = node->next;
     }
+	pthread_mutex_unlock(&config->mutex);
 	return NULL;
 }
 
@@ -89,28 +92,6 @@ bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *group)
 	}
 	return true;
 }
-
-//static void rtr_mgr_close_inactive_groups(const struct rtr_socket *sock,
-//						 struct rtr_mgr_config_ll *config,
-//						 unsigned int my_group_idx)
-//{
-//	struct rtr_mgr_group* best_group = rtr_mgr_get_best_group_rtr_mgr_group(config);
-//	tommy_node *element = tommy_list_head(&config->groups);
-//	do {
-//		struct rtr_mgr_group *cg = element->data;
-//
-//		if ((cg->status != RTR_MGR_CLOSED) &&
-//		    (cg->preference != best_group->preference)) {
-//			for (unsigned int j = 0; j < cg->sockets_len; j++) {
-//				pthread_mutex_unlock(&config->mutex);
-//				rtr_stop(cg->sockets[j]);
-//				pthread_mutex_lock(&config->mutex);
-//			}
-//			set_status(config, cg, RTR_MGR_CLOSED, sock);
-//		}
-////	}
-//	} while ((element = element->next));
-//}
 
 static void rtr_mgr_close_less_preferable_groups(const struct rtr_socket *sock,
 						 struct rtr_mgr_config_ll *config, struct rtr_mgr_group *my_group)
@@ -131,6 +112,7 @@ static void rtr_mgr_close_less_preferable_groups(const struct rtr_socket *sock,
 			}
 			set_status(config, current_group, RTR_MGR_CLOSED, sock);
 		}
+        node = node->next;
     }
 }
 
@@ -204,7 +186,7 @@ static inline void _rtr_mgr_cb_state_established(const struct rtr_socket *sock,
 				   RTR_MGR_CONNECTING, sock);
 		}
 	} else if (my_group->status == RTR_MGR_ERROR) {
-        
+
 		/*
 		 * if previous state was ERROR, only change state to
 		 * ESTABLISHED if all other more preferable socket
@@ -219,10 +201,10 @@ static inline void _rtr_mgr_cb_state_established(const struct rtr_socket *sock,
             group_node = node->data;
             current_group = group_node->group;
 
-            if (current_group != my_group && 
+            if (current_group != my_group &&
 			    current_group->status != RTR_MGR_ERROR &&
 			    current_group->status != RTR_MGR_CLOSED &&
-			    current_group->preference < my_group->preference) 
+			    current_group->preference < my_group->preference)
             {
 				all_error = false;
             }
@@ -280,14 +262,18 @@ static void rtr_mgr_cb(const struct rtr_socket *sock,
 		       const enum rtr_socket_state state,
 		       void *data)
 {
+
+    if(state == RTR_SHUTDOWN) {
+        MGR_DBG1("Received RTR_SHUTDOWN callback");
+    }
+
 	struct rtr_mgr_config_ll *config = data;
-    
+
     struct rtr_mgr_group *group = rtr_mgr_find_group(config, sock);
     if (!group) {
         MGR_DBG1("ERROR: Socket has no group");
         return;
     }
-
 	pthread_mutex_lock(&config->mutex);
 
 	switch (state) {
@@ -360,6 +346,17 @@ int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
 	qsort(groups, groups_len,
 			sizeof(struct rtr_mgr_group), &rtr_mgr_config_cmp);
 
+	for (unsigned int i = 0; i < config->len; i++) {
+		struct rtr_mgr_group cg = groups[i];
+		if ((i > 0) && (cg.preference == last_preference)) {
+			MGR_DBG1("Error Same preference for 2 socket groups!");
+			goto err;
+		}
+		if (cg.sockets_len == 0) {
+			MGR_DBG1("Error Empty sockets array in socket group!");
+			goto err;
+		}
+	}
 	config->len = groups_len;
 	//Init list that will hold our groups
 	config->groups = NULL;
@@ -378,18 +375,12 @@ int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
 	config->status_fp = status_fp;
 
 	for (unsigned int i = 0; i < config->len; i++) {
-		struct rtr_mgr_group cg = groups[i];
-		cg.status = RTR_MGR_CLOSED;
-		if ((i > 0) && (cg.preference == last_preference)) {
-			MGR_DBG1("Error Same preference for 2 socket groups!");
-			goto err;
-		}
-		if (cg.sockets_len == 0) {
-			MGR_DBG1("Error Empty sockets array in socket group!");
-			goto err;
-		}
-		for (unsigned int j = 0; j < cg.sockets_len; j++) {
-			if (rtr_init(cg.sockets[j], NULL,
+        struct rtr_mgr_group *cg = lrtr_malloc(sizeof(struct rtr_mgr_group));
+        memcpy(cg, &groups[i], sizeof(struct rtr_mgr_group));
+
+		cg->status = RTR_MGR_CLOSED;
+		for (unsigned int j = 0; j < cg->sockets_len; j++) {
+			if (rtr_init(cg->sockets[j], NULL,
 				     pfxt, spki_table, refresh_interval,
 				     expire_interval, retry_interval,
 				     rtr_mgr_cb, config) != RTR_SUCCESS) {
@@ -397,12 +388,8 @@ int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
 				goto err;
 			}
 		}
-		last_preference = cg.preference;
-
-        struct rtr_mgr_group_node *group_node = malloc(sizeof(struct rtr_mgr_group_node));
-        struct rtr_mgr_group *group = malloc(sizeof(struct rtr_mgr_group));
-        memcpy(group, &groups[i], sizeof(struct rtr_mgr_group));
-        group_node->group = &groups[i];
+        struct rtr_mgr_group_node *group_node = lrtr_malloc(sizeof(struct rtr_mgr_group_node));
+        group_node->group = cg;
         tommy_list_insert_tail(&config->groups, &group_node->node, group_node);
 	}
 
@@ -445,8 +432,9 @@ int rtr_mgr_start(struct rtr_mgr_config_ll *config)
 bool rtr_mgr_conf_in_sync(struct rtr_mgr_config_ll *config)
 {
     bool all_sync;
-    tommy_node *node = tommy_list_head(&config->groups);
     struct rtr_mgr_group_node *group_node;
+	pthread_mutex_lock(&config->mutex);
+    tommy_node *node = tommy_list_head(&config->groups);
     while (node) {
         all_sync = true;
         group_node = node->data;
@@ -455,16 +443,21 @@ bool rtr_mgr_conf_in_sync(struct rtr_mgr_config_ll *config)
             if (group_node->group->sockets[j]->last_update == 0)
                 all_sync = false;
         }
-        if (all_sync)
+        if (all_sync) {
+	        pthread_mutex_unlock(&config->mutex);
             return true;
+        }
         node = node->next;
     }
+	pthread_mutex_unlock(&config->mutex);
 	return false;
 }
 
 int rtr_mgr_add_group(struct rtr_mgr_config_ll *config,
                        const struct rtr_mgr_group *group)
 {
+    RTR_DBG("rtr_mgr_add_group()");
+	pthread_mutex_lock(&config->mutex);
 	// check for existing preference.
 	tommy_node *node = tommy_list_head(&config->groups);
 	while(node) {
@@ -477,16 +470,25 @@ int rtr_mgr_add_group(struct rtr_mgr_config_ll *config,
 	}
 
 	// TODO: check for successfull malloc.
-	struct rtr_mgr_group_node *new_group_node;
-	struct rtr_mgr_group *new_group = malloc(sizeof(struct rtr_mgr_group));
+	struct rtr_mgr_group *new_group = lrtr_malloc(sizeof(struct rtr_mgr_group));
 	memcpy(new_group, group, sizeof(struct rtr_mgr_group));
+    //init sockets
+	for (unsigned int j = 0; j < new_group->sockets_len; j++) {
+		if (rtr_init(new_group->sockets[j], NULL, pfxt, spki_table, refresh_interval,
+			     expire_interval, retry_interval,rtr_mgr_cb, config) != RTR_SUCCESS) {
+			err_code = RTR_INVALID_PARAM;
+            lrtr_free(new_group);
+            return err_code;
+		}
+	}
 
+	// TODO: check for successfull malloc.
+    struct rtr_mgr_group_node *new_group_node = lrtr_malloc(sizeof(struct rtr_mgr_group_node));
 	new_group_node->group = new_group;
-
-	pthread_mutex_lock(&config->mutex);
 	tommy_list_insert_tail(&config->groups, &new_group_node->node, new_group_node);
 	config->len++;
 	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
+
 	pthread_mutex_unlock(&config->mutex);
 
 	return RTR_SUCCESS;
@@ -495,6 +497,7 @@ int rtr_mgr_add_group(struct rtr_mgr_config_ll *config,
 int rtr_mgr_remove_group(struct rtr_mgr_config_ll *config,
                          unsigned int preference)
 {
+	pthread_mutex_lock(&config->mutex);
 	// make sure the group exists.
 	tommy_node *remove_node;
 	tommy_node *node = tommy_list_head(&config->groups);
@@ -511,33 +514,32 @@ int rtr_mgr_remove_group(struct rtr_mgr_config_ll *config,
 		return RTR_ERROR;
 	}
 
-	pthread_mutex_lock(&config->mutex);
 	tommy_list_remove_existing(&config->groups, remove_node);
 	config->len--;
 	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
-	// TODO: free group
-	struct rtr_mgr_group_node *free_node = remove_node->data;
-	pfx_table_free(free_node->group->sockets[0]->pfx_table);
-	spki_table_free(free_node->group->sockets[0]->spki_table);
-	lrtr_free(free_node->group->sockets[0]->spki_table);
-	lrtr_free(free_node->group->sockets[0]->pfx_table);
+	//struct rtr_mgr_group_node *free_node = remove_node->data;
+	//pfx_table_free(free_node->group->sockets[0]->pfx_table);
+	//spki_table_free(free_node->group->sockets[0]->spki_table);
+	//lrtr_free(free_node->group->sockets[0]->spki_table);
+	//lrtr_free(free_node->group->sockets[0]->pfx_table);
 	pthread_mutex_unlock(&config->mutex);
 
 	return RTR_SUCCESS;
 }
 
-void rtr_mgr_free(struct rtr_mgr_config *config)
+void rtr_mgr_free(struct rtr_mgr_config_ll *config)
 {
 	MGR_DBG1("rtr_mgr_free()");
 	pthread_mutex_lock(&config->mutex);
-	pfx_table_free(config->groups[0].sockets[0]->pfx_table);
-	spki_table_free(config->groups[0].sockets[0]->spki_table);
-	lrtr_free(config->groups[0].sockets[0]->spki_table);
-	lrtr_free(config->groups[0].sockets[0]->pfx_table);
+
+    tommy_node *head = tommy_list_head(&config->groups);
+
+    struct rtr_mgr_group_node *group_node = head->data;
+	pfx_table_free(group_node->group->sockets[0]->pfx_table);
+	spki_table_free(group_node->group->sockets[0]->spki_table);
+	lrtr_free(group_node->group->sockets[0]->spki_table);
+	lrtr_free(group_node->group->sockets[0]->pfx_table);
 	lrtr_free(config->groups);
-	pthread_mutex_unlock(&config->mutex);
-	pthread_mutex_destroy(&config->mutex);
-	lrtr_free(config);
 }
 
 /* cppcheck-suppress unusedFunction */
@@ -562,13 +564,18 @@ inline int rtr_mgr_get_spki(struct rtr_mgr_config *config,
 				  asn, ski, result, result_count);
 }
 
-void rtr_mgr_stop(struct rtr_mgr_config *config)
+void rtr_mgr_stop(struct rtr_mgr_config_ll *config)
 {
+    tommy_node *node = tommy_list_head(&config->groups);
 	MGR_DBG1("rtr_mgr_stop()");
-	for (unsigned int i = 0; i < config->len; i++) {
-		for (unsigned int j = 0; j < config->groups[i].sockets_len; j++)
-			rtr_stop(config->groups[i].sockets[j]);
-	}
+    struct rtr_mgr_group_node *group_node;
+    while (node) {
+        group_node = node->data;
+		for (unsigned int j = 0; j < group_node->group->sockets_len; j++) {
+			rtr_stop(group_node->group->sockets[j]);
+        }
+        node = node->next;
+    }
 }
 
 const char *rtr_mgr_status_to_str(enum rtr_mgr_status status)

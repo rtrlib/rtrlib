@@ -147,7 +147,7 @@ int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
  * @details rtr_mgr_stop must be called before, to shutdown all rtr_sockets.
  * @param[in] config rtr_mgr_config.
  */
-void rtr_mgr_free(struct rtr_mgr_config *config);
+void rtr_mgr_free(struct rtr_mgr_config_ll *config);
 
 /**
  * @brief Establishes rtr_socket connections
@@ -166,7 +166,7 @@ int rtr_mgr_start(struct rtr_mgr_config_ll *config);
  * All pfx_records received from these sockets will be purged.
  * @param[in] config The rtr_mgr_config struct
  */
-void rtr_mgr_stop(struct rtr_mgr_config *config);
+void rtr_mgr_stop(struct rtr_mgr_config_ll *config);
 
 /**
  * @brief Check if rtr_mgr_group is fully synchronized with at least one group.
