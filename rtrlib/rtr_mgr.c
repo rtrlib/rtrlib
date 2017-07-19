@@ -508,10 +508,11 @@ int rtr_mgr_remove_group(struct rtr_mgr_config_ll *config,
 	config->len--;
 	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
 	// TODO: free group
-	pfx_table_free(remove_node->data->group.sockets[0]->pfx_table);
-	spki_table_free(remove_node->data->group.sockets[0]->spki_table);
-	lrtr_free(remove_node->data->group.sockets[0]->spki_table);
-	lrtr_free(remove_node->data->group.sockets[0]->pfx_table);
+	struct rtr_mgr_group_node *free_node = remove_node->data;
+	pfx_table_free(free_node->group->sockets[0]->pfx_table);
+	spki_table_free(free_node->group->sockets[0]->spki_table);
+	lrtr_free(free_node->group->sockets[0]->spki_table);
+	lrtr_free(free_node->group->sockets[0]->pfx_table);
 	pthread_mutex_unlock(&config->mutex);
 
 	return RTR_SUCCESS;
