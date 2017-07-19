@@ -510,18 +510,6 @@ int rtr_mgr_add_group(struct rtr_mgr_config_ll *config,
 	pthread_mutex_unlock(&config->mutex);
 
 	return RTR_SUCCESS;
-err:
-	if (config->spki_table)
-		spki_table_free(config->spki_table);
-	if (config->pfxt)
-		pfx_table_free(config->pfxt);
-	lrtr_free(config->pfxt);
-	lrtr_free(config->spki_table);
-
-	lrtr_free(config->groups);
-	lrtr_free(config);
-	config = NULL;
-	return err_code;
 }
 
 int rtr_mgr_remove_group(struct rtr_mgr_config_ll *config,
