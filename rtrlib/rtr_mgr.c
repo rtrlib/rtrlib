@@ -134,25 +134,35 @@ static void rtr_mgr_close_less_preferable_groups(const struct rtr_socket *sock,
     }
 }
 
-//static struct rtr_mgr_group
-//*get_best_inactive_rtr_mgr_group(struct rtr_mgr_config *config,
-//				 unsigned int my_group_idx)
-//{
-//	/* groups are sorted by preference */
-//	for (int i = 0; i < config->len; i++) {
-//		if ((i != my_group_idx) &&
-//		    (config->groups[i].status == RTR_MGR_CLOSED))
-//			return &config->groups[i];
-//	}
-//	return NULL;
-//}
-
-static bool is_some_rtr_mgr_group_established(struct rtr_mgr_config *config)
+static struct rtr_mgr_group
+*get_best_inactive_rtr_mgr_group(struct rtr_mgr_config_ll *config, struct rtr_mgr_group *my_group)
 {
-	for (int i = 0; i < config->len; i++) {
-		if (config->groups[i].status == RTR_MGR_ESTABLISHED)
-			return true;
-	}
+    tommy_node *node = tommy_list_head(&config->groups);
+    struct rtr_mgr_group_node *group_node;
+    struct rtr_mgr_group *group;
+
+    while (node) {
+        group_node = node->data;
+        group = group_node->group;
+		if ((group != my_group) && (group->status == RTR_MGR_CLOSED))
+            return group;
+
+        node = node->next;
+    }
+
+	return NULL;
+}
+
+static bool is_some_rtr_mgr_group_established(struct rtr_mgr_config_ll *config)
+{
+    tommy_node *node = tommy_list_head(&config->groups);
+    struct rtr_mgr_group_node *group_node;
+    while (node) {
+        group_node = node->data;
+        if (group_node->group->status == RTR_MGR_ESTABLISHED)
+            return true;
+        node = node->next;
+    }
 	return false;
 }
 
@@ -230,33 +240,30 @@ static inline void _rtr_mgr_cb_state_established(const struct rtr_socket *sock,
 }
 
 static inline void _rtr_mgr_cb_state_connecting(const struct rtr_socket *sock,
-						struct rtr_mgr_config_ll *config,
-						unsigned int ind)
+						struct rtr_mgr_config_ll *config, struct rtr_mgr_group *my_group)
 {
-//	if (config->groups[ind].status == RTR_MGR_ERROR)
-//		set_status(config, &config->groups[ind],
-//			   RTR_MGR_ERROR, sock);
-//	else
-//		set_status(config, &config->groups[ind],
-//			   RTR_MGR_CONNECTING, sock);
+	if (my_group->status == RTR_MGR_ERROR)
+		set_status(config, my_group,
+			   RTR_MGR_ERROR, sock);
+	else
+		set_status(config, my_group,
+			   RTR_MGR_CONNECTING, sock);
 }
 
 static inline void _rtr_mgr_cb_state_error(const struct rtr_socket *sock,
-					   struct rtr_mgr_config_ll *config,
-					   unsigned int ind)
+					   struct rtr_mgr_config_ll *config, struct rtr_mgr_group *my_group)
 {
-//	set_status(config, &config->groups[ind],
-//		   RTR_MGR_ERROR, sock);
-//
-//	if (!is_some_rtr_mgr_group_established(config)) {
-//		struct rtr_mgr_group *next_group =
-//			get_best_inactive_rtr_mgr_group(config, ind);
-//
-//		if (next_group)
-//			rtr_mgr_start_sockets(next_group);
-//		else
-//		      MGR_DBG1("No other inactive groups found");
-//	}
+	set_status(config, my_group, RTR_MGR_ERROR, sock);
+
+	if (!is_some_rtr_mgr_group_established(config)) {
+		struct rtr_mgr_group *next_group =
+			get_best_inactive_rtr_mgr_group(config, my_group);
+
+		if (next_group)
+			rtr_mgr_start_sockets(next_group);
+		else
+		      MGR_DBG1("No other inactive groups found");
+	}
 }
 
 static bool rtr_mgr_sock_in_group(const struct rtr_mgr_group* group, const struct rtr_socket* sock)
@@ -291,12 +298,12 @@ static void rtr_mgr_cb(const struct rtr_socket *sock,
 		_rtr_mgr_cb_state_established(sock, config, group);
 		break;
 	case RTR_CONNECTING:
-		//_rtr_mgr_cb_state_connecting(sock, config, ind);
+		_rtr_mgr_cb_state_connecting(sock, config, group);
 		break;
 	case RTR_ERROR_FATAL:
 	case RTR_ERROR_TRANSPORT:
 	case RTR_ERROR_NO_DATA_AVAIL:
-		//_rtr_mgr_cb_state_error(sock, config, ind);
+		_rtr_mgr_cb_state_error(sock, config, group);
 		break;
 	default:
 		set_status(config, group, group->status, sock);
@@ -478,7 +485,7 @@ int rtr_mgr_add_group(struct rtr_mgr_config_ll *config,
 	pthread_mutex_lock(&config->mutex);
 	tommy_list_insert_tail(&config->groups, &new_group_node->node, new_group_node);
 	config->len++;
-	tommy_list_sort(config->groups, &rtr_mgr_config_cmp);
+	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
 	pthread_mutex_unlock(&config->mutex);
 
 	return RTR_SUCCESS;
@@ -504,7 +511,7 @@ int rtr_mgr_remove_group(struct rtr_mgr_config_ll *config,
 	}
 
 	pthread_mutex_lock(&config->mutex);
-	tommy_list_remove_existing(&config->groups, &remove_node);
+	tommy_list_remove_existing(&config->groups, remove_node);
 	config->len--;
 	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
 	// TODO: free group
