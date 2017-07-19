@@ -64,7 +64,6 @@ int main(void)
 					    RPKI_CACHE_POST,
 					    NULL };
 	struct rtr_socket rtr_tcp;
-	struct rtr_mgr_config *conf;
 	struct rtr_mgr_group groups[1];
 
 	/* init a TCP transport and create rtr socket */
@@ -76,6 +75,8 @@ int main(void)
 	groups[0].sockets_len = 1;
 	groups[0].sockets[0] = &rtr_tcp;
 	groups[0].preference = 1;
+
+	struct rtr_mgr_config_ll *conf;
 
 	if  (rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL,
 			  &connection_status_callback, NULL) < 0)
@@ -116,7 +117,7 @@ int main(void)
 
 	rtr_mgr_stop(conf);
 	rtr_mgr_free(conf);
-	free(groups[0].sockets);
+	//free(groups[0].sockets);
 
 	return EXIT_SUCCESS;
 }

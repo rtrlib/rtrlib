@@ -59,7 +59,7 @@ int main(){
 
 	node = tommy_list_head(&conf->groups);
 	group_node = node->data;
-	assert(group_node->group->preference == 1);
+	assert(group_node->group->preference == 2);
 
 
 	rtr_mgr_stop(conf);
