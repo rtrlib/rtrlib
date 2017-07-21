@@ -35,7 +35,7 @@ int main(){
 	group2.preference = 2;
 
 
-	struct rtr_mgr_config_ll *conf;
+	struct rtr_mgr_config *conf;
 	rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL, NULL, NULL);
 
 	//start the connection manager
