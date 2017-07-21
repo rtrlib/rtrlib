@@ -73,37 +73,32 @@ struct rtr_mgr_group_node {
     struct rtr_mgr_group *group;
 };
 
+
 typedef void (*rtr_mgr_status_fp)(const struct rtr_mgr_group *,
 				  enum rtr_mgr_status,
 				  const struct rtr_socket *,
 				  void *);
 
-struct rtr_mgr_config_ll {
+
+struct rtr_mgr_config {
     tommy_list groups;
 	unsigned int len;
 	pthread_mutex_t mutex;
 	rtr_mgr_status_fp status_fp;
 	void *status_fp_data;
-	struct pfx_table *pfxt;
+	struct pfx_table *pfx_table;
 	struct spki_table *spki_table;
 };
 
-struct rtr_mgr_config {
-	struct rtr_mgr_group *groups;
-	unsigned int len;
-	pthread_mutex_t mutex;
-	rtr_mgr_status_fp status_fp;
-	void *status_fp_data;
-};
 /**
  * @brief Initializes a rtr_mgr_config.
  * @param[out] config_out The rtr_mgr_config that will be initialized by this
  *			function. On error, *config_out will be NULL!
- * @param[in] groups Array of rtr_mgr_group. Every RTR socket in an
+ * @param[in] groups Linked list of rtr_mgr_group. Every RTR socket in an
  *		     rtr_mgr_group must be assoziated with an initialized
  *		     transport socket. A Transport socket is only allowed to be
  *		     associated with one rtr socket. The preference values must
- *		     be unique in the group array. More than one rtr_mgr_group
+ *		     be unique in the linked list. More than one rtr_mgr_group
  *		     with the same preference value isn't allowed.
  * @param[in] groups_len Number of elements in the groups array. Must be >= 1.
  * @param[in] refresh_interval Interval in seconds between serial queries that
@@ -133,7 +128,7 @@ struct rtr_mgr_config {
  * @return RTR_INVALID_PARAM If refresh_interval or expire_interval is invalid.
  * @return RTR_SUCCESS On success.
  */
-int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
+int rtr_mgr_init(struct rtr_mgr_config **config_out,
 		 struct rtr_mgr_group groups[],
 		 const unsigned int groups_len,
 		 const unsigned int refresh_interval,
@@ -144,12 +139,48 @@ int rtr_mgr_init(struct rtr_mgr_config_ll **config_out,
 		 const rtr_mgr_status_fp status_fp,
 		 void *status_fp_data);
 
+
+/**
+ * @brief Adds a new rtr_mgr_group to the linked list of a initialized config.
+ * @details A new group must have at least one rtr_socket associated
+ *          with it. This socket must have at least one initialized 
+ *          transport socket associated with it. The new group must
+ *          have a preference value that is none of the already present
+ *          groups have. More than one rtr_mgr_group with the same 
+ *          preference is not allowed. 
+ * @param config A rtr_mgr_config struct that has been initialized 
+ *           previously with rtr_mgr_init
+ * @param group A rtr_mgr_group with at least one rtr_socket and a 
+ *           preference value that no existing group has.
+ * @return RTR_INVALID_PARAM If a group with the same preference value already
+ *           exists.
+ * @return RTR_ERROR If an error occured while adding the group.
+ * @return RTR_SUCCESS If the group was successfully added.
+ *
+ */
+int rtr_mgr_add_group(struct rtr_mgr_config *config, 
+                        const struct rtr_mgr_group *group);
+/**
+ * @brief Removes an existing rtr_mgr_group from the linked list of config.
+ * @details The group to be removed is identified by its preference value.
+ *          Should the group to be removed be currently active, it will be 
+ *          shut down and the next best group will be spun up.
+ * @param config A rtr_mgr_config struct that has been initialized previously with 
+ *          rtr_mgr_init
+ * @param preference The preference value of the group to be removed.
+ * @return RTR_ERROR If no group with this preference value exists.
+ * @return RTR_SUCCESS If group was successfully removed.
+ *
+ */
+int rtr_mgr_remove_group(struct rtr_mgr_config *config,
+                        unsigned int preference);
+
 /**
  * @brief Frees all resources that were allocated from the rtr_mgr.
  * @details rtr_mgr_stop must be called before, to shutdown all rtr_sockets.
  * @param[in] config rtr_mgr_config.
  */
-void rtr_mgr_free(struct rtr_mgr_config_ll *config);
+void rtr_mgr_free(struct rtr_mgr_config *config);
 
 /**
  * @brief Establishes rtr_socket connections
@@ -160,7 +191,7 @@ void rtr_mgr_free(struct rtr_mgr_config_ll *config);
  * @return RTR_SUCCESS On success
  * @return RTR_ERROR On error
  */
-int rtr_mgr_start(struct rtr_mgr_config_ll *config);
+int rtr_mgr_start(struct rtr_mgr_config *config);
 
 /**
  * @brief Terminates rtr_socket connections
@@ -168,7 +199,7 @@ int rtr_mgr_start(struct rtr_mgr_config_ll *config);
  * All pfx_records received from these sockets will be purged.
  * @param[in] config The rtr_mgr_config struct
  */
-void rtr_mgr_stop(struct rtr_mgr_config_ll *config);
+void rtr_mgr_stop(struct rtr_mgr_config *config);
 
 /**
  * @brief Check if rtr_mgr_group is fully synchronized with at least one group.
@@ -176,7 +207,7 @@ void rtr_mgr_stop(struct rtr_mgr_config_ll *config);
  * @return true If pfx_table stores non-outdated pfx_records
  * @return false If pfx_table isn't fully synchronized with at least one group.
  */
-bool rtr_mgr_conf_in_sync(struct rtr_mgr_config_ll *config);
+bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config);
 
 /**
  * @brief Validates the origin of a BGP-Route.
@@ -242,13 +273,11 @@ void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config,
 				  pfx_for_each_fp fp,
 				  void *data);
 
-int rtr_mgr_add_group(struct rtr_mgr_config_ll *config,
+int rtr_mgr_add_group(struct rtr_mgr_config *config,
                       const struct rtr_mgr_group *group);
 
-int rtr_mgr_remove_group(struct rtr_mgr_config_ll *config,
+int rtr_mgr_remove_group(struct rtr_mgr_config *config,
                          unsigned int preference);
-
-struct rtr_mgr_group * rtr_mgr_get_best_rtr_mgr_group(struct rtr_mgr_config_ll *config);
 
 #endif
 /* @} */
