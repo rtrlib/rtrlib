@@ -617,6 +617,7 @@ int rtr_mgr_remove_group(struct rtr_mgr_config *config,
     if (remove_group->status != RTR_MGR_CLOSED) {
 		for (unsigned int j = 0; j < remove_group->sockets_len; j++) {
 			rtr_stop(remove_group->sockets[j]);
+            tr_free(remove_group->sockets[j]->tr_socket);
         }
     }
 
