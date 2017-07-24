@@ -1,4 +1,26 @@
+For details, please check the commit history:
+https://github.com/rtrlib/rtrlib/commits/master
+
 Release History:
+
+* Version 0.4.0
+    - Fix bug in prefix origin AS validation caused by LPFST, which lead to
+      incrrect validation results in corner caes, and change prefix storage
+      structure to Trie
+    - Fix memory leaks in lpfst_get_children
+    - Fix memory leak in rtr_mgr_get_spki
+    - Fix memory leak in rtr_mgr_init
+    - Fix memory leak in pfx_table_append_elem
+    - Fix memory leak in pfx_table_del_elem
+    - Fix byte order for encapsulated error PDUs
+    - Fix error PDU handling, do not send encapsulated PDUs on internal errors
+    - Improve testing:
+        - add extensive unit tests based on the Cmocka framework
+        - add runtime tests, e.g. live validation of RIPE RIS BGP beacons
+    - Improve overall coding style and documentation
+    - Add static code analysis (cppcheck, codecov.io) to Travis CI config
+    - Add backward compatibility for libssh 0.5.0 and Ubuntu 12.04 LTS
+    - Update Debian package build files
 
 * Version 0.3.6
     - rtrlib/lib/*: Change API and add lrtr_ prefix to prevent namespace
