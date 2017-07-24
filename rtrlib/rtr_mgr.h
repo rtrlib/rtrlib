@@ -70,8 +70,8 @@ struct rtr_mgr_group {
 
 //TODO Find a nicer way todo a linked list (without writing our own)
 struct rtr_mgr_group_node {
-    tommy_node node;
-    struct rtr_mgr_group *group;
+	tommy_node node;
+	struct rtr_mgr_group *group;
 };
 
 typedef void (*rtr_mgr_status_fp)(const struct rtr_mgr_group *,
@@ -79,10 +79,9 @@ typedef void (*rtr_mgr_status_fp)(const struct rtr_mgr_group *,
 				  const struct rtr_socket *,
 				  void *);
 
-
 //TODO Add refresh, expire, and retry intervals to config for easier access.
 struct rtr_mgr_config {
-    tommy_list groups;
+	tommy_list groups;
 	unsigned int len;
 	pthread_mutex_t mutex;
 	rtr_mgr_status_fp status_fp;
@@ -140,42 +139,40 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 		 const rtr_mgr_status_fp status_fp,
 		 void *status_fp_data);
 
-
 /**
  * @brief Adds a new rtr_mgr_group to the linked list of a initialized config.
  * @details A new group must have at least one rtr_socket associated
- *          with it. This socket must have at least one initialized 
+ *          with it. This socket must have at least one initialized
  *          transport socket associated with it. The new group must
  *          have a preference value that is none of the already present
- *          groups have. More than one rtr_mgr_group with the same 
- *          preference is not allowed. 
- * @param config A rtr_mgr_config struct that has been initialized 
+ *          groups have. More than one rtr_mgr_group with the same
+ *          preference is not allowed.
+ * @param config A rtr_mgr_config struct that has been initialized
  *           previously with rtr_mgr_init
- * @param group A rtr_mgr_group with at least one rtr_socket and a 
+ * @param group A rtr_mgr_group with at least one rtr_socket and a
  *           preference value that no existing group has.
  * @return RTR_INVALID_PARAM If a group with the same preference value already
  *           exists.
- * @return RTR_ERROR If an error occured while adding the group.
+ * @return RTR_ERROR If an error occurred while adding the group.
  * @return RTR_SUCCESS If the group was successfully added.
  *
  */
-int rtr_mgr_add_group(struct rtr_mgr_config *config, 
-                        const struct rtr_mgr_group *group);
+int rtr_mgr_add_group(struct rtr_mgr_config *config,
+		const struct rtr_mgr_group *group);
 /**
  * @brief Removes an existing rtr_mgr_group from the linked list of config.
  * @details The group to be removed is identified by its preference value.
- *          Should the group to be removed be currently active, it will be 
+ *          Should the group to be removed be currently active, it will be
  *          shut down and the next best group will be spun up.
- * @param config A rtr_mgr_config struct that has been initialized previously with 
- *          rtr_mgr_init
+ * @param config A rtr_mgr_config struct that has been initialized previously
+ *          with rtr_mgr_init
  * @param preference The preference value of the group to be removed.
  * @return RTR_ERROR If no group with this preference value exists.
  * @return RTR_SUCCESS If group was successfully removed.
  *
  */
 int rtr_mgr_remove_group(struct rtr_mgr_config *config,
-                        unsigned int preference);
-
+						unsigned int preference);
 /**
  * @brief Frees all resources that were allocated from the rtr_mgr.
  * @details rtr_mgr_stop must be called before, to shutdown all rtr_sockets.
@@ -273,12 +270,5 @@ void rtr_mgr_for_each_ipv4_record(struct rtr_mgr_config *config,
 void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config,
 				  pfx_for_each_fp fp,
 				  void *data);
-
-int rtr_mgr_add_group(struct rtr_mgr_config *config,
-                      const struct rtr_mgr_group *group);
-
-int rtr_mgr_remove_group(struct rtr_mgr_config *config,
-                         unsigned int preference);
-
 #endif
 /* @} */
