@@ -586,15 +586,14 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 int rtr_mgr_remove_group(struct rtr_mgr_config *config,
                          unsigned int preference)
 {
-    //TODO If group was best group, we need to start up the new best group (if it
-    //isn't active yet already)
 	pthread_mutex_lock(&config->mutex);
-
-	tommy_node *remove_node;
+	tommy_node *remove_node = NULL;
 	tommy_node *node = tommy_list_head(&config->groups);
 	struct rtr_mgr_group_node *group_node;
     struct rtr_mgr_group *remove_group;
-	while(node) {
+
+    // Find the node of the group we want to remove
+	while(node && !remove_node) {
 		group_node = node->data;
 		if (group_node->group->preference == preference) {
 			remove_node = node;
