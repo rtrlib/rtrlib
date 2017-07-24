@@ -333,6 +333,7 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 	qsort(groups, groups_len,
 			sizeof(struct rtr_mgr_group), &rtr_mgr_config_cmp);
 
+    /* Check that the groups have unique preference values and at least one socket */
 	for (unsigned int i = 0; i < config->len; i++) {
 		struct rtr_mgr_group cg = groups[i];
 		if ((i > 0) && (cg.preference == last_preference)) {
@@ -344,10 +345,8 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 			goto err;
 		}
 	}
-	config->len = groups_len;
-	//Init list that will hold our groups
-	config->groups = NULL;
 
+    /* Init data structures that we need to pass to the sockets */
 	pfxt = lrtr_malloc(sizeof(*pfxt));
 	if (!pfxt)
 		goto err;
@@ -358,14 +357,16 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 		goto err;
 	spki_table_init(spki_table, spki_update_fp);
 
-	config->status_fp_data = status_fp_data;
-	config->status_fp = status_fp;
-
 	config->pfx_table = pfxt;
 	config->spki_table = spki_table;
 
-	for (unsigned int i = 0; i < config->len; i++) {
-        struct rtr_mgr_group *cg = lrtr_malloc(sizeof(struct rtr_mgr_group));
+    /* Copy the groups from the array into the linked list config->groups */
+	config->len = groups_len;
+	config->groups = NULL;
+    struct rtr_mgr_group *cg;
+    struct rtr_mgr_group_node *group_node;
+	for (unsigned int i = 0; i < groups_len; i++) {
+        cg = lrtr_malloc(sizeof(struct rtr_mgr_group));
         memcpy(cg, &groups[i], sizeof(struct rtr_mgr_group));
 
 		cg->status = RTR_MGR_CLOSED;
@@ -378,15 +379,17 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 				goto err;
 			}
 		}
-        struct rtr_mgr_group_node *group_node = lrtr_malloc(sizeof(struct rtr_mgr_group_node));
+        group_node = lrtr_malloc(sizeof(struct rtr_mgr_group_node));
         group_node->group = cg;
         tommy_list_insert_tail(&config->groups, &group_node->node, group_node);
 	}
 
-	/* This LL should be sorted already, since the groups array was sorted. However,
-	 * for safety reasons we sort again
-	 */
+	/* Our linked list should be sorted already, since the groups array was sorted. However,
+	 * for safety reasons we sort again. */
 	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
+
+	config->status_fp_data = status_fp_data;
+	config->status_fp = status_fp;
 	return RTR_SUCCESS;
 
 err:
