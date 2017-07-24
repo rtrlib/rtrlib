@@ -449,14 +449,28 @@ void rtr_mgr_free(struct rtr_mgr_config *config)
 	MGR_DBG1("rtr_mgr_free()");
 	pthread_mutex_lock(&config->mutex);
 
-    tommy_node *head = tommy_list_head(&config->groups);
+	pfx_table_free(config->pfx_table);
+	spki_table_free(config->spki_table);
+	lrtr_free(config->spki_table);
+	lrtr_free(config->pfx_table);
 
-    struct rtr_mgr_group_node *group_node = head->data;
-	pfx_table_free(group_node->group->sockets[0]->pfx_table);
-	spki_table_free(group_node->group->sockets[0]->spki_table);
-	lrtr_free(group_node->group->sockets[0]->spki_table);
-	lrtr_free(group_node->group->sockets[0]->pfx_table);
-	lrtr_free(config->groups);
+    /* Free linked list */
+    tommy_node *tmp;
+    tommy_node *head = tommy_list_head(&config->groups);
+    struct rtr_mgr_group_node *group_node;
+    while (head) {
+        tmp = head;
+        head = head->next;
+
+        group_node = tmp->data;
+        for (unsigned int j = 0; j < group_node->group->sockets_len; j++) {
+            tr_free(group_node->group->sockets[j]->tr_socket);
+        }
+
+        lrtr_free(group_node->group);
+        lrtr_free(group_node);
+    }
+
 	pthread_mutex_unlock(&config->mutex);
 	pthread_mutex_destroy(&config->mutex);
 	lrtr_free(config);
