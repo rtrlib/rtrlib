@@ -68,6 +68,6 @@ int main(){
 
 	rtr_mgr_stop(conf);
 	rtr_mgr_free(conf);
-	//free(groups[0].sockets);
-	//free(groups[1].sockets);
+    free(group2.sockets);
+    free(groups[0].sockets);
 }
