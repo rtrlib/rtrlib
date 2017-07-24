@@ -62,7 +62,6 @@ static int rtr_mgr_start_sockets(struct rtr_mgr_group *group)
 static struct rtr_mgr_group *rtr_mgr_find_group(struct rtr_mgr_config *config,
                                 const struct rtr_socket *sock)
 {
-	pthread_mutex_lock(&config->mutex);
 	tommy_node *node;
     node  = tommy_list_head(&config->groups);
     struct rtr_mgr_group_node *group_node;
@@ -70,13 +69,11 @@ static struct rtr_mgr_group *rtr_mgr_find_group(struct rtr_mgr_config *config,
         group_node = node->data;
 		for (unsigned int j = 0;j < group_node->group->sockets_len; j++) {
 			if (group_node->group->sockets[j] == sock) {
-	            pthread_mutex_unlock(&config->mutex);
 				return group_node->group;
 			}
         }
         node = node->next;
     }
-	pthread_mutex_unlock(&config->mutex);
 	return NULL;
 }
 
