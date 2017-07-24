@@ -68,11 +68,11 @@ struct rtr_mgr_group {
 	enum rtr_mgr_status status;
 };
 
+//TODO Find a nicer way todo a linked list (without writing our own)
 struct rtr_mgr_group_node {
     tommy_node node;
     struct rtr_mgr_group *group;
 };
-
 
 typedef void (*rtr_mgr_status_fp)(const struct rtr_mgr_group *,
 				  enum rtr_mgr_status,
@@ -80,6 +80,7 @@ typedef void (*rtr_mgr_status_fp)(const struct rtr_mgr_group *,
 				  void *);
 
 
+//TODO Add refresh, expire, and retry intervals to config for easier access.
 struct rtr_mgr_config {
     tommy_list groups;
 	unsigned int len;
