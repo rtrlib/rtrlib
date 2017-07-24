@@ -608,8 +608,10 @@ int rtr_mgr_remove_group(struct rtr_mgr_config *config,
 	}
     group_node = remove_node->data;
     remove_group = group_node->group;
-
-    
+	tommy_list_remove_existing(&config->groups, remove_node);
+	config->len--;
+	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
+	pthread_mutex_unlock(&config->mutex);
 
     //If group isn't closed, make it so!
     if (remove_group->status != RTR_MGR_CLOSED) {
@@ -617,10 +619,6 @@ int rtr_mgr_remove_group(struct rtr_mgr_config *config,
 			rtr_stop(remove_group->sockets[j]);
         }
     }
-
-	tommy_list_remove_existing(&config->groups, remove_node);
-	config->len--;
-	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
 
     // Check whether best group is closed, if so then start it.
     struct rtr_mgr_group *best_group = rtr_mgr_get_first_group(config);
@@ -632,7 +630,6 @@ int rtr_mgr_remove_group(struct rtr_mgr_config *config,
     
     lrtr_free(group_node->group);
     lrtr_free(group_node);
-	pthread_mutex_unlock(&config->mutex);
 	return RTR_SUCCESS;
 }
 const char *rtr_mgr_status_to_str(enum rtr_mgr_status status)
