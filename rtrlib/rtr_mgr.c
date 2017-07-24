@@ -625,7 +625,7 @@ int rtr_mgr_remove_group(struct rtr_mgr_config *config,
     struct rtr_mgr_group *best_group = rtr_mgr_get_first_group(config);
     if (best_group->status == RTR_MGR_CLOSED) {
 		for (unsigned int j = 0; j < best_group->sockets_len; j++) {
-			rtr_stop(best_group->sockets[j]);
+			rtr_start(best_group->sockets[j]);
         }
     }
     
