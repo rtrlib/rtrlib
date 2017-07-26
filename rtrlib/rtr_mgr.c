@@ -641,7 +641,6 @@ int rtr_mgr_remove_group(struct rtr_mgr_config *config,
 		}
 	}
 
-	// Check whether best group is closed, if so then start it.
 	struct rtr_mgr_group *best_group = rtr_mgr_get_first_group(config);
 
 	if (best_group->status == RTR_MGR_CLOSED) {
