@@ -308,7 +308,7 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 		return RTR_ERROR;
 
 	config->len = groups_len;
-	config->groups = malloc(groups_len * sizeof(*groups));
+	config->groups = lrtr_malloc(groups_len * sizeof(*groups));
 	if (!config->groups)
 		goto err;
 	memcpy(config->groups, groups, groups_len * sizeof(*groups));
