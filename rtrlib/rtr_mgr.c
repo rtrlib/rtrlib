@@ -471,7 +471,7 @@ static int rtr_mgr_add_group(struct rtr_mgr_config_ll *config,
 
 	// TODO: check for successfull malloc.
 	struct rtr_mgr_group_node *new_group_node;
-	struct rtr_mgr_group *new_group = lrtr_malloc(sizeof(struct rtr_mgr_group));
+	struct rtr_mgr_group *new_group = malloc(sizeof(struct rtr_mgr_group));
 	memcpy(new_group, group, sizeof(struct rtr_mgr_group));
 
 	new_group_node->group = new_group;
@@ -488,7 +488,7 @@ static int rtr_mgr_remove_group(struct rtr_mgr_config_ll *config,
                           struct rtr_mgr_group *group)
 {
 	// make sure the group exists.
-	struct rtr_mgr_group *remove_group = lrtr_malloc(sizeof(struct rtr_mgr_group));
+	struct rtr_mgr_group *remove_group = malloc(sizeof(struct rtr_mgr_group));
 	int group_exists = false;
 	tommy_node *node = tommy_list_head(&config->groups);
 	while(node) {
