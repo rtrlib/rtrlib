@@ -569,8 +569,8 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 
 	for (unsigned int j = 0; j < new_group->sockets_len; j++) {
 		if (rtr_init(new_group->sockets[j], NULL, config->pfx_table,
-			     config->spki_table, refresh_interval,
-			     expire_interval, retry_interval, rtr_mgr_cb,
+			     config->spki_table, refresh_iv,
+			     expire_iv, retry_iv, rtr_mgr_cb,
 			     config) != RTR_SUCCESS) {
 			err_code = RTR_INVALID_PARAM;
 			lrtr_free(new_group);
