@@ -592,10 +592,14 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 			       new_group_node);
 	config->len++;
 
-	//TODO What should happen if the new group has the lowest pref?
-	// We could stop the existing best group and start up this one
 	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
 	pthread_mutex_unlock(&config->mutex);
+
+	struct rtr_mgr_group *best_group = rtr_mgr_get_first_group(config);
+	if (best_group->status == RTR_MGR_CLOSED) {
+		for (unsigned int j = 0; j < best_group->sockets_len; j++)
+			rtr_start(best_group->sockets[j]);
+	}
 	return RTR_SUCCESS;
 }
 
