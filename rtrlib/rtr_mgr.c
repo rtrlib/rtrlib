@@ -464,8 +464,8 @@ void rtr_mgr_free(struct rtr_mgr_config *config)
 
 	pfx_table_free(config->pfx_table);
 	spki_table_free(config->spki_table);
-	lrtr_free(config->spki_table);
-	lrtr_free(config->pfx_table);
+	free(config->spki_table);
+	free(config->pfx_table);
 
 	/* Free linked list */
 	tommy_node *tmp;
@@ -481,13 +481,13 @@ void rtr_mgr_free(struct rtr_mgr_config *config)
 			tr_free(group_node->group->sockets[j]->tr_socket);
 		}
 
-		lrtr_free(group_node->group);
-		lrtr_free(group_node);
+		free(group_node->group);
+		free(group_node);
 	}
 
 	pthread_mutex_unlock(&config->mutex);
 	pthread_mutex_destroy(&config->mutex);
-	lrtr_free(config);
+	free(config);
 }
 
 /* cppcheck-suppress unusedFunction */
@@ -572,7 +572,7 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 			     expire_iv, retry_iv, rtr_mgr_cb,
 			     config) != RTR_SUCCESS) {
 			err_code = RTR_INVALID_PARAM;
-			lrtr_free(new_group);
+			free(new_group);
 			pthread_mutex_unlock(&config->mutex);
 			return err_code;
 		}
@@ -582,7 +582,7 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 					sizeof(struct rtr_mgr_group_node));
 	if (!new_group_node) {
 		pthread_mutex_unlock(&config->mutex);
-		lrtr_free(new_group);
+		free(new_group);
 		return RTR_ERROR;
 	}
 
@@ -647,8 +647,8 @@ int rtr_mgr_remove_group(struct rtr_mgr_config *config,
 			rtr_start(best_group->sockets[j]);
 	}
 
-	lrtr_free(group_node->group);
-	lrtr_free(group_node);
+	free(group_node->group);
+	free(group_node);
 	return RTR_SUCCESS;
 }
 
