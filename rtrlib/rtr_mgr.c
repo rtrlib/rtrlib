@@ -352,7 +352,7 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 	}
 
 	/* Init data structures that we need to pass to the sockets */
-	pfxt = lrtr_malloc(sizeof(*pfxt));
+	pfxt = malloc(sizeof(*pfxt));
 	if (!pfxt)
 		goto err;
 	pfx_table_init(pfxt, update_fp);
@@ -372,7 +372,7 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 	struct rtr_mgr_group_node *group_node;
 
 	for (unsigned int i = 0; i < groups_len; i++) {
-		cg = lrtr_malloc(sizeof(struct rtr_mgr_group));
+		cg = malloc(sizeof(struct rtr_mgr_group));
 		memcpy(cg, &groups[i], sizeof(struct rtr_mgr_group));
 
 		cg->status = RTR_MGR_CLOSED;
@@ -385,7 +385,7 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 				goto err;
 			}
 		}
-		group_node = lrtr_malloc(sizeof(struct rtr_mgr_group_node));
+		group_node = malloc(sizeof(struct rtr_mgr_group_node));
 		group_node->group = cg;
 		tommy_list_insert_tail(&config->groups, &group_node->node,
 				       group_node);
@@ -559,8 +559,7 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 			expire_iv = gnode->group->sockets[0]->expire_interval;
 		node = node->next;
 	}
-	struct rtr_mgr_group *new_group = lrtr_malloc(sizeof(
-							struct rtr_mgr_group));
+	struct rtr_mgr_group *new_group = malloc(sizeof(struct rtr_mgr_group));
 	if (!new_group) {
 		pthread_mutex_unlock(&config->mutex);
 		return RTR_ERROR;
@@ -579,7 +578,7 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 		}
 	}
 
-	struct rtr_mgr_group_node *new_group_node = lrtr_malloc(
+	struct rtr_mgr_group_node *new_group_node = malloc(
 					sizeof(struct rtr_mgr_group_node));
 	if (!new_group_node) {
 		pthread_mutex_unlock(&config->mutex);
