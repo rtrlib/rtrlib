@@ -117,7 +117,6 @@ int main(void)
 
 	rtr_mgr_stop(conf);
 	rtr_mgr_free(conf);
-	//free(groups[0].sockets);
 
 	return EXIT_SUCCESS;
 }
