@@ -213,9 +213,11 @@ static inline void _rtr_mgr_cb_state_established(const struct rtr_socket *sock,
 		 * groups are also in ERROR or SHUTDOWN state
 		 */
 		bool all_error = true;
-		tommy_node *node = tommy_list_head(&config->groups);
 		struct rtr_mgr_group_node *group_node;
 		struct rtr_mgr_group *current_group;
+
+		pthread_mutex_lock(&config->mutex);
+		tommy_node *node = tommy_list_head(&config->groups);
 
 		while (node) {
 			group_node = node->data;
@@ -228,6 +230,7 @@ static inline void _rtr_mgr_cb_state_established(const struct rtr_socket *sock,
 			}
 			node = node->next;
 		}
+		pthread_mutex_unlock(&config->mutex);
 
 		if (all_error && rtr_mgr_config_status_is_synced(my_group)) {
 			set_status(config, my_group, RTR_MGR_ESTABLISHED, sock);
