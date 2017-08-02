@@ -151,14 +151,19 @@ static struct rtr_mgr_group *get_best_inactive_rtr_mgr_group(
 static bool is_some_rtr_mgr_group_established(struct rtr_mgr_config *config)
 {
 	struct rtr_mgr_group_node *group_node;
+
+	pthread_mutex_lock(&config->mutex);
 	tommy_node *node = tommy_list_head(&config->groups);
 
 	while (node) {
 		group_node = node->data;
-		if (group_node->group->status == RTR_MGR_ESTABLISHED)
+		if (group_node->group->status == RTR_MGR_ESTABLISHED) {
+			pthread_mutex_unlock(&config->mutex);
 			return true;
+		}
 		node = node->next;
 	}
+	pthread_mutex_unlock(&config->mutex);
 	return false;
 }
 
