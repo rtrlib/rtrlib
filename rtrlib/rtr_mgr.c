@@ -612,13 +612,13 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 	config->len++;
 
 	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
-	pthread_mutex_unlock(&config->mutex);
 
 	struct rtr_mgr_group *best_group = rtr_mgr_get_first_group(config);
 	if (best_group->status == RTR_MGR_CLOSED) {
 		for (unsigned int j = 0; j < best_group->sockets_len; j++)
 			rtr_start(best_group->sockets[j]);
 	}
+	pthread_mutex_unlock(&config->mutex);
 	return RTR_SUCCESS;
 }
 
