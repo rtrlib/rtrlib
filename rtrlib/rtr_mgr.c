@@ -531,8 +531,10 @@ inline int rtr_mgr_get_spki(struct rtr_mgr_config *config,
 
 void rtr_mgr_stop(struct rtr_mgr_config *config)
 {
-	tommy_node *node = tommy_list_head(&config->groups);
 	struct rtr_mgr_group_node *group_node;
+
+	pthread_mutex_lock(&config->mutex);
+	tommy_node *node = tommy_list_head(&config->groups);
 
 	MGR_DBG1("rtr_mgr_stop()");
 	while (node) {
@@ -543,6 +545,7 @@ void rtr_mgr_stop(struct rtr_mgr_config *config)
 		}
 	node = node->next;
 	}
+	pthread_mutex_unlock(&config->mutex);
 }
 
 int rtr_mgr_add_group(struct rtr_mgr_config *config,
