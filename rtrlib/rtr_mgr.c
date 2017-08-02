@@ -285,7 +285,6 @@ static void rtr_mgr_cb(const struct rtr_socket *sock,
 		MGR_DBG1("ERROR: Socket has no group");
 		return;
 	}
-	pthread_mutex_lock(&config->mutex);
 
 	switch (state) {
 	case RTR_SHUTDOWN:
@@ -305,7 +304,6 @@ static void rtr_mgr_cb(const struct rtr_socket *sock,
 	default:
 		set_status(config, group, group->status, sock);
 	}
-	pthread_mutex_unlock(&config->mutex);
 }
 
 int rtr_mgr_config_cmp(const void *a, const void *b)
