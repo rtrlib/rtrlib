@@ -129,17 +129,22 @@ static struct rtr_mgr_group *get_best_inactive_rtr_mgr_group(
 						struct rtr_mgr_config *config,
 						struct rtr_mgr_group *my_group)
 {
-	tommy_node *node = tommy_list_head(&config->groups);
 	struct rtr_mgr_group_node *group_node;
 	struct rtr_mgr_group *group;
+
+	pthread_mutex_lock(&config->mutex);
+	tommy_node *node = tommy_list_head(&config->groups);
 
 	while (node) {
 	group_node = node->data;
 	group = group_node->group;
-		if ((group != my_group) && (group->status == RTR_MGR_CLOSED))
+		if ((group != my_group) && (group->status == RTR_MGR_CLOSED)) {
+			pthread_mutex_unlock(&config->mutex);
 			return group;
+		}
 	node = node->next;
 	}
+		pthread_mutex_unlock(&config->mutex);
 	return NULL;
 }
 
