@@ -101,10 +101,11 @@ static void rtr_mgr_close_less_preferable_groups(const struct rtr_socket *sock,
 						 struct rtr_mgr_config *config,
 						 struct rtr_mgr_group *my_group)
 {
-	tommy_node *node = tommy_list_head(&config->groups);
 	struct rtr_mgr_group_node *group_node;
 	struct rtr_mgr_group *current_group;
 
+	pthread_mutex_lock(&config->mutex);
+	tommy_node *node = tommy_list_head(&config->groups);
 	while (node) {
 		group_node = node->data;
 		current_group = group_node->group;
@@ -121,6 +122,7 @@ static void rtr_mgr_close_less_preferable_groups(const struct rtr_socket *sock,
 		}
 	node = node->next;
 	}
+	pthread_mutex_unlock(&config->mutex);
 }
 
 static struct rtr_mgr_group *get_best_inactive_rtr_mgr_group(
