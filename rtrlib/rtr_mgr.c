@@ -565,6 +565,7 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 		gnode = node->data;
 		if (gnode->group->preference == group->preference) {
 			RTR_DBG("Group with preference value already exists!");
+			pthread_mutex_unlock(&config->mutex);
 			return RTR_INVALID_PARAM;
 		}
 
