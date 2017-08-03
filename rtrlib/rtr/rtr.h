@@ -70,8 +70,11 @@ enum rtr_socket_state {
     /** Error on the transport socket occurred. */
     RTR_ERROR_TRANSPORT,
 
-    /** RTR Socket is stopped. */
+    /** RTR Socket was started, but now has shut down. */
     RTR_SHUTDOWN,
+
+    /** RTR Socket has not been started yet. Initial state after rtr_init */
+    RTR_CLOSED,
 };
 
 struct rtr_socket;

@@ -83,7 +83,7 @@ int rtr_init(struct rtr_socket *rtr_socket,
         rtr_socket->retry_interval = retry_interval;
     }
 
-    rtr_socket->state = RTR_SHUTDOWN;
+    rtr_socket->state = RTR_CLOSED;
     rtr_socket->request_session_id = true;
     rtr_socket->serial_number = 0;
     rtr_socket->last_update = 0;
@@ -129,7 +129,10 @@ void rtr_purge_outdated_records(struct rtr_socket *rtr_socket)
 }
 
 void rtr_fsm_start(struct rtr_socket *rtr_socket)
-{
+{ 
+   if (rtr_socket->state == RTR_SHUTDOWN)
+	return;
+     
     rtr_socket->state = RTR_CONNECTING;
     install_sig_handler();
     while(1) {
