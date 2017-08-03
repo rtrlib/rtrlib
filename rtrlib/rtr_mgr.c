@@ -106,6 +106,7 @@ static void rtr_mgr_close_less_preferable_groups(const struct rtr_socket *sock,
 
 	pthread_mutex_lock(&config->mutex);
 	tommy_node *node = tommy_list_head(&config->groups);
+
 	while (node) {
 		group_node = node->data;
 		current_group = group_node->group;
@@ -581,6 +582,7 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 		node = node->next;
 	}
 	struct rtr_mgr_group *new_group = malloc(sizeof(struct rtr_mgr_group));
+
 	if (!new_group) {
 		pthread_mutex_unlock(&config->mutex);
 		return RTR_ERROR;
@@ -616,6 +618,7 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
 
 	struct rtr_mgr_group *best_group = rtr_mgr_get_first_group(config);
+
 	if (best_group->status == RTR_MGR_CLOSED) {
 		for (unsigned int j = 0; j < best_group->sockets_len; j++)
 			rtr_start(best_group->sockets[j]);

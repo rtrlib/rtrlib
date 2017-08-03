@@ -158,7 +158,7 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
  *
  */
 int rtr_mgr_add_group(struct rtr_mgr_config *config,
-		const struct rtr_mgr_group *group);
+		      const struct rtr_mgr_group *group);
 /**
  * @brief Removes an existing rtr_mgr_group from the linked list of config.
  * @details The group to be removed is identified by its preference value.
@@ -172,7 +172,7 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
  *
  */
 int rtr_mgr_remove_group(struct rtr_mgr_config *config,
-						unsigned int preference);
+			 unsigned int preference);
 /**
  * @brief Frees all resources that were allocated from the rtr_mgr.
  * @details rtr_mgr_stop must be called before, to shutdown all rtr_sockets.
