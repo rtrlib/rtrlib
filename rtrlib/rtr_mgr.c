@@ -660,6 +660,7 @@ int rtr_mgr_remove_group(struct rtr_mgr_config *config,
 			rtr_stop(remove_group->sockets[j]);
 			tr_free(remove_group->sockets[j]->tr_socket);
 		}
+		set_status(config, remove_group, RTR_MGR_CLOSED, NULL);
 	}
 
 	struct rtr_mgr_group *best_group = rtr_mgr_get_first_group(config);
