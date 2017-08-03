@@ -273,13 +273,13 @@ static inline void _rtr_mgr_cb_state_error(const struct rtr_socket *sock,
 
 static void rtr_mgr_cb(const struct rtr_socket *sock,
 		       const enum rtr_socket_state state,
-		       void *data)
+		       void *data_config, void *data_group)
 {
 	if (state == RTR_SHUTDOWN)
 		MGR_DBG1("Received RTR_SHUTDOWN callback");
 
-	struct rtr_mgr_config *config = data;
-	struct rtr_mgr_group *group = rtr_mgr_find_group(config, sock);
+	struct rtr_mgr_config *config = data_config;
+	struct rtr_mgr_group *group = data_group;
 
 	if (!group) {
 		MGR_DBG1("ERROR: Socket has no group");
@@ -397,7 +397,7 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 			if (rtr_init(cg->sockets[j], NULL,
 				     pfxt, spki_table, refresh_interval,
 				     expire_interval, retry_interval,
-				     rtr_mgr_cb, config) != RTR_SUCCESS) {
+				     rtr_mgr_cb, config, cg) != RTR_SUCCESS) {
 				err_code = RTR_INVALID_PARAM;
 				goto err;
 			}
@@ -591,7 +591,7 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 		if (rtr_init(new_group->sockets[j], NULL, config->pfx_table,
 			     config->spki_table, refresh_iv,
 			     expire_iv, retry_iv, rtr_mgr_cb,
-			     config) != RTR_SUCCESS) {
+			     config, new_group) != RTR_SUCCESS) {
 			err_code = RTR_INVALID_PARAM;
 			free(new_group);
 			pthread_mutex_unlock(&config->mutex);

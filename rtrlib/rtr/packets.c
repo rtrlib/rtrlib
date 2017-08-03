@@ -208,7 +208,7 @@ void rtr_change_socket_state(struct rtr_socket *rtr_socket, const enum rtr_socke
     }    
 
     if (rtr_socket->connection_state_fp != NULL)
-        rtr_socket->connection_state_fp(rtr_socket, new_state, rtr_socket->connection_state_fp_param);
+        rtr_socket->connection_state_fp(rtr_socket, new_state, rtr_socket->connection_state_fp_param_config, rtr_socket->connection_state_fp_param_group);
 }
 
 static void rtr_pdu_convert_header_byte_order(void *pdu, const enum target_byte_order target_byte_order)

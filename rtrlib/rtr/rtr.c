@@ -59,7 +59,8 @@ int rtr_init(struct rtr_socket *rtr_socket,
               const unsigned int refresh_interval,
               const unsigned int expire_interval,
               const unsigned int retry_interval,
-              rtr_connection_state_fp fp, void *fp_param)
+              rtr_connection_state_fp fp, void *fp_param_config,
+	      void *fp_param_group)
 {
     if(tr != NULL)
         rtr_socket->tr_socket = tr;
@@ -89,7 +90,8 @@ int rtr_init(struct rtr_socket *rtr_socket,
     rtr_socket->pfx_table = pfx_table;
     rtr_socket->spki_table = spki_table;
     rtr_socket->connection_state_fp = fp;
-    rtr_socket->connection_state_fp_param = fp_param;
+    rtr_socket->connection_state_fp_param_config = fp_param_config;
+    rtr_socket->connection_state_fp_param_group = fp_param_group;
     rtr_socket->thread_id = 0;
     rtr_socket->version = RTR_PROTOCOL_MAX_SUPPORTED_VERSION;
     rtr_socket->has_received_pdus = false;
