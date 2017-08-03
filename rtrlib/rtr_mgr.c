@@ -586,6 +586,7 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 		return RTR_ERROR;
 	}
 	memcpy(new_group, group, sizeof(struct rtr_mgr_group));
+	new_group->status = RTR_MGR_CLOSED;
 
 	for (unsigned int j = 0; j < new_group->sockets_len; j++) {
 		if (rtr_init(new_group->sockets[j], NULL, config->pfx_table,
