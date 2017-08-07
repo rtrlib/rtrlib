@@ -555,7 +555,6 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 	unsigned int refresh_iv = 3600;
 	unsigned int retry_iv = 600;
 	unsigned int expire_iv = 7200;
-	int err_code = RTR_ERROR;
 
 	pthread_mutex_lock(&config->mutex);
 
@@ -595,10 +594,9 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 			     config->spki_table, refresh_iv,
 			     expire_iv, retry_iv, rtr_mgr_cb,
 			     config, new_group) != RTR_SUCCESS) {
-			err_code = RTR_INVALID_PARAM;
 			free(new_group);
 			pthread_mutex_unlock(&config->mutex);
-			return err_code;
+			return RTR_INVALID_PARAM;
 		}
 	}
 
