@@ -38,6 +38,17 @@ int main(void)
 	group2.sockets[0] = &rtr_tcp2;
 	group2.preference = 2;
 
+	struct tr_socket tr_tcp3;
+	struct rtr_socket rtr_tcp3;
+	struct rtr_mgr_group group3;
+
+	tr_tcp_init(&tcp_config, &tr_tcp3);
+	rtr_tcp3.tr_socket = &tr_tcp3;
+	group3.sockets = malloc(sizeof(struct rtr_socket *));
+	group3.sockets_len = 1;
+	group3.sockets[0] = &rtr_tcp3;
+	group3.preference = 2;
+
 	struct rtr_mgr_config *conf;
 
 	rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL, NULL, NULL);
@@ -67,6 +78,26 @@ int main(void)
 	group_node = node->data;
 	assert(group_node->group->preference == 2);
 	assert(conf->len == 1);
+
+	//checking behavior in case the group preference already exists.
+	rtr_mgr_add_group(conf, &group3);
+	group3.preference = 3;
+	rtr_mgr_add_group(conf, &group3);
+	
+	//remove non-existent group
+	rtr_mgr_remove_group(conf, 3);
+	rtr_mgr_remove_group(conf, 3);
+
+	//add 100 groups
+	for (int i = 0; i < 100; i++) {
+		rtr_mgr_add_group(conf, &group3);
+		group3.preference++;
+	}
+	
+	//remove 100 groups
+	for (int i = 0; i < 100; i++) {
+		rtr_mgr_remove_group(conf, --group3.preference);
+	}
 
 	rtr_mgr_stop(conf);
 	rtr_mgr_free(conf);
