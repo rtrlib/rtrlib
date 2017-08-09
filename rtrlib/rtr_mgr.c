@@ -613,15 +613,16 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 			       new_group_node);
 	config->len++;
 
-	MGR_DBG("Group with preference %d sucessfully added!", new_group->preference);
+	MGR_DBG("Group with preference %d successfully added!",
+		new_group->preference);
 
 	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
 
 	struct rtr_mgr_group *best_group = rtr_mgr_get_first_group(config);
 
-	if (best_group->status == RTR_MGR_CLOSED) {
+	if (best_group->status == RTR_MGR_CLOSED)
 		rtr_mgr_start_sockets(best_group);
-	}
+
 	pthread_mutex_unlock(&config->mutex);
 	return RTR_SUCCESS;
 }
@@ -653,7 +654,7 @@ int rtr_mgr_remove_group(struct rtr_mgr_config *config,
 	remove_group = group_node->group;
 	tommy_list_remove_existing(&config->groups, remove_node);
 	config->len--;
-	MGR_DBG("Group with preference %d sucessfully removed!", preference);
+	MGR_DBG("Group with preference %d successfully removed!", preference);
 	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
 	pthread_mutex_unlock(&config->mutex);
 
@@ -668,9 +669,8 @@ int rtr_mgr_remove_group(struct rtr_mgr_config *config,
 
 	struct rtr_mgr_group *best_group = rtr_mgr_get_first_group(config);
 
-	if (best_group->status == RTR_MGR_CLOSED) {
+	if (best_group->status == RTR_MGR_CLOSED)
 		rtr_mgr_start_sockets(best_group);
-	}
 
 	free(group_node->group);
 	free(group_node);

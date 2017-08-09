@@ -83,7 +83,7 @@ int main(void)
 	rtr_mgr_add_group(conf, &group3);
 	group3.preference = 3;
 	rtr_mgr_add_group(conf, &group3);
-	
+
 	//remove non-existent group
 	rtr_mgr_remove_group(conf, 3);
 	rtr_mgr_remove_group(conf, 3);
@@ -93,11 +93,10 @@ int main(void)
 		rtr_mgr_add_group(conf, &group3);
 		group3.preference++;
 	}
-	
+
 	//remove 100 groups
-	for (int i = 0; i < 100; i++) {
+	for (int i = 0; i < 100; i++)
 		rtr_mgr_remove_group(conf, --group3.preference);
-	}
 
 	rtr_mgr_stop(conf);
 	rtr_mgr_free(conf);
