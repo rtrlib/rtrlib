@@ -11,9 +11,9 @@
 
 #include "alloc_utils.h"
 
-void* (*MALLOC_PTR)(size_t size);
-void* (*REALLOC_PTR)(void* ptr, size_t size);
-void (*FREE_PTR)(void* ptr);
+void* (*MALLOC_PTR)(size_t size) = malloc;
+void* (*REALLOC_PTR)(void* ptr, size_t size) = realloc;
+void (*FREE_PTR)(void* ptr) = free;
 
 
 void lrtr_set_malloc(void* (*malloc_function)(size_t size))
@@ -33,27 +33,15 @@ void lrtr_set_free(void (free_ptr)(void* ptr))
 
 inline void* lrtr_malloc(size_t size)
 {
-	if (MALLOC_PTR) {
-		return MALLOC_PTR(size);
-	} else {
-		return malloc(size);
-	}
+	return MALLOC_PTR(size);
 }
 
 inline void lrtr_free(void* ptr)
 {
-	if (FREE_PTR) {
-		return FREE_PTR(ptr);
-	} else {
-		return free(ptr);
-	}
+	return FREE_PTR(ptr);
 }
 
 inline void* lrtr_realloc(void* ptr, size_t size)
 {
-	if (REALLOC_PTR) {
-		return REALLOC_PTR(ptr, size);
-	}  else {
-		return realloc(ptr, size);
-	}
+	return REALLOC_PTR(ptr, size);
 }
