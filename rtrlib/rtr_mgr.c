@@ -564,7 +564,7 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 	while (node) {
 		gnode = node->data;
 		if (gnode->group->preference == group->preference) {
-			RTR_DBG("Group with preference value already exists!");
+			MGR_DBG1("Group with preference value already exists!");
 			pthread_mutex_unlock(&config->mutex);
 			return RTR_INVALID_PARAM;
 		}
@@ -613,6 +613,8 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 			       new_group_node);
 	config->len++;
 
+	MGR_DBG("Group with preference %d sucessfully added!", new_group->preference);
+
 	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
 
 	struct rtr_mgr_group *best_group = rtr_mgr_get_first_group(config);
@@ -642,7 +644,7 @@ int rtr_mgr_remove_group(struct rtr_mgr_config *config,
 	}
 
 	if (!remove_node) {
-		RTR_DBG("The group that should be removed does not exist!");
+		MGR_DBG1("The group that should be removed does not exist!");
 		pthread_mutex_unlock(&config->mutex);
 		return RTR_ERROR;
 	}
@@ -651,6 +653,7 @@ int rtr_mgr_remove_group(struct rtr_mgr_config *config,
 	remove_group = group_node->group;
 	tommy_list_remove_existing(&config->groups, remove_node);
 	config->len--;
+	MGR_DBG("Group with preference %d sucessfully removed!", preference);
 	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
 	pthread_mutex_unlock(&config->mutex);
 
