@@ -15,19 +15,14 @@ void *(*MALLOC_PTR)(size_t size) = malloc;
 void *(*REALLOC_PTR)(void *ptr, size_t size) = realloc;
 void (*FREE_PTR)(void *ptr) = free;
 
-void lrtr_set_malloc(void *(*malloc_function)(size_t size))
+void lrtr_set_alloc_functions(
+		void *(*malloc_function)(size_t size),
+		void *(*realloc_function)(void *ptr, size_t size),
+		void (free_function)(void *ptr))
 {
-	 MALLOC_PTR = malloc_function;
-}
-
-void lrtr_set_realloc(void *(*realloc_ptr)(void *ptr, size_t size))
-{
-	REALLOC_PTR = realloc_ptr;
-}
-
-void lrtr_set_free(void (free_ptr)(void *ptr))
-{
-	FREE_PTR = free_ptr;
+	MALLOC_PTR = malloc_function;
+	REALLOC_PTR = realloc_function;
+	FREE_PTR = free_function;
 }
 
 inline void *lrtr_malloc(size_t size)

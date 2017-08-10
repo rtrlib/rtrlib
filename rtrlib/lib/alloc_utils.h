@@ -17,25 +17,16 @@ extern void (*FREE_PTR)(void *ptr);
 extern void *(*REALLOC_PTR)(void *ptr, size_t size);
 
 /**
- * @brief Sets a custom malloc function that is used throughout rtrlib.
- * If you set this function you must also set custom free and custom realloc
- * @param[in] Pointer to a malloc function
+ * @brief Sets custom malloc, realloc and free function
+ * that is used throughout rtrlib.
+ * @param[in] Pointer to malloc function
+ * @param[in] Pointer to realloc function
+ * @param[in] Pointer to free function
  */
-void lrtr_set_malloc(void *(*malloc_function)(size_t size));
-
-/**
- * @brief Sets a custom free function that is used throughout rtrlib.
- * If you set this function you must also set custom malloc and realloc
- * @param[in] Pointer to a free function
- */
-void lrtr_set_free(void (free_ptr)(void *ptr));
-
-/**
- * @brief Sets a custom realloc function that is used throughout rtrlib.
- * If you set this function you must also set custom malloc and free.
- * @param[in] Pointer to a realloc function
- */
-void lrtr_set_realloc(void *(*realloc_ptr)(void *ptr, size_t size));
+void lrtr_set_alloc_functions(
+		void *(*malloc_function)(size_t size),
+		void *(*realloc_function)(void *ptr, size_t size),
+		void (free_function)(void *ptr));
 
 void *lrtr_malloc(size_t size);
 
