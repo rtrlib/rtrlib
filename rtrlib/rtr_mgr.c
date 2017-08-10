@@ -423,14 +423,6 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 		if (err_code)
 			goto err;
 
-		for (unsigned int j = 0; j < cg->sockets_len; j++) {
-			err_code = rtr_init(cg->sockets[j], NULL,
-					    pfxt, spki_table, refresh_interval,
-					    expire_interval, retry_interval,
-					    rtr_mgr_cb, config, cg);
-			if (err_code)
-				goto err;
-		}
 		group_node = malloc(sizeof(struct rtr_mgr_group_node));
 		if (!group_node)
 			goto err;
