@@ -33,6 +33,9 @@ static int rtr_mgr_config_cmp(const void *a, const void *b);
 static bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *group);
 static struct rtr_mgr_group *rtr_mgr_get_first_group(struct rtr_mgr_config
 						     *conf);
+static void rtr_mgr_cb(const struct rtr_socket *sock,
+		       const enum rtr_socket_state state,
+		       void *data_config, void *data_group);
 
 static void set_status(const struct rtr_mgr_config *conf,
 		       struct rtr_mgr_group *group,
@@ -57,6 +60,23 @@ static int rtr_mgr_start_sockets(struct rtr_mgr_group *group)
 		}
 	}
 	group->status = RTR_MGR_CONNECTING;
+	return RTR_SUCCESS;
+}
+
+static int rtr_mgr_init_sockets(struct rtr_mgr_group *group,
+				struct rtr_mgr_config *config,
+				const unsigned int refresh_interval,
+				const unsigned int expire_interval,
+				const unsigned int retry_interval)
+{
+	for (unsigned int i = 0; i < group->sockets_len; i++) {
+		int err_code = rtr_init(group->sockets[i], NULL, config->pfx_table,
+					config->spki_table, refresh_interval,
+					expire_interval, retry_interval,
+					rtr_mgr_cb, config, group);
+		if (err_code)
+			return err_code;
+	}
 	return RTR_SUCCESS;
 }
 
@@ -397,6 +417,12 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 		memcpy(cg, &groups[i], sizeof(struct rtr_mgr_group));
 
 		cg->status = RTR_MGR_CLOSED;
+		err_code = rtr_mgr_init_sockets(cg, config, refresh_interval,
+						expire_interval,
+						retry_interval);
+		if (err_code)
+			goto err;
+
 		for (unsigned int j = 0; j < cg->sockets_len; j++) {
 			err_code = rtr_init(cg->sockets[j], NULL,
 					    pfxt, spki_table, refresh_interval,
@@ -436,6 +462,7 @@ err:
 	free(config);
 	config = NULL;
 	*config_out = NULL;
+
 	return err_code;
 }
 
@@ -598,14 +625,10 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 	memcpy(new_group, group, sizeof(struct rtr_mgr_group));
 	new_group->status = RTR_MGR_CLOSED;
 
-	for (unsigned int j = 0; j < new_group->sockets_len; j++) {
-		if (rtr_init(new_group->sockets[j], NULL, config->pfx_table,
-			     config->spki_table, refresh_iv,
-			     expire_iv, retry_iv, rtr_mgr_cb,
-			     config, new_group) != RTR_SUCCESS) {
-			err_code = RTR_INVALID_PARAM;
-		}
-	}
+	err_code = rtr_mgr_init_sockets(new_group, config, refresh_iv,
+					expire_iv, retry_iv);
+	if (err_code)
+		goto err;
 
 	new_group_node = malloc(sizeof(struct rtr_mgr_group_node));
 	if (!new_group_node)
