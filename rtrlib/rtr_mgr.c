@@ -334,6 +334,8 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 	struct pfx_table *pfxt = NULL;
 	struct spki_table *spki_table = NULL;
 	struct rtr_mgr_config *config = NULL;
+	struct rtr_mgr_group *cg;
+	struct rtr_mgr_group_node *group_node;
 	uint8_t last_preference = UINT8_MAX;
 
 	*config_out = NULL;
@@ -386,8 +388,6 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 	/* Copy the groups from the array into linked list config->groups */
 	config->len = groups_len;
 	config->groups = NULL;
-	struct rtr_mgr_group *cg;
-	struct rtr_mgr_group_node *group_node;
 
 	for (unsigned int i = 0; i < groups_len; i++) {
 		cg = malloc(sizeof(struct rtr_mgr_group));
@@ -566,10 +566,10 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 	int err_code = RTR_ERROR;
 	struct rtr_mgr_group_node *new_group_node = NULL;
 	struct rtr_mgr_group *new_group = NULL;
+	struct rtr_mgr_group_node *gnode;
 
 	pthread_mutex_lock(&config->mutex);
 
-	struct rtr_mgr_group_node *gnode;
 	tommy_node *node = tommy_list_head(&config->groups);
 
 	while (node) {
