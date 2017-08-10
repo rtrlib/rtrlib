@@ -102,4 +102,5 @@ int main(void)
 	rtr_mgr_free(conf);
 	free(group2.sockets);
 	free(groups[0].sockets);
+	free(group3.sockets);
 }
