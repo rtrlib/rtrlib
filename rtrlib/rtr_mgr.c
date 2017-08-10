@@ -391,6 +391,9 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 
 	for (unsigned int i = 0; i < groups_len; i++) {
 		cg = malloc(sizeof(struct rtr_mgr_group));
+		if (!cg)
+			goto err;
+
 		memcpy(cg, &groups[i], sizeof(struct rtr_mgr_group));
 
 		cg->status = RTR_MGR_CLOSED;
@@ -404,6 +407,9 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 			}
 		}
 		group_node = malloc(sizeof(struct rtr_mgr_group_node));
+		if (!group_node)
+			goto err;
+
 		group_node->group = cg;
 		tommy_list_insert_tail(&config->groups, &group_node->node,
 				       group_node);
@@ -425,8 +431,10 @@ err:
 	lrtr_free(pfxt);
 	lrtr_free(spki_table);
 
-	lrtr_free(config->groups);
-	lrtr_free(config);
+	free(cg);
+
+	free(config->groups);
+	free(config);
 	config = NULL;
 	*config_out = NULL;
 	return err_code;
@@ -555,6 +563,9 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 	unsigned int refresh_iv = 3600;
 	unsigned int retry_iv = 600;
 	unsigned int expire_iv = 7200;
+	int err_code = RTR_ERROR;
+	struct rtr_mgr_group_node *new_group_node = NULL;
+	struct rtr_mgr_group *new_group = NULL;
 
 	pthread_mutex_lock(&config->mutex);
 
@@ -565,8 +576,8 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 		gnode = node->data;
 		if (gnode->group->preference == group->preference) {
 			MGR_DBG1("Group with preference value already exists!");
-			pthread_mutex_unlock(&config->mutex);
-			return RTR_INVALID_PARAM;
+			err_code = RTR_INVALID_PARAM;
+			goto err;
 		}
 
 		//TODO This is not pretty. It wants to get the same intervals
@@ -580,12 +591,11 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 			expire_iv = gnode->group->sockets[0]->expire_interval;
 		node = node->next;
 	}
-	struct rtr_mgr_group *new_group = malloc(sizeof(struct rtr_mgr_group));
+	new_group = malloc(sizeof(struct rtr_mgr_group));
 
-	if (!new_group) {
-		pthread_mutex_unlock(&config->mutex);
-		return RTR_ERROR;
-	}
+	if (!new_group)
+		goto err;
+
 	memcpy(new_group, group, sizeof(struct rtr_mgr_group));
 	new_group->status = RTR_MGR_CLOSED;
 
@@ -594,19 +604,13 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 			     config->spki_table, refresh_iv,
 			     expire_iv, retry_iv, rtr_mgr_cb,
 			     config, new_group) != RTR_SUCCESS) {
-			free(new_group);
-			pthread_mutex_unlock(&config->mutex);
-			return RTR_INVALID_PARAM;
+			err_code = RTR_INVALID_PARAM;
 		}
 	}
 
-	struct rtr_mgr_group_node *new_group_node = malloc(
-					sizeof(struct rtr_mgr_group_node));
-	if (!new_group_node) {
-		pthread_mutex_unlock(&config->mutex);
-		free(new_group);
-		return RTR_ERROR;
-	}
+	new_group_node = malloc(sizeof(struct rtr_mgr_group_node));
+	if (!new_group_node)
+		goto err;
 
 	new_group_node->group = new_group;
 	tommy_list_insert_tail(&config->groups, &new_group_node->node,
@@ -625,6 +629,16 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 
 	pthread_mutex_unlock(&config->mutex);
 	return RTR_SUCCESS;
+
+err:
+	pthread_mutex_unlock(&config->mutex);
+
+	if (new_group_node)
+		free(new_group_node);
+	if (new_group)
+		free(new_group);
+
+	return err_code;
 }
 
 int rtr_mgr_remove_group(struct rtr_mgr_config *config,
