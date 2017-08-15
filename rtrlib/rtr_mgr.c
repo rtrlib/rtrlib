@@ -70,7 +70,7 @@ static int rtr_mgr_init_sockets(struct rtr_mgr_group *group,
 				const unsigned int retry_interval)
 {
 	for (unsigned int i = 0; i < group->sockets_len; i++) {
-		int err_code = rtr_init(group->sockets[i], NULL, config->pfx_table,
+		enum rtr_rtvals err_code = rtr_init(group->sockets[i], NULL, config->pfx_table,
 					config->spki_table, refresh_interval,
 					expire_interval, retry_interval,
 					rtr_mgr_cb, config, group);
@@ -350,7 +350,7 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 		 const rtr_mgr_status_fp status_fp,
 		 void *status_fp_data)
 {
-	int err_code = RTR_ERROR;
+	enum rtr_rtvals err_code = RTR_ERROR;
 	struct pfx_table *pfxt = NULL;
 	struct spki_table *spki_table = NULL;
 	struct rtr_mgr_config *config = NULL;
@@ -581,7 +581,7 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 	unsigned int refresh_iv = 3600;
 	unsigned int retry_iv = 600;
 	unsigned int expire_iv = 7200;
-	int err_code = RTR_ERROR;
+	enum rtr_rtvals err_code = RTR_ERROR;
 	struct rtr_mgr_group_node *new_group_node = NULL;
 	struct rtr_mgr_group *new_group = NULL;
 	struct rtr_mgr_group_node *gnode;
