@@ -277,5 +277,9 @@ void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config,
  * @return rtr_mgr_group The head of the linked list.
  */
 struct rtr_mgr_group *rtr_mgr_get_first_group(struct rtr_mgr_config *conf);
+
+int rtr_mgr_for_each_group(struct rtr_mgr_config *config, void
+			   (*fp)(const struct rtr_mgr_group *group, void *data),
+			   void *data);
 #endif
 /* @} */

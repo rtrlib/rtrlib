@@ -703,6 +703,23 @@ int rtr_mgr_remove_group(struct rtr_mgr_config *config,
 	return RTR_SUCCESS;
 }
 
+// TODO: write test for this function.
+int rtr_mgr_for_each_group(struct rtr_mgr_config *conf, void
+			   (*fp)(const struct rtr_mgr_group *group, void *data),
+			   void *data)
+{
+	tommy_node *node = tommy_list_head(&conf->groups);
+	struct rtr_mgr_group_node *group_node;
+
+	while (node) {
+		group_node = node->data;
+		fp(group_node->group, data);
+		node = node->next;
+	}
+
+	return RTR_SUCCESS;
+}
+
 const char *rtr_mgr_status_to_str(enum rtr_mgr_status status)
 {
 	return mgr_str_status[status];
