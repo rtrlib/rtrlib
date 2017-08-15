@@ -31,8 +31,6 @@ static struct rtr_mgr_group *rtr_mgr_find_group(struct rtr_mgr_config *config,
 						const struct rtr_socket *sock);
 static int rtr_mgr_config_cmp(const void *a, const void *b);
 static bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *group);
-static struct rtr_mgr_group *rtr_mgr_get_first_group(struct rtr_mgr_config
-						     *conf);
 static void rtr_mgr_cb(const struct rtr_socket *sock,
 		       const enum rtr_socket_state state,
 		       void *data_config, void *data_group);
@@ -458,7 +456,7 @@ err:
 	return err_code;
 }
 
-static struct rtr_mgr_group *rtr_mgr_get_first_group(struct rtr_mgr_config
+struct rtr_mgr_group *rtr_mgr_get_first_group(struct rtr_mgr_config
 						     *config)
 {
 	tommy_node *head = tommy_list_head(&config->groups);
