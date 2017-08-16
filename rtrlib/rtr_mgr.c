@@ -665,6 +665,12 @@ int rtr_mgr_remove_group(struct rtr_mgr_config *config,
 	struct rtr_mgr_group_node *group_node;
 	struct rtr_mgr_group *remove_group;
 
+	if (config->len == 1) {
+		MGR_DBG1("Cannot remove last remaining group!");
+		pthread_mutex_unlock(&config->mutex);
+		return RTR_ERROR;
+	}
+
 	// Find the node of the group we want to remove
 	while (node && !remove_node) {
 		group_node = node->data;
