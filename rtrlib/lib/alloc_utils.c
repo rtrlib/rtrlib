@@ -8,6 +8,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "alloc_utils.h"
 
@@ -38,4 +39,13 @@ inline void lrtr_free(void *ptr)
 inline void *lrtr_realloc(void *ptr, size_t size)
 {
 	return REALLOC_PTR(ptr, size);
+}
+
+char *lrtr_strdup(const char *string)
+{
+	size_t length = strlen(string) + 1;
+	char *new_string = lrtr_malloc(length);
+
+	return (new_string ? memcpy(new_string, string, length) : NULL);
+
 }

@@ -105,10 +105,15 @@ void tr_tcp_free(struct tr_socket *tr_sock)
     assert(tcp_sock != NULL);
     assert(tcp_sock->socket == -1);
 
+    TCP_DBG1("Freeing socket", tcp_sock);
+
+    lrtr_free(tcp_sock->config.host);
+    lrtr_free(tcp_sock->config.port);
+    lrtr_free(tcp_sock->config.bindaddr);
+
     if (tcp_sock->ident != NULL)
         lrtr_free(tcp_sock->ident);
     tr_sock->socket = NULL;
-    TCP_DBG1("Socket freed", tcp_sock);
     lrtr_free(tcp_sock);
 }
 
@@ -200,7 +205,13 @@ int tr_tcp_init(const struct tr_tcp_config *config, struct tr_socket *socket)
     socket->socket = lrtr_malloc(sizeof(struct tr_tcp_socket));
     struct tr_tcp_socket *tcp_socket = socket->socket;
     tcp_socket->socket = -1;
-    tcp_socket->config = *config;
+    tcp_socket->config.host = lrtr_strdup(config->host);
+    tcp_socket->config.port = lrtr_strdup(config->port);
+    if (config->bindaddr) {
+        tcp_socket->config.bindaddr = lrtr_strdup(config->bindaddr);
+    } else {
+        tcp_socket->config.bindaddr = NULL;
+    }
     tcp_socket->ident = NULL;
 
     return TR_SUCCESS;
