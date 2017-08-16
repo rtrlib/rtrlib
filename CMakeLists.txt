@@ -54,7 +54,7 @@ endif(LIBSSH_050 OR LIBSSH_060)
 #doxygen target
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
-    add_custom_target(doc ALL ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/doxygen/Doxyfile
+    add_custom_target(doc ALL ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/docs/Doxyfile
         COMMENT "Generating doxygen API documentation" VERBATIM)
     install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/docs DESTINATION share/doc/rtrlib)
 endif(DOXYGEN_FOUND)
@@ -71,7 +71,7 @@ endif(UNIT_TESTING)
 
 ADD_SUBDIRECTORY(tools)
 
-ADD_SUBDIRECTORY(doxygen/examples)
+ADD_SUBDIRECTORY(docs/examples)
 
 include(AddTest)
 ADD_SUBDIRECTORY(tests)
