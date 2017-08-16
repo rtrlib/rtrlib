@@ -127,6 +127,13 @@ void tr_ssh_free(struct tr_socket *tr_sock)
     struct tr_ssh_socket *tr_ssh_sock = tr_sock->socket;
     assert(tr_ssh_sock->channel == NULL);
     assert(tr_ssh_sock->session == NULL);
+
+    lrtr_free(tr_ssh_sock->config.host);
+    lrtr_free(tr_ssh_sock->config.bindaddr);
+    lrtr_free(tr_ssh_sock->config.username);
+    lrtr_free(tr_ssh_sock->config.client_privkey_path);
+    lrtr_free(tr_ssh_sock->config.server_hostkey_path);
+
     if (tr_ssh_sock->ident != NULL)
         lrtr_free(tr_ssh_sock->ident);
     SSH_DBG1("Socket freed", tr_ssh_sock);
@@ -208,7 +215,12 @@ int tr_ssh_init(const struct tr_ssh_config *config, struct tr_socket *socket)
     struct tr_ssh_socket *ssh_socket = socket->socket;
     ssh_socket->channel = NULL;
     ssh_socket->session = NULL;
-    ssh_socket->config = *config;
+    ssh_socket->config.host = lrtr_strdup(config->host);
+    ssh_socket->config.port = config->port;
+    ssh_socket->config.bindaddr = lrtr_strdup(config->bindaddr);
+    ssh_socket->config.username = lrtr_strdup(config->username);
+    ssh_socket->config.client_privkey_path = lrtr_strdup(config->client_privkey_path);
+    ssh_socket->config.server_hostkey_path = lrtr_strdup(config->server_hostkey_path);
     ssh_socket->ident = NULL;;
 
     return TR_SUCCESS;
