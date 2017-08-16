@@ -68,10 +68,13 @@ static int rtr_mgr_init_sockets(struct rtr_mgr_group *group,
 				const unsigned int retry_interval)
 {
 	for (unsigned int i = 0; i < group->sockets_len; i++) {
-		enum rtr_rtvals err_code = rtr_init(group->sockets[i], NULL, config->pfx_table,
-					config->spki_table, refresh_interval,
-					expire_interval, retry_interval,
-					rtr_mgr_cb, config, group);
+		enum rtr_rtvals err_code = rtr_init(group->sockets[i], NULL,
+						    config->pfx_table,
+						    config->spki_table,
+						    refresh_interval,
+						    expire_interval,
+						    retry_interval,
+						    rtr_mgr_cb, config, group);
 		if (err_code)
 			return err_code;
 	}
@@ -704,12 +707,13 @@ int rtr_mgr_remove_group(struct rtr_mgr_config *config,
 }
 
 // TODO: write test for this function.
-int rtr_mgr_for_each_group(struct rtr_mgr_config *conf, void
-			   (*fp)(const struct rtr_mgr_group *group, void *data),
+int rtr_mgr_for_each_group(struct rtr_mgr_config *conf,
+			   void (fp)(const struct rtr_mgr_group *group,
+				     void *data),
 			   void *data)
 {
-	tommy_node *node = tommy_list_head(&conf->groups);
 	struct rtr_mgr_group_node *group_node;
+	tommy_node *node = tommy_list_head(&conf->groups);
 
 	while (node) {
 		group_node = node->data;
