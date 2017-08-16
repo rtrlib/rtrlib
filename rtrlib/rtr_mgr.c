@@ -393,7 +393,7 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 	}
 
 	/* Init data structures that we need to pass to the sockets */
-	pfxt = malloc(sizeof(*pfxt));
+	pfxt = lrtr_malloc(sizeof(*pfxt));
 	if (!pfxt)
 		goto err;
 	pfx_table_init(pfxt, update_fp);
@@ -411,7 +411,7 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 	config->groups = NULL;
 
 	for (unsigned int i = 0; i < groups_len; i++) {
-		cg = malloc(sizeof(struct rtr_mgr_group));
+		cg = lrtr_malloc(sizeof(struct rtr_mgr_group));
 		if (!cg)
 			goto err;
 
@@ -424,7 +424,7 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 		if (err_code)
 			goto err;
 
-		group_node = malloc(sizeof(struct rtr_mgr_group_node));
+		group_node = lrtr_malloc(sizeof(struct rtr_mgr_group_node));
 		if (!group_node)
 			goto err;
 
@@ -449,10 +449,10 @@ err:
 	lrtr_free(pfxt);
 	lrtr_free(spki_table);
 
-	free(cg);
+	lrtr_free(cg);
 
-	free(config->groups);
-	free(config);
+	lrtr_free(config->groups);
+	lrtr_free(config);
 	config = NULL;
 	*config_out = NULL;
 
@@ -509,8 +509,8 @@ void rtr_mgr_free(struct rtr_mgr_config *config)
 
 	pfx_table_free(config->pfx_table);
 	spki_table_free(config->spki_table);
-	free(config->spki_table);
-	free(config->pfx_table);
+	lrtr_free(config->spki_table);
+	lrtr_free(config->pfx_table);
 
 	/* Free linked list */
 	tommy_node *tmp;
@@ -526,13 +526,13 @@ void rtr_mgr_free(struct rtr_mgr_config *config)
 			tr_free(group_node->group->sockets[j]->tr_socket);
 		}
 
-		free(group_node->group);
-		free(group_node);
+		lrtr_free(group_node->group);
+		lrtr_free(group_node);
 	}
 
 	pthread_mutex_unlock(&config->mutex);
 	pthread_mutex_destroy(&config->mutex);
-	free(config);
+	lrtr_free(config);
 }
 
 /* cppcheck-suppress unusedFunction */
@@ -610,7 +610,7 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 			expire_iv = gnode->group->sockets[0]->expire_interval;
 		node = node->next;
 	}
-	new_group = malloc(sizeof(struct rtr_mgr_group));
+	new_group = lrtr_malloc(sizeof(struct rtr_mgr_group));
 
 	if (!new_group)
 		goto err;
@@ -623,7 +623,7 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 	if (err_code)
 		goto err;
 
-	new_group_node = malloc(sizeof(struct rtr_mgr_group_node));
+	new_group_node = lrtr_malloc(sizeof(struct rtr_mgr_group_node));
 	if (!new_group_node)
 		goto err;
 
@@ -649,9 +649,9 @@ err:
 	pthread_mutex_unlock(&config->mutex);
 
 	if (new_group_node)
-		free(new_group_node);
+		lrtr_free(new_group_node);
 	if (new_group)
-		free(new_group);
+		lrtr_free(new_group);
 
 	return err_code;
 }
@@ -701,8 +701,8 @@ int rtr_mgr_remove_group(struct rtr_mgr_config *config,
 	if (best_group->status == RTR_MGR_CLOSED)
 		rtr_mgr_start_sockets(best_group);
 
-	free(group_node->group);
-	free(group_node);
+	lrtr_free(group_node->group);
+	lrtr_free(group_node);
 	return RTR_SUCCESS;
 }
 
