@@ -34,4 +34,12 @@ void lrtr_free(void *ptr);
 
 void *lrtr_realloc(void *ptr, size_t size);
 
+/**
+ * @brief Duplicates a string
+ * @param[in] string
+ * @returns Duplicated string
+ * @returns NULL on error
+ */
+char *lrtr_strdup (const char *string);
+
 #endif
