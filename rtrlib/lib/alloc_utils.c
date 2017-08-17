@@ -7,6 +7,7 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -43,9 +44,10 @@ inline void *lrtr_realloc(void *ptr, size_t size)
 
 char *lrtr_strdup(const char *string)
 {
+	assert(string);
+
 	size_t length = strlen(string) + 1;
 	char *new_string = lrtr_malloc(length);
 
-	return (new_string ? memcpy(new_string, string, length) : NULL);
-
+	return new_string ? memcpy(new_string, string, length) : NULL;
 }
