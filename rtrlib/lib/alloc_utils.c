@@ -43,15 +43,9 @@ inline void *lrtr_realloc(void *ptr, size_t size)
 
 char *lrtr_strdup(const char *string)
 {
-	if (string == NULL) {
-		return NULL;
-	}
+	size_t length = strlen(string) + 1;
+	char *new_string = lrtr_malloc(length);
 
-	size_t length = strlen(string);
-	char *new_string = lrtr_malloc(length+1);
+	return (new_string ? memcpy(new_string, string, length) : NULL);
 
-	if (!new_string) {
-		return NULL;
-	}
-	return memcpy(new_string, string, length+1);
 }

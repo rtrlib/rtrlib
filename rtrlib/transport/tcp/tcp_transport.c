@@ -206,7 +206,11 @@ int tr_tcp_init(const struct tr_tcp_config *config, struct tr_socket *socket)
     tcp_socket->socket = -1;
     tcp_socket->config.host = lrtr_strdup(config->host);
     tcp_socket->config.port = lrtr_strdup(config->port);
-    tcp_socket->config.bindaddr = lrtr_strdup(config->bindaddr);
+    if (config->bindaddr) {
+        tcp_socket->config.bindaddr = lrtr_strdup(config->bindaddr);
+    } else {
+        tcp_socket->config.bindaddr = NULL;
+    }
     tcp_socket->ident = NULL;
 
     return TR_SUCCESS;

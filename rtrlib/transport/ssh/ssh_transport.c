@@ -217,10 +217,27 @@ int tr_ssh_init(const struct tr_ssh_config *config, struct tr_socket *socket)
     ssh_socket->session = NULL;
     ssh_socket->config.host = lrtr_strdup(config->host);
     ssh_socket->config.port = config->port;
-    ssh_socket->config.bindaddr = lrtr_strdup(config->bindaddr);
     ssh_socket->config.username = lrtr_strdup(config->username);
-    ssh_socket->config.client_privkey_path = lrtr_strdup(config->client_privkey_path);
-    ssh_socket->config.server_hostkey_path = lrtr_strdup(config->server_hostkey_path);
+
+    if (config->bindaddr) {
+        ssh_socket->config.bindaddr = lrtr_strdup(config->bindaddr);
+    } else {
+        ssh_socket->config.bindaddr = NULL;
+    }
+
+    if (config->bindaddr) {
+        ssh_socket->config.client_privkey_path =
+		lrtr_strdup(config->client_privkey_path);
+    } else {
+        ssh_socket->config.client_privkey_path = NULL;
+    }
+
+    if (config->bindaddr) {
+        ssh_socket->config.server_hostkey_path =
+		lrtr_strdup(config->server_hostkey_path);
+    } else {
+        ssh_socket->config.server_hostkey_path = NULL;
+    }
     ssh_socket->ident = NULL;;
 
     return TR_SUCCESS;
