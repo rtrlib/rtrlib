@@ -371,6 +371,8 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 	if (!config)
 		return RTR_ERROR;
 
+	config->len = groups_len;
+
 	if (pthread_mutex_init(&config->mutex, NULL) != 0) {
 		MGR_DBG1("Mutex initialization failed");
 		goto err;
