@@ -86,8 +86,6 @@ struct rtr_mgr_config {
 	pthread_mutex_t mutex;
 	rtr_mgr_status_fp status_fp;
 	void *status_fp_data;
-	struct pfx_table *pfx_table;
-	struct spki_table *spki_table;
 };
 
 /**
