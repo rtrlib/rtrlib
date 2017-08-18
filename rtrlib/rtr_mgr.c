@@ -27,6 +27,10 @@ static const char * const mgr_str_status[] = {
 	[RTR_MGR_ERROR] = "RTR_MGR_ERROR",
 };
 
+static struct pfx_table rtr_pfx_table;
+static struct spki_table rtr_spki_table;
+static struct rtr_mgr_config rtr_config;
+
 static struct rtr_mgr_group *rtr_mgr_find_group(struct rtr_mgr_config *config,
 						const struct rtr_socket *sock);
 static int rtr_mgr_config_cmp(const void *a, const void *b);
@@ -70,8 +74,8 @@ static int rtr_mgr_init_sockets(struct rtr_mgr_group *group,
 {
 	for (unsigned int i = 0; i < group->sockets_len; i++) {
 		enum rtr_rtvals err_code = rtr_init(group->sockets[i], NULL,
-						    config->pfx_table,
-						    config->spki_table,
+						    &rtr_pfx_table,
+						    &rtr_spki_table,
 						    refresh_interval,
 						    expire_interval,
 						    retry_interval,
@@ -362,10 +366,6 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 		 void *status_fp_data)
 {
 	enum rtr_rtvals err_code = RTR_ERROR;
-	struct pfx_table *pfxt = NULL;
-	struct spki_table *spki_table = NULL;
-	struct rtr_mgr_config *config = NULL;
-	struct rtr_mgr_group *cg;
 	struct rtr_mgr_group_node *group_node;
 	uint8_t last_preference = UINT8_MAX;
 
@@ -376,13 +376,11 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 		return RTR_ERROR;
 	}
 
-	*config_out = config = lrtr_malloc(sizeof(*config));
-	if (!config)
-		return RTR_ERROR;
+	*config_out = &rtr_config;
 
-	config->len = groups_len;
+	rtr_config.len = groups_len;
 
-	if (pthread_mutex_init(&config->mutex, NULL) != 0) {
+	if (pthread_mutex_init(&rtr_config.mutex, NULL) != 0) {
 		MGR_DBG1("Mutex initialization failed");
 		goto err;
 	}
@@ -391,46 +389,38 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 	      sizeof(struct rtr_mgr_group), &rtr_mgr_config_cmp);
 
 	/* Check that the groups have unique pref and at least one socket */
-	for (unsigned int i = 0; i < config->len; i++) {
-		struct rtr_mgr_group cg = groups[i];
+	for (unsigned int i = 0; i < rtr_config.len; i++) {
+		struct rtr_mgr_group *cg = &groups[i];
 
-		if ((i > 0) && (cg.preference == last_preference)) {
+		if ((i > 0) && (cg->preference == last_preference)) {
 			MGR_DBG1("Error Same preference for 2 socket groups!");
 			goto err;
 		}
-		if (cg.sockets_len == 0) {
+		if (cg->sockets_len == 0) {
 			MGR_DBG1("Error Empty sockets array in socket group!");
 			goto err;
 		}
 	}
 
 	/* Init data structures that we need to pass to the sockets */
-	pfxt = lrtr_malloc(sizeof(*pfxt));
-	if (!pfxt)
-		goto err;
-	pfx_table_init(pfxt, update_fp);
-
-	spki_table = lrtr_malloc(sizeof(*spki_table));
-	if (!spki_table)
-		goto err;
-	spki_table_init(spki_table, spki_update_fp);
-
-	config->pfx_table = pfxt;
-	config->spki_table = spki_table;
+	pfx_table_init(&rtr_pfx_table, update_fp);
+	spki_table_init(&rtr_spki_table, spki_update_fp);
 
 	/* Copy the groups from the array into linked list config->groups */
-	config->len = groups_len;
-	config->groups = NULL;
+	rtr_config.len = groups_len;
+	rtr_config.groups = NULL;
 
 	for (unsigned int i = 0; i < groups_len; i++) {
-		cg = lrtr_malloc(sizeof(struct rtr_mgr_group));
-		if (!cg)
+		struct rtr_mgr_group *cg;
+
+		if ((cg = lrtr_malloc(sizeof(struct rtr_mgr_group))) == NULL)
 			goto err;
 
 		memcpy(cg, &groups[i], sizeof(struct rtr_mgr_group));
 
 		cg->status = RTR_MGR_CLOSED;
-		err_code = rtr_mgr_init_sockets(cg, config, refresh_interval,
+		err_code = rtr_mgr_init_sockets(cg, &rtr_config,
+						refresh_interval,
 						expire_interval,
 						retry_interval);
 		if (err_code)
@@ -441,7 +431,7 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 			goto err;
 
 		group_node->group = cg;
-		tommy_list_insert_tail(&config->groups, &group_node->node,
+		tommy_list_insert_tail(&rtr_config.groups, &group_node->node,
 				       group_node);
 	}
 	/* Our linked list should be sorted already, since the groups array was
@@ -449,30 +439,21 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 	 */
 	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp_tommy);
 
-	config->status_fp_data = status_fp_data;
-	config->status_fp = status_fp;
+	rtr_config.status_fp_data = status_fp_data;
+	rtr_config.status_fp = status_fp;
 	return RTR_SUCCESS;
 
 err:
-	if (spki_table)
-		spki_table_free(spki_table);
-	if (pfxt)
-		pfx_table_free(pfxt);
-	lrtr_free(pfxt);
-	lrtr_free(spki_table);
+	spki_table_free(&rtr_spki_table);
+	pfx_table_free(&rtr_pfx_table);
 
-	lrtr_free(cg);
-
-	lrtr_free(config->groups);
-	lrtr_free(config);
-	config = NULL;
+	lrtr_free(&rtr_config.groups);
 	*config_out = NULL;
 
 	return err_code;
 }
 
-struct rtr_mgr_group *rtr_mgr_get_first_group(struct rtr_mgr_config
-						     *config)
+struct rtr_mgr_group *rtr_mgr_get_first_group(struct rtr_mgr_config *config)
 {
 	tommy_node *head = tommy_list_head(&config->groups);
 	struct rtr_mgr_group_node *group_node = head->data;
@@ -519,10 +500,8 @@ void rtr_mgr_free(struct rtr_mgr_config *config)
 	MGR_DBG1("rtr_mgr_free()");
 	pthread_mutex_lock(&config->mutex);
 
-	pfx_table_free(config->pfx_table);
-	spki_table_free(config->spki_table);
-	lrtr_free(config->spki_table);
-	lrtr_free(config->pfx_table);
+	pfx_table_free(&rtr_pfx_table);
+	spki_table_free(&rtr_spki_table);
 
 	/* Free linked list */
 	tommy_node *tmp;
@@ -544,7 +523,6 @@ void rtr_mgr_free(struct rtr_mgr_config *config)
 
 	pthread_mutex_unlock(&config->mutex);
 	pthread_mutex_destroy(&config->mutex);
-	lrtr_free(config);
 }
 
 /* cppcheck-suppress unusedFunction */
@@ -554,8 +532,8 @@ inline int rtr_mgr_validate(struct rtr_mgr_config *config,
 			    const uint8_t mask_len,
 			    enum pfxv_state *result)
 {
-	return pfx_table_validate(config->pfx_table, asn, prefix, mask_len,
-				  result);
+	(void) config;
+	return pfx_table_validate(&rtr_pfx_table, asn, prefix, mask_len, result);
 }
 
 /* cppcheck-suppress unusedFunction */
@@ -565,8 +543,8 @@ inline int rtr_mgr_get_spki(struct rtr_mgr_config *config,
 			    struct spki_record **result,
 			    unsigned int *result_count)
 {
-	return spki_table_get_all(config->spki_table,
-				  asn, ski, result, result_count);
+	(void) config;
+	return spki_table_get_all(&rtr_spki_table, asn, ski, result, result_count);
 }
 
 void rtr_mgr_stop(struct rtr_mgr_config *config)
@@ -725,13 +703,13 @@ int rtr_mgr_remove_group(struct rtr_mgr_config *config,
 }
 
 // TODO: write test for this function.
-int rtr_mgr_for_each_group(struct rtr_mgr_config *conf,
+int rtr_mgr_for_each_group(struct rtr_mgr_config *config,
 			   void (fp)(const struct rtr_mgr_group *group,
 				     void *data),
 			   void *data)
 {
 	struct rtr_mgr_group_node *group_node;
-	tommy_node *node = tommy_list_head(&conf->groups);
+	tommy_node *node = tommy_list_head(&config->groups);
 
 	while (node) {
 		group_node = node->data;
@@ -751,10 +729,11 @@ const char *rtr_mgr_status_to_str(enum rtr_mgr_status status)
 inline void rtr_mgr_for_each_ipv4_record(struct rtr_mgr_config *config,
 					 void (fp)(const struct pfx_record *,
 						   void *data),
-						   void *data)
+					 void *data)
 {
-	pfx_table_for_each_ipv4_record(config->pfx_table,
-				       fp, data);
+	(void) config;
+
+	pfx_table_for_each_ipv4_record(&rtr_pfx_table, fp, data);
 }
 
 /* cppcheck-suppress unusedFunction */
@@ -763,6 +742,7 @@ inline void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config,
 						   void *data),
 					 void *data)
 {
-	pfx_table_for_each_ipv6_record(config->pfx_table,
-				       fp, data);
+	(void) config;
+
+	pfx_table_for_each_ipv6_record(&rtr_pfx_table, fp, data);
 }
