@@ -105,6 +105,8 @@ void tr_tcp_free(struct tr_socket *tr_sock)
     assert(tcp_sock != NULL);
     assert(tcp_sock->socket == -1);
 
+    TCP_DBG1("Freeing socket", tcp_sock);
+
     lrtr_free(tcp_sock->config.host);
     lrtr_free(tcp_sock->config.port);
     lrtr_free(tcp_sock->config.bindaddr);
@@ -112,7 +114,6 @@ void tr_tcp_free(struct tr_socket *tr_sock)
     if (tcp_sock->ident != NULL)
         lrtr_free(tcp_sock->ident);
     tr_sock->socket = NULL;
-    TCP_DBG1("Socket freed", tcp_sock);
     lrtr_free(tcp_sock);
 }
 
