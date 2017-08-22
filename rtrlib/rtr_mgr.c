@@ -30,6 +30,7 @@ static const char * const mgr_str_status[] = {
 static struct rtr_mgr_group *rtr_mgr_find_group(struct rtr_mgr_config *config,
 						const struct rtr_socket *sock);
 static int rtr_mgr_config_cmp(const void *a, const void *b);
+static int rtr_mgr_config_cmp_tommy(const void *a, const void *b);
 static bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *group);
 static void rtr_mgr_cb(const struct rtr_socket *sock,
 		       const enum rtr_socket_state state,
@@ -341,6 +342,14 @@ int rtr_mgr_config_cmp(const void *a, const void *b)
 	return 0;
 }
 
+int rtr_mgr_config_cmp_tommy(const void *a, const void *b)
+{
+	const struct rtr_mgr_group_node *ar = a;
+	const struct rtr_mgr_group_node *br = b;
+
+	return rtr_mgr_config_cmp(ar->group, br->group);
+}
+
 int rtr_mgr_init(struct rtr_mgr_config **config_out,
 		 struct rtr_mgr_group groups[],
 		 const unsigned int groups_len,
@@ -438,7 +447,7 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 	/* Our linked list should be sorted already, since the groups array was
 	 * sorted. However, for safety reasons we sort again.
 	 */
-	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
+	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp_tommy);
 
 	config->status_fp_data = status_fp_data;
 	config->status_fp = status_fp;
@@ -638,7 +647,7 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 	MGR_DBG("Group with preference %d successfully added!",
 		new_group->preference);
 
-	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
+	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp_tommy);
 
 	struct rtr_mgr_group *best_group = rtr_mgr_get_first_group(config);
 
@@ -693,7 +702,7 @@ int rtr_mgr_remove_group(struct rtr_mgr_config *config,
 	tommy_list_remove_existing(&config->groups, remove_node);
 	config->len--;
 	MGR_DBG("Group with preference %d successfully removed!", preference);
-	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
+	//tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
 	pthread_mutex_unlock(&config->mutex);
 
 	//If group isn't closed, make it so!
