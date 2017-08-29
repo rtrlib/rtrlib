@@ -30,6 +30,7 @@ static const char * const mgr_str_status[] = {
 static struct pfx_table rtr_pfx_table;
 static struct spki_table rtr_spki_table;
 static struct rtr_mgr_config rtr_config;
+static bool rtr_mgr_running = false;
 
 static struct rtr_mgr_group *rtr_mgr_find_group(struct rtr_mgr_config *config,
 						const struct rtr_socket *sock);
@@ -371,6 +372,12 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 
 	*config_out = NULL;
 
+	/* check if a rtr manager is already initiated and running */
+	if (rtr_mgr_running) {
+		MGR_DBG1("already running!");
+		return RTR_ERROR;
+	}
+
 	if (groups_len == 0) {
 		MGR_DBG1("Error Empty rtr_mgr_group array");
 		return RTR_ERROR;
@@ -441,6 +448,8 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 
 	rtr_config.status_fp_data = status_fp_data;
 	rtr_config.status_fp = status_fp;
+	rtr_mgr_running = true;
+
 	return RTR_SUCCESS;
 
 err:
@@ -449,6 +458,7 @@ err:
 
 	lrtr_free(&rtr_config.groups);
 	*config_out = NULL;
+	rtr_mgr_running = false;
 
 	return err_code;
 }
