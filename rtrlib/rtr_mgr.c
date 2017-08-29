@@ -30,7 +30,7 @@ static const char * const mgr_str_status[] = {
 static struct pfx_table rtr_pfx_table;
 static struct spki_table rtr_spki_table;
 static struct rtr_mgr_config rtr_config;
-static bool rtr_mgr_running = false;
+static bool rtr_mgr_running;
 
 static struct rtr_mgr_group *rtr_mgr_find_group(struct rtr_mgr_config *config,
 						const struct rtr_socket *sock);
@@ -420,7 +420,8 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 	for (unsigned int i = 0; i < groups_len; i++) {
 		struct rtr_mgr_group *cg;
 
-		if ((cg = lrtr_malloc(sizeof(struct rtr_mgr_group))) == NULL)
+		cg = lrtr_malloc(sizeof(struct rtr_mgr_group))
+		if (!cg)
 			goto err;
 
 		memcpy(cg, &groups[i], sizeof(struct rtr_mgr_group));
@@ -542,8 +543,9 @@ inline int rtr_mgr_validate(struct rtr_mgr_config *config,
 			    const uint8_t mask_len,
 			    enum pfxv_state *result)
 {
-	(void) config;
-	return pfx_table_validate(&rtr_pfx_table, asn, prefix, mask_len, result);
+	(void)config;
+	return pfx_table_validate(&rtr_pfx_table, asn,
+				  prefix, mask_len, result);
 }
 
 /* cppcheck-suppress unusedFunction */
@@ -553,8 +555,9 @@ inline int rtr_mgr_get_spki(struct rtr_mgr_config *config,
 			    struct spki_record **result,
 			    unsigned int *result_count)
 {
-	(void) config;
-	return spki_table_get_all(&rtr_spki_table, asn, ski, result, result_count);
+	(void)config;
+	return spki_table_get_all(&rtr_spki_table, asn,
+				  ski, result, result_count);
 }
 
 void rtr_mgr_stop(struct rtr_mgr_config *config)
@@ -741,7 +744,7 @@ inline void rtr_mgr_for_each_ipv4_record(struct rtr_mgr_config *config,
 						   void *data),
 					 void *data)
 {
-	(void) config;
+	(void)config;
 
 	pfx_table_for_each_ipv4_record(&rtr_pfx_table, fp, data);
 }
@@ -752,7 +755,7 @@ inline void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config,
 						   void *data),
 					 void *data)
 {
-	(void) config;
+	(void)config;
 
 	pfx_table_for_each_ipv6_record(&rtr_pfx_table, fp, data);
 }
