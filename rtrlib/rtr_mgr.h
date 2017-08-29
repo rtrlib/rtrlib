@@ -68,6 +68,9 @@ struct rtr_mgr_group {
 	enum rtr_mgr_status status;
 };
 
+typedef void (*group_for_each_fp)(const struct rtr_mgr_group *group,
+				  void *data);
+
 //TODO Find a nicer way todo a linked list (without writing our own)
 struct rtr_mgr_group_node {
 	tommy_node node;
@@ -86,8 +89,6 @@ struct rtr_mgr_config {
 	pthread_mutex_t mutex;
 	rtr_mgr_status_fp status_fp;
 	void *status_fp_data;
-	struct pfx_table *pfx_table;
-	struct spki_table *spki_table;
 };
 
 /**
@@ -279,8 +280,7 @@ void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config,
 struct rtr_mgr_group *rtr_mgr_get_first_group(struct rtr_mgr_config *conf);
 
 int rtr_mgr_for_each_group(struct rtr_mgr_config *config,
-			   void (fp)(const struct rtr_mgr_group *group,
-				     void *data),
+			   group_for_each_fp fp,
 			   void *data);
 #endif
 /* @} */
