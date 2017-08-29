@@ -420,7 +420,7 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 	for (unsigned int i = 0; i < groups_len; i++) {
 		struct rtr_mgr_group *cg;
 
-		cg = lrtr_malloc(sizeof(struct rtr_mgr_group))
+		cg = lrtr_malloc(sizeof(struct rtr_mgr_group));
 		if (!cg)
 			goto err;
 
@@ -445,7 +445,7 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 	/* Our linked list should be sorted already, since the groups array was
 	 * sorted. However, for safety reasons we sort again.
 	 */
-	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp_tommy);
+	tommy_list_sort(&rtr_config.groups, &rtr_mgr_config_cmp_tommy);
 
 	rtr_config.status_fp_data = status_fp_data;
 	rtr_config.status_fp = status_fp;
