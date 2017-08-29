@@ -369,6 +369,12 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 
 	*config_out = NULL;
 
+	/* check if a rtr manager is already initiated and running */
+	if (rtr_config.running) {
+		MGR_DBG1("already running!");
+		return RTR_ERROR;
+	}
+
 	if (groups_len == 0) {
 		MGR_DBG1("Error Empty rtr_mgr_group array");
 		return RTR_ERROR;
@@ -411,7 +417,8 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 	for (unsigned int i = 0; i < groups_len; i++) {
 		struct rtr_mgr_group *cg;
 
-		if ((cg = lrtr_malloc(sizeof(struct rtr_mgr_group))) == NULL)
+		cg = lrtr_malloc(sizeof(struct rtr_mgr_group));
+		if (!cg)
 			goto err;
 
 		memcpy(cg, &groups[i], sizeof(struct rtr_mgr_group));
@@ -435,10 +442,12 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 	/* Our linked list should be sorted already, since the groups array was
 	 * sorted. However, for safety reasons we sort again.
 	 */
-	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp_tommy);
+	tommy_list_sort(&rtr_config.groups, &rtr_mgr_config_cmp_tommy);
 
 	rtr_config.status_fp_data = status_fp_data;
 	rtr_config.status_fp = status_fp;
+	rtr_config.running = true;
+
 	return RTR_SUCCESS;
 
 err:
@@ -447,6 +456,7 @@ err:
 
 	lrtr_free(&rtr_config.groups);
 	*config_out = NULL;
+	rtr_config.running = false;
 
 	return err_code;
 }
@@ -530,8 +540,9 @@ inline int rtr_mgr_validate(struct rtr_mgr_config *config,
 			    const uint8_t mask_len,
 			    enum pfxv_state *result)
 {
-	(void) config;
-	return pfx_table_validate(&rtr_pfx_table, asn, prefix, mask_len, result);
+	(void)config;
+	return pfx_table_validate(&rtr_pfx_table, asn,
+				  prefix, mask_len, result);
 }
 
 /* cppcheck-suppress unusedFunction */
@@ -541,8 +552,9 @@ inline int rtr_mgr_get_spki(struct rtr_mgr_config *config,
 			    struct spki_record **result,
 			    unsigned int *result_count)
 {
-	(void) config;
-	return spki_table_get_all(&rtr_spki_table, asn, ski, result, result_count);
+	(void)config;
+	return spki_table_get_all(&rtr_spki_table, asn,
+				  ski, result, result_count);
 }
 
 void rtr_mgr_stop(struct rtr_mgr_config *config)
@@ -727,7 +739,7 @@ inline void rtr_mgr_for_each_ipv4_record(struct rtr_mgr_config *config,
 						   void *data),
 					 void *data)
 {
-	(void) config;
+	(void)config;
 
 	pfx_table_for_each_ipv4_record(&rtr_pfx_table, fp, data);
 }
@@ -738,7 +750,7 @@ inline void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config,
 						   void *data),
 					 void *data)
 {
-	(void) config;
+	(void)config;
 
 	pfx_table_for_each_ipv6_record(&rtr_pfx_table, fp, data);
 }
