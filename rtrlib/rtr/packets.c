@@ -205,7 +205,7 @@ void rtr_change_socket_state(struct rtr_socket *rtr_socket, const enum rtr_socke
     rtr_socket->state = new_state;
     if (new_state == RTR_SHUTDOWN) {
         MGR_DBG1("Calling rtr_mgr_cb with RTR_SHUTDOWN");
-    }    
+    }
 
     if (rtr_socket->connection_state_fp != NULL)
         rtr_socket->connection_state_fp(rtr_socket, new_state, rtr_socket->connection_state_fp_param_config, rtr_socket->connection_state_fp_param_group);
@@ -1144,7 +1144,8 @@ int rtr_wait_for_sync(struct rtr_socket *rtr_socket)
     if (rtval >= 0) {
         enum pdu_type type = rtr_get_pdu_type(pdu);
         if (type == SERIAL_NOTIFY) {
-            RTR_DBG1("Serial Notify received");
+            RTR_DBG("Serial Notify received (%"PRIu32")",
+                    ((struct pdu_serial_notify *)pdu)->sn);
             return RTR_SUCCESS;
         }
     } else if (rtval == TR_WOULDBLOCK) {
