@@ -1107,9 +1107,6 @@ int rtr_sync(struct rtr_socket *rtr_socket)
         return RTR_ERROR;
     } else if (type == CACHE_RESPONSE) {
         rtr_handle_cache_response_pdu(rtr_socket,pdu);
-    } else if (type == ERROR) {
-        rtr_handle_error_pdu(rtr_socket, pdu);
-        return RTR_ERROR;
     } else {
         RTR_DBG("Expected Cache Response PDU but received PDU Type (Type: %u)", ((struct pdu_header *) pdu)->type);
         const char txt[] = "Unexpected PDU received in data synchronisation";
