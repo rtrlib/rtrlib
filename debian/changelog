@@ -1,3 +1,13 @@
+librtr0 (0.5.0-1) stable; urgency=high
+
+  * Add support for dynamic add and remove of socket groups in rtr_mgr
+  * add memory handling wrappers (i.e. alloc utils) for FRR integration
+  * extend tests to verify dynamic groups feature
+  * fix duplicate socket configuration on init in {tcp,ssh}_transport
+  * Improve documentation on trie implementation and for util functions
+
+ -- Sebastian Meiling <s@mlng.net>  Tue,  7 Nov 2017 15:45:00 +0100
+
 librtr0 (0.4.0-1) stable; urgency=high
 
   * Fix bug in prefix origin AS validation caused by LPFST, which lead to
