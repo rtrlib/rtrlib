@@ -3,7 +3,7 @@ https://github.com/rtrlib/rtrlib/commits/master
 
 Release History:
 
-* Version 0.4.1
+* Version 0.5.0
     - alloc_utils: add assert and improve doc
     - {tcp,ssh}_transport: duplicate socket configuration on init
     - tests: adapt test_live_validation to dynamic groups
