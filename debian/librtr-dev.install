@@ -1,2 +1,3 @@
 /usr/lib/*/librtr.so
+/usr/lib/*/pkgconfig/
 usr/include/*
