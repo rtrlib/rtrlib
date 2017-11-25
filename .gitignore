@@ -31,3 +31,10 @@ cmake_install.cmake
 CMakeCache.txt
 rtrlib.pc
 
+## REDHAT ##
+redhat/BUILD
+redhat/BUILDROOT
+redhat/RPMS
+redhat/SOURCES
+redhat/SRPMS
+
