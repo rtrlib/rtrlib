@@ -54,8 +54,8 @@ Description: Small extensible RPKI-RTR-Client C library. Debug Symbols
 
 Package: librtr-doc
 Section: doc
-Architecture: any
-Depends: ${misc:Depends}
+Architecture: all
+Depends: libjs-jquery ${misc:Depends}
 Suggests: doc-base
 Description: Small extensible RPKI-RTR-Client C library. Documentation files
  RTRlib is an open-source C implementation of the  RPKI/Router Protocol
@@ -75,7 +75,7 @@ Description: RPKI-RTR command line tools
  rtrclient is command line that connects to an RPKI-RTR server and prints
  protocol information and information about the fetched ROAs to the console.
  cli-validator is a command line tool that connects to an RPKI-RTR server and
- allows to validate given IP prefixes and origin ASes.
+ allows one to validate given IP prefixes and origin ASes.
 
 
 Package: rtr-tools-dbg
@@ -88,6 +88,6 @@ Description: RPKI-RTR command line tools
  rtrclient is command line that connects to an RPKI-RTR server and prints
  protocol information and information about the fetched ROAs to the console.
  cli-validator is a command line tool that connects to an RPKI-RTR server and
- allows to validate given IP prefixes and origin ASes.
+ allows one to validate given IP prefixes and origin ASes.
  .
  This package contains debug symbols.
