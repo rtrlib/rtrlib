@@ -153,7 +153,7 @@ struct rtr_socket {
 int rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr_socket, struct pfx_table *pfx_table,
              struct spki_table *spki_table, const unsigned int refresh_interval,
              const unsigned int expire_interval, const unsigned int retry_interval,
-             rtr_connection_state_fp fp, void *fp_data_config, void *my_group);
+             rtr_connection_state_fp fp, void *fp_data_config, void *fp_data_group);
 
 /**
  * @brief Starts the RTR protocol state machine in a pthread. Connection to the rtr_server will be established and the
