@@ -6,8 +6,8 @@ Group:          Development/Libraries
 License:        MIT
 URL:            http://rpki.realmv6.org/
 Source0:        %{name}-%{version}.tar.gz
-BuildRequires:  binutils gcc tar chrpath cmake libssh-devel >= 0.6.0 doxygen
-Requires:       libssh >= 0.6.0
+BuildRequires:  binutils gcc tar chrpath cmake libssh-devel >= 0.5.0 doxygen
+Requires:       libssh >= 0.5.0
 
 %description
 RTRlib is an open-source C implementation of the  RPKI/Router Protocol
@@ -71,7 +71,7 @@ fi
 cd %{_topdir}/BUILD
 rm -rf %{name}-%{version}
 tar xzf %{SOURCE0}
-/usr/bin/chmod -Rf a+rX,u+w,g-w,o-w .
+/bin/chmod -Rf a+rX,u+w,g-w,o-w .
 
 %build
 %cmake -D CMAKE_BUILD_TYPE=Release .
@@ -79,7 +79,7 @@ make %{?_smp_mflags}
 
 %install
 %make_install
-strip $RPM_BUILD_ROOT/usr/lib64/librtr.so.0.5.0
+strip $RPM_BUILD_ROOT/usr/lib64/librtr.so.%{version}
 chrpath -d $RPM_BUILD_ROOT/usr/bin/cli-validator
 strip $RPM_BUILD_ROOT/usr/bin/cli-validator
 chrpath -d $RPM_BUILD_ROOT/usr/bin/rtrclient
@@ -88,13 +88,11 @@ cp %{_topdir}/BUILD/CHANGELOG %{buildroot}/%{_docdir}/rtrlib/
 cp %{_topdir}/BUILD/LICENSE %{buildroot}/%{_docdir}/rtrlib/
 
 %check
-make test
+export LD_LIBRARY_PATH=.; make test
 
 %post -p /sbin/ldconfig
 
 %postun -p /sbin/ldconfig
-
-%clean
 
 %files
 %{_libdir}/lib*.so.0
@@ -123,6 +121,6 @@ make test
 %doc LICENSE
 
 %changelog
-* Fri Nov 24 2017 Martin Winter <mwinter@opensourcerouting.org> - %{version}-%{release}
+* Thu Dec 14 2017 Martin Winter <mwinter@opensourcerouting.org> - %{version}-%{release}
 - RPM Packaging added
 
