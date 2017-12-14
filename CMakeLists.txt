@@ -113,7 +113,15 @@ install(DIRECTORY rtrlib/ DESTINATION include/rtrlib
 if(LIBSSH_FOUND)
     set (PKG_CONFIG_REQUIRES "libssh >= 0.5.0")
 endif(LIBSSH_FOUND)
-set (PKG_CONFIG_LIBDIR     "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
+
+if(IS_ABSOLUTE ${CMAKE_INSTALL_LIBDIR})
+    set (PKG_CONFIG_LIBDIR ${CMAKE_INSTALL_LIBDIR})
+    set (RTRLIB_INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR})
+else()
+    set (PKG_CONFIG_LIBDIR "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
+    set (RTRLIB_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+endif(IS_ABSOLUTE ${CMAKE_INSTALL_LIBDIR})
+
 # '#include <rtrlib/rtrlib.h>' includes the "rtrlib/"
 set (PKG_CONFIG_INCLUDEDIR "\${prefix}/include")
 set (PKG_CONFIG_LIBS       "-L\${libdir} -lrtr")
@@ -125,7 +133,7 @@ configure_file (
 )
 install (
     FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
-    DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/pkgconfig"
+    DESTINATION "${RTRLIB_INSTALL_LIBDIR}/pkgconfig"
 )
 #add uninstall target
 configure_file(
