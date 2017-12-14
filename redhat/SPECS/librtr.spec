@@ -45,21 +45,15 @@ and is easily extendable.
 .
 This package contains documentation files.
 
-%package -n rtrclient
-Summary:        RPKI-RTR command line tool
+%package -n rtr-tools
+Summary:        RPKI-RTR command line tools
 Group:          Development/Libraries
 Requires:       %{name} = %{version}-%{release}
 
-%description -n rtrclient
+%description -n rtr-tools
+Tools for the RTRlib
 Rtrclient is command line that connects to an RPKI-RTR server and prints
 protocol information and information about the fetched ROAs to the console.
-
-%package -n cli-validator
-Summary:        RPKI-RTR command line tool
-Group:          Development/Libraries
-Requires:       %{name} = %{version}-%{release}
-
-%description -n cli-validator
 Cli-validator is a command line tool that connects to an RPKI-RTR server and
 allows to validate given IP prefixes and origin ASes.
 
@@ -110,12 +104,8 @@ export LD_LIBRARY_PATH=.; make test
 %files doc
 %{_docdir}/rtrlib
 
-%files -n rtrclient
+%files -n rtr-tools
 %attr(755,root,root) %{_bindir}/rtrclient
-%doc CHANGELOG
-%doc LICENSE
-
-%files -n cli-validator
 %attr(755,root,root) %{_bindir}/cli-validator
 %doc CHANGELOG
 %doc LICENSE
