@@ -316,8 +316,8 @@ static void rtr_pdu_footer_to_network_byte_order(void *pdu)
 
 static void rtr_pdu_to_network_byte_order(void *pdu)
 {
-	rtr_pdu_header_to_network_byte_order(pdu);
 	rtr_pdu_footer_to_network_byte_order(pdu);
+	rtr_pdu_header_to_network_byte_order(pdu);
 }
 
 static void rtr_pdu_footer_to_host_byte_order(void *pdu)
@@ -1178,7 +1178,7 @@ static int rtr_send_error_pdu(const struct rtr_socket *rtr_socket, const void *e
 	if (erroneous_pdu_len > 0)
 		memcpy(err_pdu->rest, erroneous_pdu, erroneous_pdu_len);
 
-	*(err_pdu->rest + erroneous_pdu_len) = err_text_len;
+	*((uint32_t *)(err_pdu->rest + erroneous_pdu_len)) = err_text_len;
 	if (err_text_len > 0)
 		memcpy(err_pdu->rest + erroneous_pdu_len + 4, err_text, err_text_len);
 
