@@ -165,7 +165,7 @@ struct trie_node *trie_remove(struct trie_node *root,
 {
 	/* If the node has no children we can simply remove it
 	 * If the node has children, we swap the node with the child that
-	 * has the bigger prefix length and drop the child.
+	 * has the smaller prefix length and drop the child.
 	 */
 	if (prefix_is_same(root, prefix, mask_len)) {
 		void *tmp;
@@ -177,7 +177,7 @@ struct trie_node *trie_remove(struct trie_node *root,
 
 		/* swap with the left child and drop the child */
 		if (root->lchild && (!root->rchild ||
-				     root->lchild->len > root->rchild->len)) {
+				     root->lchild->len < root->rchild->len)) {
 			tmp = root->data;
 			replace_node_data(root, root->lchild);
 			root->lchild->data = tmp;
