@@ -14,6 +14,10 @@ function run_command {
 		colour=$GREEN
 	fi
 	echo -e "\n${colour}The command \"$@\" exited with $ret.$NC\n\n"
+
+	if [ $ret != 0 ]; then
+		exit $ret
+	fi
 }
 
 run_command scripts/cppcheck.sh
