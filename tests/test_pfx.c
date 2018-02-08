@@ -330,6 +330,16 @@ static void pfx_table_test(void)
 	printf("pfx_table_test successful\n");
 }
 
+static void create_ip4_pfx_record(struct pfx_record *pfx, uint32_t asn,
+				  const char *ip, uint8_t min_mask_len,
+				  uint8_t max_mask_len)
+{
+	pfx->asn = asn;
+	pfx->min_len = min_mask_len;
+	pfx->max_len = max_mask_len;
+	assert(!lrtr_ip_str_to_addr(ip, &pfx->prefix));
+}
+
 static void add_ip4_pfx_record(struct pfx_table *pfxt, uint32_t asn,
 			       const char *ip, uint8_t min_mask_len,
 			       uint8_t max_mask_len)
@@ -337,11 +347,8 @@ static void add_ip4_pfx_record(struct pfx_table *pfxt, uint32_t asn,
 	struct pfx_record pfx;
 	enum pfxv_state val_res;
 
-	pfx.asn = asn;
-	pfx.min_len = min_mask_len;
-	pfx.max_len = max_mask_len;
+	create_ip4_pfx_record(&pfx, asn, ip, min_mask_len, max_mask_len);
 
-	assert(!lrtr_ip_str_to_addr(ip, &pfx.prefix));
 	assert(pfx_table_add(pfxt, &pfx) == PFX_SUCCESS);
 
 	assert(pfx_table_validate(pfxt, pfx.asn, &pfx.prefix, pfx.min_len,
@@ -363,12 +370,35 @@ static void test_issue99(void)
 	pfx_table_free(&pfxt);
 }
 
+static void test_issue152(void)
+{
+	struct pfx_table pfxt;
+	struct pfx_record *records = calloc(6, sizeof(struct pfx_record));
+
+	pfx_table_init(&pfxt, NULL);
+	create_ip4_pfx_record(&records[0], 1, "89.18.183.0", 24, 24);
+	create_ip4_pfx_record(&records[1], 2, "109.164.0.0", 17, 25);
+	create_ip4_pfx_record(&records[2], 3, "185.131.60.0", 22, 24);
+	create_ip4_pfx_record(&records[3], 4, "185.146.28.0", 22, 22);
+	create_ip4_pfx_record(&records[4], 5, "212.5.51.0", 24, 24);
+	create_ip4_pfx_record(&records[5], 6, "213.175.86.0", 24, 24);
+
+	for (size_t i = 0; i < 6; i++)
+		assert(pfx_table_add(&pfxt, &records[i]) == PFX_SUCCESS);
+
+	for (size_t i = 0; i < 6; i++)
+		assert(pfx_table_remove(&pfxt, &records[i]) == PFX_SUCCESS);
+
+	free(records);
+}
+
 int main(void)
 {
 	pfx_table_test();
 	remove_src_test();
 	mass_test();
 	test_issue99();
+	test_issue152();
 
 	return EXIT_SUCCESS;
 }
