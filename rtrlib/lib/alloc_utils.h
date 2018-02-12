@@ -26,7 +26,7 @@ extern void *(*REALLOC_PTR)(void *ptr, size_t size);
 void lrtr_set_alloc_functions(
 		void *(*malloc_function)(size_t size),
 		void *(*realloc_function)(void *ptr, size_t size),
-		void (free_function)(void *ptr));
+		void (*free_function)(void *ptr));
 
 void *lrtr_malloc(size_t size);
 
