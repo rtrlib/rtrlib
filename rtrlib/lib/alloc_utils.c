@@ -17,6 +17,7 @@ void *(*MALLOC_PTR)(size_t size) = malloc;
 void *(*REALLOC_PTR)(void *ptr, size_t size) = realloc;
 void (*FREE_PTR)(void *ptr) = free;
 
+/* cppcheck-suppress unusedFunction */
 void lrtr_set_alloc_functions(
 		void *(*malloc_function)(size_t size),
 		void *(*realloc_function)(void *ptr, size_t size),
