@@ -103,6 +103,7 @@ static void rtr_mgr_close_less_preferable_groups(const struct rtr_socket *sock,
 	while (node) {
 		struct rtr_mgr_group_node *group_node = node->data;
 		struct rtr_mgr_group *current_group = group_node->group;
+
 		if ((current_group->status != RTR_MGR_CLOSED) &&
 		    (current_group != group) &&
 		    (current_group->preference > group->preference)) {
@@ -145,6 +146,7 @@ static bool is_some_rtr_mgr_group_established(struct rtr_mgr_config *config)
 
 	while (node) {
 		struct rtr_mgr_group_node *group_node = node->data;
+
 		if (group_node->group->status == RTR_MGR_ESTABLISHED) {
 			pthread_mutex_unlock(&config->mutex);
 			return true;
@@ -208,6 +210,7 @@ static inline void _rtr_mgr_cb_state_established(const struct rtr_socket *sock,
 		while (node) {
 			struct rtr_mgr_group_node *group_node = node->data;
 			struct rtr_mgr_group *current_group = group_node->group;
+
 			if ((current_group != group) &&
 			    (current_group->status != RTR_MGR_ERROR) &&
 			    (current_group->status != RTR_MGR_CLOSED) &&
@@ -458,6 +461,7 @@ bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config)
 	while (node) {
 		bool all_sync = true;
 		struct rtr_mgr_group_node *group_node = node->data;
+
 		for (unsigned int j = 0; all_sync &&
 		     (j < group_node->group->sockets_len); j++) {
 			if (group_node->group->sockets[j]->last_update == 0)
@@ -489,6 +493,7 @@ void rtr_mgr_free(struct rtr_mgr_config *config)
 	while (head) {
 		tommy_node *tmp = head;
 		struct rtr_mgr_group_node *group_node = tmp->data;
+
 		head = head->next;
 		for (unsigned int j = 0; j < group_node->group->sockets_len;
 		     j++) {
@@ -534,6 +539,7 @@ void rtr_mgr_stop(struct rtr_mgr_config *config)
 	MGR_DBG1("rtr_mgr_stop()");
 	while (node) {
 		struct rtr_mgr_group_node *group_node = node->data;
+
 		for (unsigned int j = 0; j < group_node->group->sockets_len;
 		     j++) {
 			rtr_stop(group_node->group->sockets[j]);
@@ -690,6 +696,7 @@ int rtr_mgr_for_each_group(struct rtr_mgr_config *conf,
 
 	while (node) {
 		struct rtr_mgr_group_node *group_node = node->data;
+
 		fp(group_node->group, data);
 		node = node->next;
 	}
