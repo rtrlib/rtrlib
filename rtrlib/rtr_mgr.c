@@ -27,8 +27,6 @@ static const char * const mgr_str_status[] = {
 	[RTR_MGR_ERROR] = "RTR_MGR_ERROR",
 };
 
-static struct rtr_mgr_group *rtr_mgr_find_group(struct rtr_mgr_config *config,
-						const struct rtr_socket *sock);
 static int rtr_mgr_config_cmp(const void *a, const void *b);
 static int rtr_mgr_config_cmp_tommy(const void *a, const void *b);
 static bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *group);
@@ -80,30 +78,6 @@ static int rtr_mgr_init_sockets(struct rtr_mgr_group *group,
 			return err_code;
 	}
 	return RTR_SUCCESS;
-}
-
-static struct rtr_mgr_group *rtr_mgr_find_group(struct rtr_mgr_config *config,
-						const struct rtr_socket *sock)
-{
-	tommy_node *node;
-	struct rtr_mgr_group_node *group_node;
-
-	pthread_mutex_lock(&config->mutex);
-	node  = tommy_list_head(&config->groups);
-
-	while (node) {
-		group_node = node->data;
-		for (unsigned int j = 0; j < group_node->group->sockets_len;
-									 j++) {
-			if (group_node->group->sockets[j] == sock) {
-				pthread_mutex_unlock(&config->mutex);
-				return group_node->group;
-			}
-		}
-	node = node->next;
-	}
-	pthread_mutex_unlock(&config->mutex);
-	return NULL;
 }
 
 bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *group)
