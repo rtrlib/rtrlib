@@ -97,15 +97,12 @@ static void rtr_mgr_close_less_preferable_groups(const struct rtr_socket *sock,
 						 struct rtr_mgr_config *config,
 						 struct rtr_mgr_group *group)
 {
-	struct rtr_mgr_group_node *group_node;
-	struct rtr_mgr_group *current_group;
-
 	pthread_mutex_lock(&config->mutex);
 	tommy_node *node = tommy_list_head(&config->groups);
 
 	while (node) {
-		group_node = node->data;
-		current_group = group_node->group;
+		struct rtr_mgr_group_node *group_node = node->data;
+		struct rtr_mgr_group *current_group = group_node->group;
 		if ((current_group->status != RTR_MGR_CLOSED) &&
 		    (current_group != group) &&
 		    (current_group->preference > group->preference)) {
@@ -124,15 +121,12 @@ static struct rtr_mgr_group *get_best_inactive_rtr_mgr_group(
 						struct rtr_mgr_config *config,
 						struct rtr_mgr_group *group)
 {
-	struct rtr_mgr_group_node *group_node;
-	struct rtr_mgr_group *current_group;
-
 	pthread_mutex_lock(&config->mutex);
 	tommy_node *node = tommy_list_head(&config->groups);
 
 	while (node) {
-		group_node = node->data;
-		current_group = group_node->group;
+		struct rtr_mgr_group_node *group_node = node->data;
+		struct rtr_mgr_group *current_group = group_node->group;
 			if ((current_group != group) &&
 			    (current_group->status == RTR_MGR_CLOSED)) {
 				pthread_mutex_unlock(&config->mutex);
@@ -146,13 +140,11 @@ static struct rtr_mgr_group *get_best_inactive_rtr_mgr_group(
 
 static bool is_some_rtr_mgr_group_established(struct rtr_mgr_config *config)
 {
-	struct rtr_mgr_group_node *group_node;
-
 	pthread_mutex_lock(&config->mutex);
 	tommy_node *node = tommy_list_head(&config->groups);
 
 	while (node) {
-		group_node = node->data;
+		struct rtr_mgr_group_node *group_node = node->data;
 		if (group_node->group->status == RTR_MGR_ESTABLISHED) {
 			pthread_mutex_unlock(&config->mutex);
 			return true;
@@ -209,15 +201,13 @@ static inline void _rtr_mgr_cb_state_established(const struct rtr_socket *sock,
 		 * groups are also in ERROR or SHUTDOWN state
 		 */
 		bool all_error = true;
-		struct rtr_mgr_group_node *group_node;
-		struct rtr_mgr_group *current_group;
 
 		pthread_mutex_lock(&config->mutex);
 		tommy_node *node = tommy_list_head(&config->groups);
 
 		while (node) {
-			group_node = node->data;
-			current_group = group_node->group;
+			struct rtr_mgr_group_node *group_node = node->data;
+			struct rtr_mgr_group *current_group = group_node->group;
 			if ((current_group != group) &&
 			    (current_group->status != RTR_MGR_ERROR) &&
 			    (current_group->status != RTR_MGR_CLOSED) &&
@@ -462,15 +452,12 @@ int rtr_mgr_start(struct rtr_mgr_config *config)
 
 bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config)
 {
-	bool all_sync;
-	struct rtr_mgr_group_node *group_node;
-
 	pthread_mutex_lock(&config->mutex);
 	tommy_node *node = tommy_list_head(&config->groups);
 
 	while (node) {
-		all_sync = true;
-		group_node = node->data;
+		bool all_sync = true;
+		struct rtr_mgr_group_node *group_node = node->data;
 		for (unsigned int j = 0; all_sync &&
 		     (j < group_node->group->sockets_len); j++) {
 			if (group_node->group->sockets[j]->last_update == 0)
@@ -497,14 +484,12 @@ void rtr_mgr_free(struct rtr_mgr_config *config)
 	lrtr_free(config->pfx_table);
 
 	/* Free linked list */
-	tommy_node *tmp;
 	tommy_node *head = tommy_list_head(&config->groups);
-	struct rtr_mgr_group_node *group_node;
 
 	while (head) {
-		tmp = head;
+		tommy_node *tmp = head;
+		struct rtr_mgr_group_node *group_node = tmp->data;
 		head = head->next;
-		group_node = tmp->data;
 		for (unsigned int j = 0; j < group_node->group->sockets_len;
 		     j++) {
 			tr_free(group_node->group->sockets[j]->tr_socket);
@@ -543,14 +528,12 @@ inline int rtr_mgr_get_spki(struct rtr_mgr_config *config,
 
 void rtr_mgr_stop(struct rtr_mgr_config *config)
 {
-	struct rtr_mgr_group_node *group_node;
-
 	pthread_mutex_lock(&config->mutex);
 	tommy_node *node = tommy_list_head(&config->groups);
 
 	MGR_DBG1("rtr_mgr_stop()");
 	while (node) {
-		group_node = node->data;
+		struct rtr_mgr_group_node *group_node = node->data;
 		for (unsigned int j = 0; j < group_node->group->sockets_len;
 		     j++) {
 			rtr_stop(group_node->group->sockets[j]);
@@ -703,11 +686,10 @@ int rtr_mgr_for_each_group(struct rtr_mgr_config *conf,
 				     void *data),
 			   void *data)
 {
-	struct rtr_mgr_group_node *group_node;
 	tommy_node *node = tommy_list_head(&conf->groups);
 
 	while (node) {
-		group_node = node->data;
+		struct rtr_mgr_group_node *group_node = node->data;
 		fp(group_node->group, data);
 		node = node->next;
 	}
