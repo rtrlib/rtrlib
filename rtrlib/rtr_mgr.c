@@ -560,6 +560,7 @@ void rtr_mgr_stop(struct rtr_mgr_config *config)
 	pthread_mutex_unlock(&config->mutex);
 }
 
+/* cppcheck-suppress unusedFunction */
 int rtr_mgr_add_group(struct rtr_mgr_config *config,
 		      const struct rtr_mgr_group *group)
 {
@@ -638,6 +639,7 @@ err:
 	return err_code;
 }
 
+/* cppcheck-suppress unusedFunction */
 int rtr_mgr_remove_group(struct rtr_mgr_config *config,
 			 unsigned int preference)
 {
@@ -695,6 +697,7 @@ int rtr_mgr_remove_group(struct rtr_mgr_config *config,
 }
 
 // TODO: write test for this function.
+/* cppcheck-suppress unusedFunction */
 int rtr_mgr_for_each_group(struct rtr_mgr_config *conf,
 			   void (fp)(const struct rtr_mgr_group *group,
 				     void *data),
