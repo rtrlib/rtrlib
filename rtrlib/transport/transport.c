@@ -20,7 +20,6 @@ inline void tr_close(struct tr_socket *socket)
     socket->close_fp(socket->socket);
 }
 
-// cppcheck-suppress unusedFunction
 inline void tr_free(struct tr_socket *socket)
 {
     socket->free_fp(socket);
