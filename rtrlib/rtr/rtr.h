@@ -161,6 +161,7 @@ struct rtr_socket {
     unsigned int version;
     bool has_received_pdus;
     struct spki_table *spki_table;
+    bool is_resetting;
 };
 
 /**

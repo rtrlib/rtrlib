@@ -17,6 +17,7 @@
 #include "rtrlib/rtr/packets.h"
 #include "rtrlib/lib/utils.h"
 #include "rtrlib/lib/log.h"
+#include "rtrlib/pfx/trie/trie-pfx.h"
 #include "rtrlib/spki/hashtable/ht-spkitable.h"
 
 #define MGR_DBG1(a) lrtr_dbg("RTR_MGR: " a)
@@ -739,11 +740,12 @@ static int rtr_handle_cache_response_pdu(struct rtr_socket *rtr_socket, char *pd
     //set connection session_id
     if (rtr_socket->request_session_id) {
         if (rtr_socket->last_update != 0) {
+            RTR_DBG1("Resetting Socket.");
             //if this isnt the first sync, but we already received records, delete old records in the pfx_table
-            pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
             spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
 
             rtr_socket->last_update = 0;
+            rtr_socket->is_resetting = true;
         }
         rtr_socket->session_id = cr_pdu->session_id;
     } else {
@@ -792,7 +794,7 @@ static void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, con
  * @brief Removes all Prefix from the pfx_table with flag field == ADD, ADDs all Prefix PDU to the pfx_table with flag
  * field == REMOVE.
  */
-static int rtr_undo_update_pfx_table(struct rtr_socket *rtr_socket, void *pdu)
+static int rtr_undo_update_pfx_table(struct rtr_socket *rtr_socket, struct pfx_table *pfx_table, void *pdu)
 {
     const enum pdu_type type = rtr_get_pdu_type(pdu);
     assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
@@ -803,9 +805,9 @@ static int rtr_undo_update_pfx_table(struct rtr_socket *rtr_socket, void *pdu)
     int rtval = RTR_ERROR;
     //invert add/remove operation
     if (((struct pdu_ipv4 *) pdu)->flags == 1)
-        rtval = pfx_table_remove(rtr_socket->pfx_table, &pfxr);
+        rtval = pfx_table_remove(pfx_table, &pfxr);
     else if (((struct pdu_ipv4 *) pdu)->flags == 0)
-        rtval = pfx_table_add(rtr_socket->pfx_table, &pfxr);
+        rtval = pfx_table_add(pfx_table, &pfxr);
     return rtval;
 }
 
@@ -897,7 +899,7 @@ static int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *p
     return RTR_SUCCESS;
 }
 
-static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, const void *pdu)
+static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, struct pfx_table *pfx_table, const void *pdu)
 {
     const enum pdu_type type = rtr_get_pdu_type(pdu);
     assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
@@ -908,9 +910,9 @@ static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, const void *pdu)
 
     int rtval;
     if (((struct pdu_ipv4 *) pdu)->flags == 1)
-        rtval = pfx_table_add(rtr_socket->pfx_table, &pfxr);
+        rtval = pfx_table_add(pfx_table, &pfxr);
     else if (((struct pdu_ipv4 *) pdu)->flags == 0)
-        rtval = pfx_table_remove(rtr_socket->pfx_table, &pfxr);
+        rtval = pfx_table_remove(pfx_table, &pfxr);
     else {
         const char txt[] = "Prefix PDU with invalid flags value received";
         RTR_DBG("%s", txt);
@@ -997,12 +999,14 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
     unsigned int ipv6_pdus_size = 0;
 
     struct pdu_ipv4 *ipv4_pdus = NULL;
-    unsigned int ipv4_pdus_size = 0; 
+    unsigned int ipv4_pdus_size = 0;
     unsigned int ipv4_pdus_nindex = 0; //next free index in ipv4_pdus
 
     struct pdu_router_key *router_key_pdus = NULL;
     unsigned int router_key_pdus_size = 0;
     unsigned int router_key_pdus_nindex = 0;
+
+    struct pfx_table pfx_shadow_table;
 
     //receive LRTR_IPV4/IPV6 PDUs till EOD
     do {
@@ -1080,14 +1084,26 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
                         rtr_socket->expire_interval, rtr_socket->refresh_interval, rtr_socket->retry_interval);
             }
 
+            struct pfx_table *pfx_update_table;
+
+            if (rtr_socket->is_resetting) {
+                RTR_DBG1("Reset in progress creating shadow table for atomic reset");
+                pfx_table_init(&pfx_shadow_table, NULL);
+                pfx_update_table = &pfx_shadow_table;
+                pfx_table_copy_except_socket(rtr_socket->pfx_table, pfx_update_table, rtr_socket);
+                RTR_DBG1("Shadow table created");
+            } else {
+                pfx_update_table = rtr_socket->pfx_table;
+            }
+
             int retval = PFX_SUCCESS;
             //add all IPv4 prefix pdu to the pfx_table
             for (unsigned int i = 0; i < ipv4_pdus_nindex; i++) {
-                if (rtr_update_pfx_table(rtr_socket, &(ipv4_pdus[i])) == PFX_ERROR) {
+                if (rtr_update_pfx_table(rtr_socket, pfx_update_table, &(ipv4_pdus[i])) == PFX_ERROR) {
                     //undo all record updates, except the last which produced the error
                     RTR_DBG("Error during data synchronisation, recovering Serial Nr. %u state",rtr_socket->serial_number);
                     for (unsigned int j = 0; j < i && retval == PFX_SUCCESS; j++)
-                        retval = rtr_undo_update_pfx_table(rtr_socket, &(ipv4_pdus[j]));
+                        retval = rtr_undo_update_pfx_table(rtr_socket, pfx_update_table, &(ipv4_pdus[j]));
                     if (retval == RTR_ERROR) {
                         RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all records");
                         pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
@@ -1098,15 +1114,16 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
                     goto cleanup;
                 }
             }
+            RTR_DBG1("v4 prefixes added");
             //add all IPv6 prefix pdu to the pfx_table
             for (unsigned int i = 0; i < ipv6_pdus_nindex; i++) {
-                if (rtr_update_pfx_table(rtr_socket, &(ipv6_pdus[i])) == PFX_ERROR) {
+                if (rtr_update_pfx_table(rtr_socket, pfx_update_table, &(ipv6_pdus[i])) == PFX_ERROR) {
                     //undo all record updates if error occured
                     RTR_DBG("Error during data synchronisation, recovering Serial Nr. %u state",rtr_socket->serial_number);
                     for (unsigned int j = 0; j < ipv4_pdus_nindex && retval == PFX_SUCCESS; j++)
-                        retval = rtr_undo_update_pfx_table(rtr_socket, &(ipv4_pdus[j]));
+                        retval = rtr_undo_update_pfx_table(rtr_socket, pfx_update_table, &(ipv4_pdus[j]));
                     for (unsigned int j = 0; j < i && retval == PFX_SUCCESS; j++)
-                        retval = rtr_undo_update_pfx_table(rtr_socket, &(ipv6_pdus[j]));
+                        retval = rtr_undo_update_pfx_table(rtr_socket, pfx_update_table, &(ipv6_pdus[j]));
                     if (retval == PFX_ERROR) {
                         RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all records");
                         pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
@@ -1118,17 +1135,18 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
                 }
             }
 
+            RTR_DBG1("v6 prefixes added");
             //add all router key pdu to the spki_table
             for (unsigned int i = 0; i < router_key_pdus_nindex; i++) {
                 if (rtr_update_spki_table(rtr_socket, &(router_key_pdus[i])) == SPKI_ERROR) {
                     RTR_DBG("Error during router key data synchronisation, recovering Serial Nr. %u state",rtr_socket->serial_number);
                     for (unsigned int j = 0; j < ipv4_pdus_nindex && retval == PFX_SUCCESS; j++)
-                        retval = rtr_undo_update_pfx_table(rtr_socket, &(ipv4_pdus[j]));
+                        retval = rtr_undo_update_pfx_table(rtr_socket, pfx_update_table, &(ipv4_pdus[j]));
                     for (unsigned int j = 0; j < ipv6_pdus_nindex && retval == PFX_SUCCESS; j++)
-                        retval = rtr_undo_update_pfx_table(rtr_socket, &(ipv6_pdus[j]));
+                        retval = rtr_undo_update_pfx_table(rtr_socket, pfx_update_table, &(ipv6_pdus[j]));
              // cppcheck-suppress duplicateExpression
                     for (unsigned int j = 0; j < i && (retval == PFX_SUCCESS || retval == SPKI_SUCCESS); j++)
-                        retval = rtr_undo_update_spki_table(rtr_socket, &(router_key_pdus[j]));
+                        retval = rtr_undo_update_spki_table(rtr_socket, spki_update_table, &(router_key_pdus[j]));
              // cppcheck-suppress duplicateExpression
                     if (retval == RTR_ERROR || retval == SPKI_ERROR) {
                         RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all key entries");
@@ -1140,6 +1158,18 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
                     goto cleanup;
                 }
             }
+            RTR_DBG1("spki data added");
+            if (rtr_socket->is_resetting) {
+                RTR_DBG1("Reset finished. Swapping new table in.");
+                pfx_table_swap(rtr_socket->pfx_table, &pfx_shadow_table);
+                if (rtr_socket->pfx_table->update_fp) {
+                    RTR_DBG1("Calculating and notifying pfx diff");
+                    pfx_table_notify_diff(rtr_socket->pfx_table, &pfx_shadow_table, rtr_socket);
+                } else {
+                    RTR_DBG1("No pfx update callback. Skipping diff");
+                }
+            }
+
             rtr_socket->serial_number = eod_pdu->sn;
             RTR_DBG("Sync successfull, received %u Prefix PDUs, %u Router Key PDUs, session_id: %u, SN: %u", (ipv4_pdus_nindex + ipv6_pdus_nindex), router_key_pdus_nindex,rtr_socket->session_id,rtr_socket->serial_number);
             goto cleanup;
@@ -1159,6 +1189,13 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
     } while (type != EOD);
 
     cleanup:
+
+    if (rtr_socket->is_resetting) {
+        RTR_DBG1("Freeing shadow table.");
+        pfx_table_free_without_notify(&pfx_shadow_table);
+        rtr_socket->is_resetting = false;
+    }
+
     lrtr_free(router_key_pdus);
     lrtr_free(ipv6_pdus);
     lrtr_free(ipv4_pdus);

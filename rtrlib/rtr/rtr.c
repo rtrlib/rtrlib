@@ -90,6 +90,7 @@ int rtr_init(struct rtr_socket *rtr_socket,
     rtr_socket->thread_id = 0;
     rtr_socket->version = RTR_PROTOCOL_MAX_SUPPORTED_VERSION;
     rtr_socket->has_received_pdus = false;
+    rtr_socket->is_resetting = false;
     return RTR_SUCCESS;
 }
 
@@ -120,6 +121,7 @@ void rtr_purge_outdated_records(struct rtr_socket *rtr_socket)
         rtr_socket->request_session_id = true;
         rtr_socket->serial_number = 0;
         rtr_socket->last_update = 0;
+	rtr_socket->is_resetting = true;
     }
 }
 

@@ -51,6 +51,12 @@ void pfx_table_init(struct pfx_table *pfx_table, pfx_update_fp update_fp)
     pthread_rwlock_init(&(pfx_table->lock), NULL);
 }
 
+void pfx_table_free_without_notify(struct pfx_table *pfx_table)
+{
+    pfx_table->update_fp = NULL;
+    pfx_table_free(pfx_table);
+}
+
 void pfx_table_free(struct pfx_table *pfx_table)
 {
     for(int i = 0; i < 2; i++) {
@@ -504,4 +510,90 @@ void pfx_table_for_each_ipv6_record(struct pfx_table *pfx_table, pfx_for_each_fp
     pthread_rwlock_rdlock(&(pfx_table->lock));
     pfx_table_for_each_rec(pfx_table->ipv6, fp, data);
     pthread_rwlock_unlock(&pfx_table->lock);
+}
+
+struct copy_cb_args {
+	struct pfx_table *pfx_table;
+	const struct rtr_socket *socket;
+};
+
+static void pfx_table_copy_cb(const struct pfx_record *record, void *data)
+{
+	struct copy_cb_args *args = data;
+	if (record->socket != args->socket)
+		pfx_table_add(args->pfx_table, record);
+}
+
+void pfx_table_copy_except_socket(struct pfx_table *src_table, struct pfx_table *dst_table, const struct rtr_socket *socket)
+{
+	struct copy_cb_args args = {dst_table, socket};
+	pfx_table_for_each_ipv4_record(src_table, pfx_table_copy_cb, &args);
+	pfx_table_for_each_ipv6_record(src_table, pfx_table_copy_cb, &args);
+}
+
+void pfx_table_swap(struct pfx_table *a, struct pfx_table *b)
+{
+	struct trie_node *ipv4_tmp;
+	struct trie_node *ipv6_tmp;
+
+	pthread_rwlock_wrlock(&(a->lock));
+	pthread_rwlock_wrlock(&(b->lock));
+
+	ipv4_tmp = a->ipv4;
+	ipv6_tmp = a->ipv6;
+
+	a->ipv4 = b->ipv4;
+	a->ipv6 = b->ipv6;
+
+	b->ipv4 = ipv4_tmp;
+	b->ipv6 = ipv6_tmp;
+
+	pthread_rwlock_unlock(&(b->lock));
+	pthread_rwlock_unlock(&(a->lock));
+}
+
+struct notify_diff_cb_args {
+	struct pfx_table *old_table;
+	struct pfx_table *new_table;
+	const struct rtr_socket *socket;
+	pfx_update_fp pfx_update_fp;
+	bool added;
+};
+
+static void pfx_table_notify_diff_cb(const struct pfx_record *record, void *data)
+{
+	struct notify_diff_cb_args *args = data;
+
+	if (args->socket == record->socket && args->added) {
+		if (pfx_table_remove(args->old_table, record) != PFX_SUCCESS) {
+			pfx_table_notify_clients(args->new_table, record, args->added);
+		}
+	} else if (args->socket == record->socket && !args->added) {
+		pfx_table_notify_clients(args->new_table, record, args->added);
+	}
+
+}
+
+void pfx_table_notify_diff(struct pfx_table *new_table, struct pfx_table *old_table, const struct rtr_socket *socket)
+{
+	pfx_update_fp old_table_fp;
+	struct notify_diff_cb_args args = { old_table, new_table, socket, new_table->update_fp, true };
+
+	// Disable update callback for old_table table
+	old_table_fp = old_table->update_fp;
+	old_table->update_fp = NULL;
+
+	// Iterate new_table and try to delete every prefix from the given socket in old_table
+	// If the prefix could not be removed it was added in new_table and the update cb must be called
+	pfx_table_for_each_ipv4_record(new_table, pfx_table_notify_diff_cb, &args);
+	pfx_table_for_each_ipv6_record(new_table, pfx_table_notify_diff_cb, &args);
+
+	// Iterate over old_table table and search and remove remaining prefixes from the socket
+	// issue a remove notification for every one of them, because they are not present in new_table.
+	args.added = false;
+	pfx_table_for_each_ipv4_record(old_table, pfx_table_notify_diff_cb, &args);
+	pfx_table_for_each_ipv6_record(old_table, pfx_table_notify_diff_cb, &args);
+
+	// Restore original state of old_tables update_fp
+	old_table->update_fp  = old_table_fp;
 }
