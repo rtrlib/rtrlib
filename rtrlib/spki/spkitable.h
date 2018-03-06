@@ -141,5 +141,29 @@ int spki_table_remove_entry(struct spki_table *spki_table,
 int spki_table_src_remove(struct spki_table *spki_table,
 			  const struct rtr_socket *socket);
 
+/**
+ * @brief Copy spki table except entries from the given socket
+ * @param[in] src source table
+ * @param[in] dest target table
+ * @param[in] rtr_socket socket which entries should not be copied
+ */
+int spki_table_copy_except_socket(struct spki_table *src, struct spki_table *dest, struct rtr_socket *socket);
+
+/**
+ * @brief Notify client about changes between two spki tables regarding one specific socket
+ * @details old_table will be modified and should probebly be freed after calling this function
+ * @param[in] new_table
+ * @param[in] old_table
+ * @param[in] socket socket which entries should be diffed
+ */
+void spki_table_notify_diff(struct spki_table *new_table, struct spki_table *old_table, const struct rtr_socket *socket);
+
+/**
+ * @brief tommy_hashlin and tommy_list of the argument tables
+ * @param[in] a
+ * @param[in] b
+ */
+void spki_table_swap(struct spki_table *a, struct spki_table *b);
+
 #endif
 /* @} */

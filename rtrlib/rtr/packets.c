@@ -741,8 +741,6 @@ static int rtr_handle_cache_response_pdu(struct rtr_socket *rtr_socket, char *pd
     if (rtr_socket->request_session_id) {
         if (rtr_socket->last_update != 0) {
             RTR_DBG1("Resetting Socket.");
-            //if this isnt the first sync, but we already received records, delete old records in the pfx_table
-            spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
 
             rtr_socket->last_update = 0;
             rtr_socket->is_resetting = true;
@@ -815,7 +813,7 @@ static int rtr_undo_update_pfx_table(struct rtr_socket *rtr_socket, struct pfx_t
  * @brief Removes router_key from the spki_table with flag field == ADD, ADDs router_key PDU to the spki_table with flag
  * field == REMOVE.
  */
-static int rtr_undo_update_spki_table(struct rtr_socket *rtr_socket, void *pdu)
+static int rtr_undo_update_spki_table(struct rtr_socket *rtr_socket, struct spki_table *spki_table, void *pdu)
 {
     const enum pdu_type type = rtr_get_pdu_type(pdu);
     assert(type == ROUTER_KEY);
@@ -826,9 +824,9 @@ static int rtr_undo_update_spki_table(struct rtr_socket *rtr_socket, void *pdu)
     int rtval = RTR_ERROR;
     //invert add/remove operation
     if (((struct pdu_router_key*) pdu)->flags == 1)
-        rtval = spki_table_remove_entry(rtr_socket->spki_table, &entry);
+        rtval = spki_table_remove_entry(spki_table, &entry);
     else if (((struct pdu_router_key*) pdu)->flags == 0)
-        rtval = spki_table_add_entry(rtr_socket->spki_table, &entry);
+        rtval = spki_table_add_entry(spki_table, &entry);
     return rtval;
 }
 
@@ -943,7 +941,7 @@ static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, struct pfx_table 
     return RTR_SUCCESS;
 }
 
-static int rtr_update_spki_table(struct rtr_socket* rtr_socket, const void* pdu)
+static int rtr_update_spki_table(struct rtr_socket* rtr_socket, struct spki_table *spki_table, const void* pdu)
 {
     const enum pdu_type type = rtr_get_pdu_type(pdu);
     assert(type == ROUTER_KEY);
@@ -955,10 +953,10 @@ static int rtr_update_spki_table(struct rtr_socket* rtr_socket, const void* pdu)
 
     int rtval;
     if (((struct pdu_router_key*) pdu)->flags == 1)
-        rtval = spki_table_add_entry(rtr_socket->spki_table, &entry);
+        rtval = spki_table_add_entry(spki_table, &entry);
 
     else if (((struct pdu_router_key*) pdu)->flags == 0)
-        rtval = spki_table_remove_entry(rtr_socket->spki_table, &entry);
+        rtval = spki_table_remove_entry(spki_table, &entry);
 
     else {
         const char txt[] = "Router Key PDU with invalid flags value received";
@@ -1007,6 +1005,7 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
     unsigned int router_key_pdus_nindex = 0;
 
     struct pfx_table pfx_shadow_table;
+    struct spki_table spki_shadow_table;
 
     //receive LRTR_IPV4/IPV6 PDUs till EOD
     do {
@@ -1085,15 +1084,27 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
             }
 
             struct pfx_table *pfx_update_table;
+            struct spki_table *spki_update_table;
 
             if (rtr_socket->is_resetting) {
                 RTR_DBG1("Reset in progress creating shadow table for atomic reset");
                 pfx_table_init(&pfx_shadow_table, NULL);
                 pfx_update_table = &pfx_shadow_table;
                 pfx_table_copy_except_socket(rtr_socket->pfx_table, pfx_update_table, rtr_socket);
+
+                spki_table_init(&spki_shadow_table, NULL);
+                spki_update_table = &spki_shadow_table;
+                if (spki_table_copy_except_socket(rtr_socket->spki_table, spki_update_table, rtr_socket) != SPKI_SUCCESS) {
+                    RTR_DBG1("Creation of spki shadow table failed");
+                    rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+                    retval = RTR_ERROR;
+                    goto cleanup;
+                }
+
                 RTR_DBG1("Shadow table created");
             } else {
                 pfx_update_table = rtr_socket->pfx_table;
+                spki_update_table = rtr_socket->spki_table;
             }
 
             int retval = PFX_SUCCESS;
@@ -1138,7 +1149,7 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
             RTR_DBG1("v6 prefixes added");
             //add all router key pdu to the spki_table
             for (unsigned int i = 0; i < router_key_pdus_nindex; i++) {
-                if (rtr_update_spki_table(rtr_socket, &(router_key_pdus[i])) == SPKI_ERROR) {
+                if (rtr_update_spki_table(rtr_socket, spki_update_table, &(router_key_pdus[i])) == SPKI_ERROR) {
                     RTR_DBG("Error during router key data synchronisation, recovering Serial Nr. %u state",rtr_socket->serial_number);
                     for (unsigned int j = 0; j < ipv4_pdus_nindex && retval == PFX_SUCCESS; j++)
                         retval = rtr_undo_update_pfx_table(rtr_socket, pfx_update_table, &(ipv4_pdus[j]));
@@ -1150,7 +1161,7 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
              // cppcheck-suppress duplicateExpression
                     if (retval == RTR_ERROR || retval == SPKI_ERROR) {
                         RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all key entries");
-                        spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
+                        spki_table_src_remove(spki_update_table, rtr_socket);
                         rtr_socket->request_session_id = true;
                     }
                     rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
@@ -1162,12 +1173,22 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
             if (rtr_socket->is_resetting) {
                 RTR_DBG1("Reset finished. Swapping new table in.");
                 pfx_table_swap(rtr_socket->pfx_table, &pfx_shadow_table);
+                spki_table_swap(rtr_socket->spki_table, &spki_shadow_table);
+
                 if (rtr_socket->pfx_table->update_fp) {
                     RTR_DBG1("Calculating and notifying pfx diff");
                     pfx_table_notify_diff(rtr_socket->pfx_table, &pfx_shadow_table, rtr_socket);
                 } else {
                     RTR_DBG1("No pfx update callback. Skipping diff");
                 }
+
+                if (rtr_socket->spki_table->update_fp) {
+                    RTR_DBG1("Calculating and notifying spki diff");
+                    spki_table_notify_diff(rtr_socket->spki_table, &spki_shadow_table, rtr_socket);
+                } else {
+                    RTR_DBG1("No spki update callback. Skipping diff");
+                }
+
             }
 
             rtr_socket->serial_number = eod_pdu->sn;
@@ -1191,8 +1212,9 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
     cleanup:
 
     if (rtr_socket->is_resetting) {
-        RTR_DBG1("Freeing shadow table.");
+        RTR_DBG1("Freeing shadow tables.");
         pfx_table_free_without_notify(&pfx_shadow_table);
+        spki_table_free(&spki_shadow_table);
         rtr_socket->is_resetting = false;
     }
 
