@@ -337,7 +337,7 @@ static void create_ip4_pfx_record(struct pfx_record *pfx, uint32_t asn,
 	pfx->asn = asn;
 	pfx->min_len = min_mask_len;
 	pfx->max_len = max_mask_len;
-	pfx->socket = (struct rtr_socket *) 1;
+	pfx->socket = (struct rtr_socket *)1;
 	assert(!lrtr_ip_str_to_addr(ip, &pfx->prefix));
 }
 
@@ -394,8 +394,8 @@ static void test_issue152(void)
 }
 
 static void update_cb1(struct pfx_table *p  __attribute__((unused)),
-		      const struct pfx_record rec,
-		      const bool added)
+		       const struct pfx_record rec,
+		       const bool added)
 {
 	char ip[INET6_ADDRSTRLEN];
 
@@ -406,6 +406,13 @@ static void update_cb1(struct pfx_table *p  __attribute__((unused)),
 	lrtr_ip_addr_to_str(&rec.prefix, ip, sizeof(ip));
 	printf("%-40s   %3u - %3u   %10u\n",
 	       ip, rec.min_len, rec.max_len, rec.asn);
+
+	if (rec.asn == 1)
+		assert(!added);
+	if (rec.asn == 2)
+		assert(false);
+	if (rec.asn == 3)
+		assert(added);
 }
 
 static void test_pfx_merge(void)
@@ -414,8 +421,8 @@ static void test_pfx_merge(void)
 	struct pfx_table pfxt2;
 	struct pfx_record records[3];
 
-	pfx_table_init(&pfxt1, update_cb1);
-	pfx_table_init(&pfxt2, update_cb1);
+	pfx_table_init(&pfxt1, NULL);
+	pfx_table_init(&pfxt2, NULL);
 
 	create_ip4_pfx_record(&records[0], 1, "1.1.1.1", 24, 24);
 	create_ip4_pfx_record(&records[1], 2, "2.2.2.2", 24, 24);
@@ -429,22 +436,25 @@ static void test_pfx_merge(void)
 	assert(pfx_table_add(&pfxt2, &records[2]) == PFX_SUCCESS);
 
 	printf("Computing diff\n");
+	pfxt1.update_fp = update_cb1;
+	pfxt2.update_fp = update_cb1;
 	pfx_table_notify_diff(&pfxt2, &pfxt1, (struct rtr_socket *)1);
+	pfxt1.update_fp = NULL;
+	pfxt2.update_fp = NULL;
 
 	printf("Freeing table one\n");
 	pfx_table_free(&pfxt1);
 	printf("Freeing table two\n");
 	pfx_table_free(&pfxt2);
-
 }
 
 int main(void)
 {
-/*	pfx_table_test();
+	pfx_table_test();
 	remove_src_test();
 	mass_test();
 	test_issue99();
-	test_issue152();*/
+	test_issue152();
 	test_pfx_merge();
 
 	return EXIT_SUCCESS;

@@ -538,6 +538,156 @@ static void test_ht_7(void)
 	printf("test_ht_7() complete\n");
 }
 
+void test_table_swap(void)
+{
+	struct spki_table table1;
+	struct spki_table table2;
+
+	struct spki_record *test_record1 = create_record(1, 10, 100, NULL);
+	struct spki_record *test_record2 = create_record(2, 20, 200, NULL);
+
+	spki_table_init(&table1, NULL);
+	spki_table_init(&table2, NULL);
+
+	_spki_table_add_assert(&table1, test_record1);
+	_spki_table_add_assert(&table2, test_record2);
+
+	struct spki_record *result;
+	unsigned int result_len;
+
+	assert(spki_table_search_by_ski(
+				&table1,
+				test_record1->ski,
+				&result,
+				&result_len)
+			== SPKI_SUCCESS);
+	assert(result_len == 1);
+	free(result);
+	result = NULL;
+
+	assert(spki_table_search_by_ski(
+				&table2,
+				test_record2->ski,
+				&result,
+				&result_len)
+			== SPKI_SUCCESS);
+	assert(result_len == 1);
+	free(result);
+	result = NULL;
+
+	spki_table_swap(&table1, &table2);
+
+	assert(spki_table_search_by_ski(
+				&table1,
+				test_record2->ski,
+				&result, &result_len)
+			== SPKI_SUCCESS);
+	assert(result_len == 1);
+	free(result);
+	result = NULL;
+
+	assert(spki_table_search_by_ski(
+				&table2,
+				test_record1->ski,
+				&result,
+				&result_len)
+			== SPKI_SUCCESS);
+	assert(result_len == 1);
+	free(result);
+	result = NULL;
+
+	spki_table_free(&table1);
+	spki_table_free(&table2);
+	free(test_record1);
+	free(test_record2);
+
+	printf("test_table_swap() complete\n");
+}
+
+static void update_spki(struct spki_table *s __attribute__((unused)),
+			const struct spki_record record,
+			const bool added)
+{
+	char c;
+
+	if (added)
+		c = '+';
+	else
+		c = '-';
+
+	printf("%c ", c);
+	printf("ASN:  %u\n  ", record.asn);
+
+	int i;
+	int size = sizeof(record.ski);
+
+	printf("SKI:  ");
+	for (i = 0; i < size; i++) {
+		printf("%02x", record.ski[i]);
+		if (i < size - 1)
+			printf(":");
+	}
+	printf("\n  ");
+
+	i = 0;
+	size = sizeof(record.spki);
+	printf("SPKI: ");
+	for (i = 0; i < size; i++) {
+		if ((i % 40 == 0) && (i != 0))
+			printf("\n	");
+
+		printf("%02x", record.spki[i]);
+		if (i < size - 1)
+			printf(":");
+	}
+	printf("\n");
+
+	if (record.asn == 1)
+		assert(!added);
+	if (record.asn == 2)
+		assert(false);
+	if (record.asn == 3)
+		assert(added);
+}
+
+void test_table_diff(void)
+{
+	struct spki_table table1;
+	struct spki_table table2;
+	struct rtr_socket *socket = (struct rtr_socket *)1;
+
+	struct spki_record *test_record1 = create_record(1, 10, 100, socket);
+	struct spki_record *test_record2 = create_record(2, 20, 200, socket);
+	struct spki_record *test_record3 = create_record(3, 30, 300, socket);
+
+	spki_table_init(&table1, NULL);
+	spki_table_init(&table2, NULL);
+
+	printf("Adding to table 1\n");
+	_spki_table_add_assert(&table1, test_record1);
+	_spki_table_add_assert(&table1, test_record2);
+
+	printf("Adding to table 2\n");
+	_spki_table_add_assert(&table2, test_record2);
+	_spki_table_add_assert(&table2, test_record3);
+
+	printf("Calculating diff\n");
+	table1.update_fp = update_spki;
+	table2.update_fp = update_spki;
+	spki_table_notify_diff(&table2, &table1, socket);
+	table1.update_fp = NULL;
+	table2.update_fp = NULL;
+
+	printf("Freeing tables\n");
+	spki_table_free(&table1);
+	spki_table_free(&table2);
+	free(test_record1);
+	free(test_record2);
+	free(test_record3);
+
+	printf("test_table_diff() complete\n");
+}
+
 int main(void)
 {
 	test_ht_1();
@@ -547,5 +697,7 @@ int main(void)
 	test_ht_5();
 	test_ht_6();
 	test_ht_7();
+	test_table_swap();
+	test_table_diff();
 	return EXIT_SUCCESS;
 }
