@@ -20,8 +20,7 @@ add_executable(test_dynamic_groups test_dynamic_groups.c)
 target_link_libraries(test_dynamic_groups rtrlib)
 
 
-if(UNIT_TESTING)
+if(UNIT_TESTING AND NOT APPLE)
     find_package(CMocka REQUIRED)
     add_subdirectory(unittests)
-endif(UNIT_TESTING)
-
+endif(UNIT_TESTING AND NOT APPLE)
