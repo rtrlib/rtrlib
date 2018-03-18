@@ -19,7 +19,7 @@ and is easily extendable.
 %package devel
 Summary:        Small extensible RPKI-RTR-Client C library. Development files
 Group:          Development/Libraries
-Requires:       %{name} = %{version}-%{release}
+Requires:       %{name} = %{version}-%{release} libssh-devel >= 0.5.0
 
 %description devel
 RTRlib is an open-source C implementation of the  RPKI/Router Protocol
