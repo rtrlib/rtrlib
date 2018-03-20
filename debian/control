@@ -25,7 +25,7 @@ Section: libdevel
 Architecture: any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
-Depends: librtr0 (= ${binary:Version}), ${misc:Depends}
+Depends: librtr0 (= ${binary:Version}), ${misc:Depends}, libssh-dev (>= 0.5.0)
 Suggests: librtr-doc
 Description: Small extensible RPKI-RTR-Client C library. Development files
  RTRlib is an open-source C implementation of the  RPKI/Router Protocol
