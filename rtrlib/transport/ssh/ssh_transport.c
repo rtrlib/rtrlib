@@ -74,9 +74,9 @@ int tr_ssh_open(void *socket)
         goto error;
     }
 
-#ifdef LIBSSH_060
+#if LIBSSH_VERSION_MAJOR > 0 || LIBSSH_VERSION_MINOR > 5
     const int rtval = ssh_userauth_publickey_auto(ssh_socket->session, NULL, NULL);
-#else // else use libSSH version 0.5.0
+#else /* else use libSSH version 0.5.0 */
     const int rtval = ssh_userauth_autopubkey(ssh_socket->session, NULL);
 #endif
     if(rtval != SSH_AUTH_SUCCESS) {
