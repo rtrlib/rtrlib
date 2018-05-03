@@ -253,6 +253,12 @@ static void test_rtr_pdu_check_size(void **state)
 	pdu.len = 12;
 	assert_true(rtr_pdu_check_size(&pdu));
 
+	pdu.type = ROUTER_KEY;
+	pdu.len = 124;
+	assert_false(rtr_pdu_check_size(&pdu));
+	pdu.len = 123;
+	assert_true(rtr_pdu_check_size(&pdu));
+
 	/* Test error pdu size checks */
 	error->type = ERROR;
 	error->len = 14;
