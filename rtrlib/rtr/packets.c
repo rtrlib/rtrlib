@@ -124,7 +124,7 @@ struct pdu_router_key {
     uint8_t ski[SKI_SIZE];
     uint32_t asn;
     uint8_t spki[SPKI_SIZE];
-};
+} __attribute__((packed));
 
 /*
    0          8          16         24        31
