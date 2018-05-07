@@ -25,6 +25,19 @@ struct node_data {
     struct data_elem *ary;
 };
 
+struct copy_cb_args {
+	struct pfx_table *pfx_table;
+	const struct rtr_socket *socket;
+};
+
+struct notify_diff_cb_args {
+	struct pfx_table *old_table;
+	struct pfx_table *new_table;
+	const struct rtr_socket *socket;
+	pfx_update_fp pfx_update_fp;
+	bool added;
+};
+
 static struct trie_node *pfx_table_get_root(const struct pfx_table *pfx_table, const enum lrtr_ip_version ver);
 static int pfx_table_del_elem(struct node_data *data, const unsigned int index);
 static int pfx_table_create_node(struct trie_node **node, const struct pfx_record *record);
@@ -512,11 +525,6 @@ void pfx_table_for_each_ipv6_record(struct pfx_table *pfx_table, pfx_for_each_fp
     pthread_rwlock_unlock(&pfx_table->lock);
 }
 
-struct copy_cb_args {
-	struct pfx_table *pfx_table;
-	const struct rtr_socket *socket;
-};
-
 static void pfx_table_copy_cb(const struct pfx_record *record, void *data)
 {
 	struct copy_cb_args *args = data;
@@ -551,14 +559,6 @@ void pfx_table_swap(struct pfx_table *a, struct pfx_table *b)
 	pthread_rwlock_unlock(&(b->lock));
 	pthread_rwlock_unlock(&(a->lock));
 }
-
-struct notify_diff_cb_args {
-	struct pfx_table *old_table;
-	struct pfx_table *new_table;
-	const struct rtr_socket *socket;
-	pfx_update_fp pfx_update_fp;
-	bool added;
-};
 
 static void pfx_table_notify_diff_cb(const struct pfx_record *record, void *data)
 {
