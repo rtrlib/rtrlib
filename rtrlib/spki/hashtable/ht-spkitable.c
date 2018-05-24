@@ -303,7 +303,7 @@ int spki_table_copy_except_socket(struct spki_table *src, struct spki_table *dst
         entry = (struct key_entry *) current_node->data;
         key_entry_to_spki_record(entry, &record);
 
-        if (entry->socket == socket) {
+        if (entry->socket != socket) {
             if (spki_table_add_entry(dst, &record) != SPKI_SUCCESS) {
                 ret = SPKI_ERROR;
                 break;
