@@ -145,7 +145,9 @@ int spki_table_src_remove(struct spki_table *spki_table,
  * @brief Copy spki table except entries from the given socket
  * @param[in] src source table
  * @param[in] dest target table
- * @param[in] rtr_socket socket which entries should not be copied
+ * @param[in] socket socket which entries should not be copied
+ * @return SPKI_SUCCESS On success.
+ * @return SPKI_ERROR On error.
  */
 int spki_table_copy_except_socket(struct spki_table *src, struct spki_table *dest, struct rtr_socket *socket);
 
