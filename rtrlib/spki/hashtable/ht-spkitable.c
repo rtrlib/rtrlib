@@ -102,6 +102,18 @@ void spki_table_free(struct spki_table *spki_table)
     pthread_rwlock_destroy(&spki_table->lock);
 }
 
+void spki_table_free_without_notify(struct spki_table *spki_table)
+{
+    pthread_rwlock_wrlock(&spki_table->lock);
+
+    spki_table->update_fp = NULL;
+    tommy_list_foreach(&spki_table->list, free);
+    tommy_hashlin_done(&spki_table->hashtable);
+
+    pthread_rwlock_unlock(&spki_table->lock);
+    pthread_rwlock_destroy(&spki_table->lock);
+}
+
 int spki_table_add_entry(struct spki_table *spki_table,
                          struct spki_record *spki_record)
 {

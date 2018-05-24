@@ -1214,7 +1214,7 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
     if (rtr_socket->is_resetting) {
         RTR_DBG1("Freeing shadow tables.");
         pfx_table_free_without_notify(&pfx_shadow_table);
-        spki_table_free(&spki_shadow_table);
+        spki_table_free_without_notify(&spki_shadow_table);
         rtr_socket->is_resetting = false;
     }
 

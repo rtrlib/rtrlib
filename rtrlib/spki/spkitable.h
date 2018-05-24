@@ -83,6 +83,12 @@ void spki_table_init(struct spki_table *spki_table, spki_update_fp update_fp);
 void spki_table_free(struct spki_table *spki_table);
 
 /**
+ * @brief Frees the memory associcated with the spki_table without calling the update callback.
+ * @param[in] spki_table spki_table that will be initialized.
+ */
+void spki_table_free_without_notify(struct spki_table *spki_table);
+
+/**
  * @brief Adds a spki_record to a spki_table.
  * @param[in] spki_table spki_table to use.
  * @param[in] spki_record spki_record that will be added.
