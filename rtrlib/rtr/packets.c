@@ -1090,7 +1090,12 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
                 RTR_DBG1("Reset in progress creating shadow table for atomic reset");
                 pfx_table_init(&pfx_shadow_table, NULL);
                 pfx_update_table = &pfx_shadow_table;
-                pfx_table_copy_except_socket(rtr_socket->pfx_table, pfx_update_table, rtr_socket);
+                if (pfx_table_copy_except_socket(rtr_socket->pfx_table, pfx_update_table, rtr_socket)) {
+                    RTR_DBG1("Creation of pfx shadow table failed");
+                    rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+                    retval = RTR_ERROR;
+                    goto cleanup;
+                }
 
                 spki_table_init(&spki_shadow_table, NULL);
                 spki_update_table = &spki_shadow_table;

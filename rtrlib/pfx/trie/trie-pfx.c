@@ -28,6 +28,7 @@ struct node_data {
 struct copy_cb_args {
 	struct pfx_table *pfx_table;
 	const struct rtr_socket *socket;
+	bool error;
 };
 
 struct notify_diff_cb_args {
@@ -528,15 +529,28 @@ void pfx_table_for_each_ipv6_record(struct pfx_table *pfx_table, pfx_for_each_fp
 static void pfx_table_copy_cb(const struct pfx_record *record, void *data)
 {
 	struct copy_cb_args *args = data;
-	if (record->socket != args->socket)
-		pfx_table_add(args->pfx_table, record);
+	if (record->socket != args->socket) {
+		if (pfx_table_add(args->pfx_table, record) != PFX_SUCCESS) {
+			args->error = true;
+		}
+	}
+
 }
 
-void pfx_table_copy_except_socket(struct pfx_table *src_table, struct pfx_table *dst_table, const struct rtr_socket *socket)
+int pfx_table_copy_except_socket(struct pfx_table *src_table, struct pfx_table *dst_table, const struct rtr_socket *socket)
 {
-	struct copy_cb_args args = {dst_table, socket};
+	struct copy_cb_args args = {dst_table, socket, false};
 	pfx_table_for_each_ipv4_record(src_table, pfx_table_copy_cb, &args);
+	if (args.error) {
+		return PFX_ERROR;
+	}
+
 	pfx_table_for_each_ipv6_record(src_table, pfx_table_copy_cb, &args);
+	if (args.error) {
+		return PFX_ERROR;
+	}
+
+	return PFX_SUCCESS;
 }
 
 void pfx_table_swap(struct pfx_table *a, struct pfx_table *b)

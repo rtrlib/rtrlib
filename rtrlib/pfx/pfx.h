@@ -189,7 +189,7 @@ void pfx_table_for_each_ipv6_record(struct pfx_table *pfx_table, pfx_for_each_fp
  * @param[out] dst_table Destination table
  * @param[in] socket socket which prefixes should not be copied
  */
-void pfx_table_copy_except_socket(struct pfx_table *src_table, struct pfx_table *dst_table, const struct rtr_socket *socket);
+int pfx_table_copy_except_socket(struct pfx_table *src_table, struct pfx_table *dst_table, const struct rtr_socket *socket);
 
 /**
  * @brief Swap root nodes of the argument tables
