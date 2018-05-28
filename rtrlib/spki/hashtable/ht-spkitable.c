@@ -339,7 +339,7 @@ void spki_table_notify_diff(struct spki_table *new_table, struct spki_table *old
 
     // Iterate new_table and try to delete every entry from the given socket in old_table
     // If the prefix could not be removed it was added in new_table and the update cb must be called
-    for(tommy_node *current_node = tommy_list_head(&new_table->list); current_node; current_node = current_node->next) {
+    for (tommy_node *current_node = tommy_list_head(&new_table->list); current_node; current_node = current_node->next) {
         struct key_entry *entry = (struct key_entry *) current_node->data;
         if (entry->socket == socket) {
             struct spki_record record;
@@ -353,7 +353,7 @@ void spki_table_notify_diff(struct spki_table *new_table, struct spki_table *old
 
     // Iterate old_table and call cb for every remianing entry from the given socket with added false
     // because it is not present in new_table
-    for(tommy_node *current_node = tommy_list_head(&old_table->list); current_node; current_node = current_node->next) {
+    for (tommy_node *current_node = tommy_list_head(&old_table->list); current_node; current_node = current_node->next) {
         struct key_entry *entry = (struct key_entry *) current_node->data;
         if (entry->socket == socket) {
             struct spki_record record;
