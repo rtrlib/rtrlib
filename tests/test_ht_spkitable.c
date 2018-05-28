@@ -608,15 +608,7 @@ static void update_spki(struct spki_table *s __attribute__((unused)),
 			const struct spki_record record,
 			const bool added)
 {
-	char c;
-
-	if (added)
-		c = '+';
-	else
-		c = '-';
-
-	printf("%c ", c);
-	printf("ASN:  %u\n  ", record.asn);
+	printf("%c ASN: %u\n", (added ? '+' : '-'), record.asn);
 
 	int i;
 	int size = sizeof(record.ski);
