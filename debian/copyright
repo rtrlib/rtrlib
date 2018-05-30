@@ -1,6 +1,6 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: rtrlib
 Source: https://github.com/rtrlib/rtrlib
-Copyright: 2011-2017 The RTRlib authors
+Copyright: 2011-2018 The RTRlib authors
 License: MIT
  For details see http://opensource.org/licenses/MIT.
