@@ -83,6 +83,12 @@ void spki_table_init(struct spki_table *spki_table, spki_update_fp update_fp);
 void spki_table_free(struct spki_table *spki_table);
 
 /**
+ * @brief Frees the memory associcated with the spki_table without calling the update callback.
+ * @param[in] spki_table spki_table that will be initialized.
+ */
+void spki_table_free_without_notify(struct spki_table *spki_table);
+
+/**
  * @brief Adds a spki_record to a spki_table.
  * @param[in] spki_table spki_table to use.
  * @param[in] spki_record spki_record that will be added.
@@ -140,6 +146,32 @@ int spki_table_remove_entry(struct spki_table *spki_table,
  */
 int spki_table_src_remove(struct spki_table *spki_table,
 			  const struct rtr_socket *socket);
+
+/**
+ * @brief Copy spki table except entries from the given socket
+ * @param[in] src source table
+ * @param[in] dest target table
+ * @param[in] socket socket which entries should not be copied
+ * @return SPKI_SUCCESS On success.
+ * @return SPKI_ERROR On error.
+ */
+int spki_table_copy_except_socket(struct spki_table *src, struct spki_table *dest, struct rtr_socket *socket);
+
+/**
+ * @brief Notify client about changes between two spki tables regarding one specific socket
+ * @details old_table will be modified and should probebly be freed after calling this function
+ * @param[in] new_table
+ * @param[in] old_table
+ * @param[in] socket socket which entries should be diffed
+ */
+void spki_table_notify_diff(struct spki_table *new_table, struct spki_table *old_table, const struct rtr_socket *socket);
+
+/**
+ * @brief tommy_hashlin and tommy_list of the argument tables
+ * @param[in] a
+ * @param[in] b
+ */
+void spki_table_swap(struct spki_table *a, struct spki_table *b);
 
 #endif
 /* @} */

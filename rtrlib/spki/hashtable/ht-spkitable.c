@@ -102,6 +102,18 @@ void spki_table_free(struct spki_table *spki_table)
     pthread_rwlock_destroy(&spki_table->lock);
 }
 
+void spki_table_free_without_notify(struct spki_table *spki_table)
+{
+    pthread_rwlock_wrlock(&spki_table->lock);
+
+    spki_table->update_fp = NULL;
+    tommy_list_foreach(&spki_table->list, free);
+    tommy_hashlin_done(&spki_table->hashtable);
+
+    pthread_rwlock_unlock(&spki_table->lock);
+    pthread_rwlock_destroy(&spki_table->lock);
+}
+
 int spki_table_add_entry(struct spki_table *spki_table,
                          struct spki_record *spki_record)
 {
@@ -287,4 +299,90 @@ int spki_table_src_remove(struct spki_table *spki_table,
     }
     pthread_rwlock_unlock(&spki_table->lock);
     return SPKI_SUCCESS;
+}
+
+int spki_table_copy_except_socket(struct spki_table *src, struct spki_table *dst, struct rtr_socket *socket)
+{
+    tommy_node *current_node;
+    int ret = SPKI_SUCCESS;
+
+    pthread_rwlock_rdlock(&src->lock);
+    current_node = tommy_list_head(&src->list);
+    while (current_node) {
+        struct key_entry *entry;
+        struct spki_record record;
+
+        entry = (struct key_entry *) current_node->data;
+        key_entry_to_spki_record(entry, &record);
+
+        if (entry->socket != socket) {
+            if (spki_table_add_entry(dst, &record) != SPKI_SUCCESS) {
+                ret = SPKI_ERROR;
+                break;
+            }
+        }
+        current_node = current_node->next;
+    }
+
+    pthread_rwlock_unlock(&src->lock);
+
+    return ret;
+}
+
+void spki_table_notify_diff(struct spki_table *new_table, struct spki_table *old_table, const struct rtr_socket *socket)
+{
+    spki_update_fp old_table_fp;
+
+    // Disable update callback for old_table
+    old_table_fp = old_table->update_fp;
+    old_table->update_fp = NULL;
+
+    // Iterate new_table and try to delete every entry from the given socket in old_table
+    // If the prefix could not be removed it was added in new_table and the update cb must be called
+    for (tommy_node *current_node = tommy_list_head(&new_table->list); current_node; current_node = current_node->next) {
+        struct key_entry *entry = (struct key_entry *) current_node->data;
+        if (entry->socket == socket) {
+            struct spki_record record;
+            key_entry_to_spki_record(entry, &record);
+
+            if (spki_table_remove_entry(old_table, &record) == SPKI_RECORD_NOT_FOUND) {
+                spki_table_notify_clients(new_table, &record, true);
+            }
+        }
+    }
+
+    // Iterate old_table and call cb for every remianing entry from the given socket with added false
+    // because it is not present in new_table
+    for (tommy_node *current_node = tommy_list_head(&old_table->list); current_node; current_node = current_node->next) {
+        struct key_entry *entry = (struct key_entry *) current_node->data;
+        if (entry->socket == socket) {
+            struct spki_record record;
+            key_entry_to_spki_record(entry, &record);
+            spki_table_notify_clients(new_table, &record, false);
+        }
+    }
+
+    // Restore original state of old_tables update_fp
+    old_table->update_fp = old_table_fp;
+}
+
+void spki_table_swap(struct spki_table *a, struct spki_table *b)
+{
+    tommy_hashlin tmp_hashtable;
+    tommy_list tmp_list;
+
+    pthread_rwlock_wrlock(&a->lock);
+    pthread_rwlock_wrlock(&b->lock);
+
+    memcpy(&tmp_hashtable, &a->hashtable, sizeof(tmp_hashtable));
+    memcpy(&tmp_list, &a->list, sizeof(tmp_list));
+
+    memcpy(&a->hashtable, &b->hashtable, sizeof(tmp_hashtable));
+    memcpy(&a->list, &b->list, sizeof(tmp_list));
+
+    memcpy(&b->hashtable, &tmp_hashtable, sizeof(tmp_hashtable));
+    memcpy(&b->list, &tmp_list, sizeof(tmp_list));
+
+    pthread_rwlock_unlock(&a->lock);
+    pthread_rwlock_unlock(&b->lock);
 }

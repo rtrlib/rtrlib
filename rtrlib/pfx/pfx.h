@@ -100,6 +100,13 @@ void pfx_table_init(struct pfx_table *pfx_table, pfx_update_fp update_fp);
  */
 void pfx_table_free(struct pfx_table *pfx_table);
 
+
+/**
+ * @brief Frees all memory associcated with the pfx_table without calling the update callback.
+ * @param[in] pfx_table pfx_table that will be freed.
+ */
+void pfx_table_free_without_notify(struct pfx_table *pfx_table);
+
 /**
  * @brief Adds a pfx_record to a pfx_table.
  * @param[in] pfx_table pfx_table to use.
@@ -174,6 +181,31 @@ void pfx_table_for_each_ipv4_record(struct pfx_table *pfx_table, pfx_for_each_fp
  * @param[in] data This parameter is forwarded to the callback function.
  */
 void pfx_table_for_each_ipv6_record(struct pfx_table *pfx_table, pfx_for_each_fp fp, void *data);
+
+/**
+ * @brief Copy content of @p src_table into @p dst_table
+ * @details dst must be empty and initialized
+ * @param[in] src_table Source table
+ * @param[out] dst_table Destination table
+ * @param[in] socket socket which prefixes should not be copied
+ */
+int pfx_table_copy_except_socket(struct pfx_table *src_table, struct pfx_table *dst_table, const struct rtr_socket *socket);
+
+/**
+ * @brief Swap root nodes of the argument tables
+ * @param[in,out] a First table
+ * @param[in,out] b second table
+ */
+void pfx_table_swap(struct pfx_table *a, struct pfx_table *b);
+
+/**
+ * @brief Notify client about changes between to pfx tables regarding one specific socket
+ * @details old_table will be modified it should be freed after calling this function
+ * @param[in] new_table
+ * @param[in] old_table
+ * @param[in] socket socket which prefixes should be diffed
+ */
+void pfx_table_notify_diff(struct pfx_table *new_table, struct pfx_table *old_table, const struct rtr_socket *socket);
 
 #endif
 /* @} */
