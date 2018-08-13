@@ -1,0 +1,55 @@
+.\"
+.\" This file is part of RTRlib.
+.\"
+.\" This file is subject to the terms and conditions of the MIT license.
+.\" See the file LICENSE in the top level directory for more details.
+.\"
+.\" Website: http://rtrlib.realmv6.org/
+.\"
+.TH "rtrclient" "1"
+.SH NAME
+rtrclient \- rtr rpki client
+.SH SYNOPSIS
+.B rtrclient
+.B tcp
+[\fB\-k\fR]
+[\fB\-p\fR]
+.IR HOST
+.IR PORT
+.br
+.B rtrclient
+.B ssh
+[\fB\-k\fR]
+[\fB\-p\fR]
+.IR HOST
+.IR PORT
+.IR USERNAME
+.IR PRIVATE_KEY
+[\fIHOST_KEY\fR]
+.SH DESCRIPTION
+\fBrtrclient\fR allows to connect to an rtr server and print prefix, origin AS and router key updates.
+.SH OPTIONS
+\fB-k\fR
+.RS 4
+Print information about router key updates
+.RE
+\fB-p\fR
+.RS 4
+Print information about prefix and origin AS updates
+.RE
+.SH EXAMPLES
+Print prefix and origin AS updates from a tcp based server
+.PP
+.nf
+.RS
+rtrclient tcp -k rpki.example.com 323
+.RE
+.fi
+.PP
+Print prefix and router key updates from a ssh based server
+.PP
+.nf
+.RS
+rtrclient ssh -k -p rpki.example.com 22 rtr-ssh ~/.ssh/id_rsa ~/.ssh/known_hosts
+.RE
+.fi

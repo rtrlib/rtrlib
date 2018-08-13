@@ -1,0 +1,29 @@
+.\"
+.\" This file is part of RTRlib.
+.\"
+.\" This file is subject to the terms and conditions of the MIT license.
+.\" See the file LICENSE in the top level directory for more details.
+.\"
+.\" Website: http://rtrlib.realmv6.org/
+.\"
+.TH "rpki-rov" "1"
+.SH NAME
+rpki-rov - rpki route origin validator
+.SH SYNOPSIS
+.B rpki-rov
+.IR HOST
+.IR PORT
+.SH DESCRIPTION
+\fBrpki-rov\fR is a command line interface that implements RPKI route origin validation.
+It connects to the rpki server described by \fIhost\fR and \fIport\fR and can be used interactively or via pipes.
+The format of the input parameter is always "\fIIP PREFIXLENGTH ASN\fR" followed by a newline.
+.SH EXAMPLES
+Pipe into stdin
+.PP
+.nf
+.RS
+echo "93.175.146.0 24 12654" | rpki-rov rpki.example.com 8282
+.RE
+.fi
+.SH BUGS
+Does currently not support ssh-based rpki server.

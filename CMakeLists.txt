@@ -21,6 +21,8 @@ find_package(Threads REQUIRED)
 if(NOT APPLE)
     find_library(RT_LIB rt)
 endif(NOT APPLE)
+
+include(GNUInstallDirs) # for man page install path
 include(UseMultiArch) # needed for debian packaging
 
 set(RTRLIB_SRC rtrlib/rtr_mgr.c rtrlib/lib/utils.c rtrlib/lib/alloc_utils.c rtrlib/lib/convert_byte_order.c
