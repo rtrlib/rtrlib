@@ -425,6 +425,7 @@ static bool rtr_pdu_check_size (const struct pdu_header *pdu) {
   case SERIAL_NOTIFY:
     if (sizeof(struct pdu_serial_notify) == pdu->len)
       retval = true;
+    break;
   case CACHE_RESPONSE:
     if (sizeof(struct pdu_cache_response) == pdu->len)
       retval = true;
