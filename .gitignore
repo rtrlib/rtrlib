@@ -19,7 +19,7 @@ tags
 *.so*
 */Makefile
 rtrlib/rtrlib.h
-tools/cli-validator
+tools/rpki-rov
 tools/rtrclient
 
 ## CMAKE ##

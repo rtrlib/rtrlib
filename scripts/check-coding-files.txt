@@ -18,5 +18,5 @@ tests/test_pfx.c
 tests/test_pfx_locks.c
 tests/unittests/test_packets_static.c
 tests/unittests/test_packets.c
-tools/cli-validator.c
+tools/rpki-rov.c
 tools/rtrclient.c
