@@ -1,2 +1,4 @@
 usr/bin/rtrclient
 usr/bin/rpki-rov
+usr/share/man/man1/rtrclient.1
+usr/share/man/man1/rpki-rov.1
