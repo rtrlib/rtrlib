@@ -54,7 +54,7 @@ Requires:       %{name} = %{version}-%{release}
 Tools for the RTRlib
 Rtrclient is command line that connects to an RPKI-RTR server and prints
 protocol information and information about the fetched ROAs to the console.
-Cli-validator is a command line tool that connects to an RPKI-RTR server and
+rpki-rov is a command line tool that connects to an RPKI-RTR server and
 allows to validate given IP prefixes and origin ASes.
 
 %prep
@@ -74,8 +74,8 @@ make %{?_smp_mflags}
 %install
 %make_install
 strip $RPM_BUILD_ROOT/usr/lib64/librtr.so.%{version}
-chrpath -d $RPM_BUILD_ROOT/usr/bin/cli-validator
-strip $RPM_BUILD_ROOT/usr/bin/cli-validator
+chrpath -d $RPM_BUILD_ROOT/usr/bin/rpki-rov
+strip $RPM_BUILD_ROOT/usr/bin/rpki-rov
 chrpath -d $RPM_BUILD_ROOT/usr/bin/rtrclient
 strip $RPM_BUILD_ROOT/usr/bin/rtrclient
 cp %{_topdir}/BUILD/CHANGELOG %{buildroot}/%{_docdir}/rtrlib/
@@ -106,7 +106,7 @@ export LD_LIBRARY_PATH=.; make test
 
 %files -n rtr-tools
 %attr(755,root,root) %{_bindir}/rtrclient
-%attr(755,root,root) %{_bindir}/cli-validator
+%attr(755,root,root) %{_bindir}/rpki-rov
 %doc CHANGELOG
 %doc LICENSE
 
