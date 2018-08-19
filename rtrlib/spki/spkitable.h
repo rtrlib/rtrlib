@@ -29,7 +29,7 @@
  * @brief Possible return values for some spki_table_ functions.
  */
 enum spki_rtvals {
-	/** Operation was successfull. */
+	/** Operation was successful. */
 	SPKI_SUCCESS = 0,
 
 	/** Error occured. */

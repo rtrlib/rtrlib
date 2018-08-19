@@ -1198,7 +1198,7 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
             }
 
             rtr_socket->serial_number = eod_pdu->sn;
-            RTR_DBG("Sync successfull, received %u Prefix PDUs, %u Router Key PDUs, session_id: %u, SN: %u", (ipv4_pdus_nindex + ipv6_pdus_nindex), router_key_pdus_nindex,rtr_socket->session_id,rtr_socket->serial_number);
+            RTR_DBG("Sync successful, received %u Prefix PDUs, %u Router Key PDUs, session_id: %u, SN: %u", (ipv4_pdus_nindex + ipv6_pdus_nindex), router_key_pdus_nindex,rtr_socket->session_id,rtr_socket->serial_number);
             goto cleanup;
         } else if (type == ERROR) {
             rtr_handle_error_pdu(rtr_socket, pdu);
@@ -1237,7 +1237,7 @@ int rtr_sync(struct rtr_socket *rtr_socket)
 
     do {
         int rtval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
-        //If the cache has closed the connection and we dont have a session_id
+        //If the cache has closed the connection and we don't have a session_id
         //(no packages where exchanged) we should downgrade.
         if (rtval == TR_CLOSED && rtr_socket->request_session_id) {
             RTR_DBG1("The cache server closed the connection and we have no session_id!");
@@ -1326,10 +1326,10 @@ static int rtr_send_error_pdu(const struct rtr_socket *rtr_socket, const void *e
 	unsigned int msg_size = sizeof(struct pdu_error) + 4 + erroneous_pdu_len + err_text_len;
 	uint8_t msg[msg_size];
 
-	//dont send errors for erroneous error PDUs
+	//don't send errors for erroneous error PDUs
 	if (erroneous_pdu_len >= 2) {
 		if (rtr_get_pdu_type(erroneous_pdu) == ERROR) {
-		    RTR_DBG1("Dont send errors for erroneous error PDUs");
+		    RTR_DBG1("Don't send errors for erroneous error PDUs");
 		    return RTR_SUCCESS;
 		}
 	}

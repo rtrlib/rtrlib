@@ -28,7 +28,7 @@
  * @brief The return values for tr_ functions.
  */
 enum tr_rtvals {
-    /** @brief Operation was successfull. */
+    /** @brief Operation was successful. */
     TR_SUCCESS = 0,
 
     /** Error occured. */

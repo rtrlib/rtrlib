@@ -25,7 +25,7 @@
  * @brief Possible return values for pfx_ functions.
  */
 enum pfx_rtvals {
-    /** Operation was successfull. */
+    /** Operation was successful. */
     PFX_SUCCESS = 0,
 
     /** Error occured. */
