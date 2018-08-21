@@ -62,11 +62,9 @@ add_coverage(rtrlib)
 target_link_libraries(rtrlib ${RTRLIB_LINK})
 set_target_properties(rtrlib PROPERTIES C_VISIBILITY_PRESET hidden)
 
-if(UNIT_TESTING)
-    add_library(rtrlib_static STATIC ${RTRLIB_SRC})
-    add_coverage(rtrlib_static)
-    target_link_libraries(rtrlib_static ${RTRLIB_LINK})
-endif(UNIT_TESTING)
+add_library(rtrlib_static STATIC ${RTRLIB_SRC})
+add_coverage(rtrlib_static)
+target_link_libraries(rtrlib_static ${RTRLIB_LINK})
 
 ADD_SUBDIRECTORY(tools)
 
