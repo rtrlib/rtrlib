@@ -11,6 +11,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <unistd.h>
+#include "rtrlib/rtrlib_export.h"
 #include "rtrlib/lib/log.h"
 #include "rtrlib/rtr/packets.h"
 #include "rtrlib/spki/hashtable/ht-spkitable.h"
@@ -245,19 +246,19 @@ void rtr_stop(struct rtr_socket *rtr_socket)
     RTR_DBG1("Socket shut down");
 }
 
-const char *rtr_state_to_str(enum rtr_socket_state state)
+RTRLIB_EXPORT const char *rtr_state_to_str(enum rtr_socket_state state)
 {
     return socket_str_states[state];
 }
 
 /* cppcheck-suppress unusedFunction */
-enum rtr_interval_mode rtr_get_interval_mode(struct rtr_socket *rtr_socket)
+RTRLIB_EXPORT enum rtr_interval_mode rtr_get_interval_mode(struct rtr_socket *rtr_socket)
 {
 	return rtr_socket->iv_mode;
 }
 
 /* cppcheck-suppress unusedFunction */
-void rtr_set_interval_mode(struct rtr_socket *rtr_socket, enum rtr_interval_mode option)
+RTRLIB_EXPORT void rtr_set_interval_mode(struct rtr_socket *rtr_socket, enum rtr_interval_mode option)
 {
 	switch (option) {
 	case RTR_INTERVAL_MODE_IGNORE_ANY:

@@ -60,6 +60,7 @@ endif(DOXYGEN_FOUND)
 add_library(rtrlib SHARED ${RTRLIB_SRC})
 add_coverage(rtrlib)
 target_link_libraries(rtrlib ${RTRLIB_LINK})
+set_target_properties(rtrlib PROPERTIES C_VISIBILITY_PRESET hidden)
 
 if(UNIT_TESTING)
     add_library(rtrlib_static STATIC ${RTRLIB_SRC})

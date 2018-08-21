@@ -16,6 +16,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "rtrlib/rtrlib_export.h"
 #include "rtrlib/lib/log.h"
 #include "rtrlib/transport/tcp/tcp_transport.h"
 #include "rtrlib/lib/alloc_utils.h"
@@ -192,7 +193,7 @@ const char *tr_tcp_ident(void *socket)
     return sock->ident;
 }
 
-int tr_tcp_init(const struct tr_tcp_config *config, struct tr_socket *socket)
+RTRLIB_EXPORT int tr_tcp_init(const struct tr_tcp_config *config, struct tr_socket *socket)
 {
 
     socket->close_fp = &tr_tcp_close;

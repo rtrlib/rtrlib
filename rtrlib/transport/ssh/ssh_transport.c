@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+#include "rtrlib/rtrlib_export.h"
 #include "../../lib/log.h"
 #include "../../lib/utils.h"
 #include "ssh_transport.h"
@@ -202,7 +203,7 @@ const char *tr_ssh_ident(void *tr_ssh_sock)
     return sock->ident;
 }
 
-int tr_ssh_init(const struct tr_ssh_config *config, struct tr_socket *socket)
+RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_socket *socket)
 {
 
     socket->close_fp = &tr_ssh_close;

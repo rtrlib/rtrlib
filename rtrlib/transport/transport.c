@@ -9,6 +9,7 @@
 
 #include "rtrlib/transport/transport.h"
 #include "rtrlib/lib/utils.h"
+#include "rtrlib/rtrlib_export.h"
 
 inline int tr_open(struct tr_socket *socket)
 {

@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "rtrlib/lib/ip.h"
+#include "rtrlib/rtrlib_export.h"
 
 bool lrtr_ip_addr_is_zero(const struct lrtr_ip_addr prefix)
 {
@@ -36,7 +37,7 @@ struct lrtr_ip_addr lrtr_ip_addr_get_bits(const struct lrtr_ip_addr *val, const 
     return result;
 }
 
-bool lrtr_ip_addr_equal(const struct lrtr_ip_addr a, const struct lrtr_ip_addr b )
+RTRLIB_EXPORT bool lrtr_ip_addr_equal(const struct lrtr_ip_addr a, const struct lrtr_ip_addr b )
 {
     if(a.ver != b.ver)
         return false;
@@ -46,14 +47,17 @@ bool lrtr_ip_addr_equal(const struct lrtr_ip_addr a, const struct lrtr_ip_addr b
     return lrtr_ipv4_addr_equal(&(a.u.addr4), &(b.u.addr4));
 }
 
-int lrtr_ip_addr_to_str(const struct lrtr_ip_addr *ip, char *str, const unsigned int len)
+RTRLIB_EXPORT int lrtr_ip_addr_to_str(
+		const struct lrtr_ip_addr *ip,
+		char *str,
+		const unsigned int len)
 {
     if(ip->ver == LRTR_IPV6)
         return lrtr_ipv6_addr_to_str(&(ip->u.addr6), str, len);
     return lrtr_ipv4_addr_to_str(&(ip->u.addr4), str, len);
 }
 
-int lrtr_ip_str_to_addr(const char *str, struct lrtr_ip_addr *ip)
+RTRLIB_EXPORT int lrtr_ip_str_to_addr(const char *str, struct lrtr_ip_addr *ip)
 {
     if(strchr(str, ':') == NULL) {
         ip->ver = LRTR_IPV4;;
@@ -64,7 +68,7 @@ int lrtr_ip_str_to_addr(const char *str, struct lrtr_ip_addr *ip)
 }
 
 // cppcheck-suppress unusedFunction
-bool lrtr_ip_str_cmp(const struct lrtr_ip_addr *addr1, const char *addr2)
+RTRLIB_EXPORT bool lrtr_ip_str_cmp(const struct lrtr_ip_addr *addr1, const char *addr2)
 {
     struct lrtr_ip_addr tmp;
     if(lrtr_ip_str_to_addr(addr2, &tmp) == -1)

@@ -8,6 +8,7 @@
  */
 
 #include "rtrlib/rtr_mgr.h"
+#include "rtrlib/rtrlib_export.h"
 #include "rtrlib/pfx/trie/trie-pfx.h"
 #include "rtrlib/spki/hashtable/ht-spkitable.h"
 #include <stdlib.h>
@@ -316,16 +317,16 @@ int rtr_mgr_config_cmp_tommy(const void *a, const void *b)
 	return rtr_mgr_config_cmp(ar->group, br->group);
 }
 
-int rtr_mgr_init(struct rtr_mgr_config **config_out,
-		 struct rtr_mgr_group groups[],
-		 const unsigned int groups_len,
-		 const unsigned int refresh_interval,
-		 const unsigned int expire_interval,
-		 const unsigned int retry_interval,
-		 const pfx_update_fp update_fp,
-		 const spki_update_fp spki_update_fp,
-		 const rtr_mgr_status_fp status_fp,
-		 void *status_fp_data)
+RTRLIB_EXPORT int rtr_mgr_init(struct rtr_mgr_config **config_out,
+			       struct rtr_mgr_group groups[],
+			       const unsigned int groups_len,
+			       const unsigned int refresh_interval,
+			       const unsigned int expire_interval,
+			       const unsigned int retry_interval,
+			       const pfx_update_fp update_fp,
+			       const spki_update_fp spki_update_fp,
+			       const rtr_mgr_status_fp status_fp,
+			       void *status_fp_data)
 {
 	enum rtr_rtvals err_code = RTR_ERROR;
 	enum rtr_interval_mode iv_mode = RTR_INTERVAL_MODE_DEFAULT_MIN_MAX;
@@ -439,8 +440,8 @@ err:
 	return err_code;
 }
 
-struct rtr_mgr_group *rtr_mgr_get_first_group(struct rtr_mgr_config
-						     *config)
+RTRLIB_EXPORT struct rtr_mgr_group *rtr_mgr_get_first_group(
+		struct rtr_mgr_config *config)
 {
 	tommy_node *head = tommy_list_head(&config->groups);
 	struct rtr_mgr_group_node *group_node = head->data;
@@ -448,7 +449,7 @@ struct rtr_mgr_group *rtr_mgr_get_first_group(struct rtr_mgr_config
 	return group_node->group;
 }
 
-int rtr_mgr_start(struct rtr_mgr_config *config)
+RTRLIB_EXPORT int rtr_mgr_start(struct rtr_mgr_config *config)
 {
 	MGR_DBG1("rtr_mgr_start()");
 	struct rtr_mgr_group *best_group = rtr_mgr_get_first_group(config);
@@ -456,7 +457,7 @@ int rtr_mgr_start(struct rtr_mgr_config *config)
 	return rtr_mgr_start_sockets(best_group);
 }
 
-bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config)
+RTRLIB_EXPORT bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config)
 {
 	pthread_mutex_lock(&config->mutex);
 	tommy_node *node = tommy_list_head(&config->groups);
@@ -480,7 +481,7 @@ bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config)
 	return false;
 }
 
-void rtr_mgr_free(struct rtr_mgr_config *config)
+RTRLIB_EXPORT void rtr_mgr_free(struct rtr_mgr_config *config)
 {
 	MGR_DBG1("rtr_mgr_free()");
 	pthread_mutex_lock(&config->mutex);
@@ -513,28 +514,28 @@ void rtr_mgr_free(struct rtr_mgr_config *config)
 }
 
 /* cppcheck-suppress unusedFunction */
-inline int rtr_mgr_validate(struct rtr_mgr_config *config,
-			    const uint32_t asn,
-			    const struct lrtr_ip_addr *prefix,
-			    const uint8_t mask_len,
-			    enum pfxv_state *result)
+RTRLIB_EXPORT inline int rtr_mgr_validate(struct rtr_mgr_config *config,
+					  const uint32_t asn,
+					  const struct lrtr_ip_addr *prefix,
+					  const uint8_t mask_len,
+					  enum pfxv_state *result)
 {
 	return pfx_table_validate(config->pfx_table, asn, prefix, mask_len,
 				  result);
 }
 
 /* cppcheck-suppress unusedFunction */
-inline int rtr_mgr_get_spki(struct rtr_mgr_config *config,
-			    const uint32_t asn,
-			    uint8_t *ski,
-			    struct spki_record **result,
-			    unsigned int *result_count)
+RTRLIB_EXPORT inline int rtr_mgr_get_spki(struct rtr_mgr_config *config,
+					  const uint32_t asn,
+					  uint8_t *ski,
+					  struct spki_record **result,
+					  unsigned int *result_count)
 {
 	return spki_table_get_all(config->spki_table,
 				  asn, ski, result, result_count);
 }
 
-void rtr_mgr_stop(struct rtr_mgr_config *config)
+RTRLIB_EXPORT void rtr_mgr_stop(struct rtr_mgr_config *config)
 {
 	pthread_mutex_lock(&config->mutex);
 	tommy_node *node = tommy_list_head(&config->groups);
@@ -553,8 +554,9 @@ void rtr_mgr_stop(struct rtr_mgr_config *config)
 }
 
 /* cppcheck-suppress unusedFunction */
-int rtr_mgr_add_group(struct rtr_mgr_config *config,
-		      const struct rtr_mgr_group *group)
+RTRLIB_EXPORT int rtr_mgr_add_group(
+		struct rtr_mgr_config *config,
+		const struct rtr_mgr_group *group)
 {
 	unsigned int refresh_iv = 3600;
 	unsigned int retry_iv = 600;
@@ -633,8 +635,9 @@ err:
 }
 
 /* cppcheck-suppress unusedFunction */
-int rtr_mgr_remove_group(struct rtr_mgr_config *config,
-			 unsigned int preference)
+RTRLIB_EXPORT int rtr_mgr_remove_group(
+		struct rtr_mgr_config *config,
+		unsigned int preference)
 {
 	pthread_mutex_lock(&config->mutex);
 	tommy_node *remove_node = NULL;
@@ -691,10 +694,10 @@ int rtr_mgr_remove_group(struct rtr_mgr_config *config,
 
 // TODO: write test for this function.
 /* cppcheck-suppress unusedFunction */
-int rtr_mgr_for_each_group(struct rtr_mgr_config *conf,
-			   void (fp)(const struct rtr_mgr_group *group,
-				     void *data),
-			   void *data)
+RTRLIB_EXPORT int rtr_mgr_for_each_group(
+		struct rtr_mgr_config *conf,
+		void (fp)(const struct rtr_mgr_group *group, void *data),
+		void *data)
 {
 	tommy_node *node = tommy_list_head(&conf->groups);
 
@@ -708,26 +711,30 @@ int rtr_mgr_for_each_group(struct rtr_mgr_config *conf,
 	return RTR_SUCCESS;
 }
 
-const char *rtr_mgr_status_to_str(enum rtr_mgr_status status)
+RTRLIB_EXPORT const char *rtr_mgr_status_to_str(enum rtr_mgr_status status)
 {
 	return mgr_str_status[status];
 }
 
 /* cppcheck-suppress unusedFunction */
-inline void rtr_mgr_for_each_ipv4_record(struct rtr_mgr_config *config,
-					 void (fp)(const struct pfx_record *,
-						   void *data),
-						   void *data)
+RTRLIB_EXPORT inline void rtr_mgr_for_each_ipv4_record(
+		struct rtr_mgr_config *config,
+		void (fp)(
+			const struct pfx_record *,
+			void *data),
+		void *data)
 {
 	pfx_table_for_each_ipv4_record(config->pfx_table,
 				       fp, data);
 }
 
 /* cppcheck-suppress unusedFunction */
-inline void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config,
-					 void (fp)(const struct pfx_record *,
-						   void *data),
-					 void *data)
+RTRLIB_EXPORT inline void rtr_mgr_for_each_ipv6_record(
+		struct rtr_mgr_config *config,
+		void (fp)(
+			const struct pfx_record *,
+			void *data),
+		void *data)
 {
 	pfx_table_for_each_ipv6_record(config->pfx_table,
 				       fp, data);
