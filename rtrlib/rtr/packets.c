@@ -204,23 +204,23 @@ int rtr_check_interval_range(uint32_t interval, uint32_t minimum,
 			     uint32_t maximum)
 {
     if (interval < minimum) {
-        return BELOW_INTERVAL_RANGE;
+        return RTR_BELOW_INTERVAL_RANGE;
     } else if (interval > maximum) {
-        return ABOVE_INTERVAL_RANGE;
+        return RTR_ABOVE_INTERVAL_RANGE;
     }
 
-    return INSIDE_INTERVAL_RANGE;
+    return RTR_INSIDE_INTERVAL_RANGE;
 }
 
 void apply_interval_value(struct rtr_socket *rtr_socket,
 			  uint32_t interval,
-			  enum interval_type type)
+			  enum rtr_interval_type type)
 {
-    if (type == EXPIRATION) {
+    if (type == RTR_INTERVAL_TYPE_EXPIRATION) {
         rtr_socket->expire_interval = interval;
-    } else if (type == REFRESH) {
+    } else if (type == RTR_INTERVAL_TYPE_REFRESH) {
         rtr_socket->refresh_interval = interval;
-    } else if (type == RETRY) {
+    } else if (type == RTR_INTERVAL_TYPE_RETRY) {
         rtr_socket->retry_interval = interval;
     }
 }
@@ -228,7 +228,7 @@ void apply_interval_value(struct rtr_socket *rtr_socket,
 int rtr_check_interval_option(struct rtr_socket *rtr_socket,
 			      int interval_mode,
 			      uint32_t interval,
-			      enum interval_type type)
+			      enum rtr_interval_type type)
 {
     uint16_t minimum;
     uint32_t maximum;
@@ -236,17 +236,17 @@ int rtr_check_interval_option(struct rtr_socket *rtr_socket,
     int interv_retval;
 
     switch (type) {
-    case EXPIRATION:
+    case RTR_INTERVAL_TYPE_EXPIRATION:
         minimum = RTR_EXPIRATION_MIN;
         maximum = RTR_EXPIRATION_MAX;
         interv_retval = rtr_check_interval_range(interval, minimum, maximum);
         break;
-    case REFRESH:
+    case RTR_INTERVAL_TYPE_REFRESH:
         minimum = RTR_REFRESH_MIN;
         maximum = RTR_REFRESH_MAX;
         interv_retval = rtr_check_interval_range(interval, minimum, maximum);
         break;
-    case RETRY:
+    case RTR_INTERVAL_TYPE_RETRY:
         minimum = RTR_RETRY_MIN;
         maximum = RTR_RETRY_MAX;
         interv_retval = rtr_check_interval_range(interval, minimum, maximum);
@@ -256,11 +256,11 @@ int rtr_check_interval_option(struct rtr_socket *rtr_socket,
         return RTR_ERROR;
     }
 
-    if (interv_retval == INSIDE_INTERVAL_RANGE ||
-	interval_mode == ACCEPT_ANY) {
+    if (interv_retval == RTR_INSIDE_INTERVAL_RANGE ||
+	interval_mode == RTR_INTERVAL_MODE_ACCEPT_ANY) {
         apply_interval_value(rtr_socket, interval, type);
-    } else if (interval_mode == DEFAULT_MIN_MAX) {
-        if (interv_retval == BELOW_INTERVAL_RANGE)
+    } else if (interval_mode == RTR_INTERVAL_MODE_DEFAULT_MIN_MAX) {
+        if (interv_retval == RTR_BELOW_INTERVAL_RANGE)
             apply_interval_value(rtr_socket, minimum, type);
         else
             apply_interval_value(rtr_socket, maximum, type);
@@ -1053,10 +1053,10 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
             }
 
             if (eod_pdu->ver == RTR_PROTOCOL_VERSION_1
-                    && rtr_socket->iv_mode != IGNORE_ANY) {
+                    && rtr_socket->iv_mode != RTR_INTERVAL_MODE_IGNORE_ANY) {
 
                 int interv_retval;
-                interv_retval = rtr_check_interval_option(rtr_socket, rtr_socket->iv_mode, ((struct pdu_end_of_data_v1 *) pdu)->expire_interval, EXPIRATION);
+                interv_retval = rtr_check_interval_option(rtr_socket, rtr_socket->iv_mode, ((struct pdu_end_of_data_v1 *) pdu)->expire_interval, RTR_INTERVAL_TYPE_EXPIRATION);
 
                 if(interv_retval == RTR_ERROR) {
                     interval_send_error_pdu(rtr_socket, pdu, ((struct pdu_end_of_data_v1 *) pdu)->expire_interval, RTR_EXPIRATION_MIN, RTR_EXPIRATION_MAX);
@@ -1064,7 +1064,7 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
                     goto cleanup;
                 }
 
-                interv_retval = rtr_check_interval_option(rtr_socket, rtr_socket->iv_mode, ((struct pdu_end_of_data_v1 *) pdu)->refresh_interval, REFRESH);
+                interv_retval = rtr_check_interval_option(rtr_socket, rtr_socket->iv_mode, ((struct pdu_end_of_data_v1 *) pdu)->refresh_interval, RTR_INTERVAL_TYPE_REFRESH);
 
                 if(interv_retval == RTR_ERROR) {
                     interval_send_error_pdu(rtr_socket, pdu, ((struct pdu_end_of_data_v1 *) pdu)->refresh_interval, RTR_REFRESH_MIN, RTR_REFRESH_MAX);
@@ -1072,7 +1072,7 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
                     goto cleanup;
                 }
 
-                interv_retval = rtr_check_interval_option(rtr_socket, rtr_socket->iv_mode, ((struct pdu_end_of_data_v1 *) pdu)->retry_interval, RETRY);
+                interv_retval = rtr_check_interval_option(rtr_socket, rtr_socket->iv_mode, ((struct pdu_end_of_data_v1 *) pdu)->retry_interval, RTR_INTERVAL_TYPE_RETRY);
 
                 if(interv_retval == RTR_ERROR) {
                     interval_send_error_pdu(rtr_socket, pdu, ((struct pdu_end_of_data_v1 *) pdu)->retry_interval, RTR_RETRY_MIN, RTR_RETRY_MAX);

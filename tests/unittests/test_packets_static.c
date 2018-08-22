@@ -378,29 +378,38 @@ static void test_rtr_pdu_check_interval(void **state)
 	pdu_eod.expire_interval = 601;
 
 	/* test appliance of interval values to the rtr_socket */
-	apply_interval_value(&rtr_socket, pdu_eod.refresh_interval, REFRESH);
+	apply_interval_value(
+			&rtr_socket,
+			pdu_eod.refresh_interval,
+			RTR_INTERVAL_TYPE_REFRESH);
 	assert_int_equal(rtr_socket.refresh_interval,
 			 pdu_eod.refresh_interval);
 
-	apply_interval_value(&rtr_socket, pdu_eod.retry_interval, RETRY);
+	apply_interval_value(
+			&rtr_socket,
+			pdu_eod.retry_interval,
+			RTR_INTERVAL_TYPE_RETRY);
 	assert_int_equal(rtr_socket.retry_interval, pdu_eod.retry_interval);
 
-	apply_interval_value(&rtr_socket, pdu_eod.expire_interval, EXPIRATION);
+	apply_interval_value(
+			&rtr_socket,
+			pdu_eod.expire_interval,
+			RTR_INTERVAL_TYPE_EXPIRATION);
 	assert_int_equal(rtr_socket.expire_interval, pdu_eod.expire_interval);
 
 	/* test checks that determine if value is inside range */
 	retval = rtr_check_interval_range(pdu_eod.refresh_interval,
 					  RTR_REFRESH_MIN, RTR_REFRESH_MAX);
-	assert_int_equal(retval, INSIDE_INTERVAL_RANGE);
+	assert_int_equal(retval, RTR_INSIDE_INTERVAL_RANGE);
 
 	retval = rtr_check_interval_range(pdu_eod.retry_interval,
 					  RTR_RETRY_MIN, RTR_RETRY_MAX);
-	assert_int_equal(retval, INSIDE_INTERVAL_RANGE);
+	assert_int_equal(retval, RTR_INSIDE_INTERVAL_RANGE);
 
 	retval = rtr_check_interval_range(pdu_eod.expire_interval,
 					  RTR_EXPIRATION_MIN,
 					  RTR_EXPIRATION_MAX);
-	assert_int_equal(retval, INSIDE_INTERVAL_RANGE);
+	assert_int_equal(retval, RTR_INSIDE_INTERVAL_RANGE);
 
 	/* test checks that determine if value is below range */
 	pdu_eod.refresh_interval = RTR_REFRESH_MIN - 1;
@@ -409,16 +418,16 @@ static void test_rtr_pdu_check_interval(void **state)
 
 	retval = rtr_check_interval_range(pdu_eod.refresh_interval,
 					  RTR_REFRESH_MIN, RTR_REFRESH_MAX);
-	assert_int_equal(retval, BELOW_INTERVAL_RANGE);
+	assert_int_equal(retval, RTR_BELOW_INTERVAL_RANGE);
 
 	retval = rtr_check_interval_range(pdu_eod.retry_interval,
 					  RTR_RETRY_MIN, RTR_RETRY_MAX);
-	assert_int_equal(retval, BELOW_INTERVAL_RANGE);
+	assert_int_equal(retval, RTR_BELOW_INTERVAL_RANGE);
 
 	retval = rtr_check_interval_range(pdu_eod.expire_interval,
 					  RTR_EXPIRATION_MIN,
 					  RTR_EXPIRATION_MAX);
-	assert_int_equal(retval, BELOW_INTERVAL_RANGE);
+	assert_int_equal(retval, RTR_BELOW_INTERVAL_RANGE);
 
 	/* test checks that determine if value is above range */
 	pdu_eod.refresh_interval = RTR_REFRESH_MAX + 1;
@@ -427,51 +436,66 @@ static void test_rtr_pdu_check_interval(void **state)
 
 	retval = rtr_check_interval_range(pdu_eod.refresh_interval,
 					  RTR_REFRESH_MIN, RTR_REFRESH_MAX);
-	assert_int_equal(retval, ABOVE_INTERVAL_RANGE);
+	assert_int_equal(retval, RTR_ABOVE_INTERVAL_RANGE);
 
 	retval = rtr_check_interval_range(pdu_eod.retry_interval,
 					  RTR_RETRY_MIN, RTR_RETRY_MAX);
-	assert_int_equal(retval, ABOVE_INTERVAL_RANGE);
+	assert_int_equal(retval, RTR_ABOVE_INTERVAL_RANGE);
 
 	retval = rtr_check_interval_range(pdu_eod.expire_interval,
 					  RTR_EXPIRATION_MIN,
 					  RTR_EXPIRATION_MAX);
-	assert_int_equal(retval, ABOVE_INTERVAL_RANGE);
+	assert_int_equal(retval, RTR_ABOVE_INTERVAL_RANGE);
 
 	/* test the different interval options the user can choose */
 	rtr_socket.refresh_interval = 0;
 	pdu_eod.refresh_interval = 42;
-	retval = rtr_check_interval_option(&rtr_socket, ACCEPT_ANY,
-					   pdu_eod.refresh_interval, REFRESH);
+	retval = rtr_check_interval_option(
+			&rtr_socket,
+			RTR_INTERVAL_MODE_ACCEPT_ANY,
+			pdu_eod.refresh_interval,
+			RTR_INTERVAL_TYPE_REFRESH);
 	assert_int_equal(retval, RTR_SUCCESS);
 	assert_int_equal(rtr_socket.refresh_interval,
 			 pdu_eod.refresh_interval);
 
 	rtr_socket.refresh_interval = 0;
 	pdu_eod.refresh_interval = RTR_REFRESH_MAX + 1;
-	retval = rtr_check_interval_option(&rtr_socket, DEFAULT_MIN_MAX,
-					   pdu_eod.refresh_interval, REFRESH);
+	retval = rtr_check_interval_option(
+			&rtr_socket,
+			RTR_INTERVAL_MODE_DEFAULT_MIN_MAX,
+			pdu_eod.refresh_interval,
+			RTR_INTERVAL_TYPE_REFRESH);
 	assert_int_equal(retval, RTR_SUCCESS);
 	assert_int_equal(rtr_socket.refresh_interval, RTR_REFRESH_MAX);
 
 	rtr_socket.refresh_interval = 0;
 	pdu_eod.refresh_interval = RTR_REFRESH_MIN - 1;
-	retval = rtr_check_interval_option(&rtr_socket, DEFAULT_MIN_MAX,
-					   pdu_eod.refresh_interval, REFRESH);
+	retval = rtr_check_interval_option(
+			&rtr_socket,
+			RTR_INTERVAL_MODE_DEFAULT_MIN_MAX,
+			pdu_eod.refresh_interval,
+			RTR_INTERVAL_TYPE_REFRESH);
 	assert_int_equal(retval, RTR_SUCCESS);
 	assert_int_equal(rtr_socket.refresh_interval, RTR_REFRESH_MIN);
 
 	rtr_socket.refresh_interval = 42;
 	pdu_eod.refresh_interval = RTR_REFRESH_MIN - 1;
-	retval = rtr_check_interval_option(&rtr_socket, IGNORE_ON_FAILURE,
-					   pdu_eod.refresh_interval, REFRESH);
+	retval = rtr_check_interval_option(
+			&rtr_socket,
+			RTR_INTERVAL_MODE_IGNORE_ON_FAILURE,
+			pdu_eod.refresh_interval,
+			RTR_INTERVAL_TYPE_REFRESH);
 	assert_int_equal(retval, RTR_SUCCESS);
 	assert_int_equal(rtr_socket.refresh_interval, 42);
 
 	rtr_socket.refresh_interval = 0;
 	pdu_eod.refresh_interval = RTR_REFRESH_MAX + 1;
-	retval = rtr_check_interval_option(&rtr_socket, ACCEPT_ANY,
-					   pdu_eod.refresh_interval, REFRESH);
+	retval = rtr_check_interval_option(
+			&rtr_socket,
+			RTR_INTERVAL_MODE_ACCEPT_ANY,
+			pdu_eod.refresh_interval,
+			RTR_INTERVAL_TYPE_REFRESH);
 	assert_int_equal(retval, RTR_SUCCESS);
 	assert_int_equal(rtr_socket.refresh_interval, RTR_REFRESH_MAX + 1);
 }
@@ -482,20 +506,29 @@ static void test_set_interval_option(void **state)
 
 	struct rtr_socket rtr_socket;
 
-	set_interval_mode(&rtr_socket, IGNORE_ANY);
-	assert_int_equal(get_interval_mode(&rtr_socket), IGNORE_ANY);
+	rtr_set_interval_mode(&rtr_socket, RTR_INTERVAL_MODE_IGNORE_ANY);
+	assert_int_equal(
+			rtr_get_interval_mode(&rtr_socket),
+			RTR_INTERVAL_MODE_IGNORE_ANY);
 
-	set_interval_mode(&rtr_socket, ACCEPT_ANY);
-	assert_int_equal(get_interval_mode(&rtr_socket), ACCEPT_ANY);
+	rtr_set_interval_mode(&rtr_socket, RTR_INTERVAL_MODE_ACCEPT_ANY);
+	assert_int_equal(
+			rtr_get_interval_mode(&rtr_socket),
+			RTR_INTERVAL_MODE_ACCEPT_ANY);
 
-	set_interval_mode(&rtr_socket, DEFAULT_MIN_MAX);
-	assert_int_equal(get_interval_mode(&rtr_socket), DEFAULT_MIN_MAX);
+	rtr_set_interval_mode(&rtr_socket, RTR_INTERVAL_MODE_DEFAULT_MIN_MAX);
+	assert_int_equal(
+			rtr_get_interval_mode(&rtr_socket),
+			RTR_INTERVAL_MODE_DEFAULT_MIN_MAX);
 
-	set_interval_mode(&rtr_socket, IGNORE_ON_FAILURE);
-	assert_int_equal(get_interval_mode(&rtr_socket), IGNORE_ON_FAILURE);
+	rtr_set_interval_mode(
+			&rtr_socket, RTR_INTERVAL_MODE_IGNORE_ON_FAILURE);
+	assert_int_equal(
+			rtr_get_interval_mode(&rtr_socket),
+			RTR_INTERVAL_MODE_IGNORE_ON_FAILURE);
 
-	set_interval_mode(&rtr_socket, 4);
-	assert(get_interval_mode(&rtr_socket) != 4);
+	rtr_set_interval_mode(&rtr_socket, 4);
+	assert(rtr_get_interval_mode(&rtr_socket) != 4);
 }
 
 int main(void)
