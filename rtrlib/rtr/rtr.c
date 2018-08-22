@@ -250,11 +250,13 @@ const char *rtr_state_to_str(enum rtr_socket_state state)
     return socket_str_states[state];
 }
 
+/* cppcheck-suppress unusedFunction */
 enum rtr_interval_mode rtr_get_interval_mode(struct rtr_socket *rtr_socket)
 {
 	return rtr_socket->iv_mode;
 }
 
+/* cppcheck-suppress unusedFunction */
 void rtr_set_interval_mode(struct rtr_socket *rtr_socket, enum rtr_interval_mode option)
 {
 	switch (option) {
