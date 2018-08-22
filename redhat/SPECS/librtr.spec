@@ -107,6 +107,8 @@ export LD_LIBRARY_PATH=.; make test
 %files -n rtr-tools
 %attr(755,root,root) %{_bindir}/rtrclient
 %attr(755,root,root) %{_bindir}/rpki-rov
+%attr(644,root,root) %{_mandir}/man1/rtrclient.1.gz
+%attr(644,root,root) %{_mandir}/man1/rpki-rov.1.gz
 %doc CHANGELOG
 %doc LICENSE
 
