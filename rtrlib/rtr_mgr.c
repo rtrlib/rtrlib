@@ -34,25 +34,6 @@ static void rtr_mgr_cb(const struct rtr_socket *sock,
 		       const enum rtr_socket_state state,
 		       void *data_config, void *data_group);
 
-int get_interval_mode(struct rtr_socket *rtr_socket)
-{
-	return rtr_socket->iv_mode;
-}
-
-void set_interval_mode(struct rtr_socket *rtr_socket, int option)
-{
-	switch (option) {
-	case IGNORE_ANY:
-	case ACCEPT_ANY:
-	case DEFAULT_MIN_MAX:
-	case IGNORE_ON_FAILURE:
-		rtr_socket->iv_mode = option;
-		break;
-	default:
-		RTR_DBG1("Invalid interval mode. Mode remains unchanged.");
-	}
-}
-
 static void set_status(const struct rtr_mgr_config *conf,
 		       struct rtr_mgr_group *group,
 		       enum rtr_mgr_status mgr_status,
@@ -84,7 +65,7 @@ static int rtr_mgr_init_sockets(struct rtr_mgr_group *group,
 				const unsigned int refresh_interval,
 				const unsigned int expire_interval,
 				const unsigned int retry_interval,
-				enum interval_mode iv_mode)
+				enum rtr_interval_mode iv_mode)
 {
 	for (unsigned int i = 0; i < group->sockets_len; i++) {
 		enum rtr_rtvals err_code = rtr_init(group->sockets[i], NULL,
@@ -347,7 +328,7 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
 		 void *status_fp_data)
 {
 	enum rtr_rtvals err_code = RTR_ERROR;
-	enum interval_mode iv_mode = DEFAULT_MIN_MAX;
+	enum rtr_interval_mode iv_mode = RTR_INTERVAL_MODE_DEFAULT_MIN_MAX;
 	struct pfx_table *pfxt = NULL;
 	struct spki_table *spki_table = NULL;
 	struct rtr_mgr_config *config = NULL;
@@ -578,7 +559,7 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
 	unsigned int refresh_iv = 3600;
 	unsigned int retry_iv = 600;
 	unsigned int expire_iv = 7200;
-	enum interval_mode iv_mode = DEFAULT_MIN_MAX;
+	enum rtr_interval_mode iv_mode = RTR_INTERVAL_MODE_DEFAULT_MIN_MAX;
 	enum rtr_rtvals err_code = RTR_ERROR;
 	struct rtr_mgr_group_node *new_group_node = NULL;
 	struct rtr_mgr_group *new_group = NULL;

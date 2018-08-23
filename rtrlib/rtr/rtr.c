@@ -59,7 +59,7 @@ int rtr_init(struct rtr_socket *rtr_socket,
               const unsigned int refresh_interval,
               const unsigned int expire_interval,
               const unsigned int retry_interval,
-	      enum interval_mode iv_mode,
+	      enum rtr_interval_mode iv_mode,
               rtr_connection_state_fp fp, void *fp_param_config,
 	      void *fp_param_group)
 {
@@ -67,9 +67,9 @@ int rtr_init(struct rtr_socket *rtr_socket,
         rtr_socket->tr_socket = tr;
 
     // Check if one of the intervals is not in range of the predefined values.
-    if(rtr_check_interval_range(refresh_interval, RTR_REFRESH_MIN, RTR_REFRESH_MAX) != INSIDE_INTERVAL_RANGE ||
-       rtr_check_interval_range(expire_interval, RTR_EXPIRATION_MIN, RTR_EXPIRATION_MAX) != INSIDE_INTERVAL_RANGE ||
-       rtr_check_interval_range(retry_interval, RTR_RETRY_MIN, RTR_RETRY_MAX) != INSIDE_INTERVAL_RANGE) {
+    if(rtr_check_interval_range(refresh_interval, RTR_REFRESH_MIN, RTR_REFRESH_MAX) != RTR_INSIDE_INTERVAL_RANGE ||
+       rtr_check_interval_range(expire_interval, RTR_EXPIRATION_MIN, RTR_EXPIRATION_MAX) != RTR_INSIDE_INTERVAL_RANGE ||
+       rtr_check_interval_range(retry_interval, RTR_RETRY_MIN, RTR_RETRY_MAX) != RTR_INSIDE_INTERVAL_RANGE) {
         RTR_DBG("Interval value not in range.");
         return RTR_INVALID_PARAM;
     }
@@ -249,3 +249,25 @@ const char *rtr_state_to_str(enum rtr_socket_state state)
 {
     return socket_str_states[state];
 }
+
+/* cppcheck-suppress unusedFunction */
+enum rtr_interval_mode rtr_get_interval_mode(struct rtr_socket *rtr_socket)
+{
+	return rtr_socket->iv_mode;
+}
+
+/* cppcheck-suppress unusedFunction */
+void rtr_set_interval_mode(struct rtr_socket *rtr_socket, enum rtr_interval_mode option)
+{
+	switch (option) {
+	case RTR_INTERVAL_MODE_IGNORE_ANY:
+	case RTR_INTERVAL_MODE_ACCEPT_ANY:
+	case RTR_INTERVAL_MODE_DEFAULT_MIN_MAX:
+	case RTR_INTERVAL_MODE_IGNORE_ON_FAILURE:
+		rtr_socket->iv_mode = option;
+		break;
+	default:
+		RTR_DBG1("Invalid interval mode. Mode remains unchanged.");
+	}
+}
+

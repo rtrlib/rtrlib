@@ -51,26 +51,26 @@ enum rtr_rtvals {
     RTR_INVALID_PARAM = -2
 };
 
-enum interval_range {
-    BELOW_INTERVAL_RANGE = -1,
-    INSIDE_INTERVAL_RANGE = 0,
-    ABOVE_INTERVAL_RANGE = 1
+enum rtr_interval_range {
+    RTR_BELOW_INTERVAL_RANGE = -1,
+    RTR_INSIDE_INTERVAL_RANGE = 0,
+    RTR_ABOVE_INTERVAL_RANGE = 1
 };
 
-enum interval_type {
-    EXPIRATION,
-    REFRESH,
-    RETRY
+enum rtr_interval_type {
+    RTR_INTERVAL_TYPE_EXPIRATION,
+    RTR_INTERVAL_TYPE_REFRESH,
+    RTR_INTERVAL_TYPE_RETRY
 };
 
 /**
  * @brief These modes let the user configure how received intervals should be handled.
  */
-enum interval_mode {
-    IGNORE_ANY,         /*< Ignore appliance of interval values at all. */
-    ACCEPT_ANY,         /*< Accept any interval values, even if outside of range. */
-    DEFAULT_MIN_MAX,    /*< If interval value is outside of range, apply min (if below range) or max (if above range). */
-    IGNORE_ON_FAILURE   /*< Ignore any interval values that are outside of range. */
+enum rtr_interval_mode {
+    RTR_INTERVAL_MODE_IGNORE_ANY,         /*< Ignore appliance of interval values at all. */
+    RTR_INTERVAL_MODE_ACCEPT_ANY,         /*< Accept any interval values, even if outside of range. */
+    RTR_INTERVAL_MODE_DEFAULT_MIN_MAX,    /*< If interval value is outside of range, apply min (if below range) or max (if above range). */
+    RTR_INTERVAL_MODE_IGNORE_ON_FAILURE   /*< Ignore any interval values that are outside of range. */
 };
 
 /**
@@ -148,7 +148,7 @@ struct rtr_socket {
     time_t last_update;
     unsigned int expire_interval;
     unsigned int retry_interval;
-    enum interval_mode iv_mode;
+    enum rtr_interval_mode iv_mode;
     enum rtr_socket_state state;
     uint32_t session_id;
     bool request_session_id;
@@ -191,7 +191,7 @@ struct rtr_socket {
 int rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr_socket, struct pfx_table *pfx_table,
              struct spki_table *spki_table, const unsigned int refresh_interval,
              const unsigned int expire_interval, const unsigned int retry_interval,
-             enum interval_mode iv_mode, rtr_connection_state_fp fp, void *fp_data_config,
+             enum rtr_interval_mode iv_mode, rtr_connection_state_fp fp, void *fp_data_config,
 	     void *fp_data_group);
 
 /**
@@ -216,5 +216,20 @@ void rtr_stop(struct rtr_socket *rtr_socket);
  * @return !=NULL The rtr_socket_state as String.
  */
 const char *rtr_state_to_str(enum rtr_socket_state state);
+
+/**
+ * @brief Set the interval option to the desired one. It's either RTR_INTERVAL_MODE_IGNORE_ANY,
+ * RTR_INTERVAL_MODE_APPLY_ANY, RTR_INTERVAL_MODE_DEFAULT_MIN_MAX or RTR_INTERVAL_MODE_IGNORE_ON_FAILURE.
+ * @param[in] rtr_socket The target socket.
+ * @param[in] option The new interval option that should be applied.
+ */
+void rtr_set_interval_mode(struct rtr_socket *rtr_socket, enum rtr_interval_mode option);
+
+/**
+ * @brief Get the current interval mode.
+ * @param[in] rtr_socket The target socket.
+ * @return The value of the interval_option variable.
+ */
+enum rtr_interval_mode rtr_get_interval_mode(struct rtr_socket *rtr_socket);
 #endif
 /* @} */
