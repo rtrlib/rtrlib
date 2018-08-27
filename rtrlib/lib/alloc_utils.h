@@ -12,10 +12,6 @@
 
 #include <stdlib.h>
 
-extern void *(*MALLOC_PTR)(size_t size);
-extern void (*FREE_PTR)(void *ptr);
-extern void *(*REALLOC_PTR)(void *ptr, size_t size);
-
 /**
  * @brief Sets custom malloc, realloc and free function
  * that is used throughout rtrlib.

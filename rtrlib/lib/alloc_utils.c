@@ -15,9 +15,9 @@
 
 #include "rtrlib/rtrlib_export.h"
 
-void *(*MALLOC_PTR)(size_t size) = malloc;
-void *(*REALLOC_PTR)(void *ptr, size_t size) = realloc;
-void (*FREE_PTR)(void *ptr) = free;
+static void *(*MALLOC_PTR)(size_t size) = malloc;
+static void *(*REALLOC_PTR)(void *ptr, size_t size) = realloc;
+static void (*FREE_PTR)(void *ptr) = free;
 
 /* cppcheck-suppress unusedFunction */
 RTRLIB_EXPORT void lrtr_set_alloc_functions(
