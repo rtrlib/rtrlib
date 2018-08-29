@@ -12,7 +12,10 @@ if(CMAKE_BUILD_TYPE STREQUAL Debug)
     if(GCC_VERSION VERSION_GREATER 4.8 OR GCC_VERSION VERSION_EQUAL 4.8)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wfree-nonheap-object")
     endif()
+
+    set(DOCS_EXCLUDE_PATTERN "")
 else()
+    set(DOCS_EXCLUDE_PATTERN "*_private.h")
 endif(CMAKE_BUILD_TYPE STREQUAL Debug)
 
 include_directories(.)

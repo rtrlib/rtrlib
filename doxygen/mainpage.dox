@@ -30,7 +30,7 @@ stores them in a prefix table data structure.\n
 @par
 The @ref mod_pfx_h stores validated prefix origin data. The abstract data
 structure provides a common interface to add and delete entries as well as
-to verify a specific prefix. The library implements a @ref mod_trie_pfx_h,
+to verify a specific prefix. The library implements a Trie,
 but can be extended to other data structures.\n
 
 @par
