@@ -24,19 +24,4 @@ void lrtr_set_alloc_functions(
 		void *(*realloc_function)(void *ptr, size_t size),
 		void (*free_function)(void *ptr));
 
-void *lrtr_malloc(size_t size);
-
-void lrtr_free(void *ptr);
-
-void *lrtr_realloc(void *ptr, size_t size);
-
-/**
- * @brief Duplicates a string
- * @pre string != NULL
- * @param[in] string
- * @returns Duplicated string
- * @returns NULL on error
- */
-char *lrtr_strdup(const char *string);
-
 #endif

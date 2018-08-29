@@ -7,16 +7,20 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#include "rtrlib/rtr_mgr.h"
-#include "rtrlib/rtrlib_export.h"
-#include "rtrlib/pfx/trie/trie-pfx.h"
-#include "rtrlib/spki/hashtable/ht-spkitable.h"
 #include <stdlib.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>
-#include "rtrlib/lib/log.h"
-#include "rtrlib/lib/alloc_utils.h"
+#include <arpa/inet.h>
+
+#include "rtrlib/lib/alloc_utils_private.h"
+#include "rtrlib/lib/log_private.h"
+#include "rtrlib/pfx/trie/trie-pfx_private.h"
+#include "rtrlib/rtr/rtr_private.h"
+#include "rtrlib/rtr_mgr_private.h"
+#include "rtrlib/rtrlib_export_private.h"
+#include "rtrlib/spki/hashtable/ht-spkitable_private.h"
+#include "rtrlib/transport/transport_private.h"
 
 #define MGR_DBG(fmt, ...) lrtr_dbg("RTR_MGR: " fmt, ## __VA_ARGS__)
 #define MGR_DBG1(a) lrtr_dbg("RTR_MGR: " a)

@@ -7,16 +7,11 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#include <arpa/inet.h>
 #include <assert.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netdb.h>
+#include <stdint.h>
 #include <time.h>
-#include <stdio.h>
-#include <string.h>
-#include "rtrlib/lib/utils.h"
+
+#include "rtrlib/lib/utils_private.h"
 
 #ifdef __MACH__
 #include <mach/mach_time.h>

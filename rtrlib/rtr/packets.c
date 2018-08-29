@@ -7,18 +7,21 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
+#include <assert.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
-#include <stdio.h>
 
-#include "rtrlib/lib/convert_byte_order.h"
-#include "rtrlib/transport/transport.h"
-#include "rtrlib/rtr/packets.h"
-#include "rtrlib/lib/utils.h"
-#include "rtrlib/lib/log.h"
-#include "rtrlib/pfx/trie/trie-pfx.h"
-#include "rtrlib/spki/hashtable/ht-spkitable.h"
+#include "rtrlib/lib/alloc_utils_private.h"
+#include "rtrlib/lib/convert_byte_order_private.h"
+#include "rtrlib/lib/log_private.h"
+#include "rtrlib/lib/utils_private.h"
+#include "rtrlib/pfx/trie/trie-pfx_private.h"
+#include "rtrlib/rtr/packets_private.h"
+#include "rtrlib/rtr/rtr_private.h"
+#include "rtrlib/spki/hashtable/ht-spkitable_private.h"
+#include "rtrlib/transport/transport_private.h"
 
 #define MGR_DBG1(a) lrtr_dbg("RTR_MGR: " a)
 #define TEMPORARY_PDU_STORE_INCREMENT_VALUE 100

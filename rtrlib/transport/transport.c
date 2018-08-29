@@ -7,9 +7,8 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#include "rtrlib/transport/transport.h"
-#include "rtrlib/lib/utils.h"
-#include "rtrlib/rtrlib_export.h"
+#include "rtrlib/transport/transport_private.h"
+#include "rtrlib/lib/utils_private.h"
 
 inline int tr_open(struct tr_socket *socket)
 {

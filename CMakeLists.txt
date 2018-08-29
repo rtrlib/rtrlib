@@ -98,10 +98,22 @@ set(LIBRARY_SOVERSION ${RTRLIB_VERSION_MAJOR})
 set_target_properties(rtrlib PROPERTIES SOVERSION ${LIBRARY_SOVERSION} VERSION ${LIBRARY_VERSION} OUTPUT_NAME rtr)
 install(TARGETS rtrlib LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/)
 
+
+# Get lists of all headers
+file(GLOB_RECURSE RTRLIB_HEADERS RELATIVE "${PROJECT_SOURCE_DIR}/rtrlib" "rtrlib/*.h")
+# Create list of all public headers
+foreach(ITEM ${RTRLIB_HEADERS})
+    if(NOT ${ITEM} MATCHES ".*_private\\.h" AND NOT ${ITEM} MATCHES ".*tommy.*")
+        list(APPEND RTRLIB_PUBLIC_HEADERS ${ITEM})
+    endif()
+endforeach()
+
 #install includes
-install(DIRECTORY rtrlib/ DESTINATION include/rtrlib
-    FILES_MATCHING PATTERN "*.h"
-    PATTERN rtrlib/rtr_mgr. EXCLUDE)
+foreach(ITEM ${RTRLIB_PUBLIC_HEADERS})
+    get_filename_component(HEADER_DIRECTORY "${ITEM}" PATH)
+    install(FILES "rtrlib/${ITEM}"
+        DESTINATION "include/rtrlib/${HEADER_DIRECTORY}")
+endforeach()
 
 #pkgconfig file
 if(LIBSSH_FOUND)

@@ -24,8 +24,8 @@
 
 #ifndef SSH_TRANSPORT_H
 #define SSH_TRANSPORT_H
-#include <libssh/libssh.h>
-#include "../transport.h"
+
+#include "rtrlib/transport/transport.h"
 
 /**
  * @brief A tr_ssh_config struct holds configuration data for an tr_ssh socket.

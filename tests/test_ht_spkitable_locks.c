@@ -7,7 +7,7 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#include "rtrlib/spki/hashtable/ht-spkitable.h"
+#include "rtrlib/spki/hashtable/ht-spkitable_private.h"
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>

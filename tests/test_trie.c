@@ -11,8 +11,8 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <assert.h>
-#include "rtrlib/lib/log.h"
-#include "rtrlib/lib/utils.h"
+#include "rtrlib/lib/log_private.h"
+#include "rtrlib/lib/utils_private.h"
 #include "rtrlib/pfx/trie/trie.c"
 
 /*

@@ -7,16 +7,19 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <assert.h>
-#include <string.h>
-#include <stdbool.h>
 #include <arpa/inet.h>
-#include "rtrlib/lib/ip.h"
-#include "rtrlib/lib/utils.h"
-#include "rtrlib/pfx/trie/trie-pfx.h"
+#include <assert.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+
+#include "rtrlib/lib/ip_private.h"
+#include "rtrlib/lib/utils_private.h"
+#include "rtrlib/pfx/trie/trie-pfx_private.h"
+#include "rtrlib/pfx/trie/trie_private.h"
+#include "rtrlib/rtr/rtr.h"
 
 static void validate(struct pfx_table *pfxt, uint32_t asn, const char *prefix,
 		     uint8_t prefix_len, enum pfxv_state expected_result)

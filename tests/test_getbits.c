@@ -1,9 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
-#include "rtrlib/lib/ip.h"
 #include <arpa/inet.h>
 #include <string.h>
+
+#include "rtrlib/lib/ip_private.h"
 
 /*
  * @brief Test IPv4 address bit operations required by trie

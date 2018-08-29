@@ -7,10 +7,11 @@
  * Website; http://rtrlib.realmv6.org/
  */
 
-#include "rtrlib_unittests.h"
+#include "rtrlib/lib/alloc_utils_private.h"
 #include "rtrlib/rtr/packets.c"
+#include "rtrlib/rtr_mgr_private.h"
+#include "rtrlib_unittests.h"
 #include "test_packets_static.h"
-#include "rtrlib/rtr_mgr.h"
 
 int __wrap_lrtr_get_monotonic_time(time_t *seconds)
 {

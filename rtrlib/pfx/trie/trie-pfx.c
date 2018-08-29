@@ -7,13 +7,16 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#include "rtrlib/pfx/trie/trie-pfx.h"
-#include "rtrlib/lib/alloc_utils.h"
-#include "rtrlib/rtrlib_export.h"
 #include <assert.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdbool.h>
+
+#include "rtrlib/pfx/trie/trie-pfx_private.h"
+#include "rtrlib/pfx/trie/trie_private.h"
+#include "rtrlib/lib/alloc_utils_private.h"
+#include "rtrlib/rtrlib_export_private.h"
+#include "rtrlib/lib/ip_private.h"
 
 struct data_elem {
     uint32_t asn;

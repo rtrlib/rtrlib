@@ -16,10 +16,12 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "rtrlib/rtrlib_export.h"
-#include "rtrlib/lib/log.h"
-#include "rtrlib/transport/tcp/tcp_transport.h"
-#include "rtrlib/lib/alloc_utils.h"
+
+#include "rtrlib/lib/alloc_utils_private.h"
+#include "rtrlib/lib/log_private.h"
+#include "rtrlib/rtrlib_export_private.h"
+#include "rtrlib/transport/tcp/tcp_transport_private.h"
+#include "rtrlib/transport/transport_private.h"
 
 #define TCP_DBG(fmt, sock, ...) lrtr_dbg("TCP Transport(%s:%s): " fmt, sock->config.host, sock->config.port, ## __VA_ARGS__)
 #define TCP_DBG1(a, sock) lrtr_dbg("TCP Transport(%s:%s): " a,sock->config.host, sock->config.port)

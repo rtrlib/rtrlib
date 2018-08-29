@@ -9,8 +9,10 @@
 
 #include <stdlib.h>
 #include <assert.h>
-#include "rtrlib/pfx/trie/trie.h"
-#include "rtrlib/lib/alloc_utils.h"
+
+#include "rtrlib/pfx/trie/trie_private.h"
+#include "rtrlib/lib/alloc_utils_private.h"
+#include "rtrlib/lib/ip_private.h"
 
 static void swap_nodes(struct trie_node *a, struct trie_node *b)
 {

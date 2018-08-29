@@ -13,11 +13,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
-#include "rtrlib/rtrlib_export.h"
-#include "../../lib/log.h"
-#include "../../lib/utils.h"
-#include "ssh_transport.h"
-#include "rtrlib/lib/alloc_utils.h"
+
+#include <libssh/libssh.h>
+
+#include "rtrlib/lib/alloc_utils_private.h"
+#include "rtrlib/lib/log_private.h"
+#include "rtrlib/lib/utils_private.h"
+#include "rtrlib/rtrlib_export_private.h"
+#include "rtrlib/transport/ssh/ssh_transport_private.h"
+#include "rtrlib/transport/transport_private.h"
 
 #define SSH_DBG(fmt, sock, ...) lrtr_dbg("SSH Transport(%s@%s:%u): " fmt, (sock)->config.username, (sock)->config.host, (sock)->config.port, ## __VA_ARGS__)
 #define SSH_DBG1(a, sock) lrtr_dbg("SSH Transport(%s@%s:%u): " a, (sock)->config.username, (sock)->config.host, (sock)->config.port)

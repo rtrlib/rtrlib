@@ -9,8 +9,8 @@
 
 #include <stdbool.h>
 #include <string.h>
-#include "rtrlib/lib/ip.h"
-#include "rtrlib/rtrlib_export.h"
+#include "rtrlib/lib/ip_private.h"
+#include "rtrlib/rtrlib_export_private.h"
 
 bool lrtr_ip_addr_is_zero(const struct lrtr_ip_addr prefix)
 {

@@ -7,9 +7,9 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#include "rtrlib/lib/convert_byte_order.h"
-#include "rtrlib/lib/ipv4.h"
-#include "rtrlib/lib/utils.h"
+#include "rtrlib/lib/convert_byte_order_private.h"
+#include "rtrlib/lib/ipv4_private.h"
+#include "rtrlib/lib/utils_private.h"
 
 #include <assert.h>
 #include <stdio.h>

@@ -11,12 +11,15 @@
 #include <pthread.h>
 #include <signal.h>
 #include <unistd.h>
-#include "rtrlib/rtrlib_export.h"
-#include "rtrlib/lib/log.h"
-#include "rtrlib/rtr/packets.h"
-#include "rtrlib/spki/hashtable/ht-spkitable.h"
-#include "rtrlib/rtr/rtr.h"
-#include "rtrlib/lib/utils.h"
+
+#include "rtrlib/lib/log_private.h"
+#include "rtrlib/lib/utils_private.h"
+#include "rtrlib/pfx/pfx_private.h"
+#include "rtrlib/rtr/packets_private.h"
+#include "rtrlib/rtr/rtr_private.h"
+#include "rtrlib/rtrlib_export_private.h"
+#include "rtrlib/spki/hashtable/ht-spkitable_private.h"
+#include "rtrlib/transport/transport_private.h"
 
 static void rtr_purge_outdated_records(struct rtr_socket *rtr_socket);
 static void rtr_fsm_start(struct rtr_socket *rtr_socket);

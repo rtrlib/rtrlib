@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <arpa/inet.h>
 #include <inttypes.h>
-#include "rtrlib/lib/convert_byte_order.h"
+#include "rtrlib/lib/convert_byte_order_private.h"
 
 uint16_t lrtr_convert_short(const enum target_byte_order tbo,
 			    const uint16_t value)

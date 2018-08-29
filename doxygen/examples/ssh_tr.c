@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "rtrlib/transport/ssh/ssh_transport.h"
+#include "rtrlib/rtrlib.h"
 
 int main(){
     struct tr_socket ssh_socket;
@@ -18,7 +18,4 @@ int main(){
     };
 
     tr_ssh_init(&config, &ssh_socket);
-    tr_open(&ssh_socket);
-    tr_close(&ssh_socket);
-    tr_free(&ssh_socket);
 }

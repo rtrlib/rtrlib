@@ -15,12 +15,16 @@
 #define RTRLIB_VERSION_MINOR @RTRLIB_VERSION_MINOR@
 #define RTRLIB_VERSION_PATCH @RTRLIB_VERSION_PATCH@
 
-#include "rtrlib/transport/transport.h"
-#include "rtrlib/transport/tcp/tcp_transport.h"
-#include "rtrlib/rtr_mgr.h"
-#include "rtrlib/pfx/trie/trie-pfx.h"
-#include "rtrlib/rtr/rtr.h"
-#include "rtrlib/lib/utils.h"
+#include "lib/alloc_utils.h"
+#include "lib/ip.h"
+#include "lib/ipv4.h"
+#include "lib/ipv6.h"
+#include "pfx/pfx.h"
+#include "rtr/rtr.h"
+#include "rtr_mgr.h"
+#include "spki/spkitable.h"
+#include "transport/tcp/tcp_transport.h"
+#include "transport/transport.h"
 #ifdef RTRLIB_HAVE_LIBSSH
 #include "rtrlib/transport/ssh/ssh_transport.h"
 #endif

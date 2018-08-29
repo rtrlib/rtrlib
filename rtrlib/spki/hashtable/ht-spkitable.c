@@ -7,13 +7,13 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#include "rtrlib/spki/hashtable/ht-spkitable.h"
+#include "rtrlib/spki/hashtable/ht-spkitable_private.h"
 
 #include <string.h>
 #include <stdio.h>
 #include <pthread.h>
 
-#include "rtrlib/lib/alloc_utils.h"
+#include "rtrlib/lib/alloc_utils_private.h"
 
 struct key_entry {
     uint8_t ski[SKI_SIZE];

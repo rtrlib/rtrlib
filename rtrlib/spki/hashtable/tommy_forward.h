@@ -7,17 +7,11 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#ifndef LRTR_IPV4_H
-#define LRTR_IPV4_H
 
-#include <stdint.h>
-
-/**
- * @brief Struct storing an IPv4 address in host byte order.
- * @param addr The IPv4 address.
+/*
+ * This File contains forward declarations for some tommy types
+ * This is to be used in public headers
  */
-struct lrtr_ipv4_addr {
-	uint32_t addr;
-};
 
-#endif
+typedef struct tommy_node_struct tommy_node;
+typedef tommy_node * tommy_list;

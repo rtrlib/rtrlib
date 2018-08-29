@@ -8,7 +8,7 @@
  */
 
 #include "rtrlib_unittests.h"
-#include "rtrlib/rtr/packets.h"
+#include "rtrlib/rtr/packets_private.h"
 #include "test_packets.h"
 
 int __wrap_tr_send_all(const struct tr_socket *socket,

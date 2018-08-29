@@ -11,9 +11,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "alloc_utils.h"
-
-#include "rtrlib/rtrlib_export.h"
+#include "alloc_utils_private.h"
+#include "rtrlib/rtrlib_export_private.h"
 
 static void *(*MALLOC_PTR)(size_t size) = malloc;
 static void *(*REALLOC_PTR)(void *ptr, size_t size) = realloc;

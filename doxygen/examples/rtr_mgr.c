@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <arpa/inet.h>
 #include "rtrlib/rtrlib.h"
 
 int main(){
