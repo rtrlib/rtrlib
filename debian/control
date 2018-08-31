@@ -3,7 +3,7 @@ Section: libs
 Priority: optional
 Maintainer: Fabian Holler <mail@fholler.de>
 Build-Depends: cmake, dpkg-dev (>= 1.16.1~), debhelper (>= 9), libssh-dev (>= 0.5.0), doxygen
-Standards-Version: 3.9.4
+Standards-Version: 3.9.6
 Vcs-Git: git://github.com/rtrlib/rtrlib.git
 Vcs-Browser: https://github.com/rtrlib/rtrlib
 Homepage: http://rpki.realmv6.org/
@@ -55,7 +55,7 @@ Description: Small extensible RPKI-RTR-Client C library. Debug Symbols
 Package: librtr-doc
 Section: doc
 Architecture: all
-Depends: libjs-jquery ${misc:Depends}
+Depends: libjs-jquery, ${misc:Depends}
 Suggests: doc-base
 Description: Small extensible RPKI-RTR-Client C library. Documentation files
  RTRlib is an open-source C implementation of the  RPKI/Router Protocol

@@ -1,3 +1,11 @@
+librtr0 (0.5.0.0) stable; urgency=high
+
+  * Gratuitous un-official non-release to change package version number format:
+    this is a "native" package, so we must omit the "debian_revision" field.
+    Feel free to replace this example with the 0.5.1 entry when that's cooked.
+
+ -- Rob Austein <sra@arrcus.com>  Fri, 31 Aug 2018 21:40:00 +0000
+
 librtr0 (0.5.0-1) stable; urgency=high
 
   * Add support for dynamic add and remove of socket groups in rtr_mgr
