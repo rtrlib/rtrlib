@@ -30,3 +30,4 @@ run_command cmake -D CMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=On -DUNIT_TESTIN
 run_command make
 run_command make test
 run_command make gcov
+run_command scripts/check-exports.sh

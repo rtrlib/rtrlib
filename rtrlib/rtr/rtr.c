@@ -11,11 +11,15 @@
 #include <pthread.h>
 #include <signal.h>
 #include <unistd.h>
-#include "rtrlib/lib/log.h"
-#include "rtrlib/rtr/packets.h"
-#include "rtrlib/spki/hashtable/ht-spkitable.h"
-#include "rtrlib/rtr/rtr.h"
-#include "rtrlib/lib/utils.h"
+
+#include "rtrlib/lib/log_private.h"
+#include "rtrlib/lib/utils_private.h"
+#include "rtrlib/pfx/pfx_private.h"
+#include "rtrlib/rtr/packets_private.h"
+#include "rtrlib/rtr/rtr_private.h"
+#include "rtrlib/rtrlib_export_private.h"
+#include "rtrlib/spki/hashtable/ht-spkitable_private.h"
+#include "rtrlib/transport/transport_private.h"
 
 static void rtr_purge_outdated_records(struct rtr_socket *rtr_socket);
 static void rtr_fsm_start(struct rtr_socket *rtr_socket);
@@ -245,19 +249,19 @@ void rtr_stop(struct rtr_socket *rtr_socket)
     RTR_DBG1("Socket shut down");
 }
 
-const char *rtr_state_to_str(enum rtr_socket_state state)
+RTRLIB_EXPORT const char *rtr_state_to_str(enum rtr_socket_state state)
 {
     return socket_str_states[state];
 }
 
 /* cppcheck-suppress unusedFunction */
-enum rtr_interval_mode rtr_get_interval_mode(struct rtr_socket *rtr_socket)
+RTRLIB_EXPORT enum rtr_interval_mode rtr_get_interval_mode(struct rtr_socket *rtr_socket)
 {
 	return rtr_socket->iv_mode;
 }
 
 /* cppcheck-suppress unusedFunction */
-void rtr_set_interval_mode(struct rtr_socket *rtr_socket, enum rtr_interval_mode option)
+RTRLIB_EXPORT void rtr_set_interval_mode(struct rtr_socket *rtr_socket, enum rtr_interval_mode option)
 {
 	switch (option) {
 	case RTR_INTERVAL_MODE_IGNORE_ANY:

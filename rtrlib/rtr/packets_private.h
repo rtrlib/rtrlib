@@ -7,12 +7,12 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#ifndef RTR_PACKETS_H
-#define RTR_PACKETS_H
+#ifndef RTR_PACKETS_PRIVATE_H
+#define RTR_PACKETS_PRIVATE_H
+
 #include <arpa/inet.h>
-#include "rtrlib/lib/ipv6.h"
-#include "rtrlib/lib/ipv4.h"
-#include "rtrlib/rtr/rtr.h"
+
+#include "rtrlib/rtr/rtr_private.h"
 
 
 static const unsigned int RTR_MAX_PDU_LEN = 3248; //error pdu: header(8) + len(4) + ipv6_pdu(32) + len(4) + 400*8 (400 char text)

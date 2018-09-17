@@ -17,7 +17,7 @@
 #include <pthread.h>
 #include <time.h>
 #include "rtrlib/lib/ip.h"
-#include "rtrlib/pfx/trie/trie-pfx.h"
+#include "rtrlib/pfx/trie/trie-pfx_private.h"
 
 uint32_t min_i = 0xFF000000;
 uint32_t max_i = 0xFFFFFFF0;

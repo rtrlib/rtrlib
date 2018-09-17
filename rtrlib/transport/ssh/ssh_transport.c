@@ -13,10 +13,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
-#include "../../lib/log.h"
-#include "../../lib/utils.h"
-#include "ssh_transport.h"
-#include "rtrlib/lib/alloc_utils.h"
+
+#include <libssh/libssh.h>
+
+#include "rtrlib/lib/alloc_utils_private.h"
+#include "rtrlib/lib/log_private.h"
+#include "rtrlib/lib/utils_private.h"
+#include "rtrlib/rtrlib_export_private.h"
+#include "rtrlib/transport/ssh/ssh_transport_private.h"
+#include "rtrlib/transport/transport_private.h"
 
 #define SSH_DBG(fmt, sock, ...) lrtr_dbg("SSH Transport(%s@%s:%u): " fmt, (sock)->config.username, (sock)->config.host, (sock)->config.port, ## __VA_ARGS__)
 #define SSH_DBG1(a, sock) lrtr_dbg("SSH Transport(%s@%s:%u): " a, (sock)->config.username, (sock)->config.host, (sock)->config.port)
@@ -202,7 +207,7 @@ const char *tr_ssh_ident(void *tr_ssh_sock)
     return sock->ident;
 }
 
-int tr_ssh_init(const struct tr_ssh_config *config, struct tr_socket *socket)
+RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_socket *socket)
 {
 
     socket->close_fp = &tr_ssh_close;

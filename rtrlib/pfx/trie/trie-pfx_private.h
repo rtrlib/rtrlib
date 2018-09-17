@@ -20,10 +20,11 @@
  * @{
  */
 
-#ifndef RTR_trie_PFX
-#define RTR_trie_PFX
-#include "rtrlib/pfx/pfx.h"
-#include "rtrlib/pfx/trie/trie.h"
+#ifndef RTR_TRIE_PFX_PRIVATE
+#define RTR_TRIE_PFX_PRIVATE
+#include <pthread.h>
+
+#include "rtrlib/pfx/pfx_private.h"
 
 /**
  * @brief pfx_table.

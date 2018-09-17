@@ -9,11 +9,13 @@
 
 #include <arpa/inet.h>
 #include <stdarg.h>
-#include <stdio.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/time.h>
 #include <time.h>
-#include "rtrlib/lib/log.h"
+
+#include "rtrlib/lib/log_private.h"
 
 
 void lrtr_dbg(const char *frmt, ...)

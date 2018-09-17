@@ -1,3 +1,4 @@
+
 /*
  * This file is part of RTRlib.
  *
@@ -7,17 +8,9 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#ifndef LRTR_IPV4_H
-#define LRTR_IPV4_H
+#ifndef RTRLIB_EXPORT_H
+#define RTRLIB_EXPORT_H
 
-#include <stdint.h>
-
-/**
- * @brief Struct storing an IPv4 address in host byte order.
- * @param addr The IPv4 address.
- */
-struct lrtr_ipv4_addr {
-	uint32_t addr;
-};
+#define RTRLIB_EXPORT __attribute__((visibility("default")))
 
 #endif

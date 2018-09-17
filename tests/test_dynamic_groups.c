@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <assert.h>
+
 #include "rtrlib/rtrlib.h"
+#include "rtrlib/rtr_mgr_private.h"
+#include "rtrlib/spki/hashtable/tommyds-1.8/tommylist.h"
 
 int main(void)
 	{

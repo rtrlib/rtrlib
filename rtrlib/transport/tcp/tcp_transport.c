@@ -16,9 +16,12 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "rtrlib/lib/log.h"
-#include "rtrlib/transport/tcp/tcp_transport.h"
-#include "rtrlib/lib/alloc_utils.h"
+
+#include "rtrlib/lib/alloc_utils_private.h"
+#include "rtrlib/lib/log_private.h"
+#include "rtrlib/rtrlib_export_private.h"
+#include "rtrlib/transport/tcp/tcp_transport_private.h"
+#include "rtrlib/transport/transport_private.h"
 
 #define TCP_DBG(fmt, sock, ...) lrtr_dbg("TCP Transport(%s:%s): " fmt, sock->config.host, sock->config.port, ## __VA_ARGS__)
 #define TCP_DBG1(a, sock) lrtr_dbg("TCP Transport(%s:%s): " a,sock->config.host, sock->config.port)
@@ -192,7 +195,7 @@ const char *tr_tcp_ident(void *socket)
     return sock->ident;
 }
 
-int tr_tcp_init(const struct tr_tcp_config *config, struct tr_socket *socket)
+RTRLIB_EXPORT int tr_tcp_init(const struct tr_tcp_config *config, struct tr_socket *socket)
 {
 
     socket->close_fp = &tr_tcp_close;

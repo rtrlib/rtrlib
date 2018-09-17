@@ -7,17 +7,7 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#ifndef LRTR_IPV4_H
-#define LRTR_IPV4_H
-
-#include <stdint.h>
-
-/**
- * @brief Struct storing an IPv4 address in host byte order.
- * @param addr The IPv4 address.
- */
-struct lrtr_ipv4_addr {
-	uint32_t addr;
-};
-
+#ifndef SSH_TRANSPORT_PRIVATE_H
+#define SSH_TRANSPORT_PRIVATE_H
+#include "rtrlib/transport/ssh/ssh_transport.h"
 #endif

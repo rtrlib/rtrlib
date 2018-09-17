@@ -7,10 +7,11 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#ifndef RTR_trie
-#define RTR_trie
+#ifndef RTR_TRIE_PRIVATE
+#define RTR_TRIE_PRIVATE
 #include <inttypes.h>
-#include "rtrlib/lib/ip.h"
+
+#include "rtrlib/lib/ip_private.h"
 
 /**
  * @brief trie_node

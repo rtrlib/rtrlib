@@ -7,15 +7,15 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#include "rtrlib/lib/convert_byte_order.h"
-#include "rtrlib/lib/ipv6.h"
-#include "rtrlib/lib/ipv4.h"
-#include "rtrlib/lib/utils.h"
-
 #include <arpa/inet.h>
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
+
+#include "rtrlib/lib/convert_byte_order_private.h"
+#include "rtrlib/lib/ipv6_private.h"
+#include "rtrlib/lib/ipv4_private.h"
+#include "rtrlib/lib/utils_private.h"
 
 inline bool lrtr_ipv6_addr_equal(const struct lrtr_ipv6_addr *a, const struct lrtr_ipv6_addr *b)
 {

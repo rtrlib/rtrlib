@@ -7,11 +7,8 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#ifndef LRTR_LOG_H
-#define LRTR_LOG_H
-#include <time.h>
-#include <stdlib.h>
-#include "rtrlib/lib/ip.h"
+#ifndef LRTR_LOG_PRIVATE_H
+#define LRTR_LOG_PRIVATE_H
 
 /**
  * @brief Writes a message to stdout if NDEBUG isn't defined.

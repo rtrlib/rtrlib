@@ -7,12 +7,16 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#include "rtrlib/pfx/trie/trie-pfx.h"
-#include "rtrlib/lib/alloc_utils.h"
 #include <assert.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdbool.h>
+
+#include "rtrlib/pfx/trie/trie-pfx_private.h"
+#include "rtrlib/pfx/trie/trie_private.h"
+#include "rtrlib/lib/alloc_utils_private.h"
+#include "rtrlib/rtrlib_export_private.h"
+#include "rtrlib/lib/ip_private.h"
 
 struct data_elem {
     uint32_t asn;
@@ -336,7 +340,14 @@ inline void pfx_table_free_reason(struct pfx_record **reason, unsigned int *reas
         *reason_len = 0;
 }
 
-int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_record **reason, unsigned int *reason_len, const uint32_t asn, const struct lrtr_ip_addr *prefix, const uint8_t prefix_len, enum pfxv_state *result)
+RTRLIB_EXPORT int pfx_table_validate_r(
+		struct pfx_table *pfx_table,
+		struct pfx_record **reason,
+		unsigned int *reason_len,
+		const uint32_t asn,
+		const struct lrtr_ip_addr *prefix,
+		const uint8_t prefix_len,
+		enum pfxv_state *result)
 {
     //assert(reason_len == NULL || *reason_len  == 0);
     //assert(reason == NULL || *reason == NULL);
@@ -502,7 +513,7 @@ static void pfx_table_for_each_rec(struct trie_node *n, pfx_for_each_fp fp,
         pfx_table_for_each_rec(n->rchild, fp, data);
 }
 
-void pfx_table_for_each_ipv4_record(struct pfx_table *pfx_table, pfx_for_each_fp fp, void *data)
+RTRLIB_EXPORT void pfx_table_for_each_ipv4_record(struct pfx_table *pfx_table, pfx_for_each_fp fp, void *data)
 {
     assert(pfx_table != NULL);
 
@@ -514,7 +525,7 @@ void pfx_table_for_each_ipv4_record(struct pfx_table *pfx_table, pfx_for_each_fp
     pthread_rwlock_unlock(&pfx_table->lock);
 }
 
-void pfx_table_for_each_ipv6_record(struct pfx_table *pfx_table, pfx_for_each_fp fp, void *data)
+RTRLIB_EXPORT void pfx_table_for_each_ipv6_record(struct pfx_table *pfx_table, pfx_for_each_fp fp, void *data)
 {
     assert(pfx_table != NULL);
 

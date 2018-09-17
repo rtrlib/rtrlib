@@ -7,11 +7,13 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#include "rtrlib/spki/hashtable/ht-spkitable.h"
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
+
+#include "rtrlib/spki/hashtable/ht-spkitable_private.h"
+#include "rtrlib/rtr/rtr_private.h"
 
 /* test_ht_4 */
 #define NUM_TABLE_X		(50)

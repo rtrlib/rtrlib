@@ -32,10 +32,12 @@
  */
 #ifndef RTR_MGR
 #define RTR_MGR
+#include <stdint.h>
+#include <pthread.h>
+
 #include "rtrlib/pfx/pfx.h"
-#include "rtrlib/rtr/rtr.h"
 #include "rtrlib/spki/spkitable.h"
-#include "rtrlib/spki/hashtable/tommyds-1.8/tommy.h"
+#include "rtrlib/spki/hashtable/tommy_forward.h"
 
 /**
  * @brief Status of a rtr_mgr_group.
@@ -66,12 +68,6 @@ struct rtr_mgr_group {
 	unsigned int sockets_len;
 	uint8_t preference;
 	enum rtr_mgr_status status;
-};
-
-//TODO Find a nicer way todo a linked list (without writing our own)
-struct rtr_mgr_group_node {
-	tommy_node node;
-	struct rtr_mgr_group *group;
 };
 
 typedef void (*rtr_mgr_status_fp)(const struct rtr_mgr_group *,

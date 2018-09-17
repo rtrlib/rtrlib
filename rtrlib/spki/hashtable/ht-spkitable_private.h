@@ -6,10 +6,10 @@
  *
  * Website: http://rtrlib.realmv6.org/
  */
-#ifndef RTR_HT_SPKITABLE_H
-#define RTR_HT_SPKITABLE_H
+#ifndef RTR_HT_SPKITABLE_PRIVATE_H
+#define RTR_HT_SPKITABLE_PRIVATE_H
 
-#include "rtrlib/spki/spkitable.h"
+#include "rtrlib/spki/spkitable_private.h"
 #include "rtrlib/spki/hashtable/tommyds-1.8/tommy.h"
 
 typedef int (*hash_cmp_fp)(const void *arg, const void *obj);

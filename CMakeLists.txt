@@ -13,7 +13,10 @@ if(CMAKE_BUILD_TYPE STREQUAL Debug)
     if(GCC_VERSION VERSION_GREATER 4.8 OR GCC_VERSION VERSION_EQUAL 4.8)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wfree-nonheap-object")
     endif()
+
+    set(DOCS_EXCLUDE_PATTERN "")
 else()
+    set(DOCS_EXCLUDE_PATTERN "*_private.h")
 endif(CMAKE_BUILD_TYPE STREQUAL Debug)
 
 include_directories(.)
@@ -61,12 +64,11 @@ endif(DOXYGEN_FOUND)
 add_library(rtrlib SHARED ${RTRLIB_SRC})
 add_coverage(rtrlib)
 target_link_libraries(rtrlib ${RTRLIB_LINK})
+set_target_properties(rtrlib PROPERTIES C_VISIBILITY_PRESET hidden)
 
-if(UNIT_TESTING)
-    add_library(rtrlib_static STATIC ${RTRLIB_SRC})
-    add_coverage(rtrlib_static)
-    target_link_libraries(rtrlib_static ${RTRLIB_LINK})
-endif(UNIT_TESTING)
+add_library(rtrlib_static STATIC ${RTRLIB_SRC})
+add_coverage(rtrlib_static)
+target_link_libraries(rtrlib_static ${RTRLIB_LINK})
 
 ADD_SUBDIRECTORY(tools)
 
@@ -100,10 +102,22 @@ set(LIBRARY_SOVERSION ${RTRLIB_VERSION_MAJOR})
 set_target_properties(rtrlib PROPERTIES SOVERSION ${LIBRARY_SOVERSION} VERSION ${LIBRARY_VERSION} OUTPUT_NAME rtr)
 install(TARGETS rtrlib LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/)
 
+
+# Get lists of all headers
+file(GLOB_RECURSE RTRLIB_HEADERS RELATIVE "${PROJECT_SOURCE_DIR}/rtrlib" "rtrlib/*.h")
+# Create list of all public headers
+foreach(ITEM ${RTRLIB_HEADERS})
+    if(NOT ${ITEM} MATCHES ".*_private\\.h" AND NOT ${ITEM} MATCHES ".*tommy.*")
+        list(APPEND RTRLIB_PUBLIC_HEADERS ${ITEM})
+    endif()
+endforeach()
+
 #install includes
-install(DIRECTORY rtrlib/ DESTINATION include/rtrlib
-    FILES_MATCHING PATTERN "*.h"
-    PATTERN rtrlib/rtr_mgr. EXCLUDE)
+foreach(ITEM ${RTRLIB_PUBLIC_HEADERS})
+    get_filename_component(HEADER_DIRECTORY "${ITEM}" PATH)
+    install(FILES "rtrlib/${ITEM}"
+        DESTINATION "include/rtrlib/${HEADER_DIRECTORY}")
+endforeach()
 
 #pkgconfig file
 if(LIBSSH_FOUND)

@@ -7,8 +7,8 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#ifndef LRTR_CONVERT_BYTE_ORDER_H
-#define LRTR_CONVERT_BYTE_ORDER_H
+#ifndef LRTR_CONVERT_BYTE_ORDER_PRIVATE_H
+#define LRTR_CONVERT_BYTE_ORDER_PRIVATE_H
 
 #include <inttypes.h>
 

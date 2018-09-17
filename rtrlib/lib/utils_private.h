@@ -7,10 +7,10 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#ifndef LRTR_UTILS_H
-#define LRTR_UTILS_H
+#ifndef LRTR_UTILS_PRIVATE_H
+#define LRTR_UTILS_PRIVATE_H
+#include <stdint.h>
 #include <time.h>
-#include "rtrlib/lib/ip.h"
 
 /**
  * @brief Returns the current time of the CLOCK_MONOTONIC clock.

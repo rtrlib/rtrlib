@@ -18,7 +18,9 @@
 
 #ifndef RTR_TCP_TRANSPORT_H
 #define RTR_TCP_TRANSPORT_H
+
 #include "rtrlib/transport/transport.h"
+
 
 /**
  * @brief  A tr_tcp_config struct holds configuration for a TCP connection.
