@@ -3,6 +3,22 @@ https://github.com/rtrlib/rtrlib/commits/master
 
 Release History:
 
+* Version 0.5.1
+    - Fix Debian packages: merge rtrclient and rtr-validator into one
+      package, use libjs-jquery
+    - Fix bug in trie structure where deletion of inner nodes may lead
+      to incorrect reordering, i.e., a node with longer prefix length
+      overrules nodes with shorter prefix length, which then will not
+      be found anymore
+    - Fix wrong length of error text in error pdu
+    - Improve code for packets
+    - Add rpm package build infrastructure
+    - Add cppcheck suppresions for public api functions  
+    - Add new test to verify correctness of prefix removal
+    - Remove function rtr_mgr_find_group in RTR Manager because it is
+      not used
+    - Disable unittests for Apple macOS
+
 * Version 0.5.0
     - Add support for dynamic add and remove of socket groups in rtr_mgr
     - add memory handling wrappers (i.e. alloc utils) for FRR integration
