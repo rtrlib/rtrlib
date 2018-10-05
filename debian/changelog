@@ -1,3 +1,29 @@
+librtr0 (0.6.0.0) stable; urgency=high
+  * Change default symbol visibility: Hide all symbols per default,
+      export public symbols explicitly
+  * Change API for interval mode {set,get}_interval_mod and enumerations
+    in rtr.h: add prefixes to prevent name collisions
+  * Fix Debian packages: merge rtrclient and rtr-validator into one
+    package, use libjs-jquery, fix copyright format, fix version
+    numbering and source package format
+  * Fix bug in trie structure where deletion of inner nodes may lead
+    to incorrect reordering, i.e., a node with longer prefix length
+    overrules nodes with shorter prefix length, which then will not
+    be found anymore
+  * Rename cli-validator to rpki-rov
+  * Fix wrong length of error text in error pdu
+  * Add atomtic reset for pfx table and spki table
+  * Improve code for packets
+  * Add rpm package build infrastructure
+  * Add cppcheck suppresions for public api functions  
+  * Add new test to verify correctness of prefix removal
+  * Remove function rtr_mgr_find_group in RTR Manager because it is
+    not used
+  * Disable unittests for Apple macOS
+  * Add man pages for tools
+
+ -- Matthias Waehlisch <m.waehlisch@fu-berlin.de>  Fri,  5 Oct 2018 11:12:00 +0100
+
 librtr0 (0.5.0.0) stable; urgency=high
 
   * Gratuitous un-official non-release to change package version number format:
