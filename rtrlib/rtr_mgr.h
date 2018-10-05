@@ -37,7 +37,7 @@
 
 #include "rtrlib/pfx/pfx.h"
 #include "rtrlib/spki/spkitable.h"
-#include "rtrlib/spki/hashtable/tommy_forward.h"
+#include "rtrlib/spki/hashtable/hashtable_forward.h"
 
 /**
  * @brief Status of a rtr_mgr_group.
