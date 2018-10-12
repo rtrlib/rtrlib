@@ -27,8 +27,8 @@ if(NOT APPLE)
     find_library(RT_LIB rt)
 endif(NOT APPLE)
 
-include(GNUInstallDirs) # for man page install path
 include(UseMultiArch) # needed for debian packaging
+include(GNUInstallDirs) # for man page install path
 
 set(RTRLIB_SRC rtrlib/rtr_mgr.c rtrlib/lib/utils.c rtrlib/lib/alloc_utils.c rtrlib/lib/convert_byte_order.c
     rtrlib/lib/ip.c rtrlib/lib/ipv4.c rtrlib/lib/ipv6.c rtrlib/lib/log.c
