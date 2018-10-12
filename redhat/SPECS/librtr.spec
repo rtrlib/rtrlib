@@ -6,7 +6,7 @@ Group:          Development/Libraries
 License:        MIT
 URL:            http://rpki.realmv6.org/
 Source0:        %{name}-%{version}.tar.gz
-BuildRequires:  binutils gcc tar chrpath cmake libssh-devel >= 0.5.0 doxygen
+BuildRequires:  binutils gcc tar cmake libssh-devel >= 0.5.0 doxygen
 Requires:       libssh >= 0.5.0
 
 %description
@@ -74,9 +74,7 @@ make %{?_smp_mflags}
 %install
 %make_install
 strip $RPM_BUILD_ROOT/usr/lib64/librtr.so.%{version}
-chrpath -d $RPM_BUILD_ROOT/usr/bin/rpki-rov
 strip $RPM_BUILD_ROOT/usr/bin/rpki-rov
-chrpath -d $RPM_BUILD_ROOT/usr/bin/rtrclient
 strip $RPM_BUILD_ROOT/usr/bin/rtrclient
 cp %{_topdir}/BUILD/CHANGELOG %{buildroot}/%{_docdir}/rtrlib/
 cp %{_topdir}/BUILD/LICENSE %{buildroot}/%{_docdir}/rtrlib/
