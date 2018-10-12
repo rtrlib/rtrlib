@@ -1,5 +1,4 @@
-project(rtrlib
-    LANGUAGES C)
+project(rtrlib C)
 
 set(PROJECT_DESCRIPTION "Lightweight C library that implements the RPKI/RTR protocol and prefix origin validation.")
 
