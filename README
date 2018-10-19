@@ -1,8 +1,7 @@
 Introduction
 ------------
 The RTRlib implements the client-side of the RPKI-RTR protocol (RFC
-6810) and BGP Prefix Origin Validation (RFC 6811). This release also
-supports Internet-Draft draft-ietf-sidr-rpki-rtr-rfc6810-bis, which
+6810, RFC 8210) and BGP Prefix Origin Validation (RFC 6811). This also
 enables the maintenance of router keys. Router keys are required to
 deploy BGPSEC.
 
@@ -15,6 +14,8 @@ be found in the bin/ directory.
 
 Requirements
 ------------
+A compiler that supports C11.
+
 To build the RTRlib, the CMake build system must be installed.
 
 To establish an SSH connection between RTR-Client and RTR-Server, the
