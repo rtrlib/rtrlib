@@ -4,6 +4,11 @@ https://github.com/rtrlib/rtrlib/commits/master
 Release History:
 
 * Version 0.6.0
+    - Fix for cmake versions >= 2.8
+    - Fix rpm build
+    - Fix Ubuntu 12.04 build
+
+* Version 0.6.0
     - Change default symbol visibility: Hide all symbols per default,
       export public symbols explicitly
     - Add API to configure interval mode: {set,get}_interval_mod
