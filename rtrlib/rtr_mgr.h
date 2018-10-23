@@ -37,7 +37,6 @@
 
 #include "rtrlib/pfx/pfx.h"
 #include "rtrlib/spki/spkitable.h"
-#include "rtrlib/spki/hashtable/hashtable_forward.h"
 
 /**
  * @brief Status of a rtr_mgr_group.
@@ -75,9 +74,11 @@ typedef void (*rtr_mgr_status_fp)(const struct rtr_mgr_group *,
 				  const struct rtr_socket *,
 				  void *);
 
+struct tommy_list_wrapper;
+
 //TODO Add refresh, expire, and retry intervals to config for easier access.
 struct rtr_mgr_config {
-	tommy_list groups;
+	struct tommy_list_wrapper *groups;
 	unsigned int len;
 	pthread_mutex_t mutex;
 	rtr_mgr_status_fp status_fp;

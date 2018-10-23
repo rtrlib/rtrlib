@@ -65,7 +65,7 @@ int main(void)
 	retval = rtr_mgr_add_group(conf, &group2);
 	assert(retval == RTR_INVALID_PARAM);
 
-	tommy_node *node = tommy_list_head(&conf->groups);
+	tommy_node *node = tommy_list_head(&conf->groups->list);
 	struct rtr_mgr_group_node *group_node = node->data;
 	struct rtr_mgr_group_node *group_node2 = node->next->data;
 
@@ -75,7 +75,7 @@ int main(void)
 
 	rtr_mgr_remove_group(conf, 1);
 
-	node = tommy_list_head(&conf->groups);
+	node = tommy_list_head(&conf->groups->list);
 	group_node = node->data;
 	assert(group_node->group->preference == 2);
 	assert(conf->len == 1);
@@ -111,7 +111,7 @@ int main(void)
 	// and check whether it will be set as the active group.
 	rtr_mgr_add_group(conf, &group3);
 
-	node = tommy_list_head(&conf->groups);
+	node = tommy_list_head(&conf->groups->list);
 	group_node = node->data;
 	assert(group_node->group->preference == 3);
 
