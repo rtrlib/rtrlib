@@ -104,7 +104,7 @@ static void rtr_mgr_close_less_preferable_groups(const struct rtr_socket *sock,
 						 struct rtr_mgr_group *group)
 {
 	pthread_mutex_lock(&config->mutex);
-	tommy_node *node = tommy_list_head(&config->groups);
+	tommy_node *node = tommy_list_head(&config->groups->list);
 
 	while (node) {
 		struct rtr_mgr_group_node *group_node = node->data;
@@ -129,7 +129,7 @@ static struct rtr_mgr_group *get_best_inactive_rtr_mgr_group(
 						struct rtr_mgr_group *group)
 {
 	pthread_mutex_lock(&config->mutex);
-	tommy_node *node = tommy_list_head(&config->groups);
+	tommy_node *node = tommy_list_head(&config->groups->list);
 
 	while (node) {
 		struct rtr_mgr_group_node *group_node = node->data;
@@ -148,7 +148,7 @@ static struct rtr_mgr_group *get_best_inactive_rtr_mgr_group(
 static bool is_some_rtr_mgr_group_established(struct rtr_mgr_config *config)
 {
 	pthread_mutex_lock(&config->mutex);
-	tommy_node *node = tommy_list_head(&config->groups);
+	tommy_node *node = tommy_list_head(&config->groups->list);
 
 	while (node) {
 		struct rtr_mgr_group_node *group_node = node->data;
@@ -211,7 +211,7 @@ static inline void _rtr_mgr_cb_state_established(const struct rtr_socket *sock,
 		bool all_error = true;
 
 		pthread_mutex_lock(&config->mutex);
-		tommy_node *node = tommy_list_head(&config->groups);
+		tommy_node *node = tommy_list_head(&config->groups->list);
 
 		while (node) {
 			struct rtr_mgr_group_node *group_node = node->data;
@@ -392,7 +392,10 @@ RTRLIB_EXPORT int rtr_mgr_init(struct rtr_mgr_config **config_out,
 
 	/* Copy the groups from the array into linked list config->groups */
 	config->len = groups_len;
-	config->groups = NULL;
+	config->groups = lrtr_malloc(sizeof(*config->groups));
+	if (!config->groups)
+		goto err;
+	config->groups->list = NULL;
 
 	for (unsigned int i = 0; i < groups_len; i++) {
 		cg = lrtr_malloc(sizeof(struct rtr_mgr_group));
@@ -414,13 +417,13 @@ RTRLIB_EXPORT int rtr_mgr_init(struct rtr_mgr_config **config_out,
 			goto err;
 
 		group_node->group = cg;
-		tommy_list_insert_tail(&config->groups, &group_node->node,
+		tommy_list_insert_tail(&config->groups->list, &group_node->node,
 				       group_node);
 	}
 	/* Our linked list should be sorted already, since the groups array was
 	 * sorted. However, for safety reasons we sort again.
 	 */
-	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp_tommy);
+	tommy_list_sort(&config->groups->list, &rtr_mgr_config_cmp_tommy);
 
 	config->status_fp_data = status_fp_data;
 	config->status_fp = status_fp;
@@ -447,7 +450,7 @@ err:
 RTRLIB_EXPORT struct rtr_mgr_group *rtr_mgr_get_first_group(
 		struct rtr_mgr_config *config)
 {
-	tommy_node *head = tommy_list_head(&config->groups);
+	tommy_node *head = tommy_list_head(&config->groups->list);
 	struct rtr_mgr_group_node *group_node = head->data;
 
 	return group_node->group;
@@ -464,7 +467,7 @@ RTRLIB_EXPORT int rtr_mgr_start(struct rtr_mgr_config *config)
 RTRLIB_EXPORT bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config)
 {
 	pthread_mutex_lock(&config->mutex);
-	tommy_node *node = tommy_list_head(&config->groups);
+	tommy_node *node = tommy_list_head(&config->groups->list);
 
 	while (node) {
 		bool all_sync = true;
@@ -496,7 +499,7 @@ RTRLIB_EXPORT void rtr_mgr_free(struct rtr_mgr_config *config)
 	lrtr_free(config->pfx_table);
 
 	/* Free linked list */
-	tommy_node *head = tommy_list_head(&config->groups);
+	tommy_node *head = tommy_list_head(&config->groups->list);
 
 	while (head) {
 		tommy_node *tmp = head;
@@ -511,6 +514,8 @@ RTRLIB_EXPORT void rtr_mgr_free(struct rtr_mgr_config *config)
 		lrtr_free(group_node->group);
 		lrtr_free(group_node);
 	}
+
+	lrtr_free(config->groups);
 
 	pthread_mutex_unlock(&config->mutex);
 	pthread_mutex_destroy(&config->mutex);
@@ -542,7 +547,7 @@ RTRLIB_EXPORT inline int rtr_mgr_get_spki(struct rtr_mgr_config *config,
 RTRLIB_EXPORT void rtr_mgr_stop(struct rtr_mgr_config *config)
 {
 	pthread_mutex_lock(&config->mutex);
-	tommy_node *node = tommy_list_head(&config->groups);
+	tommy_node *node = tommy_list_head(&config->groups->list);
 
 	MGR_DBG1("rtr_mgr_stop()");
 	while (node) {
@@ -573,7 +578,7 @@ RTRLIB_EXPORT int rtr_mgr_add_group(
 
 	pthread_mutex_lock(&config->mutex);
 
-	tommy_node *node = tommy_list_head(&config->groups);
+	tommy_node *node = tommy_list_head(&config->groups->list);
 
 	while (node) {
 		gnode = node->data;
@@ -612,14 +617,14 @@ RTRLIB_EXPORT int rtr_mgr_add_group(
 		goto err;
 
 	new_group_node->group = new_group;
-	tommy_list_insert_tail(&config->groups, &new_group_node->node,
+	tommy_list_insert_tail(&config->groups->list, &new_group_node->node,
 			       new_group_node);
 	config->len++;
 
 	MGR_DBG("Group with preference %d successfully added!",
 		new_group->preference);
 
-	tommy_list_sort(&config->groups, &rtr_mgr_config_cmp_tommy);
+	tommy_list_sort(&config->groups->list, &rtr_mgr_config_cmp_tommy);
 
 	struct rtr_mgr_group *best_group = rtr_mgr_get_first_group(config);
 
@@ -645,7 +650,7 @@ RTRLIB_EXPORT int rtr_mgr_remove_group(
 {
 	pthread_mutex_lock(&config->mutex);
 	tommy_node *remove_node = NULL;
-	tommy_node *node = tommy_list_head(&config->groups);
+	tommy_node *node = tommy_list_head(&config->groups->list);
 	struct rtr_mgr_group_node *group_node;
 	struct rtr_mgr_group *remove_group;
 
@@ -671,10 +676,10 @@ RTRLIB_EXPORT int rtr_mgr_remove_group(
 
 	group_node = remove_node->data;
 	remove_group = group_node->group;
-	tommy_list_remove_existing(&config->groups, remove_node);
+	tommy_list_remove_existing(&config->groups->list, remove_node);
 	config->len--;
 	MGR_DBG("Group with preference %d successfully removed!", preference);
-	//tommy_list_sort(&config->groups, &rtr_mgr_config_cmp);
+	//tommy_list_sort(&config->groups->list, &rtr_mgr_config_cmp);
 	pthread_mutex_unlock(&config->mutex);
 
 	//If group isn't closed, make it so!
@@ -699,11 +704,11 @@ RTRLIB_EXPORT int rtr_mgr_remove_group(
 // TODO: write test for this function.
 /* cppcheck-suppress unusedFunction */
 RTRLIB_EXPORT int rtr_mgr_for_each_group(
-		struct rtr_mgr_config *conf,
+		struct rtr_mgr_config *config,
 		void (fp)(const struct rtr_mgr_group *group, void *data),
 		void *data)
 {
-	tommy_node *node = tommy_list_head(&conf->groups);
+	tommy_node *node = tommy_list_head(&config->groups->list);
 
 	while (node) {
 		struct rtr_mgr_group_node *group_node = node->data;
