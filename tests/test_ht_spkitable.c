@@ -7,6 +7,7 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -61,11 +62,11 @@ static struct spki_record *create_record(int ASN,
 	memset(record, 0, sizeof(*record));
 	record->asn = ASN;
 
-	for (i = 0; i < sizeof(record->ski) / sizeof(u_int32_t); i++)
-		((u_int32_t *)record->ski)[i] = i + ski_offset;
+	for (i = 0; i < sizeof(record->ski) / sizeof(uint32_t); i++)
+		((uint32_t *)record->ski)[i] = i + ski_offset;
 
-	for (i = 0; i < sizeof(record->spki) / sizeof(u_int32_t); i++)
-		((u_int32_t *)record->spki)[i] = i + spki_offset;
+	for (i = 0; i < sizeof(record->spki) / sizeof(uint32_t); i++)
+		((uint32_t *)record->spki)[i] = i + spki_offset;
 
 	record->socket = socket;
 	return record;
