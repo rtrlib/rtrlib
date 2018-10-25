@@ -83,7 +83,7 @@ Package: rtr-tools-dbg
 Priority: optional
 Section: debug
 Architecture: any
-Depends: rtr-tools (= ${binary:Version}), ${misc:Depends}, ${shlibs:Depends}
+Depends: rtr-tools (= ${binary:Version}), ${misc:Depends}
 Description: RPKI-RTR command line tools
  Contains rtrclient and rpki-rov.
  rtrclient is command line that connects to an RPKI-RTR server and prints
