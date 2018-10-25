@@ -1,4 +1,4 @@
-librtr0 (0.6.1.1) UNRELEASED; urgency=medium
+librtr0 (0.6.1.1) testing; urgency=medium
 
   * add myself as maintainer as I'll be uploading this to mentors.
   * flip priorities from extra to optional (4.0.1 policy)
