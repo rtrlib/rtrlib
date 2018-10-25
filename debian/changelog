@@ -1,3 +1,9 @@
+librtr0 (0.6.1.1) UNRELEASED; urgency=medium
+
+  * add myself as maintainer as I'll be uploading this to mentors.
+
+ -- David Lamparter <equinox-debian@diac24.net>  Thu, 25 Oct 2018 13:29:03 +0200
+
 librtr0 (0.6.1.0) stable; urgency=high
   * Fix for cmake versions >= 2.8
   * Fix rpm build
