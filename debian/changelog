@@ -2,6 +2,7 @@ librtr0 (0.6.1.1) UNRELEASED; urgency=medium
 
   * add myself as maintainer as I'll be uploading this to mentors.
   * flip priorities from extra to optional (4.0.1 policy)
+  * add watch file (4.1.4 policy)
 
  -- David Lamparter <equinox-debian@diac24.net>  Thu, 25 Oct 2018 13:29:03 +0200
 
