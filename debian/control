@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: David Lamparter <equinox-debian@diac24.net>
 Uploaders: Fabian Holler <mail@fholler.de>
 Build-Depends: cmake, dpkg-dev (>= 1.16.1~), debhelper (>= 9), libssh-dev (>= 0.5.0), doxygen
-Standards-Version: 3.9.6
+Standards-Version: 4.0.1
 Vcs-Git: git://github.com/rtrlib/rtrlib.git
 Vcs-Browser: https://github.com/rtrlib/rtrlib
 Homepage: http://rpki.realmv6.org/
@@ -38,7 +38,7 @@ Description: Small extensible RPKI-RTR-Client C library. Development files
  This package contains development files.
 
 Package: librtr-dbg
-Priority: extra
+Priority: optional
 Section: debug
 Architecture: any
 Multi-Arch: same
@@ -80,7 +80,7 @@ Description: RPKI-RTR command line tools
 
 
 Package: rtr-tools-dbg
-Priority: extra
+Priority: optional
 Section: debug
 Architecture: any
 Depends: rtr-tools (= ${binary:Version}), ${misc:Depends}, ${shlibs:Depends}
