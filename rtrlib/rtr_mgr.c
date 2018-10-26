@@ -15,7 +15,7 @@
 
 #include "rtrlib/lib/alloc_utils_private.h"
 #include "rtrlib/lib/log_private.h"
-#include "rtrlib/pfx/trie/trie-pfx_private.h"
+#include "rtrlib/pfx/pfx_private.h"
 #include "rtrlib/rtr/rtr_private.h"
 #include "rtrlib/rtr_mgr_private.h"
 #include "rtrlib/rtrlib_export_private.h"

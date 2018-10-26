@@ -12,8 +12,9 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "rtrlib/pfx/trie/trie-pfx_private.h"
+#include "rtrlib/pfx/trie/trie-pfx.h"
 #include "rtrlib/pfx/trie/trie_private.h"
+#include "rtrlib/pfx/pfx_private.h"
 #include "rtrlib/lib/alloc_utils_private.h"
 #include "rtrlib/rtrlib_export_private.h"
 #include "rtrlib/lib/ip_private.h"
@@ -61,7 +62,7 @@ void pfx_table_notify_clients(struct pfx_table *pfx_table, const struct pfx_reco
         pfx_table->update_fp(pfx_table, *record, added);
 }
 
-void pfx_table_init(struct pfx_table *pfx_table, pfx_update_fp update_fp)
+RTRLIB_EXPORT void pfx_table_init(struct pfx_table *pfx_table, pfx_update_fp update_fp)
 {
     pfx_table->ipv4 = NULL;
     pfx_table->ipv6 = NULL;
@@ -75,7 +76,7 @@ void pfx_table_free_without_notify(struct pfx_table *pfx_table)
     pfx_table_free(pfx_table);
 }
 
-void pfx_table_free(struct pfx_table *pfx_table)
+RTRLIB_EXPORT void pfx_table_free(struct pfx_table *pfx_table)
 {
     for(int i = 0; i < 2; i++) {
         struct trie_node *root = (i == 0 ? pfx_table->ipv4 : pfx_table->ipv6);
@@ -207,7 +208,7 @@ int pfx_table_del_elem(struct node_data *data, const unsigned int index)
     return PFX_SUCCESS;
 }
 
-int pfx_table_add(struct pfx_table *pfx_table, const struct pfx_record *record)
+RTRLIB_EXPORT int pfx_table_add(struct pfx_table *pfx_table, const struct pfx_record *record)
 {
     pthread_rwlock_wrlock(&(pfx_table->lock));
 
@@ -257,7 +258,7 @@ int pfx_table_add(struct pfx_table *pfx_table, const struct pfx_record *record)
     return PFX_SUCCESS;
 }
 
-int pfx_table_remove(struct pfx_table *pfx_table, const struct pfx_record *record)
+RTRLIB_EXPORT int pfx_table_remove(struct pfx_table *pfx_table, const struct pfx_record *record)
 {
     pthread_rwlock_wrlock(&(pfx_table->lock));
     struct trie_node *root = pfx_table_get_root(pfx_table, record->prefix.ver);
@@ -420,12 +421,12 @@ RTRLIB_EXPORT int pfx_table_validate_r(
     return PFX_SUCCESS;
 }
 
-int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const struct lrtr_ip_addr *prefix, const uint8_t prefix_len, enum pfxv_state *result)
+RTRLIB_EXPORT int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const struct lrtr_ip_addr *prefix, const uint8_t prefix_len, enum pfxv_state *result)
 {
     return pfx_table_validate_r(pfx_table, NULL, NULL, asn, prefix, prefix_len, result);
 }
 
-int pfx_table_src_remove(struct pfx_table *pfx_table, const struct rtr_socket *socket)
+RTRLIB_EXPORT int pfx_table_src_remove(struct pfx_table *pfx_table, const struct rtr_socket *socket)
 {
     for(unsigned int i = 0; i < 2; i++) {
         struct trie_node **root = (i == 0 ? &(pfx_table->ipv4) : &(pfx_table->ipv6));

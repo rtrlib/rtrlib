@@ -20,11 +20,39 @@
  * @{
  */
 
-#ifndef RTR_TRIE_PFX_PRIVATE
-#define RTR_TRIE_PFX_PRIVATE
+#ifndef RTR_TRIE_PFX
+#define RTR_TRIE_PFX
 #include <pthread.h>
+#include <stdbool.h>
+#include <stdint.h>
 
-#include "rtrlib/pfx/pfx_private.h"
+#include "rtrlib/lib/ip.h"
+
+struct pfx_table;
+
+/**
+ * @brief pfx_record.
+ * @param asn Origin AS number.
+ * @param prefix IP prefix.
+ * @param min_len Minimum prefix length.
+ * @param max_len Maximum prefix length.
+ * @param socket The rtr_socket that received this record.
+ */
+struct pfx_record {
+    uint32_t asn;
+    struct lrtr_ip_addr prefix;
+    uint8_t min_len;
+    uint8_t max_len;
+    const struct rtr_socket *socket;
+};
+
+/**
+ * @brief A function pointer that is called if an record was added to the pfx_table or was removed from the pfx_table.
+ * @param pfx_table which was updated.
+ * @param record pfx_record that was modified.
+ * @param added True if the record was added, false if the record was removed.
+ */
+typedef void (*pfx_update_fp)(struct pfx_table *pfx_table, const struct pfx_record record, const bool added);
 
 /**
  * @brief pfx_table.
