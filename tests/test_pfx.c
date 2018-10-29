@@ -17,7 +17,7 @@
 
 #include "rtrlib/lib/ip_private.h"
 #include "rtrlib/lib/utils_private.h"
-#include "rtrlib/pfx/trie/trie-pfx_private.h"
+#include "rtrlib/pfx/pfx.h"
 #include "rtrlib/pfx/trie/trie_private.h"
 #include "rtrlib/rtr/rtr.h"
 

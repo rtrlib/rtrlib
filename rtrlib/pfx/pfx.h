@@ -20,8 +20,7 @@
 #include <inttypes.h>
 
 #include "rtrlib/lib/ip.h"
-
-
+#include "rtrlib/pfx/trie/trie-pfx.h"
 
 
 /**
@@ -41,8 +40,6 @@ enum pfx_rtvals {
     PFX_RECORD_NOT_FOUND = -3
 };
 
-struct pfx_table;
-
 /**
  * @brief Validation states returned from  pfx_validate_origin.
  */
@@ -59,30 +56,6 @@ enum pfxv_state {
 
 
 /**
- * @brief pfx_record.
- * @param asn Origin AS number.
- * @param prefix IP prefix.
- * @param min_len Minimum prefix length.
- * @param max_len Maximum prefix length.
- * @param socket The rtr_socket that received this record.
- */
-struct pfx_record {
-    uint32_t asn;
-    struct lrtr_ip_addr prefix;
-    uint8_t min_len;
-    uint8_t max_len;
-    const struct rtr_socket *socket;
-};
-
-/**
- * @brief A function pointer that is called if an record was added to the pfx_table or was removed from the pfx_table.
- * @param pfx_table which was updated.
- * @param record pfx_record that was modified.
- * @param added True if the record was added, false if the record was removed.
- */
-typedef void (*pfx_update_fp)(struct pfx_table *pfx_table, const struct pfx_record record, const bool added);
-
-/**
  * @brief A function pointer that is called for each record in the pfx_table.
  * @param pfx_record
  * @param data forwarded data which the user has passed to pfx_table_for_each_ipv4_record() or
@@ -90,6 +63,59 @@ typedef void (*pfx_update_fp)(struct pfx_table *pfx_table, const struct pfx_reco
  */
 typedef void (*pfx_for_each_fp)(const struct pfx_record *pfx_record, void *data);
 
+/**
+ * @brief Initializes the pfx_table struct.
+ * @param[in] pfx_table pfx_table that will be initialized.
+ * @param[in] update_fp Afunction pointers that will be called if a record was added or removed.
+ */
+void pfx_table_init(struct pfx_table *pfx_table, pfx_update_fp update_fp);
+
+/**
+ * @brief Frees all memory associcated with the pfx_table.
+ * @param[in] pfx_table pfx_table that will be freed.
+ */
+void pfx_table_free(struct pfx_table *pfx_table);
+
+/**
+ * @brief Adds a pfx_record to a pfx_table.
+ * @param[in] pfx_table pfx_table to use.
+ * @param[in] pfx_record pfx_record that will be added.
+ * @return PFX_SUCCESS On success.
+ * @return PFX_ERROR On error.
+ * @return PFX_DUPLICATE_RECORD If the pfx_record already exists.
+ */
+int pfx_table_add(struct pfx_table *pfx_table, const struct pfx_record *pfx_record);
+
+/**
+ * @brief Removes a pfx_record from a pfx_table.
+ * @param[in] pfx_table pfx_table to use.
+ * @param[in] pfx_record Record that will be removed.
+ * @return PFX_SUCCESS On success.
+ * @return PFX_ERROR On error.
+ * @return PFX_RECORD_NOT_FOUND If pfx_records could'nt be found.
+ */
+int pfx_table_remove(struct pfx_table *pfx_table, const struct pfx_record *pfx_record);
+
+/**
+ * @brief Removes all entries in the pfx_table that match the passed socket_id value from a pfx_table.
+ * @param[in] pfx_table pfx_table to use.
+ * @param[in] socket origin socket of the record
+ * @return PFX_SUCCESS On success.
+ * @return PFX_ERROR On error.
+ */
+int pfx_table_src_remove(struct pfx_table *pfx_table, const struct rtr_socket *socket);
+
+/**
+ * @brief Validates the origin of a BGP-Route.
+ * @param[in] pfx_table pfx_table to use.
+ * @param[in] asn Autonomous system number of the Origin-AS of the route.
+ * @param[in] prefix Announcend network Prefix.
+ * @param[in] mask_len Length of the network mask of the announced prefix.
+ * @param[out] result Result of the validation.
+ * @return PFX_SUCCESS On success.
+ * @return PFX_ERROR On error.
+ */
+int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const struct lrtr_ip_addr *prefix, const uint8_t mask_len, enum pfxv_state *result);
 
 /**
  * @brief Validates the origin of a BGP-Route and returns a list of pfx_record that decided the result.
