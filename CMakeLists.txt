@@ -23,9 +23,9 @@ include_directories(.)
 find_package(codecov)
 
 find_package(Threads REQUIRED)
-if(NOT APPLE)
+if(NOT APPLE AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "OpenBSD")
     find_library(RT_LIB rt)
-endif(NOT APPLE)
+endif(NOT APPLE AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "OpenBSD")
 
 include(UseMultiArch) # needed for debian packaging
 include(GNUInstallDirs) # for man page install path
