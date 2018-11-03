@@ -27,6 +27,16 @@ if(NOT APPLE)
     find_library(RT_LIB rt)
 endif(NOT APPLE)
 
+# note: this must be before the include() directives below since
+# these directives will change CMAKE_INSTALL_LIBDIR to an absolute path
+if(IS_ABSOLUTE ${CMAKE_INSTALL_LIBDIR})
+    set (PKG_CONFIG_LIBDIR ${CMAKE_INSTALL_LIBDIR})
+    set (RTRLIB_INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR})
+else()
+    set (PKG_CONFIG_LIBDIR "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
+    set (RTRLIB_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+endif(IS_ABSOLUTE ${CMAKE_INSTALL_LIBDIR})
+
 include(UseMultiArch) # needed for debian packaging
 include(GNUInstallDirs) # for man page install path
 
@@ -99,7 +109,7 @@ CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/rtrlib/rtrlib.h.cmake ${CMAKE_SOURCE_DIR}/rtr
 set(LIBRARY_VERSION ${RTRLIB_VERSION_MAJOR}.${RTRLIB_VERSION_MINOR}.${RTRLIB_VERSION_PATCH})
 set(LIBRARY_SOVERSION ${RTRLIB_VERSION_MAJOR})
 set_target_properties(rtrlib PROPERTIES SOVERSION ${LIBRARY_SOVERSION} VERSION ${LIBRARY_VERSION} OUTPUT_NAME rtr)
-install(TARGETS rtrlib LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/)
+install(TARGETS rtrlib LIBRARY DESTINATION ${RTRLIB_INSTALL_LIBDIR}/)
 
 
 # Get lists of all headers
@@ -122,14 +132,6 @@ endforeach()
 if(LIBSSH_FOUND)
     set (PKG_CONFIG_REQUIRES "libssh >= 0.5.0")
 endif(LIBSSH_FOUND)
-
-if(IS_ABSOLUTE ${CMAKE_INSTALL_LIBDIR})
-    set (PKG_CONFIG_LIBDIR ${CMAKE_INSTALL_LIBDIR})
-    set (RTRLIB_INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR})
-else()
-    set (PKG_CONFIG_LIBDIR "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
-    set (RTRLIB_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
-endif(IS_ABSOLUTE ${CMAKE_INSTALL_LIBDIR})
 
 # '#include <rtrlib/rtrlib.h>' includes the "rtrlib/"
 set (PKG_CONFIG_INCLUDEDIR "\${prefix}/include")
