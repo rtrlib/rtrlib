@@ -23,9 +23,9 @@ include_directories(.)
 find_package(codecov)
 
 find_package(Threads REQUIRED)
-if(NOT APPLE)
+if(NOT APPLE AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "OpenBSD")
     find_library(RT_LIB rt)
-endif(NOT APPLE)
+endif(NOT APPLE AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "OpenBSD")
 
 # note: this must be before the include() directives below since
 # these directives will change CMAKE_INSTALL_LIBDIR to an absolute path
