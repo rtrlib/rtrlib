@@ -14,8 +14,6 @@ be found in the bin/ directory.
 
 Requirements
 ------------
-A compiler that supports C11.
-
 To build the RTRlib, the CMake build system must be installed.
 
 To establish an SSH connection between RTR-Client and RTR-Server, the
