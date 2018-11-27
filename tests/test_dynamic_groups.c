@@ -7,6 +7,17 @@
 #include "rtrlib/rtr_mgr_private.h"
 #include "rtrlib/spki/hashtable/tommyds-1.8/tommylist.h"
 
+const int connection_timeout = 20;
+enum rtr_mgr_status connection_status = -1;
+
+static void connection_status_callback(const struct rtr_mgr_group *group,
+				       enum rtr_mgr_status status,
+				       const struct rtr_socket *socket,
+				       void *data)
+{
+	connection_status = status;
+}
+
 int main(void)
 	{
 	//create a TCP transport socket
@@ -46,14 +57,21 @@ int main(void)
 
 	struct rtr_mgr_config *conf;
 
-	rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL, NULL, NULL);
+	rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL, &connection_status_callback, NULL);
 
 	//start the connection manager
 	rtr_mgr_start(conf);
 
-	//wait till at least one group is fully synchronized with the server
-	while (!rtr_mgr_conf_in_sync(conf))
+	int sleep_counter = 0;
+	// wait 20 sec till at least one group is fully synchronized with the server
+	// otherwise EXIT_FAILURE.
+	while (!rtr_mgr_conf_in_sync(conf)) {
+		sleep_counter++;
+		if (connection_status == RTR_MGR_ERROR || sleep_counter > connection_timeout)
+			return EXIT_FAILURE;
+
 		sleep(1);
+	}
 
 	assert(conf->len == 1);
 
