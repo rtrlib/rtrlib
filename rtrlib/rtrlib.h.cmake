@@ -7,6 +7,10 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef RTRLIB_H
 #define RTRLIB_H
 
@@ -29,4 +33,9 @@
 #include "rtrlib/transport/ssh/ssh_transport.h"
 #endif
 
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
