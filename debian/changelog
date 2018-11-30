@@ -1,3 +1,15 @@
+librtr0 (0.6.2.0) stable; urgency=high
+  * Add C++ support by disabling name mangling for RTRlib symbols
+  * Make pfx_table, pfx_table_init(), pfx_table_add(),
+    pfx_table_free(), pfx_table_src_remove() public; to use RTRlib
+    without online connection to an RPKI cache server
+  * Hide symbols of Tommy hash table without using forward declaration,
+    to resolve dependency on C11
+  * Fix cmake build errors in Debian and OpenBSD
+  * Add connection timeout in tests/test_dynamic_groups
+
+ -- Matthias Waehlisch <m.waehlisch@fu-berlin.de>  Fri,  30 Nov 2018 17:31:00 +0100
+
 librtr0 (0.6.1.0) stable; urgency=high
   * Fix for cmake versions >= 2.8
   * Fix rpm build

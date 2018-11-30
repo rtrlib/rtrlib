@@ -3,7 +3,17 @@ https://github.com/rtrlib/rtrlib/commits/master
 
 Release History:
 
-* Version 0.6.0
+* Version 0.6.2
+    - Add C++ support by disabling name mangling for RTRlib symbols
+    - Make pfx_table, pfx_table_init(), pfx_table_add(),
+      pfx_table_free(), pfx_table_src_remove() public; to use RTRlib
+      without online connection to an RPKI cache server
+    - Hide symbols of Tommy hash table without using forward declaration,
+      to resolve dependency on C11
+    - Fix cmake build errors in Debian and OpenBSD
+    - Add connection timeout in tests/test_dynamic_groups
+
+* Version 0.6.1
     - Fix for cmake versions >= 2.8
     - Fix rpm build
     - Fix Ubuntu 12.04 build
