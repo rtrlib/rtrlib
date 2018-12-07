@@ -1008,8 +1008,8 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
     unsigned int router_key_pdus_size = 0;
     unsigned int router_key_pdus_nindex = 0;
 
-    struct pfx_table pfx_shadow_table;
-    struct spki_table spki_shadow_table;
+    struct pfx_table* pfx_shadow_table = NULL;
+    struct spki_table* spki_shadow_table = NULL;
 
     //receive LRTR_IPV4/IPV6 PDUs till EOD
     do {
@@ -1092,8 +1092,15 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
 
             if (rtr_socket->is_resetting) {
                 RTR_DBG1("Reset in progress creating shadow table for atomic reset");
-                pfx_table_init(&pfx_shadow_table, NULL);
-                pfx_update_table = &pfx_shadow_table;
+                pfx_shadow_table = lrtr_malloc(sizeof(struct pfx_table));
+                if (pfx_shadow_table == NULL) {
+                    RTR_DBG1("Memory allocation for pfx shadow table failed");
+                    retval = RTR_ERROR;
+                    goto cleanup;
+                }
+
+                pfx_table_init(pfx_shadow_table, NULL);
+                pfx_update_table = pfx_shadow_table;
                 if (pfx_table_copy_except_socket(rtr_socket->pfx_table, pfx_update_table, rtr_socket)) {
                     RTR_DBG1("Creation of pfx shadow table failed");
                     rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
@@ -1101,8 +1108,14 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
                     goto cleanup;
                 }
 
-                spki_table_init(&spki_shadow_table, NULL);
-                spki_update_table = &spki_shadow_table;
+                spki_shadow_table = lrtr_malloc(sizeof(struct spki_table));
+                if (spki_shadow_table == NULL) {
+                    RTR_DBG1("Memory allocation for spki shadow table failed");
+                    retval = RTR_ERROR;
+                    goto cleanup;
+                }
+                spki_table_init(spki_shadow_table, NULL);
+                spki_update_table = spki_shadow_table;
                 if (spki_table_copy_except_socket(rtr_socket->spki_table, spki_update_table, rtr_socket) != SPKI_SUCCESS) {
                     RTR_DBG1("Creation of spki shadow table failed");
                     rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
@@ -1181,19 +1194,19 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
             RTR_DBG1("spki data added");
             if (rtr_socket->is_resetting) {
                 RTR_DBG1("Reset finished. Swapping new table in.");
-                pfx_table_swap(rtr_socket->pfx_table, &pfx_shadow_table);
-                spki_table_swap(rtr_socket->spki_table, &spki_shadow_table);
+                pfx_table_swap(rtr_socket->pfx_table, pfx_shadow_table);
+                spki_table_swap(rtr_socket->spki_table, spki_shadow_table);
 
                 if (rtr_socket->pfx_table->update_fp) {
                     RTR_DBG1("Calculating and notifying pfx diff");
-                    pfx_table_notify_diff(rtr_socket->pfx_table, &pfx_shadow_table, rtr_socket);
+                    pfx_table_notify_diff(rtr_socket->pfx_table, pfx_shadow_table, rtr_socket);
                 } else {
                     RTR_DBG1("No pfx update callback. Skipping diff");
                 }
 
                 if (rtr_socket->spki_table->update_fp) {
                     RTR_DBG1("Calculating and notifying spki diff");
-                    spki_table_notify_diff(rtr_socket->spki_table, &spki_shadow_table, rtr_socket);
+                    spki_table_notify_diff(rtr_socket->spki_table, spki_shadow_table, rtr_socket);
                 } else {
                     RTR_DBG1("No spki update callback. Skipping diff");
                 }
@@ -1222,8 +1235,15 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
 
     if (rtr_socket->is_resetting) {
         RTR_DBG1("Freeing shadow tables.");
-        pfx_table_free_without_notify(&pfx_shadow_table);
-        spki_table_free_without_notify(&spki_shadow_table);
+        if (pfx_shadow_table != NULL) {
+            pfx_table_free_without_notify(pfx_shadow_table);
+            lrtr_free(pfx_shadow_table);
+        }
+
+        if (spki_shadow_table != NULL) {
+            spki_table_free_without_notify(spki_shadow_table);
+            lrtr_free(spki_shadow_table);
+        }
         rtr_socket->is_resetting = false;
     }
 
