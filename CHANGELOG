@@ -3,6 +3,9 @@ https://github.com/rtrlib/rtrlib/commits/master
 
 Release History:
 
+* Version 0.6.3
+    - Fix IPv4 string conversion to support big endian systems
+
 * Version 0.6.2
     - Add C++ support by disabling name mangling for RTRlib symbols
     - Make pfx_table, pfx_table_init(), pfx_table_add(),

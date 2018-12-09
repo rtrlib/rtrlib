@@ -1,3 +1,8 @@
+librtr0 (0.6.3.0) stable; urgency=high
+  * Fix IPv4 string conversion to support big endian systems
+
+ -- Matthias Waehlisch <m.waehlisch@fu-berlin.de>  Sun,  9 Dec 2018 12:45:00 +0100
+
 librtr0 (0.6.2.0) stable; urgency=high
   * Add C++ support by disabling name mangling for RTRlib symbols
   * Make pfx_table, pfx_table_init(), pfx_table_add(),
