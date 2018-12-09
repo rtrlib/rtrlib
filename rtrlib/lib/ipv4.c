@@ -27,10 +27,15 @@ struct lrtr_ipv4_addr lrtr_ipv4_get_bits(const struct lrtr_ipv4_addr *val,
 int lrtr_ipv4_addr_to_str(const struct lrtr_ipv4_addr *ip,
 			  char *str, unsigned int len)
 {
-	const uint8_t *t = (uint8_t *)&ip->addr;
+	uint8_t buff[4];
+
+	buff[0] = ip->addr >> 24 & 0xff;
+	buff[1] = ip->addr >> 16 & 0xff;
+	buff[2] = ip->addr >> 8 & 0xff;
+	buff[3] = ip->addr & 0xff;
 
 	if (snprintf(str, len, "%hhu.%hhu.%hhu.%hhu",
-		     t[3], t[2], t[1], t[0]) < 0)
+		     buff[0], buff[1], buff[2], buff[3]) < 0)
 		return -1;
 
 	return 0;
@@ -38,11 +43,13 @@ int lrtr_ipv4_addr_to_str(const struct lrtr_ipv4_addr *ip,
 
 int lrtr_ipv4_str_to_addr(const char *str, struct lrtr_ipv4_addr *ip)
 {
-	unsigned char *t =  (unsigned char *)&ip->addr;
+	uint8_t buff[4];
 
 	if (sscanf(str, "%3hhu.%3hhu.%3hhu.%3hhu",
-		   &t[3], &t[2], &t[1], &t[0]) != 4)
+		   &buff[0], &buff[1], &buff[2], &buff[3]) != 4)
 		return -1;
+
+	ip->addr = buff[0] << 24 | buff[1] << 16 | buff[2] << 8 | buff[3];
 
 	return 0;
 }
