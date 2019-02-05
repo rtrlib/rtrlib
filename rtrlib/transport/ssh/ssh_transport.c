@@ -231,14 +231,14 @@ RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_sock
         ssh_socket->config.bindaddr = NULL;
     }
 
-    if (config->bindaddr) {
+    if (config->client_privkey_path) {
         ssh_socket->config.client_privkey_path =
 		lrtr_strdup(config->client_privkey_path);
     } else {
         ssh_socket->config.client_privkey_path = NULL;
     }
 
-    if (config->bindaddr) {
+    if (config->server_hostkey_path) {
         ssh_socket->config.server_hostkey_path =
 		lrtr_strdup(config->server_hostkey_path);
     } else {
