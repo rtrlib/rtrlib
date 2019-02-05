@@ -133,7 +133,11 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket)
 { 
    if (rtr_socket->state == RTR_SHUTDOWN)
 	return;
-     
+
+    // We don't care about the old state, but POSIX demands a non null value for setcancelstate
+    int oldcancelstate;
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
+
     rtr_socket->state = RTR_CONNECTING;
     install_sig_handler();
     while(1) {
@@ -176,8 +180,14 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket)
 
         else if(rtr_socket->state == RTR_ESTABLISHED) {
             RTR_DBG1("State: RTR_ESTABLISHED");
-            if(rtr_wait_for_sync(rtr_socket) == RTR_SUCCESS) { //blocks till expire_interval is expired or PDU was received
-                //send serial query
+
+            // Allow thread cancellation for recv code path only.
+            // This should be enough since we spend most of the time blocking on recv
+            pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
+            int ret = rtr_wait_for_sync(rtr_socket); //blocks till expire_interval is expired or PDU was received
+            pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
+
+            if(ret == RTR_SUCCESS) { //send serial query
                 if(rtr_send_serial_query(rtr_socket) == RTR_SUCCESS)
                     rtr_change_socket_state(rtr_socket, RTR_SYNC);
             }
@@ -224,12 +234,6 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket)
 
         else if(rtr_socket->state == RTR_SHUTDOWN) {
             RTR_DBG1("State: RTR_SHUTDOWN");
-            tr_close(rtr_socket->tr_socket);
-            rtr_socket->request_session_id = true;
-            rtr_socket->serial_number = 0;
-            rtr_socket->last_update = 0;
-            pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
-            spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
             pthread_exit(NULL);
         }
     }
@@ -240,10 +244,17 @@ void rtr_stop(struct rtr_socket *rtr_socket)
     RTR_DBG1("rtr_stop()");
     rtr_change_socket_state(rtr_socket, RTR_SHUTDOWN);
     if(rtr_socket->thread_id != 0) {
-        RTR_DBG1("pthread_kill()");
-        pthread_kill(rtr_socket->thread_id, SIGUSR1);
+        RTR_DBG1("pthread_cancel()");
+        pthread_cancel(rtr_socket->thread_id);
         RTR_DBG1("pthread_join()");
         pthread_join(rtr_socket->thread_id, NULL);
+
+        tr_close(rtr_socket->tr_socket);
+        rtr_socket->request_session_id = true;
+        rtr_socket->serial_number = 0;
+        rtr_socket->last_update = 0;
+        pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
+        spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
         rtr_socket->thread_id = 0;
     }
     RTR_DBG1("Socket shut down");
