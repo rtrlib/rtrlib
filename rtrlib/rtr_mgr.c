@@ -374,6 +374,8 @@ RTRLIB_EXPORT int rtr_mgr_init(struct rtr_mgr_config **config_out,
 			MGR_DBG1("Error Empty sockets array in socket group!");
 			goto err;
 		}
+
+		last_preference = cg.preference;
 	}
 
 	/* Init data structures that we need to pass to the sockets */
