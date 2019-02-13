@@ -168,6 +168,15 @@ struct pdu_end_of_data_v1 {
     uint32_t expire_interval;
 };
 
+struct recv_loop_cleanup_args {
+    struct pdu_ipv4 *ipv4_pdus;
+    struct pdu_ipv6 *ipv6_pdus;
+    struct pdu_router_key *router_key_pdus;
+};
+
+
+static void recv_loop_cleanup(void *p);
+
 static int rtr_send_error_pdu_from_network(const struct rtr_socket *rtr_socket,
                                            const void *erroneous_pdu,
                                            const uint32_t erroneous_pdu_len,
@@ -991,6 +1000,15 @@ static int rtr_update_spki_table(struct rtr_socket* rtr_socket, struct spki_tabl
     return RTR_SUCCESS;
 }
 
+
+void recv_loop_cleanup(void *p) {
+    struct recv_loop_cleanup_args *args = p;
+    lrtr_free(args->ipv4_pdus);
+    lrtr_free(args->ipv6_pdus);
+    lrtr_free(args->router_key_pdus);
+}
+
+
 int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
     char pdu[RTR_MAX_PDU_LEN];
     enum pdu_type type;
@@ -1011,9 +1029,20 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
     struct pfx_table* pfx_shadow_table = NULL;
     struct spki_table* spki_shadow_table = NULL;
 
+    int oldcancelstate;
+    struct recv_loop_cleanup_args cleanup_args = {
+      .ipv4_pdus = ipv4_pdus,
+      .ipv6_pdus = ipv6_pdus,
+      .router_key_pdus = router_key_pdus};
+
     //receive LRTR_IPV4/IPV6 PDUs till EOD
     do {
+        pthread_cleanup_push(recv_loop_cleanup, &cleanup_args);
+        pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
         retval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
+        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
+        pthread_cleanup_pop(0);
+
         if (retval == TR_WOULDBLOCK) {
             rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
             retval = RTR_ERROR;
@@ -1258,8 +1287,12 @@ int rtr_sync(struct rtr_socket *rtr_socket)
     char pdu[RTR_MAX_PDU_LEN];
     enum pdu_type type;
 
+    int oldcancelstate;
+
     do {
+        pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
         int rtval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
+        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
         //If the cache has closed the connection and we don't have a session_id
         //(no packages where exchanged) we should downgrade.
         if (rtval == TR_CLOSED && rtr_socket->request_session_id) {
