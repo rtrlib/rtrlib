@@ -23,8 +23,6 @@
 
 static void rtr_purge_outdated_records(struct rtr_socket *rtr_socket);
 static void rtr_fsm_start(struct rtr_socket *rtr_socket);
-static void sighandler(int b);
-static int install_sig_handler();
 
 static const char *socket_str_states[] = {
     [RTR_CONNECTING] = "RTR_CONNECTING",
@@ -38,23 +36,6 @@ static const char *socket_str_states[] = {
     [RTR_ERROR_TRANSPORT] = "RTR_ERROR_TRANSPORT",
     [RTR_SHUTDOWN] = "RTR_SHUTDOWN"
 };
-
-void sighandler(int b __attribute__((unused)) )
-{
-    return;
-}
-
-static int install_sig_handler()
-{
-    struct sigaction sa;
-    sa.sa_handler = &sighandler;
-    sigset_t mask;
-    sigemptyset(&mask);
-    sa.sa_mask = mask;
-    sa.sa_flags = 0;
-
-    return sigaction(SIGUSR1, &sa, NULL);
-}
 
 int rtr_init(struct rtr_socket *rtr_socket,
               struct tr_socket *tr,
@@ -139,7 +120,6 @@ void rtr_fsm_start(struct rtr_socket *rtr_socket)
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
 
     rtr_socket->state = RTR_CONNECTING;
-    install_sig_handler();
     while(1) {
         if(rtr_socket->state == RTR_CONNECTING) {
             RTR_DBG1("State: RTR_CONNECTING");
