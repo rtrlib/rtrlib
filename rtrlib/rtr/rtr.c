@@ -110,6 +110,7 @@ void rtr_purge_outdated_records(struct rtr_socket *rtr_socket)
     }
 }
 
+/* WARNING: This Function has cancelable sections*/
 void rtr_fsm_start(struct rtr_socket *rtr_socket)
 { 
    if (rtr_socket->state == RTR_SHUTDOWN)

@@ -1009,6 +1009,7 @@ void recv_loop_cleanup(void *p) {
 }
 
 
+/* WARNING: This Function has cancelable sections*/
 int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
     char pdu[RTR_MAX_PDU_LEN];
     enum pdu_type type;
@@ -1282,6 +1283,7 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
     return retval;
 }
 
+/* WARNING: This Function has cancelable sections */
 int rtr_sync(struct rtr_socket *rtr_socket)
 {
     char pdu[RTR_MAX_PDU_LEN];
