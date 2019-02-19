@@ -5,7 +5,7 @@
 
 #include "rtrlib/rtrlib.h"
 #include "rtrlib/rtr_mgr_private.h"
-#include "rtrlib/spki/hashtable/tommyds-1.8/tommylist.h"
+#include "rtrlib/spki/hashtable/tommyds-2.2/tommylist.h"
 
 const int connection_timeout = 20;
 enum rtr_mgr_status connection_status = -1;

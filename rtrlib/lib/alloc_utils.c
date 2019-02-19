@@ -39,7 +39,7 @@ void *lrtr_calloc(size_t nmemb, size_t size)
 {
 	int bytes = 0;
 
-#if (__GNUC__ >= 5) || (__clang_major__ >= 4)
+#if __GNUC__ >= 5
 	if (__builtin_mul_overflow(nmemb, size, &bytes)) {
 		errno = ENOMEM;
 		return 0;

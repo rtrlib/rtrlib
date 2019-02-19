@@ -8,6 +8,7 @@
  */
 
 #include "rtrlib/spki/hashtable/ht-spkitable_private.h"
+#include "assert.h"
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>

@@ -8,7 +8,7 @@ coverage:
   range: "50...80"
 
   ignore:
-  - rtrlib/spki/hashtable/tommyds-1.8/.*
+  - rtrlib/spki/hashtable/tommyds-2.2/.*
   - tests/*
 
   status: {}

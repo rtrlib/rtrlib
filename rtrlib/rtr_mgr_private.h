@@ -10,7 +10,7 @@
 #ifndef RTR_MGR_PRIVATE
 #define RTR_MGR_PRIVATE
 #include "rtrlib/rtr_mgr.h"
-#include "rtrlib/spki/hashtable/tommyds-1.8/tommylist.h"
+#include "rtrlib/spki/hashtable/tommyds-2.2/tommylist.h"
 
 struct tommy_list_wrapper {
 	tommy_list list;
