@@ -7,6 +7,7 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>

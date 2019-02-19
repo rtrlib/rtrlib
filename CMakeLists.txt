@@ -33,7 +33,7 @@ set(RTRLIB_SRC rtrlib/rtr_mgr.c rtrlib/lib/utils.c rtrlib/lib/alloc_utils.c rtrl
     rtrlib/lib/ip.c rtrlib/lib/ipv4.c rtrlib/lib/ipv6.c rtrlib/lib/log.c
     rtrlib/pfx/trie/trie.c rtrlib/pfx/trie/trie-pfx.c rtrlib/transport/transport.c
     rtrlib/transport/tcp/tcp_transport.c rtrlib/rtr/rtr.c rtrlib/rtr/packets.c
-    rtrlib/spki/hashtable/ht-spkitable.c rtrlib/spki/hashtable/tommyds-1.8/tommy.c)
+    rtrlib/spki/hashtable/ht-spkitable.c rtrlib/spki/hashtable/tommyds-2.2/tommy.c)
 set(RTRLIB_LINK ${RT_LIB} ${CMAKE_THREAD_LIBS_INIT})
 
 find_package(LibSSH 0.5.0 QUIET)
