@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include "alloc_utils_private.h"
 #include "rtrlib/rtrlib_export_private.h"
@@ -32,6 +33,30 @@ RTRLIB_EXPORT void lrtr_set_alloc_functions(
 inline void *lrtr_malloc(size_t size)
 {
 	return MALLOC_PTR(size);
+}
+
+void *lrtr_calloc(size_t nmemb, size_t size)
+{
+	int bytes = 0;
+
+#if (__GNUC__ >= 5) || (__clang_major__ >= 4)
+	if (__builtin_mul_overflow(nmemb, size, &bytes)) {
+		errno = ENOMEM;
+		return 0;
+	}
+#else
+	if (size && nmemb > (size_t)-1 / size) {
+		errno = ENOMEM;
+		return 0;
+	}
+	bytes = size * nmemb;
+#endif
+	void *p = lrtr_malloc(bytes);
+
+	if (!p)
+		return p;
+
+	return memset(p, 0, bytes);
 }
 
 inline void lrtr_free(void *ptr)
