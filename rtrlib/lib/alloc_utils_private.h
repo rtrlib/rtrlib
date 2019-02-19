@@ -16,6 +16,8 @@
 
 void *lrtr_malloc(size_t size);
 
+void *lrtr_calloc(size_t nmemb, size_t size);
+
 void lrtr_free(void *ptr);
 
 void *lrtr_realloc(void *ptr, size_t size);
