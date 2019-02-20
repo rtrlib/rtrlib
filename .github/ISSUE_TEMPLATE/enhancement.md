@@ -4,10 +4,10 @@ about: Ask for the enhancement of an existing feature.
 
 ---
 
-#### Description of current state
+### Description of current state
 <!-- Please describe the current state and why it is important to enhance. -->
 
-#### Improvement
+### Improvement
 <!-- Please describe the enhancement. -->
 
 ### Useful links
