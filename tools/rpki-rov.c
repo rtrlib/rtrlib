@@ -25,7 +25,7 @@ static void connection_status_callback(const struct rtr_mgr_group *group,
 		connection_status = status;
 }
 
-int connection_error(enum rtr_mgr_status status)
+static int connection_error(enum rtr_mgr_status status)
 {
 	if (status == RTR_MGR_ERROR) {
 	/*

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <arpa/inet.h>
+#include <unistd.h>
 #include "rtrlib/rtrlib.h"
 
 int main(){
@@ -56,7 +57,7 @@ int main(){
 
     //initialize all rtr_sockets in the server pool with the same settings
     struct rtr_mgr_config *conf;
-    int ret = rtr_mgr_init(&conf, groups, 2, 30, 600, 600, NULL, NULL, NULL, NULL);
+    rtr_mgr_init(&conf, groups, 2, 30, 600, 600, NULL, NULL, NULL, NULL);
 
     //start the connection manager
     rtr_mgr_start(conf);

@@ -22,7 +22,7 @@
 #include "rtrlib/transport/transport_private.h"
 
 static void rtr_purge_outdated_records(struct rtr_socket *rtr_socket);
-static void rtr_fsm_start(struct rtr_socket *rtr_socket);
+static void *rtr_fsm_start(struct rtr_socket *rtr_socket);
 
 static const char *socket_str_states[] = {
     [RTR_CONNECTING] = "RTR_CONNECTING",
@@ -111,10 +111,10 @@ void rtr_purge_outdated_records(struct rtr_socket *rtr_socket)
 }
 
 /* WARNING: This Function has cancelable sections*/
-void rtr_fsm_start(struct rtr_socket *rtr_socket)
-{ 
+void *rtr_fsm_start(struct rtr_socket *rtr_socket)
+{
    if (rtr_socket->state == RTR_SHUTDOWN)
-	return;
+	return NULL;
 
     // We don't care about the old state, but POSIX demands a non null value for setcancelstate
     int oldcancelstate;
