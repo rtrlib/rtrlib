@@ -542,7 +542,7 @@ static void test_ht_7(void)
 	printf("test_ht_7() complete\n");
 }
 
-void test_table_swap(void)
+static void test_table_swap(void)
 {
 	struct spki_table table1;
 	struct spki_table table2;
@@ -646,7 +646,7 @@ static void update_spki(struct spki_table *s __attribute__((unused)),
 		assert(added);
 }
 
-void test_table_diff(void)
+static void test_table_diff(void)
 {
 	struct spki_table table1;
 	struct spki_table table2;

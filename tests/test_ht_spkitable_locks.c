@@ -79,7 +79,7 @@ static struct spki_record *create_record(int ASN,
  * Add 'args->count' records to the spki table 'args->table', start with
  * ASN 'args->start_asn'.
  */
-static void add_records(struct add_records_args *args)
+static void *add_records(struct add_records_args *args)
 {
 	printf("Add %i records: ASN [%i..%i]\n",
 	       args->count, args->start_asn, args->count + args->start_asn - 1);
@@ -90,13 +90,15 @@ static void add_records(struct add_records_args *args)
 		assert(ret == SPKI_SUCCESS);
 		free(record);
 	}
+
+	return NULL;
 }
 
 /**
  * @brief remove records from spki table
  * Remove 'args->count' records from the spki table 'args->table'.
  */
-static void remove_records(struct remove_records_args *args)
+static void *remove_records(struct remove_records_args *args)
 {
 	printf("Remove %i records: ASN [%i..%i]\n",
 	       args->count, args->start_asn, args->count + args->start_asn - 1);
@@ -107,6 +109,8 @@ static void remove_records(struct remove_records_args *args)
 		assert(ret == SPKI_SUCCESS);
 		free(record);
 	}
+
+	return NULL;
 }
 
 /**

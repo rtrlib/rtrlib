@@ -26,7 +26,7 @@ uint32_t max_i = 0xFFFFFFF0;
 /**
  * @brief Add records to prefix table
  */
-static void rec_add(struct pfx_table *pfxt)
+static void *rec_add(struct pfx_table *pfxt)
 {
 	const int tid = getpid();
 	struct pfx_record rec;
@@ -56,12 +56,14 @@ static void rec_add(struct pfx_table *pfxt)
 		pfx_table_add(pfxt, &rec);
 		usleep(rand() / (RAND_MAX / 20));
 	}
+
+	return NULL;
 }
 
 /**
  * @brief Validate records in prefix table
  */
-static void rec_val(struct pfx_table *pfxt)
+static void *rec_val(struct pfx_table *pfxt)
 {
 	const int tid = getpid();
 	struct pfx_record rec;
@@ -92,12 +94,14 @@ static void rec_val(struct pfx_table *pfxt)
 				   &rec.prefix, rec.min_len, &res);
 		usleep(rand() / (RAND_MAX / 20));
 	}
+
+	return NULL;
 }
 
 /**
  * @brief Delete records from prefix table
  */
-static void rec_del(struct pfx_table *pfxt)
+static void *rec_del(struct pfx_table *pfxt)
 {
 	const int tid = getpid();
 	struct pfx_record rec;
@@ -128,6 +132,8 @@ static void rec_del(struct pfx_table *pfxt)
 		usleep(rand() / (RAND_MAX / 20));
 	}
 	printf("Done\n");
+
+	return NULL;
 }
 
 /**

@@ -224,7 +224,7 @@ static void test_v6(void)
 /*
  * @brief test ip comparsions
  */
-void test_cmp(void)
+static void test_cmp(void)
 {
 	struct lrtr_ip_addr addr1, addr2;
 
