@@ -11,15 +11,14 @@ ERROR=0
 
 # Functions annoted with RTRLIB_EXPORT
 EXPORTS=$(
-    grep -r '^RTRLIB_EXPORT' rtrlib |
-    grep -Po '(?<= ).*?(?=\(.*?)' | grep -o  '\w*$' | # extract function name
+    ctags -x --c-kinds=fp $(find rtrlib -iname '*.c' ! -name '*tommy*') |
+    grep  'RTRLIB_EXPORT' | awk '{ print $1 }' |
     sort)
 
 # Functions found in public headers
 HEADER_SYMBOLS=$(
-    cat $(find rtrlib -iname '*.h' -type f ! -name '*_private.h' ! -name '*tommy*') | # cat all public headers
-    gcc -o - -xc -fpreprocessed  -dD -E -P  - | # strip comments via gcc
-    grep -Po '(?<= ).*?(?=\(.*?)' | grep -o '\w*$' | # extract function name
+    ctags -x --c-kinds=fp  $(find rtrlib -iname '*.h' -type f ! -name '*_private.h' ! -name '*tommy*') |
+    awk '{ print $1 }' |
     sort)
 
 # Symbols found in librtrs dynamic export table
