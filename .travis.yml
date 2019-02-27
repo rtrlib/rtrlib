@@ -1,20 +1,6 @@
-sudo: required
-dist: trusty
+dist: xenial
 
 language: c
-
-before_install:
-    - sudo apt-get -qq update
-    - sudo apt-get -y install cppcheck doxygen libssh-dev ctags
-
-install:
-    - wget https://cmocka.org/files/1.1/cmocka-1.1.0.tar.xz
-    - tar xvf cmocka-1.1.0.tar.xz && pushd cmocka-1.1.0
-    - mkdir build && pushd build
-    - cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Debug
-    - make
-    - sudo make install
-    - popd && popd
 
 env:
   global:
@@ -31,6 +17,14 @@ addons:
     build_command_prepend: "cmake -D CMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=On -DUNIT_TESTING=On ."
     build_command:   "make"
     branch_pattern: coverity_scan
+
+  apt:
+    packages:
+      - cppcheck
+      - doxygen
+      - libssh-dev
+      - libcmocka-dev
+      - ctags
 
 script:
   - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then scripts/travis.sh; fi
