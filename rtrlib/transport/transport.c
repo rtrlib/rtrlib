@@ -35,6 +35,7 @@ inline int tr_recv(const struct tr_socket *socket, void *buf, const size_t len, 
     return socket->recv_fp(socket->socket, buf, len, timeout);
 }
 
+/* cppcheck-suppress unusedFunction */
 inline const char *tr_ident(struct tr_socket *sock)
 {
     return sock->ident_fp(sock->socket);

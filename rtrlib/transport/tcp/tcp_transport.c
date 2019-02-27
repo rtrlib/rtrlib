@@ -181,7 +181,7 @@ const char *tr_tcp_ident(void *socket)
     size_t len;
     struct tr_tcp_socket *sock = socket;
 
-    assert(socket != NULL);
+    assert(sock != NULL);
 
     if (sock->ident != NULL)
         return sock->ident;

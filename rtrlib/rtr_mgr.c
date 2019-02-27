@@ -364,18 +364,16 @@ RTRLIB_EXPORT int rtr_mgr_init(struct rtr_mgr_config **config_out,
 
 	/* Check that the groups have unique pref and at least one socket */
 	for (unsigned int i = 0; i < config->len; i++) {
-		struct rtr_mgr_group cg = groups[i];
-
-		if ((i > 0) && (cg.preference == last_preference)) {
+		if ((i > 0) && (groups[i].preference == last_preference)) {
 			MGR_DBG1("Error Same preference for 2 socket groups!");
 			goto err;
 		}
-		if (cg.sockets_len == 0) {
+		if (groups[i].sockets_len == 0) {
 			MGR_DBG1("Error Empty sockets array in socket group!");
 			goto err;
 		}
 
-		last_preference = cg.preference;
+		last_preference = groups[i].preference;
 	}
 
 	/* Init data structures that we need to pass to the sockets */

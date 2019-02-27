@@ -1159,7 +1159,7 @@ int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket){
                 spki_update_table = rtr_socket->spki_table;
             }
 
-            int retval = PFX_SUCCESS;
+            retval = PFX_SUCCESS;
             //add all IPv4 prefix pdu to the pfx_table
             for (unsigned int i = 0; i < ipv4_pdus_nindex; i++) {
                 if (rtr_update_pfx_table(rtr_socket, pfx_update_table, &(ipv4_pdus[i])) == PFX_ERROR) {
