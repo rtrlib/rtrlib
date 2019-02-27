@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
+#include <arpa/inet.h>
 #include "rtrlib/rtrlib.h"
 
 const int connection_timeout = 20;
@@ -40,6 +42,18 @@ static int connection_error(enum rtr_mgr_status status)
 		fflush(stdout);
 		return 1;
 	}
+	return 0;
+}
+
+static int str_to_int(const char *str, int *value)
+{
+	errno = 0;
+	int tmp = strtol(str, NULL, 10);
+
+	if (errno != 0)
+		return 1;
+
+	*value = tmp;
 	return 0;
 }
 
@@ -97,9 +111,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	char ip[128];
-	int mask;
-	int asn;
 	int counter;
 	/* loop for input */
 	while (1) {
@@ -141,17 +152,42 @@ int main(int argc, char *argv[])
 		char *input_tok = NULL;
 
 		input_tok = strtok(input, delims);
-		strcpy(ip, input_tok);
-		input_tok = strtok(NULL, delims);
-		mask = atoi(input_tok);
-		input_tok = strtok(NULL, delims); asn = atoi(input_tok);
-
 		struct lrtr_ip_addr pref;
+		char ip[INET6_ADDRSTRLEN];
+
+		if (strlen(input_tok) > sizeof(ip) - 1) {
+			fprintf(stderr, "Error: Invalid ip addr\n");
+			continue;
+		}
+
+		memset(ip, 0, sizeof(ip));
+		strncpy(ip, input_tok, sizeof(ip) - 1);
+
+		if (lrtr_ip_str_to_addr(ip, &pref) != 0) {
+			fprintf(stderr, "Error: Invalid ip addr\n");
+			continue;
+		}
+
+		input_tok = strtok(NULL, delims);
+		int mask;
+
+		if (str_to_int(input_tok, &mask)) {
+			fprintf(stderr, "Error: Invalid mask\n");
+			continue;
+		}
+
+		input_tok = strtok(NULL, delims);
+		int asn;
+
+		if (str_to_int(input_tok, &asn)) {
+			fprintf(stderr, "Error: Invalid asn\n");
+			continue;
+		}
+
 		enum pfxv_state result;
 		struct pfx_record *reason = NULL;
 		unsigned int reason_len = 0;
 
-		lrtr_ip_str_to_addr(ip, &pref);
 		/* do validation */
 		pfx_table_validate_r(groups[0].sockets[0]->pfx_table, &reason,
 				     &reason_len, asn, &pref, mask, &result);
