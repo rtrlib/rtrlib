@@ -5,7 +5,7 @@
 # Must be run from rtrlibs root dir.
 # ---HELP---
 
-SO_SYMBOL_WHITELIST=(__bss_start _edata _end _fini _init)
+SO_SYMBOL_WHITELIST=(__bss_start _edata _end _fini _init __gcov_master __gcov_sort_n_vals __gcov_var)
 
 ERROR=0
 
