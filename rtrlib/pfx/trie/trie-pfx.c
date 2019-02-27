@@ -86,8 +86,8 @@ RTRLIB_EXPORT void pfx_table_free(struct pfx_table *pfx_table)
             pthread_rwlock_wrlock(&(pfx_table->lock));
             do {
                 struct node_data *data = (struct node_data *) (root->data);
-                for(unsigned int i = 0; i < data->len; i++) {
-                    struct pfx_record record = { data->ary[i].asn, (root->prefix), root->len, data->ary[i].max_len, data->ary[i].socket};
+                for(unsigned int j = 0; j < data->len; j++) {
+                    struct pfx_record record = { data->ary[j].asn, (root->prefix), root->len, data->ary[j].max_len, data->ary[j].socket};
                     pfx_table_notify_clients(pfx_table, &record, false);
                 }
                 rm_node = (trie_remove(root, &(root->prefix), root->len, 0));
