@@ -176,7 +176,7 @@ static void lock_test1(void)
 
 	/* cleanup: free spki_table */
 	spki_table_free(&spkit);
-	printf("lock_test1() complete\n");
+	printf("%s() complete\n", __func__);
 }
 
 int main(void)

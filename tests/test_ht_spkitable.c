@@ -174,7 +174,7 @@ static void test_ht_1(void)
 	free(result);
 	free(socket_one);
 	free(socket_two);
-	printf("test_h1_1() complete\n");
+	printf("%s() complete\n", __func__);
 }
 
 /**
@@ -224,7 +224,7 @@ static void test_ht_2(void)
 	free(record1);
 	free(record2);
 	spki_table_free(&table);
-	printf("test_ht_2() complete\n");
+	printf("%s() complete\n", __func__);
 }
 
 /**
@@ -336,7 +336,7 @@ static void test_ht_3(void)
 	free(record2);
 	free(record3);
 	free(record4);
-	printf("test_ht_3() complete\n");
+	printf("%s complete\n", __func__);
 }
 
 /**
@@ -386,7 +386,7 @@ static void test_ht_4(void)
 
 	/* cleanup: free memory */
 	spki_table_free(&table);
-	printf("test_ht_4() complete\n");
+	printf("%s() complete\n", __func__);
 }
 
 /**
@@ -418,7 +418,7 @@ static void test_ht_5(void)
 	spki_table_free(&table);
 	free(record1);
 	free(record2);
-	printf("test_ht_5() complete\n");
+	printf("%s() complete\n", __func__);
 }
 
 /**
@@ -448,7 +448,7 @@ static void test_ht_6(void)
 
 	/* cleanup: free memory */
 	spki_table_free(&table);
-	printf("test_ht_6() complete\n");
+	printf("%s() complete\n", __func__);
 }
 
 /**
@@ -539,7 +539,7 @@ static void test_ht_7(void)
 
 	/* cleanup: free memory */
 	spki_table_free(&table);
-	printf("test_ht_7() complete\n");
+	printf("%s() complete\n", __func__);
 }
 
 static void test_table_swap(void)
@@ -605,7 +605,7 @@ static void test_table_swap(void)
 	free(test_record1);
 	free(test_record2);
 
-	printf("test_table_swap() complete\n");
+	printf("%s() complete\n", __func__);
 }
 
 static void update_spki(struct spki_table *s __attribute__((unused)),
@@ -681,7 +681,7 @@ static void test_table_diff(void)
 	free(test_record2);
 	free(test_record3);
 
-	printf("test_table_diff() complete\n");
+	printf("%s() complete\n", __func__);
 }
 
 int main(void)
