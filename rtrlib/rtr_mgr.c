@@ -262,7 +262,7 @@ static inline void _rtr_mgr_cb_state_error(const struct rtr_socket *sock,
 		if (next_group)
 			rtr_mgr_start_sockets(next_group);
 		else
-		      MGR_DBG1("No other inactive groups found");
+			MGR_DBG1("No other inactive groups found");
 	}
 }
 
@@ -458,7 +458,7 @@ RTRLIB_EXPORT struct rtr_mgr_group *rtr_mgr_get_first_group(
 
 RTRLIB_EXPORT int rtr_mgr_start(struct rtr_mgr_config *config)
 {
-	MGR_DBG1("rtr_mgr_start()");
+	MGR_DBG("%s()", __func__);
 	struct rtr_mgr_group *best_group = rtr_mgr_get_first_group(config);
 
 	return rtr_mgr_start_sockets(best_group);
@@ -490,7 +490,7 @@ RTRLIB_EXPORT bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config)
 
 RTRLIB_EXPORT void rtr_mgr_free(struct rtr_mgr_config *config)
 {
-	MGR_DBG1("rtr_mgr_free()");
+	MGR_DBG("%s()", __func__);
 	pthread_mutex_lock(&config->mutex);
 
 	pfx_table_free(config->pfx_table);
@@ -549,7 +549,7 @@ RTRLIB_EXPORT void rtr_mgr_stop(struct rtr_mgr_config *config)
 	pthread_mutex_lock(&config->mutex);
 	tommy_node *node = tommy_list_head(&config->groups->list);
 
-	MGR_DBG1("rtr_mgr_stop()");
+	MGR_DBG("%s()", __func__);
 	while (node) {
 		struct rtr_mgr_group_node *group_node = node->data;
 

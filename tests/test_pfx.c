@@ -96,7 +96,7 @@ static void remove_src_test(void)
 
 	/* cleanup: free table */
 	pfx_table_free(&pfxt);
-	printf("remove_src_test successful\n");
+	printf("%s() successful\n", __func__);
 }
 
 /**
@@ -186,7 +186,7 @@ static void mass_test(void)
 
 	/* cleanup: free table */
 	pfx_table_free(&pfxt);
-	printf("mass_test successful\n");
+	printf("%s() successful\n", __func__);
 }
 
 /**
@@ -331,7 +331,7 @@ static void pfx_table_test(void)
 
 	/* cleanup: free record and table */
 	pfx_table_free(&pfxt);
-	printf("pfx_table_test successful\n");
+	printf("%s() successful\n", __func__);
 }
 
 static void create_ip4_pfx_record(struct pfx_record *pfx, uint32_t asn,

@@ -184,9 +184,8 @@ int main(int argc, char **argv)
 	if (mode == TCP) {
 		tcp_config = (struct tr_tcp_config) { host, port, 0 };
 		tr_tcp_init(&tcp_config, &tr_sock);
-	}
 	#ifdef RTRLIB_HAVE_LIBSSH
-	else {
+	} else {
 		unsigned int iport = atoi(port);
 
 		ssh_config = (struct tr_ssh_config) {
@@ -198,8 +197,8 @@ int main(int argc, char **argv)
 			privkey,
 		};
 		tr_ssh_init(&ssh_config, &tr_sock);
-	}
 	#endif
+	}
 
 	struct rtr_socket rtr;
 	struct rtr_mgr_config *conf;
