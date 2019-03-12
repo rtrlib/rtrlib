@@ -29,7 +29,7 @@ fi
 cd $SCRIPT_DIR/..
 for i in $CHECKSOURCE; do
 	echo "> check coding style of $i ..."
-    IGNORE="PREFER_KERNEL_TYPES,CONST_STRUCT,OPEN_BRACE"
+    IGNORE="PREFER_KERNEL_TYPES,CONST_STRUCT,OPEN_BRACE,SPDX_LICENSE_TAG,OPEN_ENDED_LINE,UNNECESSARY_PARENTHESES"
     if [[ $i == *"unittest"* ]]; then
         IGNORE="${IGNORE},CAMELCASE"
     fi
