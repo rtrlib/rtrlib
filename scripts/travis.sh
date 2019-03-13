@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
@@ -15,13 +17,22 @@ function run_command {
 	fi
 	echo -e "\n${colour}The command \"$@\" exited with $ret.$NC\n\n"
 
-	if [ $ret != 0 ]; then
-		exit $ret
+	return $ret
+}
+
+function checkpatch {
+	git diff $TRAVIS_BRANCH '*.[ch]' > /tmp/patch
+	run_command scripts/checkpatch.pl --terse --no-tree --strict --show-types /tmp/patch
+	ret=$?
+	if [ $ret != 0]; then
+		cat -n /tmp/patch
 	fi
 }
 
+[[ $TRAVIS = "true" ]] && run_command git fetch --unshallow
 run_command scripts/cppcheck.sh
 run_command scripts/check-coding-style.sh
+[[ $TRAVIS_EVENT_TYPE = "pull_request" ]] && run_command checkpatch
 run_command cmake -D CMAKE_BUILD_TYPE=NoSSH .
 run_command make
 run_command make test
