@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-set -e
-
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
+
+BUILDSTEP_FAILED=0
 
 function run_command {
 	eval $@
@@ -12,6 +12,7 @@ function run_command {
 	ret=$?
 	if [ $ret != 0 ]; then
 		colour=$RED
+		BUILDSTEP_FAILED=1
 	else
 		colour=$GREEN
 	fi
@@ -42,3 +43,5 @@ run_command make
 run_command make test
 run_command make gcov
 run_command scripts/check-exports.sh
+
+exit $BUILDSTEP_FAILED
