@@ -23,7 +23,7 @@ function run_command {
 
 function checkpatch {
 	git diff $TRAVIS_BRANCH '*.[ch]' > /tmp/patch
-	run_command scripts/checkpatch.pl --terse --no-tree --strict --show-types /tmp/patch
+	run_command scripts/checkpatch.pl --ignore FILE_PATH_CHANGES,PREFER_KERNEL_TYPES,CONST_STRUCT,OPEN_BRACE,SPDX_LICENSE_TAG,OPEN_ENDED_LINE,UNNECESSARY_PARENTHESES --terse --no-tree --strict --show-types /tmp/patch
 	ret=$?
 	if [ $ret != 0]; then
 		cat -n /tmp/patch
