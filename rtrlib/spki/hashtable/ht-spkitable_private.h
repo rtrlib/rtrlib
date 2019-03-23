@@ -10,8 +10,8 @@
 #define RTR_HT_SPKITABLE_PRIVATE_H
 
 #include "rtrlib/spki/spkitable_private.h"
-#include "rtrlib/spki/hashtable/tommyds-2.2/tommyhashlin.h"
-#include "rtrlib/spki/hashtable/tommyds-2.2/tommylist.h"
+#include "third-party/tommyds/tommyhashlin.h"
+#include "third-party/tommyds/tommylist.h"
 
 typedef int (*hash_cmp_fp)(const void *arg, const void *obj);
 
