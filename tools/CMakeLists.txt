@@ -1,5 +1,5 @@
 add_executable(rtrclient rtrclient.c)
-target_link_libraries(rtrclient rtrlib)
+target_link_libraries(rtrclient rtrlib mustach)
 install(TARGETS rtrclient DESTINATION bin)
 install(FILES "rtrclient.1" DESTINATION "${CMAKE_INSTALL_MANDIR}/man1")
 
