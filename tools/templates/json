@@ -1,0 +1,10 @@
+[
+{{#roas}}
+	{
+		"prefix": "{{prefix}}",
+		"length": "{{length}}",
+		"maxlen": "{{maxlen}}",
+		"origin": "{{origin}}"
+	}{{^last}},{{/last}}
+{{/roas}}
+]

@@ -227,6 +227,10 @@ static int process(const char *template, struct mustach_itf *itf, void *closure,
 				if (rc < 0)
 					return rc;
 			}
+
+			if (template[0] == '\n')
+				++template;
+
 			stack[depth].name = beg;
 			stack[depth].again = template;
 			stack[depth].length = len;

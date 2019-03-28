@@ -1,0 +1,3 @@
+{{#roas}}
+{{prefix}}/{{length}}-{{maxlen}} AS {{origin}}
+{{/roas}}

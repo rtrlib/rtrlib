@@ -1,0 +1,4 @@
+prefix, minlen, maxlen, asn
+{{#roas}}
+{{prefix}}, {{length}}, {{maxlen}}, {{origin}}
+{{/roas}}
