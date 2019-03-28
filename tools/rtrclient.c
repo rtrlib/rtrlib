@@ -9,6 +9,7 @@
 
 #include <arpa/inet.h>
 #include <ctype.h>
+#include <errno.h>
 #include <netdb.h>
 #include <pthread.h>
 #include <stdarg.h>
@@ -21,6 +22,17 @@
 #include <unistd.h>
 
 #include "rtrlib/rtrlib.h"
+
+#include <third-party/mustach/mustach.h>
+#include <third-party/tommyds/tommyarray.h>
+#include <third-party/tommyds/tommyhashlin.h>
+
+#include "templates.h"
+
+__attribute__((format (printf, 1, 2), noreturn))
+static void print_error_exit(const char *fmt, ...);
+
+static bool is_readable_file(const char *str);
 
 enum socket_type {
 	SOCKET_TYPE_TCP,
@@ -38,9 +50,11 @@ struct socket_config {
 	char *bindaddr;
 	char *host;
 	char *port;
+#ifdef RTRLIB_HAVE_LIBSSH
 	char *ssh_username;
 	char *ssh_private_key;
 	char *ssh_host_key;
+#endif
 };
 
 /* activate update callback */
@@ -50,6 +64,10 @@ bool activate_spki_update_cb = false;
 /* print all updates regardless of socket configuration */
 bool print_all_pfx_updates = false;
 bool print_all_spki_updates = false;
+
+bool export_pfx = false;
+char *export_file_path = NULL;
+const char *template_name = NULL;
 
 struct socket_config **socket_config = NULL;
 size_t socket_count = 0;
@@ -98,6 +116,62 @@ static struct socket_config *extend_socket_config()
 	return config;
 }
 
+static const char *get_template(const char *name)
+{
+	const struct pfx_output_template *current = templates;
+
+	while (current->name) {
+		if (strcmp(name, current->name) == 0)
+			return current->template;
+
+		++current;
+	}
+
+	if (is_readable_file(name)) {
+		FILE *template_file = fopen(name, "r");
+
+		if (fseek(template_file, 0, SEEK_END) == -1)
+			goto read_error;
+
+		long file_size = ftell(template_file);
+
+		if (file_size == -1)
+			goto read_error;
+
+		rewind(template_file);
+
+		char *template = checked_malloc(file_size);
+
+		size_t bytes_read = fread(template, 1, file_size, template_file);
+
+		if (bytes_read != (unsigned long)file_size)
+			goto read_error;
+
+		fclose(template_file);
+		return template;
+
+read_error:
+		fclose(template_file);
+		print_error_exit("Could not read template");
+	}
+
+	print_error_exit("Template \"%s\" not found", name);
+}
+
+static void print_templates(void)
+{
+	const struct pfx_output_template *current = templates;
+
+	while (current->name) {
+		if (template_name && strcmp(current->name, template_name) == 0)
+			printf("%s", current->template);
+		else if (!template_name)
+			printf("%s\n", current->name);
+
+		++current;
+	}
+}
+
 static bool is_numeric(const char *str)
 {
 	for (size_t i = 0; i < strlen(str); ++i) {
@@ -140,24 +214,149 @@ static bool is_resolveable_host(const char *str)
 	return true;
 }
 
-#ifdef RTRLIB_HAVE_LIBSSH
+static bool is_file(const char *str)
+{
+	struct stat stat_buf;
+
+	if (stat(str, &stat_buf) == -1)
+		return false;
+
+	return S_ISREG(stat_buf.st_mode);
+}
+
 static bool is_readable_file(const char *str)
 {
 	if (access(str, R_OK) != 0)
 		return false;
 
-	struct stat stat_buf;
-
-	stat(str, &stat_buf);
-
-	return S_ISREG(stat_buf.st_mode);
+	return is_file(str);
 }
-#endif
+
+struct exporter_state {
+	bool roa_section;
+	tommy_count_t current_roa;
+	tommy_array *roas;
+};
+
+struct pfx_export_cb_arg {
+	tommy_array *array;
+	tommy_hashlin *hashtable;
+};
+
+static void pfx_export_cb(const struct pfx_record *pfx_record, void *data);
+
+static tommy_uint32_t hash_pfx_record(const struct pfx_record *record) {
+	struct pfx_record_packed {
+		uint8_t ip[16];
+		uint32_t asn;
+		uint8_t min_len;
+		uint8_t max_len;
+	} __attribute__((packed));
+
+	struct pfx_record_packed packed_record;
+
+	memset(&packed_record, 0, sizeof(packed_record));
+
+	if (record->prefix.ver == LRTR_IPV4)
+		memcpy(&packed_record.ip, &record->prefix.u.addr4, sizeof(struct lrtr_ipv4_addr));
+	else
+		memcpy(&packed_record.ip, &record->prefix.u.addr6, sizeof(struct lrtr_ipv6_addr));
+
+	packed_record.asn = record->asn;
+	packed_record.min_len = record->min_len;
+	packed_record.max_len = record->max_len;
+
+	return tommy_hash_u32(0, &packed_record, sizeof(packed_record));
+}
+
+static int pfx_record_cmp(const void *data1, const void *data2)
+{
+	const struct pfx_record *arg1 = data1;
+	const struct pfx_record *arg2 = data2;
+
+	if ((arg1->asn == arg2->asn) && (arg1->max_len == arg2->max_len) && (arg1->min_len == arg2->min_len) &&
+	    lrtr_ip_addr_equal(arg1->prefix, arg2->prefix))
+		return 0;
+
+	return 1;
+}
+
+static int template_enter(void *closure, const char *name)
+{
+	struct exporter_state *state = closure;
+
+	if (strncmp("roas", name, strlen(name)) == 0) {
+		state->roa_section = true;
+		state->current_roa = 0;
+
+		return 1;
+
+	} else if (state->current_roa && strcmp("last", name) == 0 &&
+		   state->current_roa == tommy_array_size(state->roas) - 1) {
+		return 1;
+	}
+
+	return 0;
+}
+
+static int template_leave(void *closure)
+{
+	struct exporter_state *state = closure;
+
+	state->roa_section = false;
+	return 0;
+}
+
+static int template_next(void *closure)
+{
+	struct exporter_state *state = closure;
+
+	if (++state->current_roa >= tommy_array_size(state->roas))
+		return 0;
+
+	return 1;
+}
+
+static int template_put(void *closure, const char *name, __attribute__((unused)) int escape, FILE *file)
+{
+	struct exporter_state *state = closure;
+
+	size_t namelen = strlen(name);
+
+	if (!state->roa_section || namelen == 0)
+		return MUSTACH_ERROR_SYSTEM;
+
+	struct pfx_record *pfx_record = tommy_array_get(state->roas, state->current_roa);
+
+	if (strncmp("prefix", name, namelen) == 0) {
+		char prefix_str[INET6_ADDRSTRLEN];
+
+		lrtr_ip_addr_to_str(&pfx_record->prefix, prefix_str, sizeof(prefix_str));
+		fputs(prefix_str, file);
+
+	} else if (strncmp("length", name, namelen) == 0) {
+		fprintf(file, "%d", pfx_record->min_len);
+
+	} else if (strncmp("maxlen", name, namelen) == 0) {
+		fprintf(file, "%d", pfx_record->max_len);
+
+	} else if (strncmp("origin", name, namelen) == 0) {
+		fprintf(file, "%d", pfx_record->asn);
+	}
+
+	return MUSTACH_OK;
+}
+
+struct mustach_itf template_itf = { .start = NULL,
+				    .put = template_put,
+				    .enter = template_enter,
+				    .next = template_next,
+				    .leave = template_leave };
 
 static void print_usage(char **argv)
 {
 	printf("Usage:\n");
-	printf(" %s [-hpk] <socket>...\n", argv[0]);
+	printf(" %s [-hpkel] [-o file] [-t template] <socket>...\n", argv[0]);
 	printf("\nSocket:\n");
 	printf(" tcp [-hpkb bindaddr] <host> <port>\n");
 	#ifdef RTRLIB_HAVE_LIBSSH
@@ -169,13 +368,18 @@ static void print_usage(char **argv)
 	printf("-k  Print information about SPKI updates.\n");
 	printf("-p  Print information about PFX updates.\n\n");
 
+	printf("-e  export pfx table and exit\n");
+	printf("-o  output file for export\n");
+	printf("-t  template used for export\n");
+	printf("-l  list available templates\n\n");
+
 	printf("-h  Print this help message.\n");
 
 	printf("\nExamples:\n");
-	printf(" %s tcp rpki-validator.realmv6.org 8282\n", argv[0]);
-	printf(" %s tcp -k -p rpki-validator.realmv6.org 8282\n", argv[0]);
-	printf(" %s tcp -k rpki-validator.realmv6.org 8282 tcp -s example.com 323\n", argv[0]);
-	printf(" %s -kp tcp rpki-validator.realmv6.org 8282 tcp example.com 323\n", argv[0]);
+	printf(" %s tcp rpki-validator.realmv6.org 8283\n", argv[0]);
+	printf(" %s tcp -k -p rpki-validator.realmv6.org 8283\n", argv[0]);
+	printf(" %s tcp -k rpki-validator.realmv6.org 8283 tcp -s example.com 323\n", argv[0]);
+	printf(" %s -kp tcp rpki-validator.realmv6.org 8283 tcp example.com 323\n", argv[0]);
 	#ifdef RTRLIB_HAVE_LIBSSH
 	printf(" %s ssh rpki-validator.realmv6.org 22 rtr-ssh", argv[0]);
 	printf(" ~/.ssh/id_rsa ~/.ssh/known_hosts\n");
@@ -185,6 +389,9 @@ static void print_usage(char **argv)
 	printf(" %s ssh -k -p rpki-validator.realmv6.org 22 rtr-ssh ~/.ssh/id_rsa ~/.ssh/known_hosts", argv[0]);
 	printf(" tcp -k -p example.com 323\n");
 	#endif
+
+	printf(" %s -e tcp rpki-validator.realmv6.org 8283\n", argv[0]);
+	printf(" %s -e -t csv -o roa.csv tcp rpki-validator.realmv6.org 8283\n", argv[0]);
 }
 
 static void status_fp(const struct rtr_mgr_group *group __attribute__((unused)),
@@ -282,7 +489,9 @@ static void parse_global_opts(int argc, char **argv)
 {
 	int opt;
 
-	while ((opt = getopt(argc, argv, "+kph")) != -1) {
+	bool print_template = false;
+
+	while ((opt = getopt(argc, argv, "+kphelo:t:")) != -1) {
 		switch (opt) {
 		case 'k':
 			activate_spki_update_cb = true;
@@ -294,11 +503,38 @@ static void parse_global_opts(int argc, char **argv)
 			print_all_pfx_updates = true;
 			break;
 
+		case 'e':
+			export_pfx = true;
+			break;
+
+		case 'o':
+			if (export_file_path)
+				print_error_exit("output file can not be specified more than once");
+
+			export_file_path = optarg;
+			break;
+
+		case 't':
+			template_name = optarg;
+			break;
+
+		case 'l':
+			print_template = true;
+			break;
+
 		default:
 			print_usage(argv);
 			exit(EXIT_FAILURE);
 		}
 	}
+
+	if (print_template) {
+		print_templates();
+		exit(EXIT_SUCCESS);
+	}
+
+	if ((export_file_path || template_name)  && !export_pfx)
+		print_error_exit("Specifying -o or -t without -e does not make sense");
 }
 
 static void parse_socket_opts(
@@ -331,7 +567,6 @@ static void parse_socket_opts(
 	}
 }
 
-__attribute__((format (printf, 1, 2)))
 static void print_error_exit(const char *fmt, ...)
 {
 	va_list argptr;
@@ -580,12 +815,12 @@ static void init_sockets(void)
 
 int main(int argc, char **argv)
 {
-	if (argc < 4) {
-		print_usage(argv);
-		return EXIT_FAILURE;
-	}
-
 	parse_cli(argc, argv);
+
+	if (socket_count == 0) {
+		print_usage(argv);
+		exit(EXIT_FAILURE);
+	}
 
 	init_sockets();
 
@@ -611,19 +846,100 @@ int main(int argc, char **argv)
 	if (!conf)
 		return EXIT_FAILURE;
 
-	if (activate_pfx_update_cb && socket_count > 1)
+	if (!export_pfx && activate_pfx_update_cb && socket_count > 1)
 		printf("%-40s %-40s   %3s   %3s   %3s\n",
 		       "host", "Prefix", "Prefix Length", "", "ASN");
-	else if (activate_pfx_update_cb)
+	else if (!export_pfx && activate_pfx_update_cb)
 		printf("%-40s   %3s   %3s   %3s\n",
 		       "Prefix", "Prefix Length", "", "ASN");
 
-	rtr_mgr_start(conf);
+	if (export_pfx) {
+		const char *template;
 
-	pause();
+		if (template_name)
+			template = get_template(template_name);
+		else
+			template = templates->template;
+		FILE *export_file = stdout;
+
+		if (export_file_path) {
+			export_file = fopen(export_file_path, "w");
+			if (!export_file) {
+				char *errormsg = strerror(errno);
+
+				print_error_exit("\"%s\" could not be opened for writing: %s", optarg, errormsg);
+			}
+		}
+
+		rtr_mgr_start(conf);
+
+		while (!rtr_mgr_conf_in_sync(conf))
+			sleep(1);
+
+		printf("Sync done\n");
+		tommy_array prefixes;
+		tommy_hashlin prefix_hash;
+		struct pfx_export_cb_arg arg = {
+			.array = &prefixes,
+			.hashtable = &prefix_hash,
+		};
+
+		tommy_array_init(&prefixes);
+		tommy_hashlin_init(&prefix_hash);
+
+		pfx_table_for_each_ipv4_record(conf->pfx_table, pfx_export_cb, &arg);
+		pfx_table_for_each_ipv6_record(conf->pfx_table, pfx_export_cb, &arg);
+
+		struct exporter_state state = {
+			.roa_section = false,
+			.current_roa = 0,
+			.roas = &prefixes,
+		};
+
+		fmustach(template, &template_itf, &state, export_file);
+
+		tommy_hashlin_foreach(&prefix_hash, free);
+		tommy_hashlin_done(&prefix_hash);
+		tommy_array_done(&prefixes);
+
+		if (export_file != stdout && fclose(export_file) == EOF) {
+			char *errormsg = strerror(errno);
+
+			print_error_exit("\"Error during write into output file: %s\"", errormsg);
+		}
+
+	} else {
+		rtr_mgr_start(conf);
+		pause();
+	}
+
 	rtr_mgr_stop(conf);
 	rtr_mgr_free(conf);
 	free(groups[0].sockets);
 
 	return EXIT_SUCCESS;
+}
+
+struct pfx_record_entry {
+	struct pfx_record record;
+	tommy_node hash_node;
+};
+
+static void pfx_export_cb(const struct pfx_record *pfx_record, void *data)
+{
+	struct pfx_export_cb_arg *arg = data;
+	tommy_array *roa_array = arg->array;
+	tommy_hashlin *roa_hashtable = arg->hashtable;
+
+	tommy_hash_t record_hash = hash_pfx_record(pfx_record);
+
+	if (tommy_hashlin_search(roa_hashtable, &pfx_record_cmp, pfx_record, record_hash) != 0)
+		return;
+
+	struct pfx_record_entry *pfx_record_entry = malloc(sizeof(struct pfx_record_entry));
+
+	memcpy(&pfx_record_entry->record, pfx_record, sizeof(struct pfx_record));
+
+	tommy_hashlin_insert(roa_hashtable, &pfx_record_entry->hash_node, pfx_record_entry, record_hash);
+	tommy_array_insert(roa_array, pfx_record_entry);
 }
