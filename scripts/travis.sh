@@ -34,11 +34,11 @@ function checkpatch {
 run_command scripts/cppcheck.sh
 run_command scripts/check-coding-style.sh
 [[ $TRAVIS_EVENT_TYPE = "pull_request" ]] && run_command checkpatch
-run_command cmake -D CMAKE_BUILD_TYPE=NoSSH .
+run_command cmake -D RTRLIB_TRANSPORT_SSH=Off .
 run_command make
 run_command make test
 run_command make clean
-run_command cmake -D CMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=On -DUNIT_TESTING=On .
+run_command cmake -D CMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=On -DUNIT_TESTING=On -DRTRLIB_TRANSPORT_SSH=On .
 run_command make
 run_command make test
 run_command make gcov
