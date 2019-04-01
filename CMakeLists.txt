@@ -135,9 +135,9 @@ foreach(ITEM ${RTRLIB_PUBLIC_HEADERS})
 endforeach()
 
 #pkgconfig file
-if(LIBSSH_FOUND)
+if(RTRLIB_TRANSPORT_SSH)
     set (PKG_CONFIG_REQUIRES "libssh >= 0.5.0")
-endif(LIBSSH_FOUND)
+endif(RTRLIB_TRANSPORT_SSH)
 
 # '#include <rtrlib/rtrlib.h>' includes the "rtrlib/"
 set (PKG_CONFIG_LIBDIR "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
