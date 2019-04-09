@@ -42,6 +42,15 @@ Compilation
       -D LIBSSH_LIBRARY=<path-to-libssh.so>
       -D LIBSSH_INCLUDE=<include-directory>
 
+  If libssh is installed but you do not want to build rtrlib with ssh
+  support, you can disable it with the following parameter:
+
+      -D RTRLIB_TRANSPORT_SSH=No
+
+  Or to enforce ssh support:
+
+      -D RTRLIB_TRANSPORT_SSH=Yes
+
   To specify another directory where the RTRlib will be installed, you
   can pass the following argument to cmake:
 
