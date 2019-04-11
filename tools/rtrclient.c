@@ -19,14 +19,18 @@
 static void print_usage(char **argv)
 {
 	printf("Usage:\n");
-	printf(" %s tcp [options] <host> <port>\n", argv[0]);
+	printf(" %s [-hpk] tcp [-hpk] [-b bindaddr] <host> <port>\n", argv[0]);
 	#ifdef RTRLIB_HAVE_LIBSSH
 	printf(" %s ssh [options] <host> <port>", argv[0]);
 	printf(" <username> <private_key> [<host_key>]\n");
 	#endif
 	printf("\nOptions:\n");
+	printf("-b bindaddr  Hostnamne or IP address to connect from\n\n");
+
 	printf("-k  Print information about SPKI updates.\n");
-	printf("-p  Print information about PFX updates.\n");
+	printf("-p  Print information about PFX updates.\n\n");
+
+	printf("-h  Print this help message.\n");
 
 	printf("\nExamples:\n");
 	printf(" %s tcp rpki-validator.realmv6.org 8282\n", argv[0]);
@@ -118,7 +122,7 @@ int main(int argc, char **argv)
 	char *hostkey = NULL;
 	#endif
 
-	if (argc == 1) {
+	if (argc < 4) {
 		print_usage(argv);
 		return EXIT_FAILURE;
 	}
@@ -132,43 +136,45 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	int args_it = 2;
+	int opt;
+	optind = 2;
 	/* Optional args */
-	for (args_it = 2; args_it < argc; args_it++) {
-		if (argv[args_it][0] == '-') {
-			if (argv[args_it][1] == 'k') {
+	while ((opt = getopt(argc, argv, "+kpeh")) != -1) {
+		switch (opt) {
+			case 'k':
 				spki_update_fp = update_spki;
-			} else if (argv[args_it][1] == 'p') {
+				break;
+
+			case 'p':
 				pfx_update_fp = update_cb;
-			} else {
+				break;
+
+			default:
 				print_usage(argv);
 				return EXIT_FAILURE;
-			}
-		} else {
-			break;
 		}
 	}
 
 	if (mode == TCP) {
-		if ((argc - args_it) < 2) {
+		if ((argc - optind) < 2) {
 			print_usage(argv);
 			return EXIT_FAILURE;
 		}
-		host = argv[args_it++];
-		port = argv[args_it++];
+		host = argv[optind++];
+		port = argv[optind++];
 	}
 	#ifdef RTRLIB_HAVE_LIBSSH
 	else if (mode == SSH) {
-		if ((argc - args_it) < 4) {
+		if ((argc - optind) < 4) {
 			print_usage(argv);
 			return EXIT_FAILURE;
 		}
-		host = argv[args_it++];
-		port = argv[args_it++];
-		user = argv[args_it++];
-		privkey = argv[args_it++];
-		if ((argc - args_it) == 1)
-			hostkey = argv[args_it++];
+		host = argv[optind++];
+		port = argv[optind++];
+		user = argv[optind++];
+		privkey = argv[optind++];
+		if ((argc - optind) == 1)
+			hostkey = argv[optind++];
 		else
 			hostkey = NULL;
 	}
