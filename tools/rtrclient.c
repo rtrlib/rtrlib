@@ -7,18 +7,19 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#include <stdlib.h>
-#include <stdarg.h>
-#include <pthread.h>
 #include <arpa/inet.h>
+#include <ctype.h>
+#include <netdb.h>
+#include <pthread.h>
+#include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <netdb.h>
+#include <sys/types.h>
 #include <unistd.h>
-#include <ctype.h>
+
 #include "rtrlib/rtrlib.h"
 
 enum socket_type {
