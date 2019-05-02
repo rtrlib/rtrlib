@@ -54,6 +54,8 @@ bool print_all_spki_updates = false;
 struct socket_config **socket_config = NULL;
 size_t socket_count = 0;
 
+pthread_mutex_t stdout_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 /**
  * @brief Check if argument is NULL and exit if it is
  */
@@ -184,9 +186,11 @@ static void status_fp(const struct rtr_mgr_group *group __attribute__((unused)),
 		      const struct rtr_socket *rtr_sock,
 		      void *data __attribute__((unused)))
 {
+	pthread_mutex_lock(&stdout_mutex);
 	printf("RTR-Socket changed connection status to: %s, Mgr Status: %s\n",
 	       rtr_state_to_str(rtr_sock->state),
 	       rtr_mgr_status_to_str(mgr_status));
+	pthread_mutex_unlock(&stdout_mutex);
 }
 
 static void update_cb(struct pfx_table *p  __attribute__((unused)),
@@ -201,6 +205,7 @@ static void update_cb(struct pfx_table *p  __attribute__((unused)),
 	if (!print_all_pfx_updates && !config->print_pfx_updates)
 		return;
 
+	pthread_mutex_lock(&stdout_mutex);
 	if (added)
 		printf("+ ");
 	else
@@ -213,6 +218,8 @@ static void update_cb(struct pfx_table *p  __attribute__((unused)),
 	else
 		printf("%-40s   %3u - %3u   %10u\n",
 		       ip, rec.min_len, rec.max_len, rec.asn);
+
+	pthread_mutex_unlock(&stdout_mutex);
 }
 
 static void update_spki(struct spki_table *s __attribute__((unused)),
@@ -224,6 +231,8 @@ static void update_spki(struct spki_table *s __attribute__((unused)),
 
 	if (!print_all_spki_updates && !config->print_spki_updates)
 		return;
+
+	pthread_mutex_lock(&stdout_mutex);
 
 	char c;
 
@@ -259,6 +268,8 @@ static void update_spki(struct spki_table *s __attribute__((unused)),
 			printf(":");
 	}
 	printf("\n");
+
+	pthread_mutex_unlock(&stdout_mutex);
 }
 
 static void parse_global_opts(int argc, char **argv)
@@ -594,13 +605,15 @@ int main(int argc, char **argv)
 	if (!conf)
 		return EXIT_FAILURE;
 
-	rtr_mgr_start(conf);
 	if (activate_pfx_update_cb && socket_count > 1)
 		printf("%-40s %-40s   %3s   %3s   %3s\n",
 		       "host", "Prefix", "Prefix Length", "", "ASN");
 	else if (activate_pfx_update_cb)
 		printf("%-40s   %3s   %3s   %3s\n",
 		       "Prefix", "Prefix Length", "", "ASN");
+
+	rtr_mgr_start(conf);
+
 	pause();
 	rtr_mgr_stop(conf);
 	rtr_mgr_free(conf);
