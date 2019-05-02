@@ -321,9 +321,9 @@ static void print_error_exit(const char *fmt, ...)
 
 	va_start(argptr, fmt);
 
-	printf("error: ");
+	fprintf(stderr, "error: ");
 
-	vprintf(fmt, argptr);
+	vfprintf(stderr, fmt, argptr);
 
 	va_end(argptr);
 
@@ -587,9 +587,9 @@ int main(int argc, char **argv)
 			       spki_update_fp, status_fp, NULL);
 
 	if (ret == RTR_ERROR)
-		printf("Error in rtr_mgr_init!\n");
+		fprintf(stderr, "Error in rtr_mgr_init!\n");
 	else if (ret == RTR_INVALID_PARAM)
-		printf("Invalid params passed to rtr_mgr_init\n");
+		fprintf(stderr, "Invalid params passed to rtr_mgr_init\n");
 
 	if (!conf)
 		return EXIT_FAILURE;
