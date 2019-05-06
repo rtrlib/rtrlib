@@ -11,16 +11,16 @@
 rtrclient \- rtr rpki client
 .SH SYNOPSIS
 .B rtrclient
+[\fB\-kph\fR]
+.I SOCKETS\fR...
+.SH SOCKETS
 .B tcp
-[\fB\-k\fR]
-[\fB\-p\fR]
+[\fB\-kpb \fIbindaddr\fR]
 .IR HOST
 .IR PORT
 .br
-.B rtrclient
 .B ssh
-[\fB\-k\fR]
-[\fB\-p\fR]
+[\fB\-kpb \fIbindaddr\fR]
 .IR HOST
 .IR PORT
 .IR USERNAME
@@ -28,7 +28,24 @@ rtrclient \- rtr rpki client
 [\fIHOST_KEY\fR]
 .SH DESCRIPTION
 \fBrtrclient\fR connects to an RPKI/RTR cache server and prints prefix, origin AS, and router key updates.
+\fBrtrclient\fR can use plain tcp or ssh transport to connect to an RPKI/RTR cache server.
+The amount is not limited and different transport types can be mixed arbitrarily.
+.LP
+For \fBtcp\fR you must specify the \fIHOST\fR and \fIPORT\fR.
+.LP
+For \fBssh\fR you must specify the \fIHOST\fR, \fIPORT\fR, \fIUSERNAME\fR and a file containing the \fIPRIVATE_KEY\fR.
+You may specify a file containing a list of \fIHOST_KEY\fRs, in the well known
+.B SSH_KNOWN_HOSTS
+file format. See \fIsshd(8)\fR for details.
 .SH OPTIONS
+\fB-b \fIbindaddr\fR
+.RS 4
+Set explicit bind address
+.RE
+.B -h
+.RS 4
+Print help message
+.RE
 \fB-k\fR
 .RS 4
 Print information about router key updates
@@ -53,3 +70,9 @@ Print prefix and router key updates from a ssh based server
 rtrclient ssh -k -p rpki.example.com 22 rtr-ssh ~/.ssh/id_rsa ~/.ssh/known_hosts
 .RE
 .fi
+.PP
+Use multiple rtr server, print prefix updates for some
+.PP
+.nf
+.RS
+rtrclient tcp -p rpki.example.com 323 tcp rpki2.example.com 323 ssh -p rpki.example.com 22 rtr-ssh ~/.ssh/id_rsa
