@@ -24,7 +24,7 @@ int main(void)
 	int retval = 0;
 	struct tr_socket tr_tcp;
 	char tcp_host[] = "rpki-validator.realmv6.org";
-	char tcp_port[] = "8282";
+	char tcp_port[] = "8283";
 
 	struct tr_tcp_config tcp_config = {
 	tcp_host, //IP

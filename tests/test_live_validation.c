@@ -14,7 +14,7 @@
 #include "rtrlib/rtrlib.h"
 
 #define RPKI_CACHE_HOST "rpki-validator.realmv6.org"
-#define RPKI_CACHE_POST "8282"
+#define RPKI_CACHE_POST "8283"
 
 struct test_validity_query {
 	char *pfx;
