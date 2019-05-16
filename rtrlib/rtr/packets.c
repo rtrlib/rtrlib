@@ -730,11 +730,8 @@ static int rtr_handle_error_pdu(struct rtr_socket *rtr_socket, const void *buf)
         if ((sizeof(pdu->ver) + sizeof(pdu->type) + sizeof(pdu->error_code) + sizeof(pdu->len) + sizeof(pdu->len_enc_pdu) + pdu->len_enc_pdu + 4 + len_err_txt) != pdu->len)
             RTR_DBG1("error: Length of error text contains an incorrect value");
         else {
-            //assure that the error text contains an terminating \0 char
-            char txt[len_err_txt + 1];
-            char *pdu_txt = (char *) pdu->rest + pdu->len_enc_pdu + 4;
-            snprintf(txt, len_err_txt + 1, "%s", pdu_txt);
-            RTR_DBG("Error PDU included the following error msg: \'%s\'", txt);
+            char *pdu_txt = (char *) pdu->rest + pdu->len_enc_pdu + sizeof(len_err_txt);
+            RTR_DBG("Error PDU included the following error msg: \'%.*s\'", len_err_txt, pdu_txt);
         }
     }
 
