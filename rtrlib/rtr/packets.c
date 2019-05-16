@@ -725,7 +725,7 @@ static int rtr_handle_error_pdu(struct rtr_socket *rtr_socket, const void *buf)
         break;
     }
 
-    const uint32_t len_err_txt = ntohl(*((uint32_t *) (pdu->rest + pdu->len_enc_pdu)));
+    const uint32_t len_err_txt = *((uint32_t *) (pdu->rest + pdu->len_enc_pdu));
     if (len_err_txt > 0) {
         if ((sizeof(pdu->ver) + sizeof(pdu->type) + sizeof(pdu->error_code) + sizeof(pdu->len) + sizeof(pdu->len_enc_pdu) + pdu->len_enc_pdu + 4 + len_err_txt) != pdu->len)
             RTR_DBG1("error: Length of error text contains an incorrect value");
