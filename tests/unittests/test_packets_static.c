@@ -271,12 +271,6 @@ static void test_rtr_pdu_check_size(void **state)
 	error->len = 24;
 	error->rest[11] = 0xA;
 	assert_false(rtr_pdu_check_size((struct pdu_header *)error));
-
-	/* test error pdu error string termination */
-	error->len = 25;
-	error->rest[11] = 0x1;
-	error->rest[12] = 0x20;
-	assert_false(rtr_pdu_check_size((struct pdu_header *)error));
 }
 
 static void test_rtr_send_error_pdu(void **state)

@@ -495,10 +495,6 @@ static bool rtr_pdu_check_size (const struct pdu_header *pdu) {
       break;
     }
 
-    if ((err_msg_len > 0) && (((uint8_t*)err_pdu)[min_size-1] != 0)) {
-        RTR_DBG1("Error msg is not null terminated!");
-        break;
-    }
     retval = true;
     break;
   case SERIAL_QUERY:
