@@ -32,18 +32,19 @@ void lrtr_dbg(const char *frmt, ...)
 		struct tm tm;
 
 		if (localtime_r(&tv.tv_sec, &tm)) {
-			printf("(%04d/%02d/%02d %02d:%02d:%02d:%06ld): ",
-			       tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
-			       tm.tm_hour, tm.tm_min, tm.tm_sec, tv.tv_usec);
+			fprintf(stderr,
+				"(%04d/%02d/%02d %02d:%02d:%02d:%06ld): ",
+				tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+				tm.tm_hour, tm.tm_min, tm.tm_sec, tv.tv_usec);
 			fail = false;
 		}
 	}
 
 	if (fail)
-		printf("(%jd): ", (intmax_t)time(0));
+		fprintf(stderr, "(%jd): ", (intmax_t)time(0));
 
-	vprintf(frmt, argptr);
-	printf("\n");
+	vfprintf(stderr, frmt, argptr);
+	fprintf(stderr, "\n");
 	va_end(argptr);
 #endif
 }
