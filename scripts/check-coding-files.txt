@@ -10,6 +10,8 @@ rtrlib/lib/ipv4.h
 rtrlib/lib/ipv4_private.h
 rtrlib/lib/ipv6.h
 rtrlib/lib/ipv6_private.h
+rtrlib/lib/log.c
+rtrlib/lib/log_private.h
 rtrlib/pfx/trie/trie_private.h
 rtrlib/pfx/trie/trie.c
 tests/test_ht_spkitable.c
