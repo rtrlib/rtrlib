@@ -3,6 +3,18 @@ https://github.com/rtrlib/rtrlib/commits/master
 
 Release History:
 
+* Version 0.7.0
+    - Fix to ensure shadow tables are only freed when initialized before
+    - Fix SSH transport w/o bind address and add host key verification
+    - Fix bug in cache groups to ensure uniqueness of cache server preferences
+    - Fix race condition in rtr_stop
+    - Remove error PDU null termination check
+    - Update tommyds implementation to version 2.2
+    - tools/rpki-rov: improve validation of command line arguments
+    - tools/rtrclient: add ROA export with templates, support for CSV and JSON
+    - Output log messages to stderr instead of stdout
+    - style: increase max line length to 120 characters
+
 * Version 0.6.3
     - Fix IPv4 string conversion to support big endian systems
 
@@ -39,7 +51,7 @@ Release History:
     - Add atomtic reset for pfx table and spki table
     - Improve code for packets
     - Add rpm package build infrastructure
-    - Add cppcheck suppresions for public api functions  
+    - Add cppcheck suppressions for public api functions
     - Add new test to verify correctness of prefix removal
     - Remove function rtr_mgr_find_group in RTR Manager because it is
       not used
