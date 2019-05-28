@@ -1,5 +1,5 @@
 Name:           librtr
-Version:        0.6.3
+Version:        0.7.0
 Release:        1%{?dist}
 Summary:        Small extensible RPKI-RTR-Client C library
 Group:          Development/Libraries
@@ -113,4 +113,3 @@ export LD_LIBRARY_PATH=.; make test
 %changelog
 * Thu Dec 14 2017 Martin Winter <mwinter@opensourcerouting.org> - %{version}-%{release}
 - RPM Packaging added
-
