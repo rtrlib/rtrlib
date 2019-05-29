@@ -174,22 +174,16 @@ static void print_usage(char **argv)
 	printf("\nExamples:\n");
 	printf(" %s tcp rpki-validator.realmv6.org 8282\n", argv[0]);
 	printf(" %s tcp -k -p rpki-validator.realmv6.org 8282\n", argv[0]);
-	printf(" %s tcp -k rpki-validator.realmv6.org 8282 tcp -s example.com 323\n",
-	       argv[0]);
-	printf(" %s -kp tcp rpki-validator.realmv6.org 8282 tcp example.com 323\n",
-	       argv[0]);
+	printf(" %s tcp -k rpki-validator.realmv6.org 8282 tcp -s example.com 323\n", argv[0]);
+	printf(" %s -kp tcp rpki-validator.realmv6.org 8282 tcp example.com 323\n", argv[0]);
 	#ifdef RTRLIB_HAVE_LIBSSH
 	printf(" %s ssh rpki-validator.realmv6.org 22 rtr-ssh", argv[0]);
 	printf(" ~/.ssh/id_rsa ~/.ssh/known_hosts\n");
-	printf(" %s ssh -k -p rpki-validator.realmv6.org 22 rtr-ssh"
-	       " ~/.ssh/id_rsa ~/.ssh/known_hosts\n", argv[0]);
-	printf(" %s ssh -k -p rpki-validator.realmv6.org 22 rtr-ssh"
-	       " ~/.ssh/id_rsa ~/.ssh/known_hosts"
-	       " ssh -k -p example.com 22 rtr-ssh ~/.ssh/id_rsa_example\n",
-	       argv[0]);
-	printf(" %s ssh -k -p rpki-validator.realmv6.org 22 rtr-ssh"
-	       " ~/.ssh/id_rsa ~/.ssh/known_hosts"
-	       " tcp -k -p example.com 323\n", argv[0]);
+	printf(" %s ssh -k -p rpki-validator.realmv6.org 22 rtr-ssh ~/.ssh/id_rsa ~/.ssh/known_hosts\n", argv[0]);
+	printf(" %s ssh -k -p rpki-validator.realmv6.org 22 rtr-ssh ~/.ssh/id_rsa ~/.ssh/known_hosts", argv[0]);
+	printf(" ssh -k -p example.com 22 rtr-ssh ~/.ssh/id_rsa_example\n");
+	printf(" %s ssh -k -p rpki-validator.realmv6.org 22 rtr-ssh ~/.ssh/id_rsa ~/.ssh/known_hosts", argv[0]);
+	printf(" tcp -k -p example.com 323\n");
 	#endif
 }
 
