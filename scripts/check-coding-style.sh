@@ -34,7 +34,7 @@ for i in $CHECKSOURCE; do
         IGNORE="${IGNORE},CAMELCASE"
     fi
         $SCRIPT_DIR/checkpatch.pl -f --strict --no-tree --terse --show-types \
-               --ignore ${IGNORE} $i
+               --max-line-length 120 --ignore ${IGNORE} $i
 
 	if [ $? -ne "0" ]; then
 		EXIT_CODE=1
