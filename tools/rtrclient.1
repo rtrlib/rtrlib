@@ -54,6 +54,26 @@ Print information about router key updates
 .RS 4
 Print information about prefix and origin AS updates
 .RE
+\fB-e\fR
+.RS 4
+Export ROAs after completing synchronisation and exit
+.RE
+\fB-t\fR
+.RS 4
+Select template for pfx export. May be a build in template (see \fB-l\fR) or a file path to a custom template (see \fBTEMPLATES\fR)
+.RE
+\fB-l\fR
+.RS 4
+Print available templates and exit. Prints specified templated, when used with -t.
+.RE
+\fB-o\fR
+.RS 4
+Output file for export
+.SH TEMPLATES
+Templates can be used to export ROA information in a custom format. They are written in the \fBmustache\fR(\fIhttps://mustache.github.io/\fR) templating language.
+
+A template should contain a section called \fBroas\fR which may contain the variables \fBprefix\fR, \fBlength\fR, \fBmaxlen\fR and \fBorigin\fR.
+The content of this section is expanded for every entry in the ROA table. The special variable \fBlast\fR is true for the last entry of the prefix table. See the json template for a usage example.
 .SH EXAMPLES
 Print prefix and origin AS updates from a tcp based server
 .PP
