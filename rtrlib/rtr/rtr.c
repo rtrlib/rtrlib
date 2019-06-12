@@ -202,7 +202,9 @@ void *rtr_fsm_start(struct rtr_socket *rtr_socket)
             tr_close(rtr_socket->tr_socket);
             rtr_change_socket_state(rtr_socket, RTR_CONNECTING);
             RTR_DBG("Waiting %u", rtr_socket->retry_interval);
+            pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
             sleep(rtr_socket->retry_interval);
+            pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
         }
 
         else if(rtr_socket->state == RTR_ERROR_FATAL) {
@@ -210,7 +212,9 @@ void *rtr_fsm_start(struct rtr_socket *rtr_socket)
             tr_close(rtr_socket->tr_socket);
             rtr_change_socket_state(rtr_socket, RTR_CONNECTING);
             RTR_DBG("Waiting %u", rtr_socket->retry_interval);
+            pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
             sleep(rtr_socket->retry_interval);
+            pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
         }
 
         else if(rtr_socket->state == RTR_SHUTDOWN) {
