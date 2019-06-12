@@ -22,7 +22,7 @@ function run_command {
 }
 
 function checkpatch {
-	git diff $TRAVIS_BRANCH '*.[ch]' > /tmp/patch
+	git diff $TRAVIS_BRANCH {rtrlib,tools,tests}/**/*.[ch] > /tmp/patch
 	run_command scripts/checkpatch.pl --ignore FILE_PATH_CHANGES,PREFER_KERNEL_TYPES,CONST_STRUCT,OPEN_BRACE,SPDX_LICENSE_TAG,OPEN_ENDED_LINE,UNNECESSARY_PARENTHESES,PREFER_PRINTF,GLOBAL_INITIALISERS --terse --no-tree --strict --show-types --max-line-length 120 /tmp/patch
 	ret=$?
 	if [ $ret != 0 ]; then
