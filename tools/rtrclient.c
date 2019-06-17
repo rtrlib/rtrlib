@@ -65,6 +65,8 @@ bool activate_spki_update_cb = false;
 bool print_all_pfx_updates = false;
 bool print_all_spki_updates = false;
 
+bool print_status_updates = false;
+
 bool export_pfx = false;
 char *export_file_path = NULL;
 const char *template_name = NULL;
@@ -356,7 +358,7 @@ struct mustach_itf template_itf = { .start = NULL,
 static void print_usage(char **argv)
 {
 	printf("Usage:\n");
-	printf(" %s [-hpkel] [-o file] [-t template] <socket>...\n", argv[0]);
+	printf(" %s [-hpkels] [-o file] [-t template] <socket>...\n", argv[0]);
 	printf("\nSocket:\n");
 	printf(" tcp [-hpkb bindaddr] <host> <port>\n");
 	#ifdef RTRLIB_HAVE_LIBSSH
@@ -366,7 +368,8 @@ static void print_usage(char **argv)
 	printf("-b  bindaddr Hostnamne or IP address to connect from\n\n");
 
 	printf("-k  Print information about SPKI updates.\n");
-	printf("-p  Print information about PFX updates.\n\n");
+	printf("-p  Print information about PFX updates.\n");
+	printf("-s  Print information about connection status updates.\n\n");
 
 	printf("-e  export pfx table and exit\n");
 	printf("-o  output file for export\n");
@@ -399,11 +402,13 @@ static void status_fp(const struct rtr_mgr_group *group __attribute__((unused)),
 		      const struct rtr_socket *rtr_sock,
 		      void *data __attribute__((unused)))
 {
-	pthread_mutex_lock(&stdout_mutex);
-	printf("RTR-Socket changed connection status to: %s, Mgr Status: %s\n",
-	       rtr_state_to_str(rtr_sock->state),
-	       rtr_mgr_status_to_str(mgr_status));
-	pthread_mutex_unlock(&stdout_mutex);
+	if (print_status_updates) {
+		pthread_mutex_lock(&stdout_mutex);
+		printf("RTR-Socket changed connection status to: %s, Mgr Status: %s\n",
+		       rtr_state_to_str(rtr_sock->state),
+		       rtr_mgr_status_to_str(mgr_status));
+		pthread_mutex_unlock(&stdout_mutex);
+	}
 }
 
 static void update_cb(struct pfx_table *p  __attribute__((unused)),
@@ -491,7 +496,7 @@ static void parse_global_opts(int argc, char **argv)
 
 	bool print_template = false;
 
-	while ((opt = getopt(argc, argv, "+kphelo:t:")) != -1) {
+	while ((opt = getopt(argc, argv, "+kphelo:t:s")) != -1) {
 		switch (opt) {
 		case 'k':
 			activate_spki_update_cb = true;
@@ -520,6 +525,10 @@ static void parse_global_opts(int argc, char **argv)
 
 		case 'l':
 			print_template = true;
+			break;
+
+		case 's':
+			print_status_updates = true;
 			break;
 
 		default:
