@@ -586,6 +586,8 @@ static void print_error_exit(const char *fmt, ...)
 
 	vfprintf(stderr, fmt, argptr);
 
+	fprintf(stderr, "\n");
+
 	va_end(argptr);
 
 	exit(EXIT_FAILURE);
