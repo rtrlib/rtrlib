@@ -10,11 +10,10 @@
 #ifndef LRTR_IP_PRIVATE_H
 #define LRTR_IP_PRIVATE_H
 
-#include "rtrlib/lib/ip.h"
+#include "ip.h"
+
 #include "rtrlib/lib/ipv4_private.h"
 #include "rtrlib/lib/ipv6_private.h"
-
-
 
 /**
  * @brief Detects if the lrtr_ip_addr only contains 0 bits.
@@ -31,7 +30,7 @@ bool lrtr_ip_addr_is_zero(const struct lrtr_ip_addr);
  * @param[in] from Position of the first bit that is extracted.
  * @param[in] number How many bits will be extracted.
  * @returns An lrtr_ipv_addr, where all bits that aren't in the specified range are set to 0.
-*/
+ */
 struct lrtr_ip_addr lrtr_ip_addr_get_bits(const struct lrtr_ip_addr *val, const uint8_t from, const uint8_t number);
 
 /**
@@ -52,8 +51,8 @@ bool lrtr_ip_addr_equal(const struct lrtr_ip_addr a, const struct lrtr_ip_addr b
  * @param[in] addr2 IP-address as string
  * @return true If a == b
  * @return false If a != b
-*/
+ */
 bool lrtr_ip_str_cmp(const struct lrtr_ip_addr *addr1, const char *addr2);
 
 #endif
-/* @} */
+/** @} */

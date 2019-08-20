@@ -22,9 +22,10 @@
 
 #ifndef RTR_TRANSPORT_PRIVATE_H
 #define RTR_TRANSPORT_PRIVATE_H
-#include <time.h>
 
-#include "rtrlib/transport/transport.h"
+#include "transport.h"
+
+#include <time.h>
 
 /**
  * @brief Establish the connection.
@@ -103,4 +104,4 @@ int tr_recv_all(const struct tr_socket *socket, const void *buf, const size_t le
 const char *tr_ident(struct tr_socket *socket);
 
 #endif
-/* @} */
+/** @} */

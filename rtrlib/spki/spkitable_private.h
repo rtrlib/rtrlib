@@ -17,9 +17,9 @@
 #ifndef RTR_SPKI_PRIVATE_H
 #define RTR_SPKI_PRIVATE_H
 
-#include <stdint.h>
-
 #include "rtrlib/spki/spkitable.h"
+
+#include <stdint.h>
 
 /**
  * @brief Possible return values for some spki_table_ functions.
@@ -37,7 +37,6 @@ enum spki_rtvals {
 	/** spki_record wasn't found in the spki_table. */
 	SPKI_RECORD_NOT_FOUND = -3
 };
-
 
 /**
  * @brief Initializes the spki_table struct.
@@ -66,8 +65,7 @@ void spki_table_free_without_notify(struct spki_table *spki_table);
  * @return SPKI_ERROR On error.
  * @return SPKI_DUPLICATE_RECORD If an identical spki_record already exists
  */
-int spki_table_add_entry(struct spki_table *spki_table,
-			 struct spki_record *spki_record);
+int spki_table_add_entry(struct spki_table *spki_table, struct spki_record *spki_record);
 
 /**
  * @brief Returns all spki_record whose ASN and SKI matches.
@@ -79,8 +77,7 @@ int spki_table_add_entry(struct spki_table *spki_table,
  * @return SPKI_SUCCESS On success
  * @return SPKI_ERROR On error
  */
-int spki_table_get_all(struct spki_table *spki_table, uint32_t asn,
-		       uint8_t *ski, struct spki_record **result,
+int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski, struct spki_record **result,
 		       unsigned int *result_size);
 
 /**
@@ -92,8 +89,7 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn,
  * @return SPKI_SUCCESS On success
  * @return SPKI_ERROR On error
  */
-int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski,
-			     struct spki_record **result,
+int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski, struct spki_record **result,
 			     unsigned int *result_size);
 
 /**
@@ -104,8 +100,7 @@ int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski,
  * @return SPKI_ERROR On error
  * @return SPKI_RECORD_NOT_FOUND On record not found
  */
-int spki_table_remove_entry(struct spki_table *spki_table,
-			    struct spki_record *spki_record);
+int spki_table_remove_entry(struct spki_table *spki_table, struct spki_record *spki_record);
 
 /**
  * @brief Removes all entries in the spki_table that match the passed socket_id.
@@ -114,8 +109,7 @@ int spki_table_remove_entry(struct spki_table *spki_table,
  * @return SPKI_SUCCESS On success.
  * @return SPKI_ERROR On error.
  */
-int spki_table_src_remove(struct spki_table *spki_table,
-			  const struct rtr_socket *socket);
+int spki_table_src_remove(struct spki_table *spki_table, const struct rtr_socket *socket);
 
 /**
  * @brief Copy spki table except entries from the given socket
@@ -134,7 +128,8 @@ int spki_table_copy_except_socket(struct spki_table *src, struct spki_table *des
  * @param[in] old_table
  * @param[in] socket socket which entries should be diffed
  */
-void spki_table_notify_diff(struct spki_table *new_table, struct spki_table *old_table, const struct rtr_socket *socket);
+void spki_table_notify_diff(struct spki_table *new_table, struct spki_table *old_table,
+			    const struct rtr_socket *socket);
 
 /**
  * @brief tommy_hashlin and tommy_list of the argument tables
@@ -144,4 +139,4 @@ void spki_table_notify_diff(struct spki_table *new_table, struct spki_table *old
 void spki_table_swap(struct spki_table *a, struct spki_table *b);
 
 #endif
-/* @} */
+/** @} */

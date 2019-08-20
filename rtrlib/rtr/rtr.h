@@ -7,7 +7,6 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-
 /**
  * @defgroup mod_rtr_h RTR socket
  * @brief An RTR socket implements the RPKI-RTR protocol scheme.
@@ -21,58 +20,54 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-enum rtr_rtvals {
-    RTR_SUCCESS = 0,
-    RTR_ERROR = -1,
-    RTR_INVALID_PARAM = -2
-};
+enum rtr_rtvals { RTR_SUCCESS = 0, RTR_ERROR = -1, RTR_INVALID_PARAM = -2 };
 
 /**
  * @brief These modes let the user configure how received intervals should be handled.
  */
 enum rtr_interval_mode {
-    RTR_INTERVAL_MODE_IGNORE_ANY,         /*< Ignore appliance of interval values at all. */
-    RTR_INTERVAL_MODE_ACCEPT_ANY,         /*< Accept any interval values, even if outside of range. */
-    RTR_INTERVAL_MODE_DEFAULT_MIN_MAX,    /*< If interval value is outside of range, apply min (if below range) or max (if above range). */
-    RTR_INTERVAL_MODE_IGNORE_ON_FAILURE   /*< Ignore any interval values that are outside of range. */
+	RTR_INTERVAL_MODE_IGNORE_ANY, /*< Ignore appliance of interval values at all. */
+	RTR_INTERVAL_MODE_ACCEPT_ANY, /*< Accept any interval values, even if outside of range. */
+	RTR_INTERVAL_MODE_DEFAULT_MIN_MAX, /*< If interval value is outside of range, apply min (if below range) or max (if above range). */
+	RTR_INTERVAL_MODE_IGNORE_ON_FAILURE /*< Ignore any interval values that are outside of range. */
 };
 
 /**
  * @brief States of the RTR socket.
  */
 enum rtr_socket_state {
-    /** Socket is establishing the transport connection. */
-    RTR_CONNECTING,
+	/** Socket is establishing the transport connection. */
+	RTR_CONNECTING,
 
-    /** Connection is established, socket is waiting for a Serial Notify or expiration of the refresh_interval timer */
-    RTR_ESTABLISHED,
+	/** Connection is established, socket is waiting for a Serial Notify or expiration of the refresh_interval timer */
+	RTR_ESTABLISHED,
 
-    /** Resetting RTR connection. */
-    RTR_RESET,
+	/** Resetting RTR connection. */
+	RTR_RESET,
 
-    /** Receiving validation records from the RTR server.  */
-    RTR_SYNC,
+	/** Receiving validation records from the RTR server.  */
+	RTR_SYNC,
 
-    /** Reconnect without any waiting period */
-    RTR_FAST_RECONNECT,
+	/** Reconnect without any waiting period */
+	RTR_FAST_RECONNECT,
 
-    /** No validation records are available on the RTR server. */
-    RTR_ERROR_NO_DATA_AVAIL,
+	/** No validation records are available on the RTR server. */
+	RTR_ERROR_NO_DATA_AVAIL,
 
-    /** Server was unable to answer the last serial or reset query. */
-    RTR_ERROR_NO_INCR_UPDATE_AVAIL,
+	/** Server was unable to answer the last serial or reset query. */
+	RTR_ERROR_NO_INCR_UPDATE_AVAIL,
 
-    /** Fatal protocol error occurred. */
-    RTR_ERROR_FATAL,
+	/** Fatal protocol error occurred. */
+	RTR_ERROR_FATAL,
 
-    /** Error on the transport socket occurred. */
-    RTR_ERROR_TRANSPORT,
+	/** Error on the transport socket occurred. */
+	RTR_ERROR_TRANSPORT,
 
-    /** RTR Socket was started, but now has shut down. */
-    RTR_SHUTDOWN,
+	/** RTR Socket was started, but now has shut down. */
+	RTR_SHUTDOWN,
 
-    /** RTR Socket has not been started yet. Initial state after rtr_init */
-    RTR_CLOSED,
+	/** RTR Socket has not been started yet. Initial state after rtr_init */
+	RTR_CLOSED,
 };
 
 struct rtr_socket;
@@ -80,7 +75,8 @@ struct rtr_socket;
 /**
  * @brief A function pointer that is called if the state of the rtr socket has changed.
  */
-typedef void (*rtr_connection_state_fp)(const struct rtr_socket *rtr_socket, const enum rtr_socket_state state, void *connection_state_fp_param_config, void *connection_state_fp_param_group);
+typedef void (*rtr_connection_state_fp)(const struct rtr_socket *rtr_socket, const enum rtr_socket_state state,
+					void *connection_state_fp_param_config, void *connection_state_fp_param_group);
 
 /**
  * @brief A RTR socket.
@@ -107,27 +103,26 @@ typedef void (*rtr_connection_state_fp)(const struct rtr_socket *rtr_socket, con
  * @param spki_table spki_table that stores the router keys obtaiend from the connected rtr server
  */
 struct rtr_socket {
-    struct tr_socket *tr_socket;
-    unsigned int refresh_interval;
-    time_t last_update;
-    unsigned int expire_interval;
-    unsigned int retry_interval;
-    enum rtr_interval_mode iv_mode;
-    enum rtr_socket_state state;
-    uint32_t session_id;
-    bool request_session_id;
-    uint32_t serial_number;
-    struct pfx_table *pfx_table;
-    pthread_t thread_id;
-    rtr_connection_state_fp connection_state_fp;
-    void *connection_state_fp_param_config;
-    void *connection_state_fp_param_group;
-    unsigned int version;
-    bool has_received_pdus;
-    struct spki_table *spki_table;
-    bool is_resetting;
+	struct tr_socket *tr_socket;
+	unsigned int refresh_interval;
+	time_t last_update;
+	unsigned int expire_interval;
+	unsigned int retry_interval;
+	enum rtr_interval_mode iv_mode;
+	enum rtr_socket_state state;
+	uint32_t session_id;
+	bool request_session_id;
+	uint32_t serial_number;
+	struct pfx_table *pfx_table;
+	pthread_t thread_id;
+	rtr_connection_state_fp connection_state_fp;
+	void *connection_state_fp_param_config;
+	void *connection_state_fp_param_group;
+	unsigned int version;
+	bool has_received_pdus;
+	struct spki_table *spki_table;
+	bool is_resetting;
 };
-
 
 /**
  * @brief Converts a rtr_socket_state to a String.
@@ -152,4 +147,4 @@ void rtr_set_interval_mode(struct rtr_socket *rtr_socket, enum rtr_interval_mode
  */
 enum rtr_interval_mode rtr_get_interval_mode(struct rtr_socket *rtr_socket);
 #endif
-/* @} */
+/** @} */

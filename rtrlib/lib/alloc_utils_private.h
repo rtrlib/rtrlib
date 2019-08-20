@@ -10,9 +10,9 @@
 #ifndef LRTR_ALLOC_UTILS_PRIVATE_H
 #define LRTR_ALLOC_UTILS_PRIVATE_H
 
-#include <stdlib.h>
-
 #include "alloc_utils.h"
+
+#include <stdlib.h>
 
 void *lrtr_malloc(size_t size);
 

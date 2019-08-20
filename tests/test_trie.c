@@ -7,13 +7,14 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <assert.h>
 #include "rtrlib/lib/log_private.h"
 #include "rtrlib/lib/utils_private.h"
 #include "rtrlib/pfx/trie/trie.c"
+
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
 
 /*
  * @brief Test trie core operations such as add and remove

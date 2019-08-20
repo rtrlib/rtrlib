@@ -7,6 +7,14 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
+#include "templates.h"
+
+#include "rtrlib/rtrlib.h"
+
+#include "third-party/mustach/mustach.h"
+#include "third-party/tommyds/tommyarray.h"
+#include "third-party/tommyds/tommyhashlin.h"
+
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <errno.h>
@@ -21,16 +29,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "rtrlib/rtrlib.h"
-
-#include <third-party/mustach/mustach.h>
-#include <third-party/tommyds/tommyarray.h>
-#include <third-party/tommyds/tommyhashlin.h>
-
-#include "templates.h"
-
-__attribute__((format (printf, 1, 2), noreturn))
-static void print_error_exit(const char *fmt, ...);
+__attribute__((format(printf, 1, 2), noreturn)) static void print_error_exit(const char *fmt, ...);
 
 static bool is_readable_file(const char *str);
 
@@ -106,11 +105,8 @@ static inline void *checked_realloc(void *ptr, size_t size)
 
 static struct socket_config *extend_socket_config()
 {
-	socket_config = checked_realloc(
-			socket_config,
-			sizeof(struct socket_config *) * (socket_count + 1));
-	struct socket_config *config = socket_config[socket_count] =
-		checked_malloc(sizeof(struct socket_config));
+	socket_config = checked_realloc(socket_config, sizeof(struct socket_config *) * (socket_count + 1));
+	struct socket_config *config = socket_config[socket_count] = checked_malloc(sizeof(struct socket_config));
 
 	memset(config, 0, sizeof(*config));
 	++socket_count;
@@ -152,7 +148,7 @@ static const char *get_template(const char *name)
 		fclose(template_file);
 		return template;
 
-read_error:
+	read_error:
 		fclose(template_file);
 		print_error_exit("Could not read template");
 	}
@@ -247,7 +243,8 @@ struct pfx_export_cb_arg {
 
 static void pfx_export_cb(const struct pfx_record *pfx_record, void *data);
 
-static tommy_uint32_t hash_pfx_record(const struct pfx_record *record) {
+static tommy_uint32_t hash_pfx_record(const struct pfx_record *record)
+{
 	struct pfx_record_packed {
 		uint8_t ip[16];
 		uint32_t asn;
@@ -349,11 +346,11 @@ static int template_put(void *closure, const char *name, __attribute__((unused))
 	return MUSTACH_OK;
 }
 
-struct mustach_itf template_itf = { .start = NULL,
-				    .put = template_put,
-				    .enter = template_enter,
-				    .next = template_next,
-				    .leave = template_leave };
+struct mustach_itf template_itf = {.start = NULL,
+				   .put = template_put,
+				   .enter = template_enter,
+				   .next = template_next,
+				   .leave = template_leave};
 
 static void print_usage(char **argv)
 {
@@ -361,9 +358,9 @@ static void print_usage(char **argv)
 	printf(" %s [-hpkels] [-o file] [-t template] <socket>...\n", argv[0]);
 	printf("\nSocket:\n");
 	printf(" tcp [-hpkb bindaddr] <host> <port>\n");
-	#ifdef RTRLIB_HAVE_LIBSSH
+#ifdef RTRLIB_HAVE_LIBSSH
 	printf(" ssh [-hpkb bindaddr] <host> <port> <username> <private_key> [<host_key>]\n");
-	#endif
+#endif
 	printf("\nOptions:\n");
 	printf("-b  bindaddr Hostnamne or IP address to connect from\n\n");
 
@@ -383,7 +380,7 @@ static void print_usage(char **argv)
 	printf(" %s tcp -k -p rpki-validator.realmv6.org 8283\n", argv[0]);
 	printf(" %s tcp -k rpki-validator.realmv6.org 8283 tcp -s example.com 323\n", argv[0]);
 	printf(" %s -kp tcp rpki-validator.realmv6.org 8283 tcp example.com 323\n", argv[0]);
-	#ifdef RTRLIB_HAVE_LIBSSH
+#ifdef RTRLIB_HAVE_LIBSSH
 	printf(" %s ssh rpki-validator.realmv6.org 22 rtr-ssh", argv[0]);
 	printf(" ~/.ssh/id_rsa ~/.ssh/known_hosts\n");
 	printf(" %s ssh -k -p rpki-validator.realmv6.org 22 rtr-ssh ~/.ssh/id_rsa ~/.ssh/known_hosts\n", argv[0]);
@@ -391,34 +388,28 @@ static void print_usage(char **argv)
 	printf(" ssh -k -p example.com 22 rtr-ssh ~/.ssh/id_rsa_example\n");
 	printf(" %s ssh -k -p rpki-validator.realmv6.org 22 rtr-ssh ~/.ssh/id_rsa ~/.ssh/known_hosts", argv[0]);
 	printf(" tcp -k -p example.com 323\n");
-	#endif
+#endif
 
 	printf(" %s -e tcp rpki-validator.realmv6.org 8283\n", argv[0]);
 	printf(" %s -e -t csv -o roa.csv tcp rpki-validator.realmv6.org 8283\n", argv[0]);
 }
 
-static void status_fp(const struct rtr_mgr_group *group __attribute__((unused)),
-		      enum rtr_mgr_status mgr_status,
-		      const struct rtr_socket *rtr_sock,
-		      void *data __attribute__((unused)))
+static void status_fp(const struct rtr_mgr_group *group __attribute__((unused)), enum rtr_mgr_status mgr_status,
+		      const struct rtr_socket *rtr_sock, void *data __attribute__((unused)))
 {
 	if (print_status_updates) {
 		pthread_mutex_lock(&stdout_mutex);
 		printf("RTR-Socket changed connection status to: %s, Mgr Status: %s\n",
-		       rtr_state_to_str(rtr_sock->state),
-		       rtr_mgr_status_to_str(mgr_status));
+		       rtr_state_to_str(rtr_sock->state), rtr_mgr_status_to_str(mgr_status));
 		pthread_mutex_unlock(&stdout_mutex);
 	}
 }
 
-static void update_cb(struct pfx_table *p  __attribute__((unused)),
-		      const struct pfx_record rec,
-		      const bool added)
+static void update_cb(struct pfx_table *p __attribute__((unused)), const struct pfx_record rec, const bool added)
 {
 	char ip[INET6_ADDRSTRLEN];
 
-	const struct socket_config *config =
-		(const struct socket_config *)rec.socket;
+	const struct socket_config *config = (const struct socket_config *)rec.socket;
 
 	if (!print_all_pfx_updates && !config->print_pfx_updates)
 		return;
@@ -430,22 +421,17 @@ static void update_cb(struct pfx_table *p  __attribute__((unused)),
 		printf("- ");
 	lrtr_ip_addr_to_str(&rec.prefix, ip, sizeof(ip));
 	if (socket_count > 1)
-		printf("%s:%s %-40s   %3u - %3u   %10u\n",
-		       config->host, config->port, ip,
-		       rec.min_len, rec.max_len, rec.asn);
+		printf("%s:%s %-40s   %3u - %3u   %10u\n", config->host, config->port, ip, rec.min_len, rec.max_len,
+		       rec.asn);
 	else
-		printf("%-40s   %3u - %3u   %10u\n",
-		       ip, rec.min_len, rec.max_len, rec.asn);
+		printf("%-40s   %3u - %3u   %10u\n", ip, rec.min_len, rec.max_len, rec.asn);
 
 	pthread_mutex_unlock(&stdout_mutex);
 }
 
-static void update_spki(struct spki_table *s __attribute__((unused)),
-			const struct spki_record record,
-			const bool added)
+static void update_spki(struct spki_table *s __attribute__((unused)), const struct spki_record record, const bool added)
 {
-	const struct socket_config *config =
-		(const struct socket_config *)record.socket;
+	const struct socket_config *config = (const struct socket_config *)record.socket;
 
 	if (!print_all_spki_updates && !config->print_spki_updates)
 		return;
@@ -542,14 +528,11 @@ static void parse_global_opts(int argc, char **argv)
 		exit(EXIT_SUCCESS);
 	}
 
-	if ((export_file_path || template_name)  && !export_pfx)
+	if ((export_file_path || template_name) && !export_pfx)
 		print_error_exit("Specifying -o or -t without -e does not make sense");
 }
 
-static void parse_socket_opts(
-		int argc,
-		char **argv,
-		struct socket_config *config)
+static void parse_socket_opts(int argc, char **argv, struct socket_config *config)
 {
 	int opt;
 
@@ -593,7 +576,8 @@ static void print_error_exit(const char *fmt, ...)
 	exit(EXIT_FAILURE);
 }
 
-static int parse_cli(int argc, char **argv) {
+static int parse_cli(int argc, char **argv)
+{
 	enum cli_parse_state {
 		CLI_PARSE_STATE_BEGIN,
 		CLI_PARSE_STATE_GLOBAL_OPTS,
@@ -632,8 +616,7 @@ static int parse_cli(int argc, char **argv) {
 		case CLI_PARSE_STATE_SOCKET_BEGIN:
 			current_config = extend_socket_config();
 
-			if (strncasecmp(argv[optind],
-					"tcp", strlen(argv[optind])) == 0) {
+			if (strncasecmp(argv[optind], "tcp", strlen(argv[optind])) == 0) {
 				state = CLI_PARSE_STATE_SOCKET_TCP_OPTIONS;
 				current_config->type = SOCKET_TYPE_TCP;
 
@@ -644,8 +627,7 @@ static int parse_cli(int argc, char **argv) {
 				if ((argc - optind) < 2)
 					print_error_exit("Not enough arguments for tcp socket");
 
-			} else if (strncasecmp(argv[optind], "ssh",
-					       strlen(argv[optind])) == 0) {
+			} else if (strncasecmp(argv[optind], "ssh", strlen(argv[optind])) == 0) {
 #ifdef RTRLIB_HAVE_LIBSSH
 				state = CLI_PARSE_STATE_SOCKET_SSH_OPTIONS;
 				current_config->type = SOCKET_TYPE_SSH;
@@ -661,9 +643,7 @@ static int parse_cli(int argc, char **argv) {
 #endif
 
 			} else {
-				print_error_exit(
-					"\"%s\" is not a valid socket type\n",
-					argv[optind]);
+				print_error_exit("\"%s\" is not a valid socket type\n", argv[optind]);
 				break;
 			}
 
@@ -677,17 +657,14 @@ static int parse_cli(int argc, char **argv) {
 			 * accounting for options
 			 */
 			if ((argc - optind) < 2)
-				print_error_exit(
-					"Not enough arguments for tcp socket");
+				print_error_exit("Not enough arguments for tcp socket");
 
 			state = CLI_PARSE_STATE_SOCKET_TCP_HOST;
 			break;
 
 		case CLI_PARSE_STATE_SOCKET_TCP_HOST:
 			if (!is_resolveable_host(argv[optind]))
-				print_error_exit(
-					"cannot resolve \"%s\"\n",
-					argv[optind]);
+				print_error_exit("cannot resolve \"%s\"\n", argv[optind]);
 
 			current_config->host = argv[optind++];
 
@@ -696,9 +673,7 @@ static int parse_cli(int argc, char **argv) {
 
 		case CLI_PARSE_STATE_SOCKET_TCP_PORT:
 			if (!is_valid_port_number(argv[optind]))
-				print_error_exit(
-					"\"%s\" is not a valid port number\n",
-					argv[optind]);
+				print_error_exit("\"%s\" is not a valid port number\n", argv[optind]);
 
 			current_config->port = argv[optind++];
 
@@ -713,17 +688,14 @@ static int parse_cli(int argc, char **argv) {
 			 * accounting for options
 			 */
 			if ((argc - optind) < 4)
-				print_error_exit(
-					"Not enough arguments for ssh socket");
+				print_error_exit("Not enough arguments for ssh socket");
 
 			state = CLI_PARSE_STATE_SOCKET_SSH_HOST;
 			break;
 
 		case CLI_PARSE_STATE_SOCKET_SSH_HOST:
 			if (!is_resolveable_host(argv[optind]))
-				print_error_exit(
-					"cannot resolve \"%s\"\n",
-					argv[optind]);
+				print_error_exit("cannot resolve \"%s\"\n", argv[optind]);
 
 			current_config->host = argv[optind++];
 
@@ -732,9 +704,7 @@ static int parse_cli(int argc, char **argv) {
 
 		case CLI_PARSE_STATE_SOCKET_SSH_PORT:
 			if (!is_valid_port_number(argv[optind]))
-				print_error_exit(
-					"\"%s\" is not a valid port number\n",
-					argv[optind]);
+				print_error_exit("\"%s\" is not a valid port number\n", argv[optind]);
 
 			current_config->port = argv[optind++];
 
@@ -749,9 +719,7 @@ static int parse_cli(int argc, char **argv) {
 
 		case CLI_PARSE_STATE_SOCKET_SSH_PRIVATE_KEY:
 			if (!is_readable_file(argv[optind]))
-				print_error_exit(
-					"\"%s\" is not a readable file\n",
-					argv[optind]);
+				print_error_exit("\"%s\" is not a readable file\n", argv[optind]);
 
 			current_config->ssh_private_key = argv[optind++];
 
@@ -759,18 +727,14 @@ static int parse_cli(int argc, char **argv) {
 			break;
 
 		case CLI_PARSE_STATE_SOCKET_SSH_HOST_KEY:
-			if (strncasecmp(argv[optind], "tcp",
-					strlen(argv[optind])) == 0 ||
-			    strncasecmp(argv[optind], "ssh",
-					strlen(argv[optind])) == 0) {
+			if (strncasecmp(argv[optind], "tcp", strlen(argv[optind])) == 0 ||
+			    strncasecmp(argv[optind], "ssh", strlen(argv[optind])) == 0) {
 				state = CLI_PARSE_STATE_SOCKET_BEGIN;
 				break;
 			}
 
 			if (!is_readable_file(argv[optind]))
-				print_error_exit(
-					"\"%s\" is not a readable file\n",
-					argv[optind]);
+				print_error_exit("\"%s\" is not a readable file\n", argv[optind]);
 
 			current_config->ssh_host_key = argv[optind++];
 
@@ -812,8 +776,7 @@ static void init_sockets(void)
 			ssh_config.port = atoi(config->port);
 			ssh_config.bindaddr = config->bindaddr;
 			ssh_config.username = config->ssh_username;
-			ssh_config.client_privkey_path =
-				config->ssh_private_key;
+			ssh_config.client_privkey_path = config->ssh_private_key;
 			ssh_config.server_hostkey_path = config->ssh_host_key;
 
 			tr_ssh_init(&ssh_config, &config->tr_socket);
@@ -842,12 +805,10 @@ int main(int argc, char **argv)
 	groups[0].sockets = (struct rtr_socket **)socket_config;
 	groups[0].preference = 1;
 
-	spki_update_fp spki_update_fp =
-		activate_spki_update_cb ? update_spki : NULL;
+	spki_update_fp spki_update_fp = activate_spki_update_cb ? update_spki : NULL;
 	pfx_update_fp pfx_update_fp = activate_pfx_update_cb ? update_cb : NULL;
 
-	int ret = rtr_mgr_init(&conf, groups, 1, 30, 600, 600, pfx_update_fp,
-			       spki_update_fp, status_fp, NULL);
+	int ret = rtr_mgr_init(&conf, groups, 1, 30, 600, 600, pfx_update_fp, spki_update_fp, status_fp, NULL);
 
 	if (ret == RTR_ERROR)
 		fprintf(stderr, "Error in rtr_mgr_init!\n");
@@ -858,11 +819,9 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 
 	if (!export_pfx && activate_pfx_update_cb && socket_count > 1)
-		printf("%-40s %-40s   %3s   %3s   %3s\n",
-		       "host", "Prefix", "Prefix Length", "", "ASN");
+		printf("%-40s %-40s   %3s   %3s   %3s\n", "host", "Prefix", "Prefix Length", "", "ASN");
 	else if (!export_pfx && activate_pfx_update_cb)
-		printf("%-40s   %3s   %3s   %3s\n",
-		       "Prefix", "Prefix Length", "", "ASN");
+		printf("%-40s   %3s   %3s   %3s\n", "Prefix", "Prefix Length", "", "ASN");
 
 	if (export_pfx) {
 		const char *template;

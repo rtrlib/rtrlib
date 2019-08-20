@@ -22,26 +22,27 @@
 
 #ifndef RTR_TRANSPORT_H
 #define RTR_TRANSPORT_H
+
 #include <time.h>
 
 /**
  * @brief The return values for tr_ functions.
  */
 enum tr_rtvals {
-    /** @brief Operation was successful. */
-    TR_SUCCESS = 0,
+	/** @brief Operation was successful. */
+	TR_SUCCESS = 0,
 
-    /** Error occured. */
-    TR_ERROR = -1,
+	/** Error occured. */
+	TR_ERROR = -1,
 
-    /** No data is available on the socket. */
-    TR_WOULDBLOCK = -2,
+	/** No data is available on the socket. */
+	TR_WOULDBLOCK = -2,
 
-    /** Call was interrupted from a signal */
-    TR_INTR = -3,
+	/** Call was interrupted from a signal */
+	TR_INTR = -3,
 
-    /** Connection closed */
-    TR_CLOSED = -4
+	/** Connection closed */
+	TR_CLOSED = -4
 };
 
 struct tr_socket;
@@ -93,15 +94,14 @@ typedef const char *(*tr_ident_fp)(void *socket);
  * @param recv_fp Pointer to a function that receives data from this socket.
  */
 struct tr_socket {
-    void *socket;
-    tr_open_fp open_fp;
-    tr_close_fp close_fp;
-    tr_free_fp free_fp;
-    tr_send_fp send_fp;
-    tr_recv_fp recv_fp;
-    tr_ident_fp ident_fp;
+	void *socket;
+	tr_open_fp open_fp;
+	tr_close_fp close_fp;
+	tr_free_fp free_fp;
+	tr_send_fp send_fp;
+	tr_recv_fp recv_fp;
+	tr_ident_fp ident_fp;
 };
 
-
 #endif
-/* @} */
+/** @} */

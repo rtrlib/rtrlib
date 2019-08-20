@@ -7,21 +7,20 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#include <stdlib.h>
+#include "rtrlib/rtrlib.h"
+
+#include <arpa/inet.h>
+#include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <errno.h>
-#include <arpa/inet.h>
-#include "rtrlib/rtrlib.h"
 
 const int connection_timeout = 20;
 enum rtr_mgr_status connection_status = -1;
 
-static void connection_status_callback(const struct rtr_mgr_group *group,
-				       enum rtr_mgr_status status,
-				       const struct rtr_socket *socket,
-				       void *data)
+static void connection_status_callback(const struct rtr_mgr_group *group, enum rtr_mgr_status status,
+				       const struct rtr_socket *socket, void *data)
 {
 	if (status == RTR_MGR_ERROR)
 		connection_status = status;
@@ -30,10 +29,10 @@ static void connection_status_callback(const struct rtr_mgr_group *group,
 static int connection_error(enum rtr_mgr_status status)
 {
 	if (status == RTR_MGR_ERROR) {
-	/*
-	 * Wait for input before printing error to avoid "broken pipe" error
-	 * while communicating with the Python program.
-	 */
+		/*
+		* Wait for input before printing error to avoid "broken pipe" error
+		* while communicating with the Python program.
+		*/
 		char input[256];
 
 		if (fgets(input, 256, stdin))
@@ -66,7 +65,7 @@ int main(int argc, char *argv[])
 	}
 
 	struct tr_socket tr_tcp;
-	struct tr_tcp_config tcp_config = { argv[1], argv[2], NULL };
+	struct tr_tcp_config tcp_config = {argv[1], argv[2], NULL};
 	struct rtr_socket rtr_tcp;
 	struct rtr_mgr_config *conf;
 	struct rtr_mgr_group groups[1];
@@ -81,8 +80,7 @@ int main(int argc, char *argv[])
 	groups[0].sockets[0] = &rtr_tcp;
 	groups[0].preference = 1;
 
-	if (rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL,
-			 &connection_status_callback, NULL) < 0)
+	if (rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL, &connection_status_callback, NULL) < 0)
 		return EXIT_FAILURE;
 
 	rtr_mgr_start(conf);
@@ -135,9 +133,8 @@ int main(int argc, char *argv[])
 		/* check if there are exactly 3 arguments */
 		spaces = 0;
 		for (counter = 0; counter < input_len; counter++) {
-			if (input[counter] == ' ' &&
-			    input[counter + 1] != ' ' &&
-			    input[counter + 1] != '\0' && counter != 0)
+			if (input[counter] == ' ' && input[counter + 1] != ' ' && input[counter + 1] != '\0' &&
+			    counter != 0)
 				spaces++;
 		}
 
@@ -189,8 +186,7 @@ int main(int argc, char *argv[])
 		unsigned int reason_len = 0;
 
 		/* do validation */
-		pfx_table_validate_r(groups[0].sockets[0]->pfx_table, &reason,
-				     &reason_len, asn, &pref, mask, &result);
+		pfx_table_validate_r(groups[0].sockets[0]->pfx_table, &reason, &reason_len, asn, &pref, mask, &result);
 
 		int validity_code = -1;
 		/* translate validation result */
@@ -211,12 +207,8 @@ int main(int argc, char *argv[])
 			for (i = 0; i < reason_len; i++) {
 				char tmp[100];
 
-				lrtr_ip_addr_to_str(&reason[i].prefix,
-						    tmp, sizeof(tmp));
-				printf("%u %s %u %u",
-				       reason[i].asn, tmp,
-				       reason[i].min_len,
-				       reason[i].max_len);
+				lrtr_ip_addr_to_str(&reason[i].prefix, tmp, sizeof(tmp));
+				printf("%u %s %u %u", reason[i].asn, tmp, reason[i].min_len, reason[i].max_len);
 				if ((i + 1) < reason_len)
 					printf(",");
 			}

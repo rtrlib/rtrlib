@@ -7,25 +7,26 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#include <stdlib.h>
-#include <pthread.h>
-#include <stdio.h>
-#include <string.h>
-#include <arpa/inet.h>
+#include "rtr_mgr_private.h"
 
 #include "rtrlib/lib/alloc_utils_private.h"
 #include "rtrlib/lib/log_private.h"
 #include "rtrlib/pfx/pfx_private.h"
 #include "rtrlib/rtr/rtr_private.h"
-#include "rtrlib/rtr_mgr_private.h"
 #include "rtrlib/rtrlib_export_private.h"
 #include "rtrlib/spki/hashtable/ht-spkitable_private.h"
 #include "rtrlib/transport/transport_private.h"
 
-#define MGR_DBG(fmt, ...) lrtr_dbg("RTR_MGR: " fmt, ## __VA_ARGS__)
+#include <arpa/inet.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MGR_DBG(fmt, ...) lrtr_dbg("RTR_MGR: " fmt, ##__VA_ARGS__)
 #define MGR_DBG1(a) lrtr_dbg("RTR_MGR: " a)
 
-static const char * const mgr_str_status[] = {
+static const char *const mgr_str_status[] = {
 	[RTR_MGR_CLOSED] = "RTR_MGR_CLOSED",
 	[RTR_MGR_CONNECTING] = "RTR_MGR_CONNECTING",
 	[RTR_MGR_ESTABLISHED] = "RTR_MGR_ESTABLISHED",
@@ -35,22 +36,17 @@ static const char * const mgr_str_status[] = {
 static int rtr_mgr_config_cmp(const void *a, const void *b);
 static int rtr_mgr_config_cmp_tommy(const void *a, const void *b);
 static bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *group);
-static void rtr_mgr_cb(const struct rtr_socket *sock,
-		       const enum rtr_socket_state state,
-		       void *data_config, void *data_group);
+static void rtr_mgr_cb(const struct rtr_socket *sock, const enum rtr_socket_state state, void *data_config,
+		       void *data_group);
 
-static void set_status(const struct rtr_mgr_config *conf,
-		       struct rtr_mgr_group *group,
-		       enum rtr_mgr_status mgr_status,
+static void set_status(const struct rtr_mgr_config *conf, struct rtr_mgr_group *group, enum rtr_mgr_status mgr_status,
 		       const struct rtr_socket *rtr_sock)
 {
-	MGR_DBG("Group(%u) status changed to: %s", group->preference,
-		rtr_mgr_status_to_str(mgr_status));
+	MGR_DBG("Group(%u) status changed to: %s", group->preference, rtr_mgr_status_to_str(mgr_status));
 
 	group->status = mgr_status;
 	if (conf->status_fp)
-		conf->status_fp(group, mgr_status,
-				rtr_sock, conf->status_fp_data);
+		conf->status_fp(group, mgr_status, rtr_sock, conf->status_fp_data);
 }
 
 static int rtr_mgr_start_sockets(struct rtr_mgr_group *group)
@@ -65,20 +61,13 @@ static int rtr_mgr_start_sockets(struct rtr_mgr_group *group)
 	return RTR_SUCCESS;
 }
 
-static int rtr_mgr_init_sockets(struct rtr_mgr_group *group,
-				struct rtr_mgr_config *config,
-				const unsigned int refresh_interval,
-				const unsigned int expire_interval,
-				const unsigned int retry_interval,
-				enum rtr_interval_mode iv_mode)
+static int rtr_mgr_init_sockets(struct rtr_mgr_group *group, struct rtr_mgr_config *config,
+				const unsigned int refresh_interval, const unsigned int expire_interval,
+				const unsigned int retry_interval, enum rtr_interval_mode iv_mode)
 {
 	for (unsigned int i = 0; i < group->sockets_len; i++) {
-		enum rtr_rtvals err_code = rtr_init(group->sockets[i], NULL,
-						    config->pfx_table,
-						    config->spki_table,
-						    refresh_interval,
-						    expire_interval,
-						    retry_interval, iv_mode,
+		enum rtr_rtvals err_code = rtr_init(group->sockets[i], NULL, config->pfx_table, config->spki_table,
+						    refresh_interval, expire_interval, retry_interval, iv_mode,
 						    rtr_mgr_cb, config, group);
 		if (err_code)
 			return err_code;
@@ -92,15 +81,13 @@ bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *group)
 		enum rtr_socket_state state = group->sockets[i]->state;
 
 		if ((group->sockets[i]->last_update == 0) ||
-		    ((state != RTR_ESTABLISHED) && (state != RTR_RESET) &&
-		     (state != RTR_SYNC)))
+		    ((state != RTR_ESTABLISHED) && (state != RTR_RESET) && (state != RTR_SYNC)))
 			return false;
 	}
 	return true;
 }
 
-static void rtr_mgr_close_less_preferable_groups(const struct rtr_socket *sock,
-						 struct rtr_mgr_config *config,
+static void rtr_mgr_close_less_preferable_groups(const struct rtr_socket *sock, struct rtr_mgr_config *config,
 						 struct rtr_mgr_group *group)
 {
 	pthread_mutex_lock(&config->mutex);
@@ -110,23 +97,19 @@ static void rtr_mgr_close_less_preferable_groups(const struct rtr_socket *sock,
 		struct rtr_mgr_group_node *group_node = node->data;
 		struct rtr_mgr_group *current_group = group_node->group;
 
-		if ((current_group->status != RTR_MGR_CLOSED) &&
-		    (current_group != group) &&
+		if ((current_group->status != RTR_MGR_CLOSED) && (current_group != group) &&
 		    (current_group->preference > group->preference)) {
-			for (unsigned int j = 0;
-				j < current_group->sockets_len; j++) {
+			for (unsigned int j = 0; j < current_group->sockets_len; j++) {
 				rtr_stop(current_group->sockets[j]);
 			}
 			set_status(config, current_group, RTR_MGR_CLOSED, sock);
 		}
-	node = node->next;
+		node = node->next;
 	}
 	pthread_mutex_unlock(&config->mutex);
 }
 
-static struct rtr_mgr_group *get_best_inactive_rtr_mgr_group(
-						struct rtr_mgr_config *config,
-						struct rtr_mgr_group *group)
+static struct rtr_mgr_group *get_best_inactive_rtr_mgr_group(struct rtr_mgr_config *config, struct rtr_mgr_group *group)
 {
 	pthread_mutex_lock(&config->mutex);
 	tommy_node *node = tommy_list_head(&config->groups->list);
@@ -134,14 +117,13 @@ static struct rtr_mgr_group *get_best_inactive_rtr_mgr_group(
 	while (node) {
 		struct rtr_mgr_group_node *group_node = node->data;
 		struct rtr_mgr_group *current_group = group_node->group;
-			if ((current_group != group) &&
-			    (current_group->status == RTR_MGR_CLOSED)) {
-				pthread_mutex_unlock(&config->mutex);
-				return current_group;
-			}
+		if ((current_group != group) && (current_group->status == RTR_MGR_CLOSED)) {
+			pthread_mutex_unlock(&config->mutex);
+			return current_group;
+		}
 		node = node->next;
 	}
-		pthread_mutex_unlock(&config->mutex);
+	pthread_mutex_unlock(&config->mutex);
 	return NULL;
 }
 
@@ -163,8 +145,7 @@ static bool is_some_rtr_mgr_group_established(struct rtr_mgr_config *config)
 	return false;
 }
 
-static inline void _rtr_mgr_cb_state_shutdown(const struct rtr_socket *sock,
-					      struct rtr_mgr_config *config,
+static inline void _rtr_mgr_cb_state_shutdown(const struct rtr_socket *sock, struct rtr_mgr_config *config,
 					      struct rtr_mgr_group *group)
 {
 	bool all_down = true;
@@ -176,15 +157,12 @@ static inline void _rtr_mgr_cb_state_shutdown(const struct rtr_socket *sock,
 		}
 	}
 	if (all_down)
-		set_status(config, group,
-			   RTR_MGR_CLOSED, sock);
+		set_status(config, group, RTR_MGR_CLOSED, sock);
 	else
-		set_status(config, group,
-			   group->status, sock);
+		set_status(config, group, group->status, sock);
 }
 
-static inline void _rtr_mgr_cb_state_established(const struct rtr_socket *sock,
-						 struct rtr_mgr_config *config,
+static inline void _rtr_mgr_cb_state_established(const struct rtr_socket *sock, struct rtr_mgr_config *config,
 						 struct rtr_mgr_group *group)
 {
 	/* socket established a connection to the rtr_server */
@@ -195,13 +173,10 @@ static inline void _rtr_mgr_cb_state_established(const struct rtr_socket *sock,
 		 * connection, if yes change group state to ESTABLISHED
 		 */
 		if (rtr_mgr_config_status_is_synced(group)) {
-			set_status(config, group,
-				   RTR_MGR_ESTABLISHED, sock);
-			rtr_mgr_close_less_preferable_groups(sock, config,
-							     group);
+			set_status(config, group, RTR_MGR_ESTABLISHED, sock);
+			rtr_mgr_close_less_preferable_groups(sock, config, group);
 		} else {
-			set_status(config, group,
-				   RTR_MGR_CONNECTING, sock);
+			set_status(config, group, RTR_MGR_CONNECTING, sock);
 		}
 	} else if (group->status == RTR_MGR_ERROR) {
 		/* if previous state was ERROR, only change state to
@@ -217,8 +192,7 @@ static inline void _rtr_mgr_cb_state_established(const struct rtr_socket *sock,
 			struct rtr_mgr_group_node *group_node = node->data;
 			struct rtr_mgr_group *current_group = group_node->group;
 
-			if ((current_group != group) &&
-			    (current_group->status != RTR_MGR_ERROR) &&
+			if ((current_group != group) && (current_group->status != RTR_MGR_ERROR) &&
 			    (current_group->status != RTR_MGR_CLOSED) &&
 			    (current_group->preference < group->preference)) {
 				all_error = false;
@@ -229,35 +203,29 @@ static inline void _rtr_mgr_cb_state_established(const struct rtr_socket *sock,
 
 		if (all_error && rtr_mgr_config_status_is_synced(group)) {
 			set_status(config, group, RTR_MGR_ESTABLISHED, sock);
-			rtr_mgr_close_less_preferable_groups(sock, config,
-							     group);
+			rtr_mgr_close_less_preferable_groups(sock, config, group);
 		} else {
 			set_status(config, group, RTR_MGR_ERROR, sock);
 		}
 	}
 }
 
-static inline void _rtr_mgr_cb_state_connecting(const struct rtr_socket *sock,
-						struct rtr_mgr_config *config,
+static inline void _rtr_mgr_cb_state_connecting(const struct rtr_socket *sock, struct rtr_mgr_config *config,
 						struct rtr_mgr_group *group)
 {
 	if (group->status == RTR_MGR_ERROR)
-		set_status(config, group,
-			   RTR_MGR_ERROR, sock);
+		set_status(config, group, RTR_MGR_ERROR, sock);
 	else
-		set_status(config, group,
-			   RTR_MGR_CONNECTING, sock);
+		set_status(config, group, RTR_MGR_CONNECTING, sock);
 }
 
-static inline void _rtr_mgr_cb_state_error(const struct rtr_socket *sock,
-					   struct rtr_mgr_config *config,
+static inline void _rtr_mgr_cb_state_error(const struct rtr_socket *sock, struct rtr_mgr_config *config,
 					   struct rtr_mgr_group *group)
 {
 	set_status(config, group, RTR_MGR_ERROR, sock);
 
 	if (!is_some_rtr_mgr_group_established(config)) {
-		struct rtr_mgr_group *next_group =
-			get_best_inactive_rtr_mgr_group(config, group);
+		struct rtr_mgr_group *next_group = get_best_inactive_rtr_mgr_group(config, group);
 
 		if (next_group)
 			rtr_mgr_start_sockets(next_group);
@@ -266,9 +234,8 @@ static inline void _rtr_mgr_cb_state_error(const struct rtr_socket *sock,
 	}
 }
 
-static void rtr_mgr_cb(const struct rtr_socket *sock,
-		       const enum rtr_socket_state state,
-		       void *data_config, void *data_group)
+static void rtr_mgr_cb(const struct rtr_socket *sock, const enum rtr_socket_state state, void *data_config,
+		       void *data_group)
 {
 	if (state == RTR_SHUTDOWN)
 		MGR_DBG1("Received RTR_SHUTDOWN callback");
@@ -321,23 +288,18 @@ int rtr_mgr_config_cmp_tommy(const void *a, const void *b)
 	return rtr_mgr_config_cmp(ar->group, br->group);
 }
 
-RTRLIB_EXPORT int rtr_mgr_init(struct rtr_mgr_config **config_out,
-			       struct rtr_mgr_group groups[],
-			       const unsigned int groups_len,
-			       const unsigned int refresh_interval,
-			       const unsigned int expire_interval,
-			       const unsigned int retry_interval,
-			       const pfx_update_fp update_fp,
-			       const spki_update_fp spki_update_fp,
-			       const rtr_mgr_status_fp status_fp,
-			       void *status_fp_data)
+RTRLIB_EXPORT int rtr_mgr_init(struct rtr_mgr_config **config_out, struct rtr_mgr_group groups[],
+			       const unsigned int groups_len, const unsigned int refresh_interval,
+			       const unsigned int expire_interval, const unsigned int retry_interval,
+			       const pfx_update_fp update_fp, const spki_update_fp spki_update_fp,
+			       const rtr_mgr_status_fp status_fp, void *status_fp_data)
 {
 	enum rtr_rtvals err_code = RTR_ERROR;
 	enum rtr_interval_mode iv_mode = RTR_INTERVAL_MODE_DEFAULT_MIN_MAX;
 	struct pfx_table *pfxt = NULL;
 	struct spki_table *spki_table = NULL;
 	struct rtr_mgr_config *config = NULL;
-	struct rtr_mgr_group *cg =  NULL;
+	struct rtr_mgr_group *cg = NULL;
 	struct rtr_mgr_group_node *group_node;
 	uint8_t last_preference = UINT8_MAX;
 
@@ -359,8 +321,7 @@ RTRLIB_EXPORT int rtr_mgr_init(struct rtr_mgr_config **config_out,
 		goto err;
 	}
 	/* sort array in asc order, so we can check for dupl. pref */
-	qsort(groups, groups_len,
-	      sizeof(struct rtr_mgr_group), &rtr_mgr_config_cmp);
+	qsort(groups, groups_len, sizeof(struct rtr_mgr_group), &rtr_mgr_config_cmp);
 
 	/* Check that the groups have unique pref and at least one socket */
 	for (unsigned int i = 0; i < config->len; i++) {
@@ -405,10 +366,7 @@ RTRLIB_EXPORT int rtr_mgr_init(struct rtr_mgr_config **config_out,
 		memcpy(cg, &groups[i], sizeof(struct rtr_mgr_group));
 
 		cg->status = RTR_MGR_CLOSED;
-		err_code = rtr_mgr_init_sockets(cg, config, refresh_interval,
-						expire_interval,
-						retry_interval,
-						iv_mode);
+		err_code = rtr_mgr_init_sockets(cg, config, refresh_interval, expire_interval, retry_interval, iv_mode);
 		if (err_code)
 			goto err;
 
@@ -417,8 +375,7 @@ RTRLIB_EXPORT int rtr_mgr_init(struct rtr_mgr_config **config_out,
 			goto err;
 
 		group_node->group = cg;
-		tommy_list_insert_tail(&config->groups->list, &group_node->node,
-				       group_node);
+		tommy_list_insert_tail(&config->groups->list, &group_node->node, group_node);
 	}
 	/* Our linked list should be sorted already, since the groups array was
 	 * sorted. However, for safety reasons we sort again.
@@ -447,8 +404,7 @@ err:
 	return err_code;
 }
 
-RTRLIB_EXPORT struct rtr_mgr_group *rtr_mgr_get_first_group(
-		struct rtr_mgr_config *config)
+RTRLIB_EXPORT struct rtr_mgr_group *rtr_mgr_get_first_group(struct rtr_mgr_config *config)
 {
 	tommy_node *head = tommy_list_head(&config->groups->list);
 	struct rtr_mgr_group_node *group_node = head->data;
@@ -473,8 +429,7 @@ RTRLIB_EXPORT bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config)
 		bool all_sync = true;
 		struct rtr_mgr_group_node *group_node = node->data;
 
-		for (unsigned int j = 0; all_sync &&
-		     (j < group_node->group->sockets_len); j++) {
+		for (unsigned int j = 0; all_sync && (j < group_node->group->sockets_len); j++) {
 			if (group_node->group->sockets[j]->last_update == 0)
 				all_sync = false;
 		}
@@ -506,8 +461,7 @@ RTRLIB_EXPORT void rtr_mgr_free(struct rtr_mgr_config *config)
 		struct rtr_mgr_group_node *group_node = tmp->data;
 
 		head = head->next;
-		for (unsigned int j = 0; j < group_node->group->sockets_len;
-		     j++) {
+		for (unsigned int j = 0; j < group_node->group->sockets_len; j++) {
 			tr_free(group_node->group->sockets[j]->tr_socket);
 		}
 
@@ -523,25 +477,18 @@ RTRLIB_EXPORT void rtr_mgr_free(struct rtr_mgr_config *config)
 }
 
 /* cppcheck-suppress unusedFunction */
-RTRLIB_EXPORT inline int rtr_mgr_validate(struct rtr_mgr_config *config,
-					  const uint32_t asn,
-					  const struct lrtr_ip_addr *prefix,
-					  const uint8_t mask_len,
+RTRLIB_EXPORT inline int rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn,
+					  const struct lrtr_ip_addr *prefix, const uint8_t mask_len,
 					  enum pfxv_state *result)
 {
-	return pfx_table_validate(config->pfx_table, asn, prefix, mask_len,
-				  result);
+	return pfx_table_validate(config->pfx_table, asn, prefix, mask_len, result);
 }
 
 /* cppcheck-suppress unusedFunction */
-RTRLIB_EXPORT inline int rtr_mgr_get_spki(struct rtr_mgr_config *config,
-					  const uint32_t asn,
-					  uint8_t *ski,
-					  struct spki_record **result,
-					  unsigned int *result_count)
+RTRLIB_EXPORT inline int rtr_mgr_get_spki(struct rtr_mgr_config *config, const uint32_t asn, uint8_t *ski,
+					  struct spki_record **result, unsigned int *result_count)
 {
-	return spki_table_get_all(config->spki_table,
-				  asn, ski, result, result_count);
+	return spki_table_get_all(config->spki_table, asn, ski, result, result_count);
 }
 
 RTRLIB_EXPORT void rtr_mgr_stop(struct rtr_mgr_config *config)
@@ -553,19 +500,16 @@ RTRLIB_EXPORT void rtr_mgr_stop(struct rtr_mgr_config *config)
 	while (node) {
 		struct rtr_mgr_group_node *group_node = node->data;
 
-		for (unsigned int j = 0; j < group_node->group->sockets_len;
-		     j++) {
+		for (unsigned int j = 0; j < group_node->group->sockets_len; j++) {
 			rtr_stop(group_node->group->sockets[j]);
 		}
-	node = node->next;
+		node = node->next;
 	}
 	pthread_mutex_unlock(&config->mutex);
 }
 
 /* cppcheck-suppress unusedFunction */
-RTRLIB_EXPORT int rtr_mgr_add_group(
-		struct rtr_mgr_config *config,
-		const struct rtr_mgr_group *group)
+RTRLIB_EXPORT int rtr_mgr_add_group(struct rtr_mgr_config *config, const struct rtr_mgr_group *group)
 {
 	unsigned int refresh_iv = 3600;
 	unsigned int retry_iv = 600;
@@ -588,9 +532,9 @@ RTRLIB_EXPORT int rtr_mgr_add_group(
 			goto err;
 		}
 
-		//TODO This is not pretty. It wants to get the same intervals
-		//that are being used by other groups. Maybe intervals should
-		//be store globally/per-group/per-socket?
+		// TODO This is not pretty. It wants to get the same intervals
+		// that are being used by other groups. Maybe intervals should
+		// be store globally/per-group/per-socket?
 		if (gnode->group->sockets[0]->refresh_interval)
 			refresh_iv = gnode->group->sockets[0]->refresh_interval;
 		if (gnode->group->sockets[0]->retry_interval)
@@ -607,8 +551,7 @@ RTRLIB_EXPORT int rtr_mgr_add_group(
 	memcpy(new_group, group, sizeof(struct rtr_mgr_group));
 	new_group->status = RTR_MGR_CLOSED;
 
-	err_code = rtr_mgr_init_sockets(new_group, config, refresh_iv,
-					expire_iv, retry_iv, iv_mode);
+	err_code = rtr_mgr_init_sockets(new_group, config, refresh_iv, expire_iv, retry_iv, iv_mode);
 	if (err_code)
 		goto err;
 
@@ -617,12 +560,10 @@ RTRLIB_EXPORT int rtr_mgr_add_group(
 		goto err;
 
 	new_group_node->group = new_group;
-	tommy_list_insert_tail(&config->groups->list, &new_group_node->node,
-			       new_group_node);
+	tommy_list_insert_tail(&config->groups->list, &new_group_node->node, new_group_node);
 	config->len++;
 
-	MGR_DBG("Group with preference %d successfully added!",
-		new_group->preference);
+	MGR_DBG("Group with preference %d successfully added!", new_group->preference);
 
 	tommy_list_sort(&config->groups->list, &rtr_mgr_config_cmp_tommy);
 
@@ -644,9 +585,7 @@ err:
 }
 
 /* cppcheck-suppress unusedFunction */
-RTRLIB_EXPORT int rtr_mgr_remove_group(
-		struct rtr_mgr_config *config,
-		unsigned int preference)
+RTRLIB_EXPORT int rtr_mgr_remove_group(struct rtr_mgr_config *config, unsigned int preference)
 {
 	pthread_mutex_lock(&config->mutex);
 	tommy_node *remove_node = NULL;
@@ -679,10 +618,10 @@ RTRLIB_EXPORT int rtr_mgr_remove_group(
 	tommy_list_remove_existing(&config->groups->list, remove_node);
 	config->len--;
 	MGR_DBG("Group with preference %d successfully removed!", preference);
-	//tommy_list_sort(&config->groups->list, &rtr_mgr_config_cmp);
+	// tommy_list_sort(&config->groups->list, &rtr_mgr_config_cmp);
 	pthread_mutex_unlock(&config->mutex);
 
-	//If group isn't closed, make it so!
+	// If group isn't closed, make it so!
 	if (remove_group->status != RTR_MGR_CLOSED) {
 		for (unsigned int j = 0; j < remove_group->sockets_len; j++) {
 			rtr_stop(remove_group->sockets[j]);
@@ -703,10 +642,8 @@ RTRLIB_EXPORT int rtr_mgr_remove_group(
 
 // TODO: write test for this function.
 /* cppcheck-suppress unusedFunction */
-RTRLIB_EXPORT int rtr_mgr_for_each_group(
-		struct rtr_mgr_config *config,
-		void (fp)(const struct rtr_mgr_group *group, void *data),
-		void *data)
+RTRLIB_EXPORT int rtr_mgr_for_each_group(struct rtr_mgr_config *config,
+					 void(fp)(const struct rtr_mgr_group *group, void *data), void *data)
 {
 	tommy_node *node = tommy_list_head(&config->groups->list);
 
@@ -726,25 +663,15 @@ RTRLIB_EXPORT const char *rtr_mgr_status_to_str(enum rtr_mgr_status status)
 }
 
 /* cppcheck-suppress unusedFunction */
-RTRLIB_EXPORT inline void rtr_mgr_for_each_ipv4_record(
-		struct rtr_mgr_config *config,
-		void (fp)(
-			const struct pfx_record *,
-			void *data),
-		void *data)
+RTRLIB_EXPORT inline void rtr_mgr_for_each_ipv4_record(struct rtr_mgr_config *config,
+						       void(fp)(const struct pfx_record *, void *data), void *data)
 {
-	pfx_table_for_each_ipv4_record(config->pfx_table,
-				       fp, data);
+	pfx_table_for_each_ipv4_record(config->pfx_table, fp, data);
 }
 
 /* cppcheck-suppress unusedFunction */
-RTRLIB_EXPORT inline void rtr_mgr_for_each_ipv6_record(
-		struct rtr_mgr_config *config,
-		void (fp)(
-			const struct pfx_record *,
-			void *data),
-		void *data)
+RTRLIB_EXPORT inline void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config,
+						       void(fp)(const struct pfx_record *, void *data), void *data)
 {
-	pfx_table_for_each_ipv6_record(config->pfx_table,
-				       fp, data);
+	pfx_table_for_each_ipv6_record(config->pfx_table, fp, data);
 }

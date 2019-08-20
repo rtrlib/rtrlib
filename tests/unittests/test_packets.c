@@ -8,12 +8,11 @@
  */
 
 #include "rtrlib_unittests.h"
-#include "rtrlib/rtr/packets_private.h"
 #include "test_packets.h"
 
-int __wrap_tr_send_all(const struct tr_socket *socket,
-		       const void *pdu, const size_t len,
-		       const time_t timeout)
+#include "rtrlib/rtr/packets_private.h"
+
+int __wrap_tr_send_all(const struct tr_socket *socket, const void *pdu, const size_t len, const time_t timeout)
 {
 	UNUSED(socket);
 	UNUSED(pdu);
@@ -22,8 +21,7 @@ int __wrap_tr_send_all(const struct tr_socket *socket,
 	return (int)mock();
 }
 
-void __wrap_rtr_change_socket_state(struct rtr_socket *rtr_socket,
-				    const enum rtr_socket_state new_state)
+void __wrap_rtr_change_socket_state(struct rtr_socket *rtr_socket, const enum rtr_socket_state new_state)
 {
 	UNUSED(rtr_socket);
 	UNUSED(new_state);
@@ -68,9 +66,7 @@ static void test_rtr_change_socket_state(void **state)
 
 int main(void)
 {
-	const struct CMUnitTest tests[] = {
-		cmocka_unit_test(test_rtr_send_reset_query),
-		cmocka_unit_test(test_rtr_change_socket_state)
-	};
+	const struct CMUnitTest tests[] = {cmocka_unit_test(test_rtr_send_reset_query),
+					   cmocka_unit_test(test_rtr_change_socket_state)};
 	return cmocka_run_group_tests(tests, NULL, NULL);
 }

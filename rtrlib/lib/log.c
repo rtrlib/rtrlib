@@ -7,6 +7,8 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
+#include "log_private.h"
+
 #include <arpa/inet.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -14,8 +16,6 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include <time.h>
-
-#include "rtrlib/lib/log_private.h"
 
 void lrtr_dbg(const char *frmt, ...)
 {
@@ -32,10 +32,8 @@ void lrtr_dbg(const char *frmt, ...)
 		struct tm tm;
 
 		if (localtime_r(&tv.tv_sec, &tm)) {
-			fprintf(stderr,
-				"(%04d/%02d/%02d %02d:%02d:%02d:%06ld): ",
-				tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
-				tm.tm_hour, tm.tm_min, tm.tm_sec, tv.tv_usec);
+			fprintf(stderr, "(%04d/%02d/%02d %02d:%02d:%02d:%06ld): ", tm.tm_year + 1900, tm.tm_mon + 1,
+				tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, tv.tv_usec);
 			fail = false;
 		}
 	}

@@ -7,23 +7,23 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
+#include "alloc_utils_private.h"
+
+#include "rtrlib/rtrlib_export_private.h"
+
 #include <assert.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-
-#include "alloc_utils_private.h"
-#include "rtrlib/rtrlib_export_private.h"
 
 static void *(*MALLOC_PTR)(size_t size) = malloc;
 static void *(*REALLOC_PTR)(void *ptr, size_t size) = realloc;
 static void (*FREE_PTR)(void *ptr) = free;
 
 /* cppcheck-suppress unusedFunction */
-RTRLIB_EXPORT void lrtr_set_alloc_functions(
-		void *(*malloc_function)(size_t size),
-		void *(*realloc_function)(void *ptr, size_t size),
-		void (free_function)(void *ptr))
+RTRLIB_EXPORT void lrtr_set_alloc_functions(void *(*malloc_function)(size_t size),
+					    void *(*realloc_function)(void *ptr, size_t size),
+					    void(free_function)(void *ptr))
 {
 	MALLOC_PTR = malloc_function;
 	REALLOC_PTR = realloc_function;

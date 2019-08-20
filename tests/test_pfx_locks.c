@@ -7,18 +7,19 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <string.h>
-#include <stdbool.h>
+#include "rtrlib/lib/ip.h"
+#include "rtrlib/pfx/pfx.h"
+#include "rtrlib/pfx/trie/trie-pfx.h"
+
 #include <arpa/inet.h>
 #include <pthread.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
 #include <time.h>
-#include "rtrlib/lib/ip.h"
-#include "rtrlib/pfx/trie/trie-pfx.h"
-#include "rtrlib/pfx/pfx.h"
+#include <unistd.h>
 
 uint32_t min_i = 0xFF000000;
 uint32_t max_i = 0xFFFFFFF0;
@@ -79,10 +80,8 @@ static void *rec_val(struct pfx_table *pfxt)
 		rec.max_len = 32;
 		rec.prefix.ver = LRTR_IPV4;
 		rec.prefix.u.addr4.addr = htonl(i);
-		pfx_table_validate(pfxt, (tid % 2),
-				   &rec.prefix, rec.min_len, &res);
-		pfx_table_validate(pfxt, (tid % 2) + 1,
-				   &rec.prefix, rec.min_len, &res);
+		pfx_table_validate(pfxt, (tid % 2), &rec.prefix, rec.min_len, &res);
+		pfx_table_validate(pfxt, (tid % 2) + 1, &rec.prefix, rec.min_len, &res);
 
 		rec.min_len = 128;
 		rec.max_len = 128;
@@ -90,8 +89,7 @@ static void *rec_val(struct pfx_table *pfxt)
 		rec.prefix.u.addr6.addr[1] = min_i + 0xFFFFFFFF;
 		rec.prefix.u.addr6.addr[0] = htonl(i) + 0xFFFFFFFF;
 
-		pfx_table_validate(pfxt, (tid % 2) + 1,
-				   &rec.prefix, rec.min_len, &res);
+		pfx_table_validate(pfxt, (tid % 2) + 1, &rec.prefix, rec.min_len, &res);
 		usleep(rand() / (RAND_MAX / 20));
 	}
 
@@ -156,14 +154,11 @@ int main(void)
 		int r = rand() / (RAND_MAX / 3);
 
 		if (r == 0)
-			pthread_create(&threads[i], NULL,
-				       (void * (*)(void *)) rec_add, &pfxt);
+			pthread_create(&threads[i], NULL, (void *(*)(void *))rec_add, &pfxt);
 		else if (r == 1)
-			pthread_create(&threads[i], NULL,
-				       (void * (*)(void *)) rec_del, &pfxt);
+			pthread_create(&threads[i], NULL, (void *(*)(void *))rec_del, &pfxt);
 		else if (r == 2)
-			pthread_create(&threads[i], NULL,
-				       (void * (*)(void *)) rec_val, &pfxt);
+			pthread_create(&threads[i], NULL, (void *(*)(void *))rec_val, &pfxt);
 		printf("Started Thread %d\n", i);
 		usleep(200);
 	}

@@ -7,6 +7,13 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
+#include "rtrlib/lib/ip_private.h"
+#include "rtrlib/lib/utils_private.h"
+#include "rtrlib/pfx/pfx.h"
+#include "rtrlib/pfx/pfx_private.h"
+#include "rtrlib/pfx/trie/trie_private.h"
+#include "rtrlib/rtr/rtr.h"
+
 #include <arpa/inet.h>
 #include <assert.h>
 #include <stdbool.h>
@@ -15,23 +22,15 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "rtrlib/lib/ip_private.h"
-#include "rtrlib/lib/utils_private.h"
-#include "rtrlib/pfx/pfx.h"
-#include "rtrlib/pfx/pfx_private.h"
-#include "rtrlib/pfx/trie/trie_private.h"
-#include "rtrlib/rtr/rtr.h"
-
-static void validate(struct pfx_table *pfxt, uint32_t asn, const char *prefix,
-		     uint8_t prefix_len, enum pfxv_state expected_result)
+static void validate(struct pfx_table *pfxt, uint32_t asn, const char *prefix, uint8_t prefix_len,
+		     enum pfxv_state expected_result)
 {
 	struct lrtr_ip_addr ip;
 	enum pfxv_state val_res;
 
 	assert(!lrtr_ip_str_to_addr(prefix, &ip));
 
-	assert(pfx_table_validate(pfxt, asn, &ip, prefix_len, &val_res) ==
-	       PFX_SUCCESS);
+	assert(pfx_table_validate(pfxt, asn, &ip, prefix_len, &val_res) == PFX_SUCCESS);
 
 	assert(val_res == expected_result);
 }
@@ -141,13 +140,9 @@ static void mass_test(void)
 		pfx.max_len = 32;
 		pfx.prefix.ver = LRTR_IPV4;
 		pfx.prefix.u.addr4.addr = htonl(i);
-		assert(pfx_table_validate(&pfxt, i,
-					  &pfx.prefix, pfx.min_len,
-					  &res) == PFX_SUCCESS);
+		assert(pfx_table_validate(&pfxt, i, &pfx.prefix, pfx.min_len, &res) == PFX_SUCCESS);
 		assert(res == BGP_PFXV_STATE_VALID);
-		assert(pfx_table_validate(&pfxt, i + 1,
-					  &pfx.prefix, pfx.min_len,
-					  &res) == PFX_SUCCESS);
+		assert(pfx_table_validate(&pfxt, i + 1, &pfx.prefix, pfx.min_len, &res) == PFX_SUCCESS);
 		assert(res == BGP_PFXV_STATE_VALID);
 
 		pfx.min_len = 128;
@@ -156,9 +151,7 @@ static void mass_test(void)
 		((uint64_t *)pfx.prefix.u.addr6.addr)[1] = max_i;
 		((uint64_t *)pfx.prefix.u.addr6.addr)[0] = min_i + i;
 
-		assert(pfx_table_validate(&pfxt, i + 1,
-					  &pfx.prefix, pfx.min_len,
-					  &res) == PFX_SUCCESS);
+		assert(pfx_table_validate(&pfxt, i + 1, &pfx.prefix, pfx.min_len, &res) == PFX_SUCCESS);
 		assert(res == BGP_PFXV_STATE_VALID);
 	}
 
@@ -233,9 +226,7 @@ static void pfx_table_test(void)
 	pfx.max_len = 48;
 	pfx.asn = 124;
 	assert(pfx_table_add(&pfxt, &pfx) == PFX_SUCCESS);
-	assert(pfx_table_validate(&pfxt, 124,
-				  &pfx.prefix, 48,
-				  &res) == PFX_SUCCESS);
+	assert(pfx_table_validate(&pfxt, 124, &pfx.prefix, 48, &res) == PFX_SUCCESS);
 	validate(&pfxt, 124, "2a01:4f8:131::", 48, BGP_PFXV_STATE_VALID);
 
 	validate(&pfxt, 124, "2a01:4f8:131:15::", 56, BGP_PFXV_STATE_INVALID);
@@ -334,8 +325,7 @@ static void pfx_table_test(void)
 	printf("%s() successful\n", __func__);
 }
 
-static void create_ip4_pfx_record(struct pfx_record *pfx, uint32_t asn,
-				  const char *ip, uint8_t min_mask_len,
+static void create_ip4_pfx_record(struct pfx_record *pfx, uint32_t asn, const char *ip, uint8_t min_mask_len,
 				  uint8_t max_mask_len)
 {
 	pfx->asn = asn;
@@ -345,8 +335,7 @@ static void create_ip4_pfx_record(struct pfx_record *pfx, uint32_t asn,
 	assert(!lrtr_ip_str_to_addr(ip, &pfx->prefix));
 }
 
-static void add_ip4_pfx_record(struct pfx_table *pfxt, uint32_t asn,
-			       const char *ip, uint8_t min_mask_len,
+static void add_ip4_pfx_record(struct pfx_table *pfxt, uint32_t asn, const char *ip, uint8_t min_mask_len,
 			       uint8_t max_mask_len)
 {
 	struct pfx_record pfx;
@@ -356,8 +345,7 @@ static void add_ip4_pfx_record(struct pfx_table *pfxt, uint32_t asn,
 
 	assert(pfx_table_add(pfxt, &pfx) == PFX_SUCCESS);
 
-	assert(pfx_table_validate(pfxt, pfx.asn, &pfx.prefix, pfx.min_len,
-				  &val_res) == PFX_SUCCESS);
+	assert(pfx_table_validate(pfxt, pfx.asn, &pfx.prefix, pfx.min_len, &val_res) == PFX_SUCCESS);
 	assert(val_res == BGP_PFXV_STATE_VALID);
 }
 
@@ -397,9 +385,7 @@ static void test_issue152(void)
 	free(records);
 }
 
-static void update_cb1(struct pfx_table *p  __attribute__((unused)),
-		       const struct pfx_record rec,
-		       const bool added)
+static void update_cb1(struct pfx_table *p __attribute__((unused)), const struct pfx_record rec, const bool added)
 {
 	char ip[INET6_ADDRSTRLEN];
 
@@ -408,8 +394,7 @@ static void update_cb1(struct pfx_table *p  __attribute__((unused)),
 	else
 		printf("- ");
 	lrtr_ip_addr_to_str(&rec.prefix, ip, sizeof(ip));
-	printf("%-40s   %3u - %3u   %10u\n",
-	       ip, rec.min_len, rec.max_len, rec.asn);
+	printf("%-40s   %3u - %3u   %10u\n", ip, rec.min_len, rec.max_len, rec.asn);
 
 	if (rec.asn == 1)
 		assert(!added);

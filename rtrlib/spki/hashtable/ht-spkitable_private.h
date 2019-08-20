@@ -10,6 +10,7 @@
 #define RTR_HT_SPKITABLE_PRIVATE_H
 
 #include "rtrlib/spki/spkitable_private.h"
+
 #include "third-party/tommyds/tommyhashlin.h"
 #include "third-party/tommyds/tommylist.h"
 

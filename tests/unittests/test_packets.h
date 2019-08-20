@@ -9,10 +9,6 @@
 
 #include "rtrlib/rtr/rtr.h"
 
-void __real_rtr_change_socket_state(struct rtr_socket *rtr_socket,
-				    const enum rtr_socket_state new_state);
-int __wrap_tr_send_all(const struct tr_socket *socket,
-		       const void *pdu, const size_t len,
-		       const time_t timeout);
-void __wrap_rtr_change_socket_state(struct rtr_socket *rtr_socket,
-				    const enum rtr_socket_state new_state);
+void __real_rtr_change_socket_state(struct rtr_socket *rtr_socket, const enum rtr_socket_state new_state);
+int __wrap_tr_send_all(const struct tr_socket *socket, const void *pdu, const size_t len, const time_t timeout);
+void __wrap_rtr_change_socket_state(struct rtr_socket *rtr_socket, const enum rtr_socket_state new_state);

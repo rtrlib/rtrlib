@@ -9,6 +9,7 @@
 
 #ifndef LRTR_UTILS_PRIVATE_H
 #define LRTR_UTILS_PRIVATE_H
+
 #include <stdint.h>
 #include <time.h>
 
@@ -27,7 +28,7 @@ int lrtr_get_monotonic_time(time_t *seconds);
  * @param[in] from Position of the first bit that is extracted.
  * @param[in] number How many bits will be extracted.
  * @returns a uint32_t, where all bits that aren't in the specified range are set to 0.
-*/
+ */
 uint32_t lrtr_get_bits(const uint32_t val, const uint8_t from, const uint8_t number);
 
 #endif

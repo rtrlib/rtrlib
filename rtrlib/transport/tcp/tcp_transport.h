@@ -21,7 +21,6 @@
 
 #include "rtrlib/transport/transport.h"
 
-
 /**
  * @brief  A tr_tcp_config struct holds configuration for a TCP connection.
  * @param host Hostname or IP address to connect to.
@@ -31,9 +30,9 @@
  * to use the source address of the system's default route to the server
  */
 struct tr_tcp_config {
-    char *host;
-    char *port;
-    char *bindaddr;
+	char *host;
+	char *port;
+	char *bindaddr;
 };
 
 /**
@@ -45,4 +44,4 @@ struct tr_tcp_config {
  */
 int tr_tcp_init(const struct tr_tcp_config *config, struct tr_socket *socket);
 #endif
-/* @} */
+/** @} */

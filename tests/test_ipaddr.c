@@ -8,12 +8,13 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#include <arpa/inet.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <assert.h>
-#include <string.h>
 #include "rtrlib/lib/ip.h"
+
+#include <arpa/inet.h>
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /*
  * @brief test ipv4 parsing
