@@ -7,10 +7,12 @@
  * Website; http://rtrlib.realmv6.org/
  */
 
-#include <stdlib.h>
+// clang-format off
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
+#include <stdlib.h>
 #include <cmocka.h>
+// clang-format on
 
 #define UNUSED(x) (void)(x)
