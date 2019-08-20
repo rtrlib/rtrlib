@@ -22,11 +22,12 @@
 
 #ifndef RTR_TRIE_PFX
 #define RTR_TRIE_PFX
+
+#include "rtrlib/lib/ip.h"
+
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdint.h>
-
-#include "rtrlib/lib/ip.h"
 
 struct pfx_table;
 
@@ -39,11 +40,11 @@ struct pfx_table;
  * @param socket The rtr_socket that received this record.
  */
 struct pfx_record {
-    uint32_t asn;
-    struct lrtr_ip_addr prefix;
-    uint8_t min_len;
-    uint8_t max_len;
-    const struct rtr_socket *socket;
+	uint32_t asn;
+	struct lrtr_ip_addr prefix;
+	uint8_t min_len;
+	uint8_t max_len;
+	const struct rtr_socket *socket;
 };
 
 /**
@@ -62,11 +63,11 @@ typedef void (*pfx_update_fp)(struct pfx_table *pfx_table, const struct pfx_reco
  * @param lock
  */
 struct pfx_table {
-    struct trie_node *ipv4;
-    struct trie_node *ipv6;
-    pfx_update_fp update_fp;
-    pthread_rwlock_t lock;
+	struct trie_node *ipv4;
+	struct trie_node *ipv6;
+	pfx_update_fp update_fp;
+	pthread_rwlock_t lock;
 };
 
 #endif
-/* @} */
+/** @} */

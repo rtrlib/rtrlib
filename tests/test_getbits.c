@@ -1,10 +1,10 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <assert.h>
-#include <arpa/inet.h>
-#include <string.h>
-
 #include "rtrlib/lib/ip_private.h"
+
+#include <arpa/inet.h>
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /*
  * @brief Test IPv4 address bit operations required by trie
@@ -96,16 +96,12 @@ static void get_bits_testv6(void)
 	addr.u.addr6.addr[3] = 0x33445566;
 
 	result = lrtr_ip_addr_get_bits(&addr, 0, 128);
-	assert(result.u.addr6.addr[0] == addr.u.addr6.addr[0] &&
-	       result.u.addr6.addr[1] == addr.u.addr6.addr[1] &&
-	       result.u.addr6.addr[2] == addr.u.addr6.addr[2] &&
-	       result.u.addr6.addr[3] == addr.u.addr6.addr[3]);
+	assert(result.u.addr6.addr[0] == addr.u.addr6.addr[0] && result.u.addr6.addr[1] == addr.u.addr6.addr[1] &&
+	       result.u.addr6.addr[2] == addr.u.addr6.addr[2] && result.u.addr6.addr[3] == addr.u.addr6.addr[3]);
 
 	result = lrtr_ip_addr_get_bits(&addr, 0, 64);
-	assert(result.u.addr6.addr[0] == addr.u.addr6.addr[0] &&
-	       result.u.addr6.addr[1] == addr.u.addr6.addr[1] &&
-	       result.u.addr6.addr[2] == 0 &&
-	       result.u.addr6.addr[3] == 0);
+	assert(result.u.addr6.addr[0] == addr.u.addr6.addr[0] && result.u.addr6.addr[1] == addr.u.addr6.addr[1] &&
+	       result.u.addr6.addr[2] == 0 && result.u.addr6.addr[3] == 0);
 
 	bzero(&result, sizeof(result));
 	result = lrtr_ip_addr_get_bits(&addr, 64, 64);
@@ -115,20 +111,16 @@ static void get_bits_testv6(void)
 	assert(result.u.addr6.addr[3] == addr.u.addr6.addr[3]);
 
 	result = lrtr_ip_addr_get_bits(&addr, 0, 8);
-	assert(result.u.addr6.addr[0] == 0x22000000 &&
-	       result.u.addr6.addr[1] == 0);
+	assert(result.u.addr6.addr[0] == 0x22000000 && result.u.addr6.addr[1] == 0);
 
 	result = lrtr_ip_addr_get_bits(&addr, 64, 8);
-	assert(result.u.addr6.addr[1] == 0 &&
-	       result.u.addr6.addr[2] == 0x33000000);
+	assert(result.u.addr6.addr[1] == 0 && result.u.addr6.addr[2] == 0x33000000);
 
 	result = lrtr_ip_addr_get_bits(&addr, 7, 8);
-	assert(result.u.addr6.addr[0] == 0xAA0000 &&
-	       result.u.addr6.addr[1] == 0);
+	assert(result.u.addr6.addr[0] == 0xAA0000 && result.u.addr6.addr[1] == 0);
 
 	result = lrtr_ip_addr_get_bits(&addr, 68, 7);
-	assert(result.u.addr6.addr[0] == 0 &&
-	       result.u.addr6.addr[2] == 0x03000000);
+	assert(result.u.addr6.addr[0] == 0 && result.u.addr6.addr[2] == 0x03000000);
 
 	char buf[INET6_ADDRSTRLEN];
 

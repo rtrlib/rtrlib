@@ -1,25 +1,24 @@
+#include "rtrlib/rtr_mgr_private.h"
+#include "rtrlib/rtrlib.h"
+
+#include "third-party/tommyds/tommylist.h"
+
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <assert.h>
-
-#include "rtrlib/rtrlib.h"
-#include "rtrlib/rtr_mgr_private.h"
-#include "third-party/tommyds/tommylist.h"
 
 const int connection_timeout = 20;
 enum rtr_mgr_status connection_status = -1;
 
-static void connection_status_callback(const struct rtr_mgr_group *group,
-				       enum rtr_mgr_status status,
-				       const struct rtr_socket *socket,
-				       void *data)
+static void connection_status_callback(const struct rtr_mgr_group *group, enum rtr_mgr_status status,
+				       const struct rtr_socket *socket, void *data)
 {
 	connection_status = status;
 }
 
 int main(void)
-	{
+{
 	//create a TCP transport socket
 	int retval = 0;
 	struct tr_socket tr_tcp;
@@ -27,9 +26,9 @@ int main(void)
 	char tcp_port[] = "8283";
 
 	struct tr_tcp_config tcp_config = {
-	tcp_host, //IP
-	tcp_port, //Port
-	NULL      //Source address
+		tcp_host, //IP
+		tcp_port, //Port
+		NULL //Source address
 	};
 	tr_tcp_init(&tcp_config, &tr_tcp);
 

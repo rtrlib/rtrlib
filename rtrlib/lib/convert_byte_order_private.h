@@ -26,8 +26,7 @@ enum target_byte_order {
  * @param[in] value Input (uint16_t) for conversion.
  * @result Converted uint16_t value.
  */
-uint16_t lrtr_convert_short(const enum target_byte_order tbo,
-			    const uint16_t value);
+uint16_t lrtr_convert_short(const enum target_byte_order tbo, const uint16_t value);
 
 /**
  * Converts the passed long value to the given target byte order.
@@ -35,7 +34,6 @@ uint16_t lrtr_convert_short(const enum target_byte_order tbo,
  * @param[in] value Input (uint32_t) for conversion.
  * @result Converted uint32_t value.
  */
-uint32_t lrtr_convert_long(const enum target_byte_order tbo,
-			   const uint32_t value);
+uint32_t lrtr_convert_long(const enum target_byte_order tbo, const uint32_t value);
 
 #endif /* LRTR_CONVERT_BYTE_ORDER_H */

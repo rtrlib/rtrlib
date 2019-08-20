@@ -19,9 +19,7 @@
  * @param[in] Pointer to realloc function
  * @param[in] Pointer to free function
  */
-void lrtr_set_alloc_functions(
-		void *(*malloc_function)(size_t size),
-		void *(*realloc_function)(void *ptr, size_t size),
-		void (*free_function)(void *ptr));
+void lrtr_set_alloc_functions(void *(*malloc_function)(size_t size), void *(*realloc_function)(void *ptr, size_t size),
+			      void (*free_function)(void *ptr));
 
 #endif

@@ -16,11 +16,12 @@
 
 #ifndef RTR_PFX_PRIVATE_H
 #define RTR_PFX_PRIVATE_H
-#include <stdint.h>
 
-#include "rtrlib/pfx/pfx.h"
+#include "pfx.h"
+
 #include "rtrlib/lib/ip_private.h"
 
+#include <stdint.h>
 
 /**
  * @brief Frees all memory associcated with the pfx_table without calling the update callback.
@@ -42,7 +43,8 @@ void pfx_table_swap(struct pfx_table *a, struct pfx_table *b);
  * @param[out] dst_table Destination table
  * @param[in] socket socket which prefixes should not be copied
  */
-int pfx_table_copy_except_socket(struct pfx_table *src_table, struct pfx_table *dst_table, const struct rtr_socket *socket);
+int pfx_table_copy_except_socket(struct pfx_table *src_table, struct pfx_table *dst_table,
+				 const struct rtr_socket *socket);
 
 /**
  * @brief Notify client about changes between to pfx tables regarding one specific socket
@@ -54,4 +56,4 @@ int pfx_table_copy_except_socket(struct pfx_table *src_table, struct pfx_table *
 void pfx_table_notify_diff(struct pfx_table *new_table, struct pfx_table *old_table, const struct rtr_socket *socket);
 
 #endif
-/* @} */
+/** @} */

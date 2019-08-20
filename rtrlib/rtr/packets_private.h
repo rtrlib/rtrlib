@@ -10,27 +10,23 @@
 #ifndef RTR_PACKETS_PRIVATE_H
 #define RTR_PACKETS_PRIVATE_H
 
-#include <arpa/inet.h>
-
 #include "rtrlib/rtr/rtr_private.h"
 
+#include <arpa/inet.h>
 
-static const unsigned int RTR_MAX_PDU_LEN = 3248; //error pdu: header(8) + len(4) + ipv6_pdu(32) + len(4) + 400*8 (400 char text)
+// error pdu: header(8) + len(4) + ipv6_pdu(32) + len(4) + 400*8 (400 char text)
+static const unsigned int RTR_MAX_PDU_LEN = 3248;
 static const unsigned int RTR_RECV_TIMEOUT = 60;
 static const unsigned int RTR_SEND_TIMEOUT = 60;
 
-void __attribute__((weak)) rtr_change_socket_state(struct rtr_socket *rtr_socket, const enum rtr_socket_state new_state);
+void __attribute__((weak))
+rtr_change_socket_state(struct rtr_socket *rtr_socket, const enum rtr_socket_state new_state);
 int rtr_sync(struct rtr_socket *rtr_socket);
 int rtr_wait_for_sync(struct rtr_socket *rtr_socket);
 int rtr_send_serial_query(struct rtr_socket *rtr_socket);
 int rtr_send_reset_query(struct rtr_socket *rtr_socket);
-int rtr_check_interval_range(uint32_t interval, uint32_t minimum,
-			     uint32_t maximum);
-void apply_interval_value(struct rtr_socket *rtr_socket,
-			  uint32_t interval,
-			  enum rtr_interval_type type);
-int rtr_check_interval_option(struct rtr_socket *rtr_socket,
-			      int interval_mode,
-			      uint32_t interval,
+int rtr_check_interval_range(uint32_t interval, uint32_t minimum, uint32_t maximum);
+void apply_interval_value(struct rtr_socket *rtr_socket, uint32_t interval, enum rtr_interval_type type);
+int rtr_check_interval_option(struct rtr_socket *rtr_socket, int interval_mode, uint32_t interval,
 			      enum rtr_interval_type type);
 #endif

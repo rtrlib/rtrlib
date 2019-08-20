@@ -7,13 +7,13 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#include <assert.h>
-#include <arpa/inet.h>
-#include <inttypes.h>
-#include "rtrlib/lib/convert_byte_order_private.h"
+#include "convert_byte_order_private.h"
 
-uint16_t lrtr_convert_short(const enum target_byte_order tbo,
-			    const uint16_t value)
+#include <arpa/inet.h>
+#include <assert.h>
+#include <inttypes.h>
+
+uint16_t lrtr_convert_short(const enum target_byte_order tbo, const uint16_t value)
 {
 	if (tbo == TO_NETWORK_BYTE_ORDER)
 		return htons(value);
@@ -23,8 +23,7 @@ uint16_t lrtr_convert_short(const enum target_byte_order tbo,
 	assert(0);
 }
 
-uint32_t lrtr_convert_long(const enum target_byte_order tbo,
-			   const uint32_t value)
+uint32_t lrtr_convert_long(const enum target_byte_order tbo, const uint32_t value)
 {
 	if (tbo == TO_NETWORK_BYTE_ORDER)
 		return htonl(value);

@@ -40,12 +40,12 @@
  *                            or NULL to use ~/.ssh/id_rsa.
  */
 struct tr_ssh_config {
-    char *host;
-    unsigned int port;
-    char *bindaddr;
-    char *username;
-    char *server_hostkey_path;
-    char *client_privkey_path;
+	char *host;
+	unsigned int port;
+	char *bindaddr;
+	char *username;
+	char *server_hostkey_path;
+	char *client_privkey_path;
 };
 
 /**
@@ -58,4 +58,4 @@ struct tr_ssh_config {
 int tr_ssh_init(const struct tr_ssh_config *config, struct tr_socket *socket);
 
 #endif
-/* @} */
+/** @} */

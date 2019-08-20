@@ -32,11 +32,12 @@
  */
 #ifndef RTR_MGR
 #define RTR_MGR
-#include <stdint.h>
-#include <pthread.h>
 
 #include "rtrlib/pfx/pfx.h"
 #include "rtrlib/spki/spkitable.h"
+
+#include <pthread.h>
+#include <stdint.h>
 
 /**
  * @brief Status of a rtr_mgr_group.
@@ -69,14 +70,11 @@ struct rtr_mgr_group {
 	enum rtr_mgr_status status;
 };
 
-typedef void (*rtr_mgr_status_fp)(const struct rtr_mgr_group *,
-				  enum rtr_mgr_status,
-				  const struct rtr_socket *,
-				  void *);
+typedef void (*rtr_mgr_status_fp)(const struct rtr_mgr_group *, enum rtr_mgr_status, const struct rtr_socket *, void *);
 
 struct tommy_list_wrapper;
 
-//TODO Add refresh, expire, and retry intervals to config for easier access.
+// TODO Add refresh, expire, and retry intervals to config for easier access.
 struct rtr_mgr_config {
 	struct tommy_list_wrapper *groups;
 	unsigned int len;
@@ -125,16 +123,10 @@ struct rtr_mgr_config {
  * @return RTR_INVALID_PARAM If refresh_interval or expire_interval is invalid.
  * @return RTR_SUCCESS On success.
  */
-int rtr_mgr_init(struct rtr_mgr_config **config_out,
-		 struct rtr_mgr_group groups[],
-		 const unsigned int groups_len,
-		 const unsigned int refresh_interval,
-		 const unsigned int expire_interval,
-		 const unsigned int retry_interval,
-		 const pfx_update_fp update_fp,
-		 const spki_update_fp spki_update_fp,
-		 const rtr_mgr_status_fp status_fp,
-		 void *status_fp_data);
+int rtr_mgr_init(struct rtr_mgr_config **config_out, struct rtr_mgr_group groups[], const unsigned int groups_len,
+		 const unsigned int refresh_interval, const unsigned int expire_interval,
+		 const unsigned int retry_interval, const pfx_update_fp update_fp, const spki_update_fp spki_update_fp,
+		 const rtr_mgr_status_fp status_fp, void *status_fp_data);
 
 /**
  * @brief Adds a new rtr_mgr_group to the linked list of a initialized config.
@@ -154,8 +146,7 @@ int rtr_mgr_init(struct rtr_mgr_config **config_out,
  * @return RTR_SUCCESS If the group was successfully added.
  *
  */
-int rtr_mgr_add_group(struct rtr_mgr_config *config,
-		      const struct rtr_mgr_group *group);
+int rtr_mgr_add_group(struct rtr_mgr_config *config, const struct rtr_mgr_group *group);
 /**
  * @brief Removes an existing rtr_mgr_group from the linked list of config.
  * @details The group to be removed is identified by its preference value.
@@ -168,8 +159,7 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config,
  * @return RTR_SUCCESS If group was successfully removed.
  *
  */
-int rtr_mgr_remove_group(struct rtr_mgr_config *config,
-			 unsigned int preference);
+int rtr_mgr_remove_group(struct rtr_mgr_config *config, unsigned int preference);
 /**
  * @brief Frees all resources that were allocated from the rtr_mgr.
  * @details rtr_mgr_stop must be called before, to shutdown all rtr_sockets.
@@ -214,11 +204,8 @@ bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config);
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR If an error occurred.
  */
-int rtr_mgr_validate(struct rtr_mgr_config *config,
-		     const uint32_t asn,
-		     const struct lrtr_ip_addr *prefix,
-		     const uint8_t mask_len,
-		     enum pfxv_state *result);
+int rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn, const struct lrtr_ip_addr *prefix,
+		     const uint8_t mask_len, enum pfxv_state *result);
 
 /**
  * @brief Returns all SPKI records which match the given ASN and SKI.
@@ -230,10 +217,7 @@ int rtr_mgr_validate(struct rtr_mgr_config *config,
  * @return SPKI_SUCCESS On success
  * @return SPKI_ERROR If an error occurred
  */
-int rtr_mgr_get_spki(struct rtr_mgr_config *config,
-		     const uint32_t asn,
-		     uint8_t *ski,
-		     struct spki_record **result,
+int rtr_mgr_get_spki(struct rtr_mgr_config *config, const uint32_t asn, uint8_t *ski, struct spki_record **result,
 		     unsigned int *result_count);
 
 /**
@@ -252,9 +236,7 @@ const char *rtr_mgr_status_to_str(enum rtr_mgr_status status);
  * @param[in] fp Pointer to callback function with signature \c pfx_for_each_fp.
  * @param[in] data This parameter is forwarded to the callback function.
  */
-void rtr_mgr_for_each_ipv4_record(struct rtr_mgr_config *config,
-				  pfx_for_each_fp fp,
-				  void *data);
+void rtr_mgr_for_each_ipv4_record(struct rtr_mgr_config *config, pfx_for_each_fp fp, void *data);
 
 /**
  * @brief Iterates over all IPv6 records in the pfx_table.
@@ -264,9 +246,7 @@ void rtr_mgr_for_each_ipv4_record(struct rtr_mgr_config *config,
  * @param[in] fp Pointer to callback function with signature \c pfx_for_each_fp.
  * @param[in] data This parameter is forwarded to the callback function.
  */
-void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config,
-				  pfx_for_each_fp fp,
-				  void *data);
+void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config, pfx_for_each_fp fp, void *data);
 
 /**
  * @brief Returns the first, thus active group.
@@ -275,9 +255,7 @@ void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config,
  */
 struct rtr_mgr_group *rtr_mgr_get_first_group(struct rtr_mgr_config *config);
 
-int rtr_mgr_for_each_group(struct rtr_mgr_config *config,
-			   void (*fp)(const struct rtr_mgr_group *group,
-				      void *data),
+int rtr_mgr_for_each_group(struct rtr_mgr_config *config, void (*fp)(const struct rtr_mgr_group *group, void *data),
 			   void *data);
 #endif
-/* @} */
+/** @} */

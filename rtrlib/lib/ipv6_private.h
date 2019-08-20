@@ -10,12 +10,13 @@
 #ifndef LRTR_IPV6_PRIVATE_H
 #define LRTR_IPV6_PRIVATE_H
 
-#include <sys/types.h>
-#include <stdbool.h>
-#include <stdint.h>
+#include "ipv6.h"
 
 #include "rtrlib/lib/convert_byte_order_private.h"
-#include "rtrlib/lib/ipv6.h"
+
+#include <stdbool.h>
+#include <stdint.h>
+#include <sys/types.h>
 
 /**
  * @brief Compares two lrtr_ipv6_addr structs
@@ -26,8 +27,7 @@
  * @return true if a == b
  * @return false if a != b
  */
-bool lrtr_ipv6_addr_equal(const struct lrtr_ipv6_addr *a,
-			  const struct lrtr_ipv6_addr *b);
+bool lrtr_ipv6_addr_equal(const struct lrtr_ipv6_addr *a, const struct lrtr_ipv6_addr *b);
 
 /**
  * @brief Extracts quantity bits from an IPv6 address.
@@ -41,8 +41,7 @@ bool lrtr_ipv6_addr_equal(const struct lrtr_ipv6_addr *a,
  *
  * @returns ipv6_addr, with all bits not in specified range set to 0.
  */
-struct lrtr_ipv6_addr lrtr_ipv6_get_bits(const struct lrtr_ipv6_addr *val,
-					 const uint8_t first_bit,
+struct lrtr_ipv6_addr lrtr_ipv6_get_bits(const struct lrtr_ipv6_addr *val, const uint8_t first_bit,
 					 const uint8_t quantity);
 
 /**
@@ -55,8 +54,7 @@ struct lrtr_ipv6_addr lrtr_ipv6_get_bits(const struct lrtr_ipv6_addr *val,
  * @result 0 on success
  * @result -1 on error
  */
-int lrtr_ipv6_addr_to_str(const struct lrtr_ipv6_addr *ip,
-			  char *str, const unsigned int len);
+int lrtr_ipv6_addr_to_str(const struct lrtr_ipv6_addr *ip, char *str, const unsigned int len);
 
 /**
  * @brief Converts the passed IPv6 address string in to lrtr_ipv6_addr struct.
@@ -78,7 +76,6 @@ int lrtr_ipv6_str_to_addr(const char *str, struct lrtr_ipv6_addr *ip);
  * @param[out] dest	IPv6 address (uint32_t array) in target byte order.
  * @param[in] tbo	Target byte order for address conversion.
  */
-void lrtr_ipv6_addr_convert_byte_order(const uint32_t *src, uint32_t *dest,
-				       const enum target_byte_order tbo);
+void lrtr_ipv6_addr_convert_byte_order(const uint32_t *src, uint32_t *dest, const enum target_byte_order tbo);
 /** @} */
 #endif /* LRTR_IPV6_H */

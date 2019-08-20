@@ -17,10 +17,10 @@
 #ifndef RTR_SPKI_H
 #define RTR_SPKI_H
 
+#include "rtrlib/rtr/rtr.h"
+
 #include <stdbool.h>
 #include <stdint.h>
-
-#include "rtrlib/rtr/rtr.h"
 
 #define SKI_SIZE 20
 #define SPKI_SIZE 91
@@ -48,8 +48,6 @@ struct spki_record {
  * @param record spki_record that was modified.
  * @param added True if the record was added, false if the record was removed.
  */
-typedef void (*spki_update_fp)(struct spki_table *spki_table,
-			       const struct spki_record record,
-			       const bool added);
+typedef void (*spki_update_fp)(struct spki_table *spki_table, const struct spki_record record, const bool added);
 #endif
-/* @} */
+/** @} */

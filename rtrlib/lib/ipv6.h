@@ -16,7 +16,7 @@
  * @brief Struct holding an IPv6 address in host byte order.
  */
 struct lrtr_ipv6_addr {
-	uint32_t addr[4];	/**< The IPv6 address. */
+	uint32_t addr[4]; /**< The IPv6 address. */
 };
 
 #endif /* LRTR_IPV6_PUBLIC_H */

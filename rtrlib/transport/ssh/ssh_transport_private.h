@@ -9,5 +9,5 @@
 
 #ifndef SSH_TRANSPORT_PRIVATE_H
 #define SSH_TRANSPORT_PRIVATE_H
-#include "rtrlib/transport/ssh/ssh_transport.h"
+#include "ssh_transport.h"
 #endif

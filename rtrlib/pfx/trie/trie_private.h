@@ -9,9 +9,10 @@
 
 #ifndef RTR_TRIE_PRIVATE
 #define RTR_TRIE_PRIVATE
-#include <inttypes.h>
 
 #include "rtrlib/lib/ip_private.h"
+
+#include <inttypes.h>
 
 /**
  * @brief trie_node
@@ -37,8 +38,7 @@ struct trie_node {
  * @param[in] new_node Node that will be inserted.
  * @param[in] level Level of the the root node in the tree.
  */
-void trie_insert(struct trie_node *root, struct trie_node *new_node,
-		 const unsigned int level);
+void trie_insert(struct trie_node *root, struct trie_node *new_node, const unsigned int level);
 
 /**
  * @brief Searches for a matching node matching the passed ip
@@ -54,9 +54,8 @@ void trie_insert(struct trie_node *root, struct trie_node *new_node,
  * @returns NULL if no node that matches the passed prefix and prefix length
  *	    could be found.
  */
-struct trie_node *trie_lookup(const struct trie_node *root_node,
-			      const struct lrtr_ip_addr *prefix,
-				const uint8_t mask_len, unsigned int *level);
+struct trie_node *trie_lookup(const struct trie_node *root_node, const struct lrtr_ip_addr *prefix,
+			      const uint8_t mask_len, unsigned int *level);
 
 /**
  * @brief Search for a node with the same prefix and prefix length.
@@ -72,10 +71,8 @@ struct trie_node *trie_lookup(const struct trie_node *root_node,
  *	   stopped (found==false).
  * @return NULL if root_node is NULL.
  */
-struct trie_node *trie_lookup_exact(struct trie_node *root_node,
-				    const struct lrtr_ip_addr *prefix,
-				    const uint8_t mask_len,
-				    unsigned int *level, bool *found);
+struct trie_node *trie_lookup_exact(struct trie_node *root_node, const struct lrtr_ip_addr *prefix,
+				    const uint8_t mask_len, unsigned int *level, bool *found);
 
 /**
  * @brief Removes the node with the passed IP prefix and mask_len from the tree.
@@ -86,9 +83,7 @@ struct trie_node *trie_lookup_exact(struct trie_node *root_node,
  * @returns Node that was removed from the tree. The caller has to free it.
  * @returns NULL If the Prefix could'nt be found in the tree.
  */
-struct trie_node *trie_remove(struct trie_node *root_node,
-			      const struct lrtr_ip_addr *prefix,
-			      const uint8_t mask_len,
+struct trie_node *trie_remove(struct trie_node *root_node, const struct lrtr_ip_addr *prefix, const uint8_t mask_len,
 			      const unsigned int level);
 
 /**
@@ -99,6 +94,5 @@ struct trie_node *trie_remove(struct trie_node *root_node,
  */
 bool trie_is_leaf(const struct trie_node *node);
 
-int trie_get_children(const struct trie_node *root_node,
-		      struct trie_node ***array, unsigned int *len);
+int trie_get_children(const struct trie_node *root_node, struct trie_node ***array, unsigned int *len);
 #endif

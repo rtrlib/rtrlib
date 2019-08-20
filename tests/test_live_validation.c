@@ -7,11 +7,12 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#include <stdlib.h>
+#include "rtrlib/rtrlib.h"
+
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "rtrlib/rtrlib.h"
 
 #define RPKI_CACHE_HOST "rpki-validator.realmv6.org"
 #define RPKI_CACHE_POST "8283"
@@ -28,23 +29,19 @@ struct test_validity_query {
  * (https://www.ripe.net/analyse/internet-measurements/
  *  routing-information-service-ris/current-ris-routing-beacons)
  */
-const struct test_validity_query queries[] = {
-	{"93.175.146.0",	24, 12654, BGP_PFXV_STATE_VALID},
-	{"2001:7fb:fd02::",	48, 12654, BGP_PFXV_STATE_VALID},
-	{"93.175.147.0",	24, 12654, BGP_PFXV_STATE_INVALID},
-	{"2001:7fb:fd03::",	48, 12654, BGP_PFXV_STATE_INVALID},
-	{"84.205.83.0",		24, 12654, BGP_PFXV_STATE_NOT_FOUND},
-	{"2001:7fb:ff03::",	48, 12654, BGP_PFXV_STATE_NOT_FOUND},
-	{NULL, 0, 0, 0}
-};
+const struct test_validity_query queries[] = {{"93.175.146.0", 24, 12654, BGP_PFXV_STATE_VALID},
+					      {"2001:7fb:fd02::", 48, 12654, BGP_PFXV_STATE_VALID},
+					      {"93.175.147.0", 24, 12654, BGP_PFXV_STATE_INVALID},
+					      {"2001:7fb:fd03::", 48, 12654, BGP_PFXV_STATE_INVALID},
+					      {"84.205.83.0", 24, 12654, BGP_PFXV_STATE_NOT_FOUND},
+					      {"2001:7fb:ff03::", 48, 12654, BGP_PFXV_STATE_NOT_FOUND},
+					      {NULL, 0, 0, 0}};
 
 const int connection_timeout = 20;
 enum rtr_mgr_status connection_status = -1;
 
-static void connection_status_callback(const struct rtr_mgr_group *group,
-				       enum rtr_mgr_status status,
-				       const struct rtr_socket *socket,
-				       void *data)
+static void connection_status_callback(const struct rtr_mgr_group *group, enum rtr_mgr_status status,
+				       const struct rtr_socket *socket, void *data)
 {
 	if (status == RTR_MGR_ERROR)
 		connection_status = status;
@@ -60,9 +57,7 @@ int main(void)
 {
 	/* create a TCP transport socket */
 	struct tr_socket tr_tcp;
-	struct tr_tcp_config tcp_config = { RPKI_CACHE_HOST,
-					    RPKI_CACHE_POST,
-					    NULL };
+	struct tr_tcp_config tcp_config = {RPKI_CACHE_HOST, RPKI_CACHE_POST, NULL};
 	struct rtr_socket rtr_tcp;
 	struct rtr_mgr_group groups[1];
 
@@ -78,8 +73,7 @@ int main(void)
 
 	struct rtr_mgr_config *conf;
 
-	if  (rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL,
-			  &connection_status_callback, NULL) < 0)
+	if (rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL, &connection_status_callback, NULL) < 0)
 		return EXIT_FAILURE;
 
 	rtr_mgr_start(conf);
@@ -105,8 +99,8 @@ int main(void)
 		unsigned int reason_len = 0;
 
 		lrtr_ip_str_to_addr(q.pfx, &pref);
-		pfx_table_validate_r(groups[0].sockets[0]->pfx_table, &reason,
-				     &reason_len, q.asn, &pref, q.len, &result);
+		pfx_table_validate_r(groups[0].sockets[0]->pfx_table, &reason, &reason_len, q.asn, &pref, q.len,
+				     &result);
 		if (result != q.val) {
 			printf("ERROR: prefix validation mismatch.\n");
 			return EXIT_FAILURE;

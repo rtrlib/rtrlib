@@ -9,26 +9,26 @@
 
 #ifndef RTR_PRIVATE_H
 #define RTR_PRIVATE_H
-#include <stdbool.h>
-#include <stdint.h>
-#include <pthread.h>
-
 #include "rtrlib/rtr/rtr.h"
 
-#define RTR_DBG(fmt, ...) lrtr_dbg("RTR Socket: " fmt, ## __VA_ARGS__)
+#include <pthread.h>
+#include <stdbool.h>
+#include <stdint.h>
+
+#define RTR_DBG(fmt, ...) lrtr_dbg("RTR Socket: " fmt, ##__VA_ARGS__)
 #define RTR_DBG1(a) lrtr_dbg("RTR Socket: " a)
 
-static const uint32_t RTR_EXPIRATION_MIN = 600;     // ten minutes
-static const uint32_t RTR_EXPIRATION_MAX = 172800;  // two days
-static const uint32_t RTR_EXPIRATION_DEFAULT = 7200;// two hours
+static const uint32_t RTR_EXPIRATION_MIN = 600; // ten minutes
+static const uint32_t RTR_EXPIRATION_MAX = 172800; // two days
+static const uint32_t RTR_EXPIRATION_DEFAULT = 7200; // two hours
 
-static const uint32_t RTR_REFRESH_MIN = 1;           // one second
-static const uint32_t RTR_REFRESH_MAX = 86400;      // one day
-static const uint32_t RTR_REFRESH_DEFAULT = 3600;   // one hour
+static const uint32_t RTR_REFRESH_MIN = 1; // one second
+static const uint32_t RTR_REFRESH_MAX = 86400; // one day
+static const uint32_t RTR_REFRESH_DEFAULT = 3600; // one hour
 
-static const uint32_t RTR_RETRY_MIN = 1;             // one second
-static const uint32_t RTR_RETRY_MAX = 7200;         // two hours
-static const uint32_t RTR_RETRY_DEFAULT = 600;      // ten minutes
+static const uint32_t RTR_RETRY_MIN = 1; // one second
+static const uint32_t RTR_RETRY_MAX = 7200; // two hours
+static const uint32_t RTR_RETRY_DEFAULT = 600; // ten minutes
 
 static const uint8_t RTR_PROTOCOL_VERSION_0 = 0;
 static const uint8_t RTR_PROTOCOL_VERSION_1 = 1;
@@ -36,18 +36,9 @@ static const uint8_t RTR_PROTOCOL_VERSION_1 = 1;
 static const uint8_t RTR_PROTOCOL_MIN_SUPPORTED_VERSION = 0;
 static const uint8_t RTR_PROTOCOL_MAX_SUPPORTED_VERSION = 1;
 
-enum rtr_interval_range {
-    RTR_BELOW_INTERVAL_RANGE = -1,
-    RTR_INSIDE_INTERVAL_RANGE = 0,
-    RTR_ABOVE_INTERVAL_RANGE = 1
-};
+enum rtr_interval_range { RTR_BELOW_INTERVAL_RANGE = -1, RTR_INSIDE_INTERVAL_RANGE = 0, RTR_ABOVE_INTERVAL_RANGE = 1 };
 
-enum rtr_interval_type {
-    RTR_INTERVAL_TYPE_EXPIRATION,
-    RTR_INTERVAL_TYPE_REFRESH,
-    RTR_INTERVAL_TYPE_RETRY
-};
-
+enum rtr_interval_type { RTR_INTERVAL_TYPE_EXPIRATION, RTR_INTERVAL_TYPE_REFRESH, RTR_INTERVAL_TYPE_RETRY };
 
 /**
  * @brief Initializes a rtr_socket.
@@ -74,10 +65,9 @@ enum rtr_interval_type {
  * @return RTR_SUCCESS On success.
  */
 int rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr_socket, struct pfx_table *pfx_table,
-             struct spki_table *spki_table, const unsigned int refresh_interval,
-             const unsigned int expire_interval, const unsigned int retry_interval,
-             enum rtr_interval_mode iv_mode, rtr_connection_state_fp fp, void *fp_data_config,
-	     void *fp_data_group);
+	     struct spki_table *spki_table, const unsigned int refresh_interval, const unsigned int expire_interval,
+	     const unsigned int retry_interval, enum rtr_interval_mode iv_mode, rtr_connection_state_fp fp,
+	     void *fp_data_config, void *fp_data_group);
 
 /**
  * @brief Starts the RTR protocol state machine in a pthread. Connection to the rtr_server will be established and the

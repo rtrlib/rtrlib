@@ -18,6 +18,6 @@
 
 #ifndef RTR_TCP_TRANSPORT_PRIVATE_H
 #define RTR_TCP_TRANSPORT_PRIVATE_H
-#include "rtrlib/transport/tcp/tcp_transport.h"
+#include "tcp_transport.h"
 #endif
-/* @} */
+/** @} */

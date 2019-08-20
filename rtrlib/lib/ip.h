@@ -10,10 +10,10 @@
 #ifndef LRTR_IP_PUBLIC_H
 #define LRTR_IP_PUBLIC_H
 
-#include <stdbool.h>
-
 #include "rtrlib/lib/ipv4.h"
 #include "rtrlib/lib/ipv6.h"
+
+#include <stdbool.h>
 /**
  * @defgroup util_h Utility functions
  * @{
@@ -23,11 +23,11 @@
  * @brief Version of the IP protocol.
  */
 enum lrtr_ip_version {
-    /** IPV4 */
-    LRTR_IPV4,
+	/** IPV4 */
+	LRTR_IPV4,
 
-    /** LRTR_IPV6 */
-    LRTR_IPV6
+	/** LRTR_IPV6 */
+	LRTR_IPV6
 };
 
 /**
@@ -36,11 +36,11 @@ enum lrtr_ip_version {
  * @param u Union holding a lrtr_ipv4_addr or lrtr_ipv6_addr.
  */
 struct lrtr_ip_addr {
-    enum lrtr_ip_version ver;
-    union {
-        struct lrtr_ipv4_addr addr4;
-        struct lrtr_ipv6_addr addr6;
-    } u;
+	enum lrtr_ip_version ver;
+	union {
+		struct lrtr_ipv4_addr addr4;
+		struct lrtr_ipv6_addr addr6;
+	} u;
 };
 
 /**
@@ -51,7 +51,7 @@ struct lrtr_ip_addr {
  * @param[in] len Length of the str array.
  * @result 0 On success.
  * @result -1 On error.
-*/
+ */
 int lrtr_ip_addr_to_str(const struct lrtr_ip_addr *ip, char *str, const unsigned int len);
 
 /**
@@ -60,7 +60,7 @@ int lrtr_ip_addr_to_str(const struct lrtr_ip_addr *ip, char *str, const unsigned
  * @param[out] ip Pointer to a lrtr_ip_addr struct.
  * @result 0 On success.
  * @result -1 On error.
-*/
+ */
 int lrtr_ip_str_to_addr(const char *str, struct lrtr_ip_addr *ip);
 
 /**
@@ -79,8 +79,8 @@ bool lrtr_ip_addr_equal(const struct lrtr_ip_addr a, const struct lrtr_ip_addr b
  * @param[in] addr2 IP-address as string
  * @return true If a == b
  * @return false If a != b
-*/
+ */
 bool lrtr_ip_str_cmp(const struct lrtr_ip_addr *addr1, const char *addr2);
 
 #endif
-/* @} */
+/** @} */
