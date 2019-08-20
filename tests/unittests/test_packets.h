@@ -7,6 +7,8 @@
  * Website; http://rtrlib.realmv6.org/
  */
 
+#include "rtrlib/rtr/rtr.h"
+
 void __real_rtr_change_socket_state(struct rtr_socket *rtr_socket,
 				    const enum rtr_socket_state new_state);
 int __wrap_tr_send_all(const struct tr_socket *socket,
