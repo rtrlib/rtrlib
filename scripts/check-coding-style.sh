@@ -3,10 +3,7 @@
 # ---HELP---
 # to check kernel coding style of file(s):
 # a) either pass a filename as cmdline parameter
-# b) create file 'scripts/check-coding-files.txt' with filenames
-# c) to find and check all .c and .h files, run in repo root:
-#  	find rtrlib tests tools \( -name "*.h" -o -name "*.c" \) \
-#	-not -name "*tommy*" -exec ./scripts/check-coding-style.sh {} \;
+# b) run without cmdline parameters and check all non third-party code
 # ---HELP---
 
 READLINK=$(which greadlink)
@@ -15,14 +12,13 @@ READLINK=$(which greadlink)
 }
 SCRIPT_DIR=$(dirname "$($READLINK -f "$0")")
 SCRIPT_FILE="$SCRIPT_DIR/check-coding-files.txt"
+SOURCE_DIR_NAMES="rtrlib tools tests"
 EXIT_CODE=0
 if [ -z "$1" ] ; then
-	if [ -f "$SCRIPT_FILE" ]; then
-		CHECKSOURCE=$(cat "$SCRIPT_FILE")
-	else
-		echo "USAGE: $0 SOURCEFILE"
-		exit 1
-	fi
+    for dir in ${SOURCE_DIR_NAMES}; do
+        normalized_dir=$($READLINK -f "${SCRIPT_DIR}/../${dir}")
+        CHECKSOURCE+=" $(find ${normalized_dir} -name '*.c' -or -name '*.h')"
+    done
 else
 	CHECKSOURCE=$($READLINK -f "$1")
 fi
