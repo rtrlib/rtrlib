@@ -1,0 +1,47 @@
+---
+AlignAfterOpenBracket: true
+AlignEscapedNewlines: Left
+AlignTrailingComments: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortFunctionsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakBeforeMultilineStrings: false
+BasedOnStyle: LLVM
+BreakBeforeBinaryOperators: None
+BreakBeforeBraces: Linux
+BreakBeforeTernaryOperators: false
+BreakStringLiterals: false
+ColumnLimit: 120
+CommentPragmas:  ^ cppcheck-supress
+ContinuationIndentWidth: 8
+IncludeBlocks:   Regroup
+IncludeCategories:
+  - Regex:           '"rtrlib/.+"'
+    Priority:        1
+  - Regex:           '"third-party/.+"'
+    Priority:        2
+  - Regex:           '.+_private.+'
+    Priority:        0
+  - Regex:           '"[[:alnum:]_]+"'
+    Priority:        0
+  - Regex:           '".+"'
+    Priority:        0
+  - Regex:           '<.+>'
+    Priority:        3
+IncludeIsMainRegex: '(private)?$'
+IndentCaseLabels: false
+IndentWidth: 8
+KeepEmptyLinesAtTheStartOfBlocks: false
+Language: Cpp
+MaxEmptyLinesToKeep: 1
+PenaltyBreakAssignment: 10
+PenaltyBreakBeforeFirstCallParameter: 30
+PenaltyBreakComment: 10
+PenaltyBreakFirstLessLess: 0
+PenaltyBreakString: 10
+PenaltyExcessCharacter: 100
+ReflowComments:  false
+SortIncludes:    true
+SpaceAfterCStyleCast: false
+UseTab: Always
