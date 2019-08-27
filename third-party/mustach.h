@@ -7,16 +7,9 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
- #include <stddef.h>
+/* fix missing include in the mustach header by including it first */
 
-
-struct pfx_output_template {
-	const char *name;
-	const char *template;
-};
-
-
-const struct pfx_output_template templates[] = {
-${TEMPLATES}
-{NULL, NULL}
-};
+// clang-format off
+#include <stdio.h>
+#include "third-party/mustach/mustach.h"
+// clang-format on

@@ -11,7 +11,7 @@
 
 #include "rtrlib/rtrlib.h"
 
-#include "third-party/mustach/mustach.h"
+#include "third-party/mustach.h"
 #include "third-party/tommyds/tommyarray.h"
 #include "third-party/tommyds/tommyhashlin.h"
 
