@@ -10,10 +10,20 @@
 #include "transport_private.h"
 
 #include "rtrlib/lib/utils_private.h"
+#include "rtrlib/lib/lrtr_vrf_private.h"
+#include "rtrlib/transport/tcp/tcp_transport.h"
 
 inline int tr_open(struct tr_socket *socket)
 {
-	return socket->open_fp(socket->socket);
+	int ret;
+	const char *vrfname = tr_vrfname(socket);
+
+	if (lrtr_vrf_api_usable(vrfname) < 0)
+		return TR_ERROR;
+	lrtr_vrf_switch_to(vrfname);
+	ret = socket->open_fp(socket->socket);
+	lrtr_vrf_switchback();
+	return ret;
 }
 
 inline void tr_close(struct tr_socket *socket)
@@ -84,4 +94,9 @@ int tr_recv_all(const struct tr_socket *socket, const void *pdu, const size_t le
 		total_recv += rtval;
 	}
 	return total_recv;
+}
+
+inline const char *tr_vrfname(struct tr_socket *sock)
+{
+	return sock->vrfname_fp(sock->socket);
 }

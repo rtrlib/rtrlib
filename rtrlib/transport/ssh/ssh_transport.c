@@ -12,6 +12,7 @@
 #include "rtrlib/lib/alloc_utils_private.h"
 #include "rtrlib/lib/log_private.h"
 #include "rtrlib/lib/utils_private.h"
+#include "rtrlib/lib/lrtr_vrf_private.h"
 #include "rtrlib/rtrlib_export_private.h"
 #include "rtrlib/transport/transport_private.h"
 
@@ -22,6 +23,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <errno.h>
 
 #define SSH_DBG(fmt, sock, ...)                                                                                     \
 	do {                                                                                                        \
@@ -45,11 +49,16 @@ static int tr_ssh_recv(const void *tr_ssh_sock, void *buf, const size_t buf_len,
 static int tr_ssh_send(const void *tr_ssh_sock, const void *pdu, const size_t len, const time_t timeout);
 static int tr_ssh_recv_async(const struct tr_ssh_socket *tr_ssh_sock, void *buf, const size_t buf_len);
 static const char *tr_ssh_ident(void *tr_ssh_sock);
+static const char *tr_ssh_vrfname(void *tr_ssh_sock);
 
-int tr_ssh_open(void *socket)
+int tr_ssh_open(void *api_socket)
 {
-	struct tr_ssh_socket *ssh_socket = socket;
+	struct tr_ssh_socket *ssh_socket = api_socket;
 	const struct tr_ssh_config *config = &ssh_socket->config;
+	int local_socket;
+	struct addrinfo hints;
+	struct addrinfo *res;
+        char port_str[10];
 
 	assert(!ssh_socket->channel);
 	assert(!ssh_socket->session);
@@ -74,6 +83,31 @@ int tr_ssh_open(void *socket)
 
 	if (config->client_privkey_path)
 		ssh_options_set(ssh_socket->session, SSH_OPTIONS_IDENTITY, config->client_privkey_path);
+
+	bzero(&hints, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_ADDRCONFIG;
+        snprintf(port_str, sizeof(port_str), "%u", ssh_socket->config.port);
+	if (getaddrinfo(ssh_socket->config.host, port_str, &hints, &res) != 0) {
+		SSH_DBG("getaddrinfo error, %s", ssh_socket, gai_strerror(errno));
+		return TR_ERROR;
+	}
+
+	local_socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	if (local_socket == -1) {
+		SSH_DBG("Socket creation failed, %s", ssh_socket, strerror(errno));
+		return TR_ERROR;
+	}
+	ssh_options_set(ssh_socket->session, SSH_OPTIONS_FD, &local_socket);
+
+	if (lrtr_vrf_bind(local_socket, tr_ssh_vrfname(ssh_socket)) == -1) {
+		SSH_DBG("Socket bind failed with VRF %s, %s", ssh_socket,
+			!tr_ssh_vrfname(ssh_socket) ? "<NONE>" :
+			tr_ssh_vrfname(ssh_socket),
+			strerror(errno));
+		goto error;
+	}
 
 	if (ssh_connect(ssh_socket->session) == SSH_ERROR) {
 		SSH_DBG1("tr_ssh_init: opening SSH connection failed", ssh_socket);
@@ -112,6 +146,7 @@ int tr_ssh_open(void *socket)
 	return TR_SUCCESS;
 
 error:
+	close(local_socket);
 	tr_ssh_close(ssh_socket);
 	return TR_ERROR;
 }
@@ -144,6 +179,8 @@ void tr_ssh_free(struct tr_socket *tr_sock)
 	SSH_DBG1("Freeing socket", tr_ssh_sock);
 
 	lrtr_free(tr_ssh_sock->config.host);
+	if (tr_ssh_sock->config.vrfname)
+		lrtr_free(tr_ssh_sock->config.vrfname);
 	lrtr_free(tr_ssh_sock->config.bindaddr);
 	lrtr_free(tr_ssh_sock->config.username);
 	lrtr_free(tr_ssh_sock->config.client_privkey_path);
@@ -215,6 +252,15 @@ const char *tr_ssh_ident(void *tr_ssh_sock)
 	return sock->ident;
 }
 
+static const char *tr_ssh_vrfname(void *socket)
+{
+	struct tr_ssh_socket *sock = socket;
+
+	assert(sock);
+
+	return sock->config.vrfname;
+}
+
 RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_socket *socket)
 {
 	socket->close_fp = &tr_ssh_close;
@@ -223,6 +269,7 @@ RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_sock
 	socket->recv_fp = &tr_ssh_recv;
 	socket->send_fp = &tr_ssh_send;
 	socket->ident_fp = &tr_ssh_ident;
+	socket->vrfname_fp = &tr_ssh_vrfname;
 
 	socket->socket = lrtr_malloc(sizeof(struct tr_ssh_socket));
 	struct tr_ssh_socket *ssh_socket = socket->socket;
@@ -230,6 +277,8 @@ RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_sock
 	ssh_socket->channel = NULL;
 	ssh_socket->session = NULL;
 	ssh_socket->config.host = lrtr_strdup(config->host);
+	if (config->vrfname)
+		ssh_socket->config.vrfname = lrtr_strdup(config->vrfname);
 	ssh_socket->config.port = config->port;
 	ssh_socket->config.username = lrtr_strdup(config->username);
 

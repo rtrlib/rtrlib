@@ -57,7 +57,7 @@ int main(void)
 {
 	/* create a TCP transport socket */
 	struct tr_socket tr_tcp;
-	struct tr_tcp_config tcp_config = {RPKI_CACHE_HOST, RPKI_CACHE_POST, NULL};
+	struct tr_tcp_config tcp_config = {RPKI_CACHE_HOST, RPKI_CACHE_POST, NULL, NULL};
 	struct rtr_socket rtr_tcp;
 	struct rtr_mgr_group groups[1];
 

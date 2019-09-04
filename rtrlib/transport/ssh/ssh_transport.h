@@ -46,6 +46,7 @@ struct tr_ssh_config {
 	char *username;
 	char *server_hostkey_path;
 	char *client_privkey_path;
+	char *vrfname;
 };
 
 /**

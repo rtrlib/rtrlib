@@ -44,7 +44,7 @@ endif(NOT APPLE AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "OpenBSD")
 include(GNUInstallDirs) # for man page install path
 
 set(RTRLIB_SRC rtrlib/rtr_mgr.c rtrlib/lib/utils.c rtrlib/lib/alloc_utils.c rtrlib/lib/convert_byte_order.c
-    rtrlib/lib/ip.c rtrlib/lib/ipv4.c rtrlib/lib/ipv6.c rtrlib/lib/log.c
+    rtrlib/lib/lrtr_vrf.c rtrlib/lib/ip.c rtrlib/lib/ipv4.c rtrlib/lib/ipv6.c rtrlib/lib/log.c
     rtrlib/pfx/trie/trie.c rtrlib/pfx/trie/trie-pfx.c rtrlib/transport/transport.c
     rtrlib/transport/tcp/tcp_transport.c rtrlib/rtr/rtr.c rtrlib/rtr/packets.c
     rtrlib/spki/hashtable/ht-spkitable.c ${tommyds})
@@ -66,6 +66,16 @@ if (NOT DEFINED RTRLIB_TRANSPORT_SSH OR RTRLIB_TRANSPORT_SSH)
         message(WARNING "libssh >= 0.5.0 not found")
     endif(LIBSSH_FOUND)
 endif(NOT DEFINED RTRLIB_TRANSPORT_SSH OR RTRLIB_TRANSPORT_SSH)
+
+if(CAP_FOUND)
+  set(RTRLIB_HAVE_CAPABILITIES)
+  include_directories(${CAP_INCLUDE_DIRS})
+endif(CAP_FOUND)
+
+include (CheckFunctionExists)
+set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+set(CMAKE_REQUIRED_INCLUDES sched.h)
+check_function_exists(setns RTRLIB_HAVE_NETNS)
 
 #doxygen target
 find_package(Doxygen)

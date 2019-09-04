@@ -15,6 +15,8 @@ extern "C" {
 #define RTRLIB_H
 
 #cmakedefine RTRLIB_HAVE_LIBSSH
+#cmakedefine RTRLIB_HAVE_NETNS
+#cmakedefine RTRLIB_HAVE_CAPABILITIES
 #define RTRLIB_VERSION_MAJOR @RTRLIB_VERSION_MAJOR@
 #define RTRLIB_VERSION_MINOR @RTRLIB_VERSION_MINOR@
 #define RTRLIB_VERSION_PATCH @RTRLIB_VERSION_PATCH@
@@ -23,6 +25,7 @@ extern "C" {
 #include "lib/ip.h"
 #include "lib/ipv4.h"
 #include "lib/ipv6.h"
+#include "lib/lrtr_vrf.h"
 #include "pfx/pfx.h"
 #include "rtr/rtr.h"
 #include "rtr_mgr.h"

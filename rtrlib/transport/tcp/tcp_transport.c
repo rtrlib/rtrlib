@@ -11,6 +11,7 @@
 
 #include "rtrlib/lib/alloc_utils_private.h"
 #include "rtrlib/lib/log_private.h"
+#include "rtrlib/lib/lrtr_vrf_private.h"
 #include "rtrlib/rtrlib_export_private.h"
 #include "rtrlib/transport/transport_private.h"
 
@@ -43,6 +44,7 @@ static void tr_tcp_free(struct tr_socket *tr_sock);
 static int tr_tcp_recv(const void *tr_tcp_sock, void *pdu, const size_t len, const time_t timeout);
 static int tr_tcp_send(const void *tr_tcp_sock, const void *pdu, const size_t len, const time_t timeout);
 static const char *tr_tcp_ident(void *socket);
+static const char *tr_tcp_vrfname(void *socket);
 
 int tr_tcp_open(void *tr_socket)
 {
@@ -67,6 +69,14 @@ int tr_tcp_open(void *tr_socket)
 	tcp_socket->socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 	if (tcp_socket->socket == -1) {
 		TCP_DBG("Socket creation failed, %s", tcp_socket, strerror(errno));
+		goto end;
+	}
+
+	if (lrtr_vrf_bind(tcp_socket->socket, tr_tcp_vrfname(tcp_socket)) == -1) {
+		TCP_DBG("Socket bind failed with VRF %s, %s", tcp_socket,
+			!tr_tcp_vrfname(tcp_socket) ? "<NONE>" :
+			tr_tcp_vrfname(tcp_socket),
+			strerror(errno));
 		goto end;
 	}
 
@@ -119,6 +129,8 @@ void tr_tcp_free(struct tr_socket *tr_sock)
 	TCP_DBG1("Freeing socket", tcp_sock);
 
 	lrtr_free(tcp_sock->config.host);
+	if (tcp_sock->config.vrfname)
+		lrtr_free(tcp_sock->config.vrfname);    
 	lrtr_free(tcp_sock->config.port);
 	lrtr_free(tcp_sock->config.bindaddr);
 
@@ -207,6 +219,15 @@ const char *tr_tcp_ident(void *socket)
 	return sock->ident;
 }
 
+static const char *tr_tcp_vrfname(void *socket)
+{
+	struct tr_tcp_socket *sock = socket;
+
+	assert(sock);
+
+	return sock->config.vrfname;
+}
+
 RTRLIB_EXPORT int tr_tcp_init(const struct tr_tcp_config *config, struct tr_socket *socket)
 {
 	socket->close_fp = &tr_tcp_close;
@@ -215,12 +236,17 @@ RTRLIB_EXPORT int tr_tcp_init(const struct tr_tcp_config *config, struct tr_sock
 	socket->recv_fp = &tr_tcp_recv;
 	socket->send_fp = &tr_tcp_send;
 	socket->ident_fp = &tr_tcp_ident;
+	socket->vrfname_fp = &tr_tcp_vrfname;
 
 	socket->socket = lrtr_malloc(sizeof(struct tr_tcp_socket));
 	struct tr_tcp_socket *tcp_socket = socket->socket;
 
 	tcp_socket->socket = -1;
 	tcp_socket->config.host = lrtr_strdup(config->host);
+	if (config->vrfname)
+		tcp_socket->config.vrfname = lrtr_strdup(config->vrfname);
+	else
+		tcp_socket->config.vrfname = NULL;
 	tcp_socket->config.port = lrtr_strdup(config->port);
 	if (config->bindaddr)
 		tcp_socket->config.bindaddr = lrtr_strdup(config->bindaddr);

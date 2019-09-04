@@ -85,6 +85,12 @@ typedef int (*tr_send_fp)(const void *socket, const void *pdu, const size_t len,
 typedef const char *(*tr_ident_fp)(void *socket);
 
 /**
+ * @brief A function pointer to a technology specific info function.
+ * \sa tr_vrfname
+ */
+typedef const char *(*tr_vrfname_fp)(void *socket);
+
+/**
  * @brief A transport socket datastructure.
  *
  * @param socket A pointer to a technology specific socket.
@@ -102,6 +108,7 @@ struct tr_socket {
 	tr_send_fp send_fp;
 	tr_recv_fp recv_fp;
 	tr_ident_fp ident_fp;
+	tr_vrfname_fp vrfname_fp;
 };
 
 #endif

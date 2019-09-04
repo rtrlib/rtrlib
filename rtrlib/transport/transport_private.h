@@ -103,5 +103,13 @@ int tr_recv_all(const struct tr_socket *socket, const void *buf, const size_t le
  */
 const char *tr_ident(struct tr_socket *socket);
 
+/**
+ * Returns the vrfname the socket has been configured for
+ * @param[in] socket
+ * return Pointer to a \0 terminated String
+ * return NULL on error
+ */
+const char *tr_vrfname(struct tr_socket *socket);
+
 #endif
 /** @} */
