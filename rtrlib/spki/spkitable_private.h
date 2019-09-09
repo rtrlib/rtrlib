@@ -29,7 +29,7 @@ enum spki_rtvals {
 	/** Operation was successful. */
 	SPKI_SUCCESS = 0,
 
-	/** Error occured. */
+	/** Error occurred. */
 	SPKI_ERROR = -1,
 
 	/** The supplied spki_record already exists in the spki_table. */
@@ -47,13 +47,13 @@ enum spki_rtvals {
 void spki_table_init(struct spki_table *spki_table, spki_update_fp update_fp);
 
 /**
- * @brief Frees the memory associcated with the spki_table.
+ * @brief Frees the memory associated with the spki_table.
  * @param[in] spki_table spki_table that will be initialized.
  */
 void spki_table_free(struct spki_table *spki_table);
 
 /**
- * @brief Frees the memory associcated with the spki_table without calling the update callback.
+ * @brief Frees the memory associated with the spki_table without calling the update callback.
  * @param[in] spki_table spki_table that will be initialized.
  */
 void spki_table_free_without_notify(struct spki_table *spki_table);

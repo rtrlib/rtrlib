@@ -25,7 +25,7 @@ struct key_entry {
 };
 
 /**
- * @brief Compares two key_entrys by comparing ASN, SKI and SPKI
+ * @brief Compares two key_entries by comparing ASN, SKI and SPKI
  * @param[in] arg Pointer to first key_entry
  * @param[in] obj Pointer to second key_entry
  * @return 1 if not equal
@@ -151,7 +151,7 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski
 
 	/**
 	 * A tommy node contains its storing key_entry (->data) as well as
-	 * next and prev pointer to accomodate multiple results.
+	 * next and prev pointer to accommodate multiple results.
 	 * The bucket is guaranteed to contain ALL the elements
 	 * with the specified hash, but it can contain also others.
 	 */

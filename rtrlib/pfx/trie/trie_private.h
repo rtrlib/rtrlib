@@ -81,7 +81,7 @@ struct trie_node *trie_lookup_exact(struct trie_node *root_node, const struct lr
  * @param[in] mask_len Length of the network mask of the prefix.
  * @param[in] level Level of the root node in the tree.
  * @returns Node that was removed from the tree. The caller has to free it.
- * @returns NULL If the Prefix could'nt be found in the tree.
+ * @returns NULL If the Prefix couldn't be found in the tree.
  */
 struct trie_node *trie_remove(struct trie_node *root_node, const struct lrtr_ip_addr *prefix, const uint8_t mask_len,
 			      const unsigned int level);

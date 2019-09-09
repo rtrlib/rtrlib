@@ -92,8 +92,8 @@ typedef void (*rtr_connection_state_fp)(const struct rtr_socket *rtr_socket, con
  * @param tr_socket Pointer to an initialized tr_socket that will be used to communicate with the RTR server.
  * @param refresh_interval Time period in seconds. Tells the router how long to wait before next attempting
  * to poll the cache, using a Serial Query or Reset Query PDU.
- * @param last_update Timestamp of the last validation record update. Is 0 if the pfx_table doesn't stores any
- * validation reords from this rtr_socket.
+ * @param last_update Timestamp of the last validation record update. Is 0 if the pfx_table doesn't store any
+ * validation records from this rtr_socket.
  * @param expire_interval Time period in seconds. Received records are deleted if the client was unable to refresh data
  * for this time period.  If 0 is specified, the expire_interval is twice the refresh_interval.
  * @param retry_interval Time period in seconds between a failed query and the next attempt.

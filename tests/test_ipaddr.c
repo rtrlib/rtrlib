@@ -200,7 +200,7 @@ static void test_v6(void)
 	lrtr_ip_addr_to_str(&addr, buf, sizeof(buf));
 	assert(strcmp("::10.58.64.34", buf) == 0);
 
-	/* test check for mallformed embedded ipv4 */
+	/* test check for malformed embedded ipv4 */
 	assert(lrtr_ip_str_to_addr("::ffff:192.0,2.128", &addr) == -1);
 
 	/* buffer size check*/
@@ -223,7 +223,7 @@ static void test_v6(void)
 }
 
 /*
- * @brief test ip comparsions
+ * @brief test ip comparisons
  */
 static void test_cmp(void)
 {

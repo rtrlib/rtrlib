@@ -32,7 +32,7 @@ enum tr_rtvals {
 	/** @brief Operation was successful. */
 	TR_SUCCESS = 0,
 
-	/** Error occured. */
+	/** Error occurred. */
 	TR_ERROR = -1,
 
 	/** No data is available on the socket. */

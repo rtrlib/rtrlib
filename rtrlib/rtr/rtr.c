@@ -130,7 +130,7 @@ void *rtr_fsm_start(struct rtr_socket *rtr_socket)
 			if (tr_open(rtr_socket->tr_socket) == TR_ERROR) {
 				rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
 			} else if (rtr_socket->request_session_id) {
-				// change to state RESET, if socket dont has a session_id
+				// change to state RESET, if socket doesn't have a session_id
 				rtr_change_socket_state(rtr_socket, RTR_RESET);
 			} else {
 				// if we already have a session_id, send a serial query and start to sync
