@@ -72,7 +72,7 @@ int tr_recv(const struct tr_socket *socket, void *buf, const size_t len, const t
 int tr_send(const struct tr_socket *socket, const void *pdu, const size_t len, const time_t timeout);
 
 /**
- * Repeatly calls tr_send(..) till len Bytes were sent, the timeout expired or an error occured.
+ * Repeatedly calls tr_send(..) till len Bytes were sent, the timeout expired or an error occurred.
  * @param[in] socket Socket that will be used.
  * @param[out] pdu Data that will be be sent.
  * @param[in] len Size of pdu in Bytes.
@@ -84,7 +84,7 @@ int tr_send(const struct tr_socket *socket, const void *pdu, const size_t len, c
 int tr_send_all(const struct tr_socket *socket, const void *pdu, const size_t len, const time_t timeout);
 
 /**
- * Repeatly calls tr_recv(..) till len Bytes were received, the timeout expired or an error occured.
+ * Repeatedly calls tr_recv(..) till len Bytes were received, the timeout expired or an error occurred.
  * @param[in] socket Socket that will be used.
  * @param[out] buf Received data, must be an allocated memory area of >=len bytes.
  * @param[in] len Size of pdu in Bytes.

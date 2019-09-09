@@ -1197,7 +1197,7 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 			// add all IPv6 prefix pdu to the pfx_table
 			for (unsigned int i = 0; i < ipv6_pdus_nindex; i++) {
 				if (rtr_update_pfx_table(rtr_socket, pfx_update_table, &(ipv6_pdus[i])) == PFX_ERROR) {
-					// undo all record updates if error occured
+					// undo all record updates if error occurred
 					RTR_DBG("Error during data synchronisation, recovering Serial Nr. %u state",
 						rtr_socket->serial_number);
 					for (unsigned int j = 0; j < ipv4_pdus_nindex && retval == PFX_SUCCESS; j++)

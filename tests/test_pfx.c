@@ -37,9 +37,9 @@ static void validate(struct pfx_table *pfxt, uint32_t asn, const char *prefix, u
 
 /**
  * @brief remove_src_test
- * This test verfies pfx_table_src_remove function. It first adds certain
+ * This test verifies pfx_table_src_remove function. It first adds certain
  * records with different sockets into a pfx_table. Afterwards entries with
- * socket tr1 are removed, and the remaining records are verfified.
+ * socket tr1 are removed, and the remaining records are verified.
  */
 static void remove_src_test(void)
 {
@@ -50,7 +50,7 @@ static void remove_src_test(void)
 	pfx_table_init(&pfxt, NULL);
 	pfx.min_len = 32;
 	pfx.max_len = 32;
-	/* TEST2: add and verify differnt prefixes -------------------------- */
+	/* TEST2: add and verify different prefixes -------------------------- */
 	pfx.asn = 80;
 	pfx.socket = &tr1;
 	lrtr_ip_str_to_addr("10.11.10.0", &pfx.prefix);

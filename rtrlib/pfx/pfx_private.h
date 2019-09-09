@@ -25,7 +25,7 @@
 #include <stdint.h>
 
 /**
- * @brief Frees all memory associcated with the pfx_table without calling the update callback.
+ * @brief Frees all memory associated with the pfx_table without calling the update callback.
  * @param[in] pfx_table pfx_table that will be freed.
  */
 void pfx_table_free_without_notify(struct pfx_table *pfx_table);

@@ -30,7 +30,7 @@ enum pfx_rtvals {
 	/** Operation was successful. */
 	PFX_SUCCESS = 0,
 
-	/** Error occured. */
+	/** Error occurred. */
 	PFX_ERROR = -1,
 
 	/** The supplied pfx_record already exists in the pfx_table. */
@@ -67,12 +67,12 @@ typedef void (*pfx_for_each_fp)(const struct pfx_record *pfx_record, void *data)
 /**
  * @brief Initializes the pfx_table struct.
  * @param[in] pfx_table pfx_table that will be initialized.
- * @param[in] update_fp Afunction pointers that will be called if a record was added or removed.
+ * @param[in] update_fp A function pointer that will be called if a record was added or removed.
  */
 void pfx_table_init(struct pfx_table *pfx_table, pfx_update_fp update_fp);
 
 /**
- * @brief Frees all memory associcated with the pfx_table.
+ * @brief Frees all memory associated with the pfx_table.
  * @param[in] pfx_table pfx_table that will be freed.
  */
 void pfx_table_free(struct pfx_table *pfx_table);
@@ -93,7 +93,7 @@ int pfx_table_add(struct pfx_table *pfx_table, const struct pfx_record *pfx_reco
  * @param[in] pfx_record Record that will be removed.
  * @return PFX_SUCCESS On success.
  * @return PFX_ERROR On error.
- * @return PFX_RECORD_NOT_FOUND If pfx_records could'nt be found.
+ * @return PFX_RECORD_NOT_FOUND If pfx_records couldn't be found.
  */
 int pfx_table_remove(struct pfx_table *pfx_table, const struct pfx_record *pfx_record);
 
@@ -110,7 +110,7 @@ int pfx_table_src_remove(struct pfx_table *pfx_table, const struct rtr_socket *s
  * @brief Validates the origin of a BGP-Route.
  * @param[in] pfx_table pfx_table to use.
  * @param[in] asn Autonomous system number of the Origin-AS of the route.
- * @param[in] prefix Announcend network Prefix.
+ * @param[in] prefix Announced network Prefix.
  * @param[in] mask_len Length of the network mask of the announced prefix.
  * @param[out] result Result of the validation.
  * @return PFX_SUCCESS On success.
@@ -126,7 +126,7 @@ int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const st
  * The memory area will be overwritten. Reason must point to NULL or an allocated memory area.
  * @param[out] reason_len Size of the array reason.
  * @param[in] asn Autonomous system number of the Origin-AS of the route.
- * @param[in] prefix Announcend network Prefix
+ * @param[in] prefix Announced network Prefix
  * @param[in] mask_len Length of the network mask of the announced prefix
  * @param[out] result Result of the validation.
  * @return PFX_SUCCESS On success.
