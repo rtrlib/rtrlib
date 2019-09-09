@@ -46,6 +46,7 @@ int tr_send_all(const struct tr_socket *socket, const void *pdu, const size_t le
 {
 	unsigned int total_send = 0;
 	time_t end_time;
+
 	lrtr_get_monotonic_time(&end_time);
 	end_time = end_time + timeout;
 
@@ -67,6 +68,7 @@ int tr_recv_all(const struct tr_socket *socket, const void *pdu, const size_t le
 {
 	size_t total_recv = 0;
 	time_t end_time;
+
 	lrtr_get_monotonic_time(&end_time);
 	end_time += timeout;
 

@@ -41,7 +41,7 @@ int rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_tab
 	     const unsigned int retry_interval, enum rtr_interval_mode iv_mode, rtr_connection_state_fp fp,
 	     void *fp_param_config, void *fp_param_group)
 {
-	if (tr != NULL)
+	if (tr)
 		rtr_socket->tr_socket = tr;
 
 	// Check if one of the intervals is not in range of the predefined values.
@@ -78,7 +78,8 @@ int rtr_start(struct rtr_socket *rtr_socket)
 	if (rtr_socket->thread_id)
 		return RTR_ERROR;
 
-	int rtval = pthread_create(&(rtr_socket->thread_id), NULL, (void *(*)(void *)) & rtr_fsm_start, rtr_socket);
+	int rtval = pthread_create(&(rtr_socket->thread_id), NULL, (void *(*)(void *)) &rtr_fsm_start, rtr_socket);
+
 	if (rtval == 0)
 		return RTR_SUCCESS;
 	return RTR_ERROR;
@@ -90,6 +91,7 @@ void rtr_purge_outdated_records(struct rtr_socket *rtr_socket)
 		return;
 	time_t cur_time;
 	int rtval = lrtr_get_monotonic_time(&cur_time);
+
 	if (rtval == -1 || (rtr_socket->last_update + rtr_socket->expire_interval) < cur_time) {
 		if (rtval == -1)
 			RTR_DBG1("get_monotic_time(..) failed");
@@ -112,6 +114,7 @@ void *rtr_fsm_start(struct rtr_socket *rtr_socket)
 
 	// We don't care about the old state, but POSIX demands a non null value for setcancelstate
 	int oldcancelstate;
+
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
 
 	rtr_socket->state = RTR_CONNECTING;
@@ -120,8 +123,8 @@ void *rtr_fsm_start(struct rtr_socket *rtr_socket)
 			RTR_DBG1("State: RTR_CONNECTING");
 			rtr_socket->has_received_pdus = false;
 
-			// old pfx_record could exists in the pfx_table, check if they are too old and must be removed old key_entry
-			// could exists in the spki_table, check if they are too old and must be removed
+			// old pfx_record could exists in the pfx_table, check if they are too old and must be removed
+			// old key_entry could exists in the spki_table, check if they are too old and must be removed
 			rtr_purge_outdated_records(rtr_socket);
 
 			if (tr_open(rtr_socket->tr_socket) == TR_ERROR) {
@@ -136,7 +139,6 @@ void *rtr_fsm_start(struct rtr_socket *rtr_socket)
 				else
 					rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
 			}
-
 		}
 
 		else if (rtr_socket->state == RTR_RESET) {
@@ -224,7 +226,7 @@ void *rtr_fsm_start(struct rtr_socket *rtr_socket)
 
 void rtr_stop(struct rtr_socket *rtr_socket)
 {
-	RTR_DBG1("rtr_stop()");
+	RTR_DBG("%s()", __func__);
 	rtr_change_socket_state(rtr_socket, RTR_SHUTDOWN);
 	if (rtr_socket->thread_id != 0) {
 		RTR_DBG1("pthread_cancel()");

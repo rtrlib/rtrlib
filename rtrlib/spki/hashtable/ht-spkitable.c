@@ -74,7 +74,7 @@ static void spki_record_to_key_entry(struct spki_record *spki_r, struct key_entr
  */
 static void spki_table_notify_clients(struct spki_table *spki_table, const struct spki_record *record, const bool added)
 {
-	if (spki_table->update_fp != NULL)
+	if (spki_table->update_fp)
 		spki_table->update_fp(spki_table, *record, added);
 }
 
@@ -116,7 +116,7 @@ int spki_table_add_entry(struct spki_table *spki_table, struct spki_record *spki
 	struct key_entry *entry;
 
 	entry = lrtr_malloc(sizeof(*entry));
-	if (entry == NULL)
+	if (!entry)
 		return SPKI_ERROR;
 
 	spki_record_to_key_entry(spki_record, entry);
@@ -170,7 +170,7 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski
 		if (element->asn == asn && memcmp(element->ski, ski, sizeof(element->ski)) == 0) {
 			(*result_size)++;
 			tmp = lrtr_realloc(*result, *result_size * sizeof(**result));
-			if (tmp == NULL) {
+			if (!tmp) {
 				lrtr_free(*result);
 				pthread_rwlock_unlock(&spki_table->lock);
 				return SPKI_ERROR;
@@ -205,7 +205,7 @@ int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski, struct
 		if (memcmp(current_entry->ski, ski, sizeof(current_entry->ski)) == 0) {
 			(*result_size)++;
 			tmp = lrtr_realloc(*result, sizeof(**result) * (*result_size));
-			if (tmp == NULL) {
+			if (!tmp) {
 				lrtr_free(*result);
 				pthread_rwlock_unlock(&spki_table->lock);
 				return SPKI_ERROR;
@@ -317,13 +317,14 @@ void spki_table_notify_diff(struct spki_table *new_table, struct spki_table *old
 	for (tommy_node *current_node = tommy_list_head(&new_table->list); current_node;
 	     current_node = current_node->next) {
 		struct key_entry *entry = (struct key_entry *)current_node->data;
+
 		if (entry->socket == socket) {
 			struct spki_record record;
+
 			key_entry_to_spki_record(entry, &record);
 
-			if (spki_table_remove_entry(old_table, &record) == SPKI_RECORD_NOT_FOUND) {
+			if (spki_table_remove_entry(old_table, &record) == SPKI_RECORD_NOT_FOUND)
 				spki_table_notify_clients(new_table, &record, true);
-			}
 		}
 	}
 
@@ -332,8 +333,10 @@ void spki_table_notify_diff(struct spki_table *new_table, struct spki_table *old
 	for (tommy_node *current_node = tommy_list_head(&old_table->list); current_node;
 	     current_node = current_node->next) {
 		struct key_entry *entry = (struct key_entry *)current_node->data;
+
 		if (entry->socket == socket) {
 			struct spki_record record;
+
 			key_entry_to_spki_record(entry, &record);
 			spki_table_notify_clients(new_table, &record, false);
 		}

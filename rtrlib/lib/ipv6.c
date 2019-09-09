@@ -35,12 +35,14 @@ struct lrtr_ipv6_addr lrtr_ipv6_get_bits(const struct lrtr_ipv6_addr *val, const
 
 	// if no bytes get extracted the result has to be 0
 	struct lrtr_ipv6_addr result;
+
 	memset(&result, 0, sizeof(result));
 
 	uint8_t bits_left = quantity;
 
 	if (first_bit <= 31) {
 		const uint8_t q = quantity > 32 ? 32 : quantity;
+
 		assert(bits_left >= q);
 		bits_left -= q;
 		result.addr[0] = lrtr_get_bits(val->addr[0], first_bit, q);
@@ -49,6 +51,7 @@ struct lrtr_ipv6_addr lrtr_ipv6_get_bits(const struct lrtr_ipv6_addr *val, const
 	if ((first_bit <= 63) && ((first_bit + quantity) > 32)) {
 		const uint8_t fr = first_bit < 32 ? 0 : first_bit - 32;
 		const uint8_t q = bits_left > 32 ? 32 : bits_left;
+
 		assert(bits_left >= q);
 		bits_left -= q;
 		result.addr[1] = lrtr_get_bits(val->addr[1], fr, q);
@@ -57,6 +60,7 @@ struct lrtr_ipv6_addr lrtr_ipv6_get_bits(const struct lrtr_ipv6_addr *val, const
 	if ((first_bit <= 95) && ((first_bit + quantity) > 64)) {
 		const uint8_t fr = first_bit < 64 ? 0 : first_bit - 64;
 		const uint8_t q = bits_left > 32 ? 32 : bits_left;
+
 		assert(bits_left >= q);
 		bits_left -= q;
 		result.addr[2] = lrtr_get_bits(val->addr[2], fr, q);
@@ -65,6 +69,7 @@ struct lrtr_ipv6_addr lrtr_ipv6_get_bits(const struct lrtr_ipv6_addr *val, const
 	if ((first_bit <= 127) && ((first_bit + quantity) > 96)) {
 		const uint8_t fr = first_bit < 96 ? 0 : first_bit - 127;
 		const uint8_t q = bits_left > 32 ? 32 : bits_left;
+
 		assert(bits_left >= q);
 		result.addr[3] = lrtr_get_bits(val->addr[3], fr, q);
 	}
@@ -112,17 +117,19 @@ int lrtr_ipv6_str_to_addr(const char *a, struct lrtr_ipv6_addr *ip)
 			if (j >= 0x10000 || ++l > 4)
 				return -1;
 		}
-		if (*a == ':' && a[1])
+		if (*a == ':' && a[1]) {
 			a++;
-		else if (*a == '.' && (i == 6 || (i < 6 && hfil >= 0))) { /* Embedded IPv4 address */
+		} else if (*a == '.' && (i == 6 || (i < 6 && hfil >= 0))) { /* Embedded IPv4 address */
 			struct lrtr_ipv4_addr addr4;
+
 			if (lrtr_ipv4_str_to_addr(start, &addr4) == -1)
 				return -1;
 			words[i++] = addr4.addr >> 16;
 			words[i++] = addr4.addr;
 			break;
-		} else if (*a)
+		} else if (*a) {
 			return -1;
+		}
 		if (i >= 8)
 			return -1;
 		words[i++] = j;
@@ -152,16 +159,20 @@ int lrtr_ipv6_addr_to_str(const struct lrtr_ipv6_addr *ip_addr, char *b, const u
 		return -1;
 	const uint32_t *a = ip_addr->addr;
 	uint16_t words[8];
-	int bestpos, bestlen, curpos, curlen, i;
+	int bestpos = 0;
+	int bestlen = 0;
+	int curpos = 0;
+	int curlen = 0;
+	int i;
 
 	/* First of all, preprocess the address and find the longest run of zeros */
-	bestlen = bestpos = curpos = curlen = 0;
 	for (i = 0; i < 8; i++) {
 		uint32_t x = a[i / 2];
+
 		words[i] = ((i % 2) ? x : (x >> 16)) & 0xffff;
-		if (words[i])
+		if (words[i]) {
 			curlen = 0;
-		else {
+		} else {
 			if (!curlen)
 				curpos = i;
 			curlen++;
@@ -179,6 +190,7 @@ int lrtr_ipv6_addr_to_str(const struct lrtr_ipv6_addr *ip_addr, char *b, const u
 	// if (!bestpos && ((bestlen == 5 && (a[2] == 0xffff)) || bestlen == 6))
 	{
 		uint32_t x = a[3];
+
 		b += sprintf(b, "::%s%d.%d.%d.%d", a[2] ? "ffff:" : "", ((x >> 24) & 0xff), ((x >> 16) & 0xff),
 			     ((x >> 8) & 0xff), (x & 0xff));
 		return 0;

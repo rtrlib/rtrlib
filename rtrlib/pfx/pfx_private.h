@@ -9,7 +9,8 @@
 
 /**
  * @defgroup mod_pfx_h Prefix validation table
- * @brief The pfx_table is an abstract data structure to organize the validated prefix origin data received from an RPKI-RTR cache server.
+ * @brief The pfx_table is an abstract data structure to organize the validated prefix origin data
+ * received from an RPKI-RTR cache server.
  *
  * @{
  */

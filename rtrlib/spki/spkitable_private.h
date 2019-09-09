@@ -9,7 +9,8 @@
 
 /**
  * @defgroup mod_spki_h Subject Public Key Info table
- * @brief The spki_table is an abstract data structure to organize the received Router Key PDUs from a RPKI-RTR cache server.
+ * @brief The spki_table is an abstract data structure to organize the received Router Key PDUs
+ * from a RPKI-RTR cache server.
  *
  * @{
  */

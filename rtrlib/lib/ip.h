@@ -46,8 +46,9 @@ struct lrtr_ip_addr {
 /**
  * Converts the passed lrtr_ip_addr struct to string representation.
  * @param[in] ip lrtr_ip_addr
- * @param[out] str Pointer to a char array. The array must be at least INET_ADDRSTRLEN bytes long if the passed lrtr_ip_addr stores
- * an IPv4 address. If lrtr_ip_addr stores an IPv6 address, str must be at least INET6_ADDRSTRLEN bytes long.
+ * @param[out] str Pointer to a char array.
+ * The array must be at least INET_ADDRSTRLEN bytes long if the passed lrtr_ip_addr stores an IPv4 address.
+ * If lrtr_ip_addr stores an IPv6 address, str must be at least INET6_ADDRSTRLEN bytes long.
  * @param[in] len Length of the str array.
  * @result 0 On success.
  * @result -1 On error.

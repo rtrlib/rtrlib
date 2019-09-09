@@ -30,9 +30,9 @@ static int connection_error(enum rtr_mgr_status status)
 {
 	if (status == RTR_MGR_ERROR) {
 		/*
-		* Wait for input before printing error to avoid "broken pipe" error
-		* while communicating with the Python program.
-		*/
+		 * Wait for input before printing error to avoid "broken pipe" error
+		 * while communicating with the Python program.
+		 */
 		char input[256];
 
 		if (fgets(input, 256, stdin))

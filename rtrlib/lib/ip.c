@@ -21,8 +21,9 @@ bool lrtr_ip_addr_is_zero(const struct lrtr_ip_addr prefix)
 		    prefix.u.addr6.addr[3] == 0) {
 			return true;
 		}
-	} else if (prefix.u.addr4.addr == 0)
+	} else if (prefix.u.addr4.addr == 0) {
 		return true;
+	}
 
 	return false;
 }
@@ -30,6 +31,7 @@ bool lrtr_ip_addr_is_zero(const struct lrtr_ip_addr prefix)
 struct lrtr_ip_addr lrtr_ip_addr_get_bits(const struct lrtr_ip_addr *val, const uint8_t from, const uint8_t number)
 {
 	struct lrtr_ip_addr result;
+
 	if (val->ver == LRTR_IPV6) {
 		result.ver = LRTR_IPV6;
 		result.u.addr6 = lrtr_ipv6_get_bits(&(val->u.addr6), from, number);
@@ -44,9 +46,8 @@ RTRLIB_EXPORT bool lrtr_ip_addr_equal(const struct lrtr_ip_addr a, const struct 
 {
 	if (a.ver != b.ver)
 		return false;
-	if (a.ver == LRTR_IPV6) {
+	if (a.ver == LRTR_IPV6)
 		return lrtr_ipv6_addr_equal(&(a.u.addr6), &(b.u.addr6));
-	}
 	return lrtr_ipv4_addr_equal(&(a.u.addr4), &(b.u.addr4));
 }
 
@@ -59,7 +60,7 @@ RTRLIB_EXPORT int lrtr_ip_addr_to_str(const struct lrtr_ip_addr *ip, char *str, 
 
 RTRLIB_EXPORT int lrtr_ip_str_to_addr(const char *str, struct lrtr_ip_addr *ip)
 {
-	if (strchr(str, ':') == NULL) {
+	if (!strchr(str, ':')) {
 		ip->ver = LRTR_IPV4;
 		return lrtr_ipv4_str_to_addr(str, &(ip->u.addr4));
 	}
@@ -71,7 +72,8 @@ RTRLIB_EXPORT int lrtr_ip_str_to_addr(const char *str, struct lrtr_ip_addr *ip)
 RTRLIB_EXPORT bool lrtr_ip_str_cmp(const struct lrtr_ip_addr *addr1, const char *addr2)
 {
 	struct lrtr_ip_addr tmp;
+
 	if (lrtr_ip_str_to_addr(addr2, &tmp) == -1)
 		return false;
-	return (lrtr_ip_addr_equal(*addr1, tmp));
+	return lrtr_ip_addr_equal(*addr1, tmp);
 }

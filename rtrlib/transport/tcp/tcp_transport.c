@@ -24,9 +24,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define TCP_DBG(fmt, sock, ...) \
-	lrtr_dbg("TCP Transport(%s:%s): " fmt, sock->config.host, sock->config.port, ##__VA_ARGS__)
-#define TCP_DBG1(a, sock) lrtr_dbg("TCP Transport(%s:%s): " a, sock->config.host, sock->config.port)
+#define TCP_DBG(fmt, sock, ...)                                                                            \
+	do {                                                                                               \
+		const struct tr_tcp_socket *tmp = sock;                                                    \
+		lrtr_dbg("TCP Transport(%s:%s): " fmt, tmp->config.host, tmp->config.port, ##__VA_ARGS__); \
+	} while (0)
+#define TCP_DBG1(a, sock) TCP_DBG(a, sock)
 
 struct tr_tcp_socket {
 	int socket;
@@ -45,6 +48,7 @@ int tr_tcp_open(void *tr_socket)
 {
 	int rtval = TR_ERROR;
 	struct tr_tcp_socket *tcp_socket = tr_socket;
+
 	assert(tcp_socket->socket == -1);
 
 	struct addrinfo hints;
@@ -60,7 +64,8 @@ int tr_tcp_open(void *tr_socket)
 		return TR_ERROR;
 	}
 
-	if ((tcp_socket->socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) == -1) {
+	tcp_socket->socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	if (tcp_socket->socket == -1) {
 		TCP_DBG("Socket creation failed, %s", tcp_socket, strerror(errno));
 		goto end;
 	}
@@ -97,6 +102,7 @@ end:
 void tr_tcp_close(void *tr_tcp_sock)
 {
 	struct tr_tcp_socket *tcp_socket = tr_tcp_sock;
+
 	if (tcp_socket->socket != -1)
 		close(tcp_socket->socket);
 	TCP_DBG1("Socket closed", tcp_socket);
@@ -106,7 +112,8 @@ void tr_tcp_close(void *tr_tcp_sock)
 void tr_tcp_free(struct tr_socket *tr_sock)
 {
 	struct tr_tcp_socket *tcp_sock = tr_sock->socket;
-	assert(tcp_sock != NULL);
+
+	assert(tcp_sock);
 	assert(tcp_sock->socket == -1);
 
 	TCP_DBG1("Freeing socket", tcp_sock);
@@ -115,7 +122,7 @@ void tr_tcp_free(struct tr_socket *tr_sock)
 	lrtr_free(tcp_sock->config.port);
 	lrtr_free(tcp_sock->config.bindaddr);
 
-	if (tcp_sock->ident != NULL)
+	if (tcp_sock->ident)
 		lrtr_free(tcp_sock->ident);
 	tr_sock->socket = NULL;
 	lrtr_free(tcp_sock);
@@ -125,10 +132,12 @@ int tr_tcp_recv(const void *tr_tcp_sock, void *pdu, const size_t len, const time
 {
 	const struct tr_tcp_socket *tcp_socket = tr_tcp_sock;
 	int rtval;
-	if (timeout == 0)
+
+	if (timeout == 0) {
 		rtval = recv(tcp_socket->socket, pdu, len, MSG_DONTWAIT);
-	else {
+	} else {
 		struct timeval t = {timeout, 0};
+
 		if (setsockopt(tcp_socket->socket, SOL_SOCKET, SO_RCVTIMEO, &t, sizeof(t)) == -1) {
 			TCP_DBG("setting SO_RCVTIMEO failed, %s", tcp_socket, strerror(errno));
 			return TR_ERROR;
@@ -153,10 +162,12 @@ int tr_tcp_send(const void *tr_tcp_sock, const void *pdu, const size_t len, cons
 {
 	const struct tr_tcp_socket *tcp_socket = tr_tcp_sock;
 	int rtval;
-	if (timeout == 0)
+
+	if (timeout == 0) {
 		rtval = send(tcp_socket->socket, pdu, len, MSG_DONTWAIT);
-	else {
+	} else {
 		struct timeval t = {timeout, 0};
+
 		if (setsockopt(tcp_socket->socket, SOL_SOCKET, SO_SNDTIMEO, &t, sizeof(t)) == -1) {
 			TCP_DBG("setting SO_SNDTIMEO failed, %s", tcp_socket, strerror(errno));
 			return TR_ERROR;
@@ -182,14 +193,14 @@ const char *tr_tcp_ident(void *socket)
 	size_t len;
 	struct tr_tcp_socket *sock = socket;
 
-	assert(sock != NULL);
+	assert(sock);
 
-	if (sock->ident != NULL)
+	if (sock->ident)
 		return sock->ident;
 
 	len = strlen(sock->config.port) + strlen(sock->config.host) + 2;
 	sock->ident = lrtr_malloc(len);
-	if (sock->ident == NULL)
+	if (!sock->ident)
 		return NULL;
 	snprintf(sock->ident, len, "%s:%s", sock->config.host, sock->config.port);
 
@@ -207,14 +218,15 @@ RTRLIB_EXPORT int tr_tcp_init(const struct tr_tcp_config *config, struct tr_sock
 
 	socket->socket = lrtr_malloc(sizeof(struct tr_tcp_socket));
 	struct tr_tcp_socket *tcp_socket = socket->socket;
+
 	tcp_socket->socket = -1;
 	tcp_socket->config.host = lrtr_strdup(config->host);
 	tcp_socket->config.port = lrtr_strdup(config->port);
-	if (config->bindaddr) {
+	if (config->bindaddr)
 		tcp_socket->config.bindaddr = lrtr_strdup(config->bindaddr);
-	} else {
+	else
 		tcp_socket->config.bindaddr = NULL;
-	}
+
 	tcp_socket->ident = NULL;
 
 	return TR_SUCCESS;

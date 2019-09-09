@@ -9,7 +9,8 @@
 
 /**
  * @defgroup mod_pfx_h Prefix validation table
- * @brief The pfx_table is an abstract data structure to organize the validated prefix origin data received from an RPKI-RTR cache server.
+ * @brief The pfx_table is an abstract data structure to organize the validated prefix origin data
+ * received from an RPKI-RTR cache server.
  *
  * @{
  */
@@ -49,7 +50,9 @@ enum pfxv_state {
 	/** @brief No certificate for the route exists. */
 	BGP_PFXV_STATE_NOT_FOUND,
 
-	/** @brief One or more records that match the input prefix exists in the pfx_table but the prefix max_len or ASN does'nt match. */
+	/** @brief One or more records that match the input prefix exists in the pfx_table
+	 * but the prefix max_len or ASN doesn't match.
+	 */
 	BGP_PFXV_STATE_INVALID
 };
 
@@ -119,7 +122,8 @@ int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t asn, const st
 /**
  * @brief Validates the origin of a BGP-Route and returns a list of pfx_record that decided the result.
  * @param[in] pfx_table pfx_table to use.
- * @param[out] reason Pointer to a memory area that will be used as array of pfx_records. The memory area will be overwritten. Reason must point to NULL or an allocated memory area.
+ * @param[out] reason Pointer to a memory area that will be used as array of pfx_records.
+ * The memory area will be overwritten. Reason must point to NULL or an allocated memory area.
  * @param[out] reason_len Size of the array reason.
  * @param[in] asn Autonomous system number of the Origin-AS of the route.
  * @param[in] prefix Announcend network Prefix
