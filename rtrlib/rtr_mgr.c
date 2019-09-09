@@ -99,9 +99,8 @@ static void rtr_mgr_close_less_preferable_groups(const struct rtr_socket *sock, 
 
 		if ((current_group->status != RTR_MGR_CLOSED) && (current_group != group) &&
 		    (current_group->preference > group->preference)) {
-			for (unsigned int j = 0; j < current_group->sockets_len; j++) {
+			for (unsigned int j = 0; j < current_group->sockets_len; j++)
 				rtr_stop(current_group->sockets[j]);
-			}
 			set_status(config, current_group, RTR_MGR_CLOSED, sock);
 		}
 		node = node->next;
@@ -117,6 +116,7 @@ static struct rtr_mgr_group *get_best_inactive_rtr_mgr_group(struct rtr_mgr_conf
 	while (node) {
 		struct rtr_mgr_group_node *group_node = node->data;
 		struct rtr_mgr_group *current_group = group_node->group;
+
 		if ((current_group != group) && (current_group->status == RTR_MGR_CLOSED)) {
 			pthread_mutex_unlock(&config->mutex);
 			return current_group;
@@ -461,9 +461,8 @@ RTRLIB_EXPORT void rtr_mgr_free(struct rtr_mgr_config *config)
 		struct rtr_mgr_group_node *group_node = tmp->data;
 
 		head = head->next;
-		for (unsigned int j = 0; j < group_node->group->sockets_len; j++) {
+		for (unsigned int j = 0; j < group_node->group->sockets_len; j++)
 			tr_free(group_node->group->sockets[j]->tr_socket);
-		}
 
 		lrtr_free(group_node->group);
 		lrtr_free(group_node);
@@ -500,9 +499,8 @@ RTRLIB_EXPORT void rtr_mgr_stop(struct rtr_mgr_config *config)
 	while (node) {
 		struct rtr_mgr_group_node *group_node = node->data;
 
-		for (unsigned int j = 0; j < group_node->group->sockets_len; j++) {
+		for (unsigned int j = 0; j < group_node->group->sockets_len; j++)
 			rtr_stop(group_node->group->sockets[j]);
-		}
 		node = node->next;
 	}
 	pthread_mutex_unlock(&config->mutex);

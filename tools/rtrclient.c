@@ -148,7 +148,7 @@ static const char *get_template(const char *name)
 		fclose(template_file);
 		return template;
 
-	read_error:
+read_error:
 		fclose(template_file);
 		print_error_exit("Could not read template");
 	}

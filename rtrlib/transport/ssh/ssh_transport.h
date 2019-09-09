@@ -35,7 +35,7 @@
  *		   determination by OS.
  * @param username Username for authentication.
  * @param server_hostkey_path Path to public SSH key of the server or NULL to
-                              don't verify host authenticity.
+ * don't verify host authenticity.
  * @param client_privkey_path Path to private key of the authentication keypair
  *                            or NULL to use ~/.ssh/id_rsa.
  */

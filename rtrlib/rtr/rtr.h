@@ -26,10 +26,17 @@ enum rtr_rtvals { RTR_SUCCESS = 0, RTR_ERROR = -1, RTR_INVALID_PARAM = -2 };
  * @brief These modes let the user configure how received intervals should be handled.
  */
 enum rtr_interval_mode {
-	RTR_INTERVAL_MODE_IGNORE_ANY, /*< Ignore appliance of interval values at all. */
-	RTR_INTERVAL_MODE_ACCEPT_ANY, /*< Accept any interval values, even if outside of range. */
-	RTR_INTERVAL_MODE_DEFAULT_MIN_MAX, /*< If interval value is outside of range, apply min (if below range) or max (if above range). */
-	RTR_INTERVAL_MODE_IGNORE_ON_FAILURE /*< Ignore any interval values that are outside of range. */
+	/** Ignore appliance of interval values at all. */
+	RTR_INTERVAL_MODE_IGNORE_ANY,
+
+	/** Accept any interval values, even if outside of range. */
+	RTR_INTERVAL_MODE_ACCEPT_ANY,
+
+	/** If interval value is outside of range, apply min (if below range) or max (if above range). */
+	RTR_INTERVAL_MODE_DEFAULT_MIN_MAX,
+
+	/** Ignore any interval values that are outside of range. */
+	RTR_INTERVAL_MODE_IGNORE_ON_FAILURE
 };
 
 /**
@@ -39,7 +46,9 @@ enum rtr_socket_state {
 	/** Socket is establishing the transport connection. */
 	RTR_CONNECTING,
 
-	/** Connection is established, socket is waiting for a Serial Notify or expiration of the refresh_interval timer */
+	/** Connection is established,
+	 * socket is waiting for a Serial Notify or expiration of the refresh_interval timer
+	 */
 	RTR_ESTABLISHED,
 
 	/** Resetting RTR connection. */
@@ -81,13 +90,13 @@ typedef void (*rtr_connection_state_fp)(const struct rtr_socket *rtr_socket, con
 /**
  * @brief A RTR socket.
  * @param tr_socket Pointer to an initialized tr_socket that will be used to communicate with the RTR server.
- * @param refresh_interval Time period in seconds. Tells the router how long to wait before next attempting to poll the cache, using a Serial Query or
- * Reset Query PDU.
+ * @param refresh_interval Time period in seconds. Tells the router how long to wait before next attempting
+ * to poll the cache, using a Serial Query or Reset Query PDU.
  * @param last_update Timestamp of the last validation record update. Is 0 if the pfx_table doesn't stores any
  * validation reords from this rtr_socket.
- * @param expire_interval Time period in seconds. Received records are deleted if the client was unable to refresh data for this time period.
- * If 0 is specified, the expire_interval is twice the refresh_interval.
- * @param retry_interval Time period in seconds between a faild quary and the next attempt.
+ * @param expire_interval Time period in seconds. Received records are deleted if the client was unable to refresh data
+ * for this time period.  If 0 is specified, the expire_interval is twice the refresh_interval.
+ * @param retry_interval Time period in seconds between a failed query and the next attempt.
  * @param iv_mode Defines handling of incoming intervals.
  * @param state Current state of the socket.
  * @param session_id session_id of the RTR session.
@@ -96,11 +105,13 @@ typedef void (*rtr_connection_state_fp)(const struct rtr_socket *rtr_socket, con
  * @param pfx_table pfx_table that stores the validation records obtained from the connected rtr server.
  * @param thread_id Handle of the thread this socket is running in.
  * @param connection_state_fp A callback function that is executed when the state of the socket changes.
- * @param connection_state_fp_param_config Parameter that is passed to the connection_state_fp callback. Expects a pointer to a rtr_mgr_config struct.
- * @param connection_state_fp_param_group Parameter that is passed to the connection_state_fp callback. Expects a pointer to the rtr_mgr_group this socket belongs to.
+ * @param connection_state_fp_param_config Parameter that is passed to the connection_state_fp callback.
+ * Expects a pointer to a rtr_mgr_config struct.
+ * @param connection_state_fp_param_group Parameter that is passed to the connection_state_fp callback.
+ * Expects a pointer to the rtr_mgr_group this socket belongs to.
  * @param version Protocol version used by this socket
- * @param has_received_pdus True, if this socket has already recieved PDUs
- * @param spki_table spki_table that stores the router keys obtaiend from the connected rtr server
+ * @param has_received_pdus True, if this socket has already received PDUs
+ * @param spki_table spki_table that stores the router keys obtained from the connected rtr server
  */
 struct rtr_socket {
 	struct tr_socket *tr_socket;

@@ -50,37 +50,38 @@ struct tr_socket;
 /**
  * @brief A function pointer to a technology specific close function.
  * \sa tr_close
- * */
+ */
 typedef void (*tr_close_fp)(void *socket);
 
 /**
  * @brief A function pointer to a technology specific open function.
  * \sa tr_open
- * */
+ */
 typedef int (*tr_open_fp)(void *socket);
 
 /**
- * @brief A function pointer to a technology specific free function. All memory associated with the tr_socket will be freed.
+ * @brief A function pointer to a technology specific free function.
+ * All memory associated with the tr_socket will be freed.
  * \sa tr_free
- * */
+ */
 typedef void (*tr_free_fp)(struct tr_socket *tr_sock);
 
 /**
  * @brief A function pointer to a technology specific recv function.
  * \sa tr_recv
- * */
+ */
 typedef int (*tr_recv_fp)(const void *socket, void *pdu, const size_t len, const time_t timeout);
 
 /**
  * @brief A function pointer to a technology specific send function.
  * \sa tr_send
- * */
+ */
 typedef int (*tr_send_fp)(const void *socket, const void *pdu, const size_t len, const time_t timeout);
 
 /**
  * @brief A function pointer to a technology specific info function.
  * \sa tr_send
- * */
+ */
 typedef const char *(*tr_ident_fp)(void *socket);
 
 /**
