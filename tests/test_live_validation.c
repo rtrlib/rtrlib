@@ -14,15 +14,15 @@
 #include <string.h>
 #include <unistd.h>
 
-#define RPKI_CACHE_HOST "rpki-validator.realmv6.org"
-#define RPKI_CACHE_POST "8283"
-
 struct test_validity_query {
-	char *pfx;
+	const char *pfx;
 	int len;
 	int asn;
-	int val;
+	unsigned int val;
 };
+
+static char *RPKI_CACHE_HOST = "rpki-validator.realmv6.org";
+static char *RPKI_CACHE_POST = "8283";
 
 /*
  * Verification is based on ROAs for RIPE RIS Routing Beacons, see:
@@ -40,8 +40,10 @@ const struct test_validity_query queries[] = {{"93.175.146.0", 24, 12654, BGP_PF
 const int connection_timeout = 20;
 enum rtr_mgr_status connection_status = -1;
 
-static void connection_status_callback(const struct rtr_mgr_group *group, enum rtr_mgr_status status,
-				       const struct rtr_socket *socket, void *data)
+static void connection_status_callback(const struct rtr_mgr_group *group __attribute__((unused)),
+				       enum rtr_mgr_status status,
+				       const struct rtr_socket *socket __attribute__((unused)),
+				       void *data __attribute__((unused)))
 {
 	if (status == RTR_MGR_ERROR)
 		connection_status = status;

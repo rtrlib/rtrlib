@@ -11,8 +11,10 @@
 const int connection_timeout = 20;
 enum rtr_mgr_status connection_status = -1;
 
-static void connection_status_callback(const struct rtr_mgr_group *group, enum rtr_mgr_status status,
-				       const struct rtr_socket *socket, void *data)
+static void connection_status_callback(const struct rtr_mgr_group *group __attribute__((unused)),
+				       enum rtr_mgr_status status,
+				       const struct rtr_socket *socket __attribute__((unused)),
+				       void *data __attribute__((unused)))
 {
 	connection_status = status;
 }
