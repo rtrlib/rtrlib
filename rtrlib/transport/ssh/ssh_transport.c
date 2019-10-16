@@ -59,7 +59,7 @@ int tr_ssh_open(void *socket)
 
 	ssh_socket->session = ssh_new();
 	if (!ssh_socket->session) {
-		SSH_DBG1("tr_ssh_init: can't create ssh_session", ssh_socket);
+		SSH_DBG("%s: can't create ssh_session", ssh_socket, __func__);
 		goto error;
 	}
 
@@ -96,7 +96,7 @@ int tr_ssh_open(void *socket)
 		ret = ssh_connect(ssh_socket->session);
 
 		if (ret == SSH_ERROR) {
-			SSH_DBG1("tr_ssh_init: opening SSH connection failed", ssh_socket);
+			SSH_DBG("%s: opening SSH connection failed", ssh_socket, __func__);
 			goto error;
 		} else if (ret == SSH_AGAIN) {
 			socket_t fd = ssh_get_fd(ssh_socket->session);
@@ -133,7 +133,7 @@ int tr_ssh_open(void *socket)
 
 	// check server identity
 	if ((config->server_hostkey_path) && (ssh_is_server_known(ssh_socket->session) != SSH_SERVER_KNOWN_OK)) {
-		SSH_DBG1("tr_ssh_init: Wrong hostkey", ssh_socket);
+		SSH_DBG("%s: Wrong hostkey", ssh_socket, __func__);
 		goto error;
 	}
 
@@ -143,7 +143,7 @@ int tr_ssh_open(void *socket)
 	const int rtval = ssh_userauth_autopubkey(ssh_socket->session, NULL);
 #endif
 	if (rtval != SSH_AUTH_SUCCESS) {
-		SSH_DBG1("tr_ssh_init: Authentication failed", ssh_socket);
+		SSH_DBG("%s: Authentication failed", ssh_socket, __func__);
 		goto error;
 	}
 
@@ -155,7 +155,7 @@ int tr_ssh_open(void *socket)
 		goto error;
 
 	if (ssh_channel_request_subsystem(ssh_socket->channel, "rpki-rtr") == SSH_ERROR) {
-		SSH_DBG1("tr_ssh_init: Error requesting subsystem rpki-rtr", ssh_socket);
+		SSH_DBG("%s: Error requesting subsystem rpki-rtr", ssh_socket, __func__);
 		goto error;
 	}
 	SSH_DBG1("Connection established", ssh_socket);
