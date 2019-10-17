@@ -11,7 +11,7 @@ int main()
 	char ssh_privkey[] = "/etc/rpki-rtr/client.priv";
 
 	struct tr_ssh_config config = {
-		ssh_host, 22, NULL, ssh_user, ssh_hostkey, ssh_privkey, NULL, NULL, 0,
+		ssh_host, 22, NULL, ssh_user, ssh_hostkey, ssh_privkey, NULL, NULL, 0, NULL
 	};
 
 	tr_ssh_init(&config, &ssh_socket);

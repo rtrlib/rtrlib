@@ -137,14 +137,29 @@ int tr_ssh_open(void *socket)
 		goto error;
 	}
 
+	if (config->client_privkey_path) {
+		SSH_DBG("%s: Trying publickey authentication", ssh_socket, __func__);
+		ssh_options_set(ssh_socket->session, SSH_OPTIONS_IDENTITY, config->client_privkey_path);
+
+		int rtval;
+
 #if LIBSSH_VERSION_MAJOR > 0 || LIBSSH_VERSION_MINOR > 5
-	const int rtval = ssh_userauth_publickey_auto(ssh_socket->session, NULL, NULL);
+		rtval = ssh_userauth_publickey_auto(ssh_socket->session, NULL, NULL);
 #else /* else use libSSH version 0.5.0 */
-	const int rtval = ssh_userauth_autopubkey(ssh_socket->session, NULL);
+		rtval = ssh_userauth_autopubkey(ssh_socket->session, NULL);
 #endif
-	if (rtval != SSH_AUTH_SUCCESS) {
-		SSH_DBG("%s: Authentication failed", ssh_socket, __func__);
-		goto error;
+		if (rtval != SSH_AUTH_SUCCESS) {
+			SSH_DBG("%s: Publickey authentication failed", ssh_socket, __func__);
+			goto error;
+		}
+
+	} else {
+		SSH_DBG("%s: Trying password authentication", ssh_socket, __func__);
+
+		if (ssh_userauth_password(ssh_socket->session, NULL, config->password) != SSH_AUTH_SUCCESS) {
+			SSH_DBG("%s: Password authentication failed", ssh_socket, __func__);
+			goto error;
+		}
 	}
 
 	ssh_socket->channel = ssh_channel_new(ssh_socket->session);
@@ -303,6 +318,11 @@ RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_sock
 		ssh_socket->config.connect_timeout = RTRLIB_TRANSPORT_CONNECT_TIMEOUT_DEFAULT;
 	else
 		ssh_socket->config.connect_timeout = config->connect_timeout;
+
+	if (config->password)
+		ssh_socket->config.password = lrtr_strdup(config->password);
+	else
+		ssh_socket->config.password = NULL;
 
 	ssh_socket->ident = NULL;
 	ssh_socket->config.data = config->data;
