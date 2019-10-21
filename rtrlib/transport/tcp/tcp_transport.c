@@ -48,50 +48,65 @@ int tr_tcp_open(void *tr_socket)
 {
 	int rtval = TR_ERROR;
 	struct tr_tcp_socket *tcp_socket = tr_socket;
+	const struct tr_tcp_config *config = &tcp_socket->config;
 
 	assert(tcp_socket->socket == -1);
 
 	struct addrinfo hints;
-	struct addrinfo *res;
+	struct addrinfo *res = NULL;
 	struct addrinfo *bind_addrinfo = NULL;
 
 	bzero(&hints, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_ADDRCONFIG;
-	if (getaddrinfo(tcp_socket->config.host, tcp_socket->config.port, &hints, &res) != 0) {
-		TCP_DBG("getaddrinfo error, %s", tcp_socket, gai_strerror(errno));
-		return TR_ERROR;
-	}
 
-	tcp_socket->socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-	if (tcp_socket->socket == -1) {
-		TCP_DBG("Socket creation failed, %s", tcp_socket, strerror(errno));
-		goto end;
-	}
-
-	if (tcp_socket->config.bindaddr) {
-		if (getaddrinfo(tcp_socket->config.bindaddr, 0, &hints, &bind_addrinfo) != 0) {
-			TCP_DBG("getaddrinfo error, %s", tcp_socket, gai_strerror(errno));
-			goto end;
-		}
-
-		if (bind(tcp_socket->socket, bind_addrinfo->ai_addr, bind_addrinfo->ai_addrlen) != 0) {
-			TCP_DBG("Socket bind failed, %s", tcp_socket, strerror(errno));
+	if (config->new_socket) {
+		tcp_socket->socket = (*config->new_socket)(config->data);
+		if (tcp_socket->socket <= 0) {
+			TCP_DBG("Couldn't establish TCP connection, %s",
+				tcp_socket, strerror(errno));
 			goto end;
 		}
 	}
+	if (tcp_socket->socket < 0) {
+		if (getaddrinfo(config->host, config->port, &hints, &res) != 0) {
+			TCP_DBG("getaddrinfo error, %s", tcp_socket,
+				gai_strerror(errno));
+			return TR_ERROR;
+		}
 
-	if (connect(tcp_socket->socket, res->ai_addr, res->ai_addrlen) == -1) {
-		TCP_DBG("Couldn't establish TCP connection, %s", tcp_socket, strerror(errno));
-		goto end;
+		tcp_socket->socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		if (tcp_socket->socket == -1) {
+			TCP_DBG("Socket creation failed, %s", tcp_socket, strerror(errno));
+			goto end;
+		}
+
+		if (tcp_socket->config.bindaddr) {
+			if (getaddrinfo(tcp_socket->config.bindaddr, 0, &hints, &bind_addrinfo) != 0) {
+				TCP_DBG("getaddrinfo error, %s", tcp_socket, gai_strerror(errno));
+				goto end;
+			}
+			if (bind(tcp_socket->socket, bind_addrinfo->ai_addr, bind_addrinfo->ai_addrlen) != 0) {
+				TCP_DBG("Socket bind failed, %s", tcp_socket, strerror(errno));
+				goto end;
+			}
+		}
+
+		if (connect(tcp_socket->socket, res->ai_addr, res->ai_addrlen) == -1) {
+			TCP_DBG("Couldn't establish TCP connection, %s",
+				tcp_socket, strerror(errno));
+			goto end;
+		}
 	}
 
 	TCP_DBG1("Connection established", tcp_socket);
 	rtval = TR_SUCCESS;
 
 end:
-	freeaddrinfo(res);
+	if (res)
+		freeaddrinfo(res);
+
 	if (bind_addrinfo)
 		freeaddrinfo(bind_addrinfo);
 	if (rtval == -1)
@@ -228,6 +243,8 @@ RTRLIB_EXPORT int tr_tcp_init(const struct tr_tcp_config *config, struct tr_sock
 		tcp_socket->config.bindaddr = NULL;
 
 	tcp_socket->ident = NULL;
+	tcp_socket->config.data = config->data;
+	tcp_socket->config.new_socket = config->new_socket;
 
 	return TR_SUCCESS;
 }
