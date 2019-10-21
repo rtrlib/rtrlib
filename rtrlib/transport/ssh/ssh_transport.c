@@ -74,6 +74,17 @@ int tr_ssh_open(void *socket)
 
 	if (config->client_privkey_path)
 		ssh_options_set(ssh_socket->session, SSH_OPTIONS_IDENTITY, config->client_privkey_path);
+	if (config->new_socket) {
+		int fd;
+
+		fd = config->new_socket(config->data);
+		if (fd >= 0) {
+			ssh_options_set(ssh_socket->session, SSH_OPTIONS_FD, &fd);
+		} else {
+			SSH_DBG1("tr_ssh_init: opening SSH connection failed", ssh_socket);
+			goto error;
+		}
+	}
 
 	if (ssh_connect(ssh_socket->session) == SSH_ERROR) {
 		SSH_DBG1("tr_ssh_init: opening SSH connection failed", ssh_socket);
@@ -249,6 +260,8 @@ RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_sock
 		ssh_socket->config.server_hostkey_path = NULL;
 
 	ssh_socket->ident = NULL;
+	ssh_socket->config.data = config->data;
+	ssh_socket->config.new_socket = config->new_socket;
 	;
 
 	return TR_SUCCESS;
