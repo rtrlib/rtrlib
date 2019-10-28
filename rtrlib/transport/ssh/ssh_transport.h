@@ -38,6 +38,13 @@
  * don't verify host authenticity.
  * @param client_privkey_path Path to private key of the authentication keypair
  *                            or NULL to use ~/.ssh/id_rsa.
+ * @param data Information to pass to callback function
+ *	  in charge of retrieving socket
+ * @param new_socket(void *opaque_info) callback routine, that
+ *	  Pointer to the function that is called every time a new connection
+ *	  is made. The returned socket is expected to be ready for use (e.g.
+ *	  in state established), and must use a reliably stream-oriented transport.
+ *	  When new_socket() is used, host, port, and bindaddr are not used.
  */
 struct tr_ssh_config {
 	char *host;
@@ -46,6 +53,8 @@ struct tr_ssh_config {
 	char *username;
 	char *server_hostkey_path;
 	char *client_privkey_path;
+	void *data;
+	int (*new_socket)(void *data);
 };
 
 /**

@@ -28,11 +28,20 @@
  * @param bindaddr Hostname or IP address to connect from. NULL for
  *		   determination by OS.
  * to use the source address of the system's default route to the server
+ * @param data Information to pass to callback function
+ *	  in charge of retrieving socket
+ * @param new_socket(void *opaque_info) callback routine, that
+ *	  Pointer to the function that is called every time a new connection
+ *	  is made. The returned socket is expected to be ready for use (e.g.
+ *	  in state established), and must use a reliably stream-oriented transport.
+ *	  When new_socket() is used, host, port, and bindaddr are not used.
  */
 struct tr_tcp_config {
 	char *host;
 	char *port;
 	char *bindaddr;
+	void *data;
+	int (*new_socket)(void *data);
 };
 
 /**
