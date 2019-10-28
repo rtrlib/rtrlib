@@ -20,6 +20,8 @@ int main()
 		ssh_user,
 		ssh_hostkey, //Server hostkey
 		ssh_privkey, //Private key
+		NULL, // data
+		NULL, // new_socket()
 	};
 	tr_ssh_init(&config, &tr_ssh);
 
@@ -31,7 +33,9 @@ int main()
 	struct tr_tcp_config tcp_config = {
 		tcp_host, //IP
 		tcp_port, //Port
-		NULL //Source address
+		NULL, //Source address
+		NULL, //data
+		NULL, //get_socket()
 	};
 	tr_tcp_init(&tcp_config, &tr_tcp);
 
