@@ -1,13 +1,14 @@
 Introduction
 ------------
-The RTRlib implements the client-side of the RPKI-RTR protocol (RFC
-6810, RFC 8210) and BGP Prefix Origin Validation (RFC 6811). This also
-enables the maintenance of router keys. Router keys are required to
-deploy BGPSEC.
+The RTRlib implements the client-side of the RPKI-RTR protocol 
+([RFC 6810](https://tools.ietf.org/html/rfc6810)), 
+([RFC 8210](https://tools.ietf.org/html/rfc8210)) and BGP Prefix Origin
+Validation ([RFC 6811](https://tools.ietf.org/html/rfc6811)). This also enables
+the maintenance of router keys. Router keys are required to deploy BGPSEC.
 
 The software was successfully tested on Linux and FreeBSD.
 
-This package contains also the rtrclient program. It connects to an
+This package contains also the `rtrclient` program. It connects to an
 RTR-Server over TCP or SSH and shows on STDOUT prefix origin data and
 router keys that have been received from the RTR server. The program can
 be found in the bin/ directory.
@@ -30,11 +31,11 @@ Compilation
 
   Without debugging options
 
-    cmake -D CMAKE_BUILD_TYPE=Release .
+      cmake -D CMAKE_BUILD_TYPE=Release .
 
   With debug symbols and debug messages:
 
-    cmake -D CMAKE_BUILD_TYPE=Debug .
+      cmake -D CMAKE_BUILD_TYPE=Debug .
 
   If the libssh isn't installed within the systems include and library
   directories you can run cmake with the following parameters:
@@ -58,7 +59,7 @@ Compilation
 
 * Build library, tests, and tools
 
-    make
+      make
 
 
 Installation
@@ -85,6 +86,7 @@ occurs, the location of the library can be passed explicitly as a parameter
     -L<path_to_librtr.so>
 
 e.g.,
+
     -L/usr/local/lib64/
 
 
@@ -104,7 +106,7 @@ RTR-Server using the rtrclient command line tool:
 
     bin/rtrclient tcp rpki-validator.realmv6.org 8282
 
-rpki-validator.realmv6.org is an open RTR-Server instance for testing
+`rpki-validator.realmv6.org` is an open RTR-Server instance for testing
 purposes, which runs the RIPE Validator. It listens on port 8282 and
 validates ROAs from the following trust anchors: AfriNIC, APNIC, ARIN,
 LACNIC, RIPE.
@@ -122,12 +124,7 @@ Directories
 
 Contact
 -------
-Website: http://rtrlib.realmv6.org/
+Website: [http://rtrlib.realmv6.org/](http://rtrlib.realmv6.org/)
 
-Mailing List: rtrlib@googlegroups.com
+Mailing List: [rtrlib@googlegroups.com](mailto:rtrlib@googlegroups.com)
 
-
-
-
-
-/* vim: set tw=72 sts=2 sw=2 ts=2 expandtab: */

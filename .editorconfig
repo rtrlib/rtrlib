@@ -12,3 +12,8 @@ indent_size = 4
 [{.travis.yml,CMakeLists.txt}]
 indent_style = space
 indent_size = 4
+
+[*.md]
+indent_style = space
+indent_size = 2
+max_line_width = 72
