@@ -755,9 +755,9 @@ static void init_sockets(void)
 {
 	for (size_t i = 0; i < socket_count; ++i) {
 		struct socket_config *config = socket_config[i];
-		struct tr_tcp_config tcp_config;
+		struct tr_tcp_config tcp_config = {};
 #ifdef RTRLIB_HAVE_LIBSSH
-		struct tr_ssh_config ssh_config;
+		struct tr_ssh_config ssh_config = {};
 #endif
 
 		switch (config->type) {
