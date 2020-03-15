@@ -111,5 +111,8 @@ export LD_LIBRARY_PATH=.; make test
 %doc LICENSE
 
 %changelog
-* Thu Dec 14 2017 Martin Winter <mwinter@opensourcerouting.org> - %{version}-%{release}
+* Sun Mar 15 2020 Martin Winter <mwinter@opensourcerouting.org> - %{version}-%{release}
+- Update RPM spec changelog to fix changelog error
+
+* Thu Dec 14 2017 Martin Winter <mwinter@opensourcerouting.org> - 0.5.0
 - RPM Packaging added
