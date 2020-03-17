@@ -132,7 +132,11 @@ int tr_ssh_open(void *socket)
 	ssh_set_blocking(ssh_socket->session, 1);
 
 	// check server identity
+#if LIBSSH_VERSION_MAJOR > 0 || LIBSSH_VERSION_MINOR > 8
+	if ((config->server_hostkey_path) && (ssh_session_is_known_server(ssh_socket->session) != SSH_KNOWN_HOSTS_OK)) {
+#else
 	if ((config->server_hostkey_path) && (ssh_is_server_known(ssh_socket->session) != SSH_SERVER_KNOWN_OK)) {
+#endif
 		SSH_DBG("%s: Wrong hostkey", ssh_socket, __func__);
 		goto error;
 	}
