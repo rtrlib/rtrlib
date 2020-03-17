@@ -299,6 +299,9 @@ RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_sock
 	ssh_socket->config.port = config->port;
 	ssh_socket->config.username = lrtr_strdup(config->username);
 
+	if ((config->password && config->client_privkey_path) || (!config->password && !config->client_privkey_path))
+		return TR_ERROR;
+
 	if (config->bindaddr)
 		ssh_socket->config.bindaddr = lrtr_strdup(config->bindaddr);
 	else
