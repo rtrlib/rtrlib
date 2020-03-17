@@ -330,7 +330,6 @@ RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_sock
 	ssh_socket->ident = NULL;
 	ssh_socket->config.data = config->data;
 	ssh_socket->config.new_socket = config->new_socket;
-	;
 
 	return TR_SUCCESS;
 }
