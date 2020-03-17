@@ -290,46 +290,91 @@ RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_sock
 	socket->send_fp = &tr_ssh_send;
 	socket->ident_fp = &tr_ssh_ident;
 
-	socket->socket = lrtr_malloc(sizeof(struct tr_ssh_socket));
+	socket->socket = lrtr_calloc(1, sizeof(struct tr_ssh_socket));
 	struct tr_ssh_socket *ssh_socket = socket->socket;
 
 	ssh_socket->channel = NULL;
 	ssh_socket->session = NULL;
 	ssh_socket->config.host = lrtr_strdup(config->host);
+	if (!ssh_socket->config.host)
+		goto error;
 	ssh_socket->config.port = config->port;
+
 	ssh_socket->config.username = lrtr_strdup(config->username);
+	if (!ssh_socket->config.username)
+		goto error;
 
 	if ((config->password && config->client_privkey_path) || (!config->password && !config->client_privkey_path))
 		return TR_ERROR;
 
-	if (config->bindaddr)
+	if (config->bindaddr) {
 		ssh_socket->config.bindaddr = lrtr_strdup(config->bindaddr);
-	else
+
+		if (!ssh_socket->config.bindaddr)
+			goto error;
+
+	} else {
 		ssh_socket->config.bindaddr = NULL;
+	}
 
-	if (config->client_privkey_path)
+	if (config->client_privkey_path) {
 		ssh_socket->config.client_privkey_path = lrtr_strdup(config->client_privkey_path);
-	else
-		ssh_socket->config.client_privkey_path = NULL;
+		if (!ssh_socket->config.client_privkey_path)
+			goto error;
 
-	if (config->server_hostkey_path)
+	} else {
+		ssh_socket->config.client_privkey_path = NULL;
+	}
+
+	if (config->server_hostkey_path) {
 		ssh_socket->config.server_hostkey_path = lrtr_strdup(config->server_hostkey_path);
-	else
+
+		if (!ssh_socket->config.client_privkey_path)
+			goto error;
+
+	} else {
 		ssh_socket->config.server_hostkey_path = NULL;
+	}
 
 	if (config->connect_timeout == 0)
 		ssh_socket->config.connect_timeout = RTRLIB_TRANSPORT_CONNECT_TIMEOUT_DEFAULT;
 	else
 		ssh_socket->config.connect_timeout = config->connect_timeout;
 
-	if (config->password)
+	if (config->password) {
 		ssh_socket->config.password = lrtr_strdup(config->password);
-	else
+
+		if (!ssh_socket->config.password)
+			goto error;
+
+	} else {
 		ssh_socket->config.password = NULL;
+	}
 
 	ssh_socket->ident = NULL;
 	ssh_socket->config.data = config->data;
 	ssh_socket->config.new_socket = config->new_socket;
 
 	return TR_SUCCESS;
+
+error:
+	if (ssh_socket->config.host)
+		free(ssh_socket->config.host);
+
+	if (ssh_socket->config.username)
+		free(ssh_socket->config.username);
+
+	if (ssh_socket->config.bindaddr)
+		free(ssh_socket->config.bindaddr);
+
+	if (ssh_socket->config.client_privkey_path)
+		free(ssh_socket->config.client_privkey_path);
+
+	if (ssh_socket->config.server_hostkey_path)
+		free(ssh_socket->config.server_hostkey_path);
+
+	if (ssh_socket->config.password)
+		free(ssh_socket->config.password);
+
+	return TR_ERROR;
 }
