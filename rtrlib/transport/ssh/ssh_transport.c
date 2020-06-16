@@ -256,7 +256,7 @@ int tr_ssh_recv(const void *tr_ssh_sock, void *buf, const size_t buf_len, const 
 		return TR_ERROR;
 
 	if (ssh_channel_is_eof(((struct tr_ssh_socket *)tr_ssh_sock)->channel) != 0)
-		return SSH_ERROR;
+		return TR_ERROR;
 
 	if (!rchans[0])
 		return TR_WOULDBLOCK;
@@ -267,7 +267,12 @@ int tr_ssh_recv(const void *tr_ssh_sock, void *buf, const size_t buf_len, const 
 int tr_ssh_send(const void *tr_ssh_sock, const void *pdu, const size_t len,
 		const time_t timeout __attribute__((unused)))
 {
-	return ssh_channel_write(((struct tr_ssh_socket *)tr_ssh_sock)->channel, pdu, len);
+	int ret = ssh_channel_write(((struct tr_ssh_socket *)tr_ssh_sock)->channel, pdu, len);
+
+	if (ret == SSH_ERROR)
+		return TR_ERROR;
+
+	return ret;
 }
 
 const char *tr_ssh_ident(void *tr_ssh_sock)
