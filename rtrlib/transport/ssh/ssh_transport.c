@@ -247,9 +247,13 @@ int tr_ssh_recv(const void *tr_ssh_sock, void *buf, const size_t buf_len, const 
 {
 	ssh_channel rchans[2] = {((struct tr_ssh_socket *)tr_ssh_sock)->channel, NULL};
 	struct timeval timev = {timeout, 0};
+	int ret;
 
-	if (ssh_channel_select(rchans, NULL, NULL, &timev) == SSH_EINTR)
+	ret = ssh_channel_select(rchans, NULL, NULL, &timev);
+	if (ret == SSH_EINTR)
 		return TR_INTR;
+	else if (ret == SSH_ERROR)
+		return TR_ERROR;
 
 	if (ssh_channel_is_eof(((struct tr_ssh_socket *)tr_ssh_sock)->channel) != 0)
 		return SSH_ERROR;
