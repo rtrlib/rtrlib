@@ -243,11 +243,10 @@ int tr_ssh_recv_async(const struct tr_ssh_socket *tr_ssh_sock, void *buf, const 
 	return rtval;
 }
 
-int tr_ssh_recv(const void *tr_ssh_sock, void *buf, const size_t buf_len,
-		const time_t timeout __attribute__((unused)))
+int tr_ssh_recv(const void *tr_ssh_sock, void *buf, const size_t buf_len, const time_t timeout)
 {
 	ssh_channel rchans[2] = {((struct tr_ssh_socket *)tr_ssh_sock)->channel, NULL};
-	struct timeval timev = {1, 0};
+	struct timeval timev = {timeout, 0};
 
 	if (ssh_channel_select(rchans, NULL, NULL, &timev) == SSH_EINTR)
 		return TR_INTR;
