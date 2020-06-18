@@ -16,7 +16,9 @@
 #include "rtrlib/transport/transport_private.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <libssh/libssh.h>
+#include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,6 +48,7 @@ static int tr_ssh_send(const void *tr_ssh_sock, const void *pdu, const size_t le
 static int tr_ssh_recv_async(const struct tr_ssh_socket *tr_ssh_sock, void *buf, const size_t buf_len);
 static const char *tr_ssh_ident(void *tr_ssh_sock);
 
+/* WARNING: This function has cancelable sections! */
 int tr_ssh_open(void *socket)
 {
 	struct tr_ssh_socket *ssh_socket = socket;
@@ -86,10 +89,48 @@ int tr_ssh_open(void *socket)
 		}
 	}
 
-	if (ssh_connect(ssh_socket->session) == SSH_ERROR) {
-		SSH_DBG1("tr_ssh_init: opening SSH connection failed", ssh_socket);
-		goto error;
-	}
+	ssh_set_blocking(ssh_socket->session, 0);
+	int ret;
+
+	do {
+		ret = ssh_connect(ssh_socket->session);
+
+		if (ret == SSH_ERROR) {
+			SSH_DBG1("tr_ssh_init: opening SSH connection failed", ssh_socket);
+			goto error;
+		} else if (ret == SSH_AGAIN) {
+			socket_t fd = ssh_get_fd(ssh_socket->session);
+
+			fd_set rfds;
+
+			FD_ZERO(&rfds);
+			FD_SET(fd, &rfds);
+			// timeout of 30 seconds
+			struct timeval timeout = { .tv_sec = 30, .tv_usec = 0 };
+			int oldcancelstate;
+
+			/* Enable cancellability for the select call
+			 * to prevent rtr_stop from blocking for a long time.
+			 * It must be the only blocking call in this function.
+			 * Since local resources have all been freed this should be safe.
+			 */
+			pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
+			int sret = select(fd + 1, &rfds, NULL, NULL, &timeout);
+
+			pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
+
+			if (sret < 0) {
+				SSH_DBG("could not select ssh socket, %s", ssh_socket, strerror(errno));
+
+			} else if (sret == 0) {
+				SSH_DBG1("connection attempt timed out", ssh_socket);
+				goto error;
+			}
+		}
+
+	} while (ret != SSH_OK);
+
+	ssh_set_blocking(ssh_socket->session, 1);
 
 	// check server identity
 	if ((config->server_hostkey_path) && (ssh_is_server_known(ssh_socket->session) != SSH_SERVER_KNOWN_OK)) {

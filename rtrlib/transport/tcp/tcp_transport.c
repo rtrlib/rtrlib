@@ -16,10 +16,13 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <netdb.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -44,6 +47,48 @@ static int tr_tcp_recv(const void *tr_tcp_sock, void *pdu, const size_t len, con
 static int tr_tcp_send(const void *tr_tcp_sock, const void *pdu, const size_t len, const time_t timeout);
 static const char *tr_tcp_ident(void *socket);
 
+static int set_socket_blocking(int socket)
+{
+	int flags = fcntl(socket, F_GETFL);
+
+	if (flags == -1)
+		return TR_ERROR;
+
+	flags &= ~O_NONBLOCK;
+
+	if (fcntl(socket, F_SETFL, flags) == -1)
+		return TR_ERROR;
+
+	return TR_SUCCESS;
+}
+
+static int set_socket_non_blocking(int socket)
+{
+	int flags = fcntl(socket, F_GETFL);
+
+	if (flags == -1)
+		return TR_ERROR;
+
+	flags |= O_NONBLOCK;
+
+	if (fcntl(socket, F_SETFL, flags) == -1)
+		return TR_ERROR;
+
+	return TR_SUCCESS;
+}
+
+static int get_socket_error(int socket)
+{
+	int result;
+	socklen_t result_len = sizeof(result);
+
+	if (getsockopt(socket, SOL_SOCKET, SO_ERROR, &result, &result_len) < 0)
+		return TR_ERROR;
+
+	return result;
+}
+
+/* WARNING: This function has cancelable sections! */
 int tr_tcp_open(void *tr_socket)
 {
 	int rtval = TR_ERROR;
@@ -105,11 +150,65 @@ int tr_tcp_open(void *tr_socket)
 				TCP_DBG("Socket bind failed, %s", tcp_socket, strerror(errno));
 				goto end;
 			}
+
+			freeaddrinfo(bind_addrinfo);
+			bind_addrinfo = NULL;
 		}
 
-		if (connect(tcp_socket->socket, res->ai_addr, res->ai_addrlen) == -1) {
+		if (set_socket_non_blocking(tcp_socket->socket) == TR_ERROR) {
+			TCP_DBG("Could not set socket to non blocking, %s", tcp_socket, strerror(errno));
+			goto end;
+		}
+
+		if (connect(tcp_socket->socket, res->ai_addr, res->ai_addrlen) == -1 && errno != EINPROGRESS) {
 			TCP_DBG("Couldn't establish TCP connection, %s",
 				tcp_socket, strerror(errno));
+			goto end;
+		}
+
+		freeaddrinfo(res);
+		res = NULL;
+
+		fd_set wfds;
+
+		FD_ZERO(&wfds);
+		FD_SET(tcp_socket->socket, &wfds);
+		// timeout of 30 seconds for select
+		struct timeval timeout = { .tv_sec = 30, .tv_usec = 0 };
+		int oldcancelstate;
+
+		/* Enable cancellability for the select call
+		 * to prevent rtr_stop from blocking for a long time.
+		 * It must be the only blocking call in this function.
+		 * Since local resources have all been freed this should be safe.
+		 */
+		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
+		int ret = select(tcp_socket->socket + 1, NULL, &wfds, NULL, &timeout);
+
+		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
+
+		if (ret < 0) {
+			TCP_DBG("Could not select tcp socket, %s", tcp_socket, strerror(errno));
+			goto end;
+
+		} else if (ret == 0) {
+			TCP_DBG("Could not establish TCP connection in time", tcp_socket);
+			goto end;
+		}
+
+		int socket_error = get_socket_error(tcp_socket->socket);
+
+		if (socket_error == TR_ERROR) {
+			TCP_DBG("Could not get socket error, %s", tcp_socket, strerror(errno));
+			goto end;
+
+		} else if (socket_error > 0) {
+			TCP_DBG("Could not establish TCP connection, %s", tcp_socket, strerror(socket_error));
+			goto end;
+		}
+
+		if (set_socket_blocking(tcp_socket->socket) == TR_ERROR) {
+			TCP_DBG("Could not set socket to blocking, %s", tcp_socket, strerror(errno));
 			goto end;
 		}
 	}
