@@ -47,6 +47,7 @@ static const char *tr_tcp_ident(void *socket);
 int tr_tcp_open(void *tr_socket)
 {
 	int rtval = TR_ERROR;
+	int tcp_rtval = 0;
 	struct tr_tcp_socket *tcp_socket = tr_socket;
 	const struct tr_tcp_config *config = &tcp_socket->config;
 
@@ -70,9 +71,15 @@ int tr_tcp_open(void *tr_socket)
 		}
 	}
 	if (tcp_socket->socket < 0) {
-		if (getaddrinfo(config->host, config->port, &hints, &res) != 0) {
-			TCP_DBG("getaddrinfo error, %s", tcp_socket,
-				gai_strerror(errno));
+		tcp_rtval = getaddrinfo(config->host, config->port, &hints, &res);
+		if (tcp_rtval != 0) {
+			if (tcp_rtval == EAI_SYSTEM) {
+				TCP_DBG("getaddrinfo error, %s", tcp_socket,
+					strerror(errno));
+			} else {
+				TCP_DBG("getaddrinfo error, %s", tcp_socket,
+					gai_strerror(tcp_rtval));
+			}
 			return TR_ERROR;
 		}
 
@@ -83,8 +90,15 @@ int tr_tcp_open(void *tr_socket)
 		}
 
 		if (tcp_socket->config.bindaddr) {
-			if (getaddrinfo(tcp_socket->config.bindaddr, 0, &hints, &bind_addrinfo) != 0) {
-				TCP_DBG("getaddrinfo error, %s", tcp_socket, gai_strerror(errno));
+			tcp_rtval = getaddrinfo(tcp_socket->config.bindaddr, 0, &hints, &bind_addrinfo);
+			if (tcp_rtval != 0) {
+				if (tcp_rtval == EAI_SYSTEM) {
+					TCP_DBG("getaddrinfo error, %s", tcp_socket,
+						strerror(errno));
+				} else {
+					TCP_DBG("getaddrinfo error, %s", tcp_socket,
+						gai_strerror(tcp_rtval));
+				}
 				goto end;
 			}
 			if (bind(tcp_socket->socket, bind_addrinfo->ai_addr, bind_addrinfo->ai_addrlen) != 0) {
