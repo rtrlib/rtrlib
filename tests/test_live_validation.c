@@ -21,9 +21,6 @@ struct test_validity_query {
 	unsigned int val;
 };
 
-static char *RPKI_CACHE_HOST = "rpki-validator.realmv6.org";
-static char *RPKI_CACHE_POST = "8283";
-
 /*
  * Verification is based on ROAs for RIPE RIS Routing Beacons, see:
  * (https://www.ripe.net/analyse/internet-measurements/
@@ -57,6 +54,12 @@ static void connection_status_callback(const struct rtr_mgr_group *group __attri
  */
 int main(void)
 {
+	/* These variables are not in the global scope
+	 * because it would cause warnings about discarding constness
+	 */
+	char RPKI_CACHE_HOST[] = "rpki-validator.realmv6.org";
+	char RPKI_CACHE_POST[] = "8283";
+
 	/* create a TCP transport socket */
 	struct tr_socket tr_tcp;
 	struct tr_tcp_config tcp_config = {RPKI_CACHE_HOST, RPKI_CACHE_POST, NULL, NULL, NULL};
