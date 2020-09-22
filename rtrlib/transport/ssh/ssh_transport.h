@@ -45,6 +45,8 @@
  *	  is made. The returned socket is expected to be ready for use (e.g.
  *	  in state established), and must use a reliably stream-oriented transport.
  *	  When new_socket() is used, host, port, and bindaddr are not used.
+ * @param connect_timeout Time in seconds to wait for a successful connection.
+ *	  Defaults to #RTRLIB_TRANSPORT_CONNECT_TIMEOUT_DEFAULT
  */
 struct tr_ssh_config {
 	char *host;
@@ -55,6 +57,7 @@ struct tr_ssh_config {
 	char *client_privkey_path;
 	void *data;
 	int (*new_socket)(void *data);
+	unsigned int connect_timeout;
 };
 
 /**

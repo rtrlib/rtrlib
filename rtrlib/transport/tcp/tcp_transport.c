@@ -173,8 +173,8 @@ int tr_tcp_open(void *tr_socket)
 
 		FD_ZERO(&wfds);
 		FD_SET(tcp_socket->socket, &wfds);
-		// timeout of 30 seconds for select
-		struct timeval timeout = { .tv_sec = 30, .tv_usec = 0 };
+
+		struct timeval timeout = {.tv_sec = tcp_socket->config.connect_timeout, .tv_usec = 0};
 		int oldcancelstate;
 
 		/* Enable cancellability for the select call
@@ -354,6 +354,11 @@ RTRLIB_EXPORT int tr_tcp_init(const struct tr_tcp_config *config, struct tr_sock
 		tcp_socket->config.bindaddr = lrtr_strdup(config->bindaddr);
 	else
 		tcp_socket->config.bindaddr = NULL;
+
+	if (config->connect_timeout == 0)
+		tcp_socket->config.connect_timeout = RTRLIB_TRANSPORT_CONNECT_TIMEOUT_DEFAULT;
+	else
+		tcp_socket->config.connect_timeout = config->connect_timeout;
 
 	tcp_socket->ident = NULL;
 	tcp_socket->config.data = config->data;
