@@ -22,6 +22,7 @@ int main()
 		ssh_privkey, //Private key
 		NULL, // data
 		NULL, // new_socket()
+		0, // connect timeout
 	};
 	tr_ssh_init(&config, &tr_ssh);
 
@@ -36,6 +37,7 @@ int main()
 		NULL, //Source address
 		NULL, //data
 		NULL, //get_socket()
+		0, // connect timeout
 	};
 	tr_tcp_init(&tcp_config, &tr_tcp);
 

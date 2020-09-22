@@ -105,8 +105,7 @@ int tr_ssh_open(void *socket)
 
 			FD_ZERO(&rfds);
 			FD_SET(fd, &rfds);
-			// timeout of 30 seconds
-			struct timeval timeout = { .tv_sec = 30, .tv_usec = 0 };
+			struct timeval timeout = {.tv_sec = ssh_socket->config.connect_timeout, .tv_usec = 0};
 			int oldcancelstate;
 
 			/* Enable cancellability for the select call
@@ -299,6 +298,11 @@ RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_sock
 		ssh_socket->config.server_hostkey_path = lrtr_strdup(config->server_hostkey_path);
 	else
 		ssh_socket->config.server_hostkey_path = NULL;
+
+	if (config->connect_timeout == 0)
+		ssh_socket->config.connect_timeout = RTRLIB_TRANSPORT_CONNECT_TIMEOUT_DEFAULT;
+	else
+		ssh_socket->config.connect_timeout = config->connect_timeout;
 
 	ssh_socket->ident = NULL;
 	ssh_socket->config.data = config->data;

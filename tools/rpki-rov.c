@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
 	}
 
 	struct tr_socket tr_tcp;
-	struct tr_tcp_config tcp_config = {argv[1], argv[2], NULL, NULL, NULL};
+	struct tr_tcp_config tcp_config = {argv[1], argv[2], NULL, NULL, NULL, 0};
 	struct rtr_socket rtr_tcp;
 	struct rtr_mgr_config *conf;
 	struct rtr_mgr_group groups[1];

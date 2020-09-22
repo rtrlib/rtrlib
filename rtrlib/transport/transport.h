@@ -26,6 +26,11 @@
 #include <time.h>
 
 /**
+ * @brief Default connect timeout
+ */
+#define RTRLIB_TRANSPORT_CONNECT_TIMEOUT_DEFAULT 30
+
+/**
  * @brief The return values for tr_ functions.
  */
 enum tr_rtvals {

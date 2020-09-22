@@ -33,6 +33,7 @@ int main(void)
 		NULL, //Source address
 		NULL, //data
 		NULL, //new_socket()
+		0, // connect timeout
 	};
 	tr_tcp_init(&tcp_config, &tr_tcp);
 
