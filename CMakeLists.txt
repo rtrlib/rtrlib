@@ -50,11 +50,22 @@ set(RTRLIB_SRC rtrlib/rtr_mgr.c rtrlib/lib/utils.c rtrlib/lib/alloc_utils.c rtrl
     rtrlib/spki/hashtable/ht-spkitable.c ${tommyds})
 set(RTRLIB_LINK ${RT_LIB} ${CMAKE_THREAD_LIBS_INIT})
 
+include(FindPkgConfig)
+
 if (NOT DEFINED RTRLIB_TRANSPORT_SSH OR RTRLIB_TRANSPORT_SSH)
-    find_package(LibSSH 0.5.0 QUIET)
+    pkg_check_modules(LIBSSH libssh>=0.5.0)
 
     if(LIBSSH_FOUND)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D LIBSSH_VERSION_MAJOR=${LibSSH_VERSION_MAJOR} -D LIBSSH_VERSION_MINOR=${LibSSH_VERSION_MINOR}")
+        # extract version number components
+        string(REGEX MATCH "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$" RTRLIB_LIBSSH_VERSION_MATCH ${LIBSSH_VERSION})
+        if (NOT RTRLIB_LIBSSH_VERSION_MATCH)
+            message(FATAL_ERROR "Could not parse libssh version ${LIBSSH_VERSION}")
+        endif(NOT RTRLIB_LIBSSH_VERSION_MATCH)
+        SET(LIBSSH_VERSION_MAJOR ${CMAKE_MATCH_1})
+        SET(LIBSSH_VERSION_MINOR ${CMAKE_MATCH_2})
+        SET(LIBSSH_VERSION_PATCH ${CMAKE_MATCH_3})
+
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D LIBSSH_VERSION_MAJOR=${LIBSSH_VERSION_MAJOR} -D LIBSSH_VERSION_MINOR=${LIBSSH_VERSION_MINOR}")
         set(RTRLIB_HAVE_LIBSSH 1)
         include_directories(${LIBSSH_INCLUDE_DIRS})
         set(RTRLIB_SRC ${RTRLIB_SRC} rtrlib/transport/ssh/ssh_transport.c)
