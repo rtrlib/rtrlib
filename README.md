@@ -130,6 +130,11 @@ Directories
 * tools/      - Contains the rtrclient
 
 
+CONTRIBUTE
+----------
+To contribute something to RTRlib, please refer to our [contributing document](CONTRIBUTING).
+
+
 Contact
 -------
 Website: [http://rtrlib.realmv6.org/](http://rtrlib.realmv6.org/)
