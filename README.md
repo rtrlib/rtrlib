@@ -1,3 +1,11 @@
+[![Build Status][travis-badge]][travis-link]
+[![GitHub release][release-badge]][release-link]
+[![License][license-badge]][license-link]
+[![API docs][api-badge]][api-link]
+[![Wiki][wiki-badge]][wiki-link]
+[![Read the Docs][rtd-badge]][rtd-link]
+[![Help wanted][helpwanted-badge]][helpwanted-link]
+
 Introduction
 ------------
 The RTRlib implements the client-side of the RPKI-RTR protocol 
@@ -122,9 +130,29 @@ Directories
 * tools/      - Contains the rtrclient
 
 
+CONTRIBUTE
+----------
+To contribute something to RTRlib, please refer to our [contributing document](CONTRIBUTING).
+
+
 Contact
 -------
 Website: [http://rtrlib.realmv6.org/](http://rtrlib.realmv6.org/)
 
 Mailing List: [rtrlib@googlegroups.com](mailto:rtrlib@googlegroups.com)
 
+
+[travis-badge]:https://travis-ci.com/rtrlib/rtrlib.svg?branch=master
+[travis-link]:https://travis-ci.com/rtrlib/rtrlib
+[release-badge]: https://img.shields.io/github/release/rtrlib/rtrlib.svg
+[release-link]: https://github.com/rtrlib/rtrlib/releases/latest
+[license-badge]: https://img.shields.io/github/license/rtrlib/rtrlib
+[license-link]: https://github.com/rtrlib/rtrlib/blob/master/LICENSE
+[api-badge]: https://img.shields.io/badge/docs-API-informational.svg
+[api-link]: http://rtrlib.realmv6.org/doxygen/latest/
+[wiki-badge]: https://img.shields.io/badge/docs-Wiki-informational.svg
+[wiki-link]: https://github.com/rtrlib/rtrlib/wiki
+[rtd-badge]: https://readthedocs.org/projects/rtrlib/badge/?version=latest 
+[rtd-link]: http://rtrlib.readthedocs.io/en/latest/?badge=latest
+[helpwanted-badge]: https://img.shields.io/badge/help-wanted-orange.svg
+[helpwanted-link]: https://github.com/rtrlib/rtrlib/issues
