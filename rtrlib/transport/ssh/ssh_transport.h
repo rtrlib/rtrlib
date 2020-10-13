@@ -58,6 +58,7 @@ struct tr_ssh_config {
 	void *data;
 	int (*new_socket)(void *data);
 	unsigned int connect_timeout;
+	char *password;
 };
 
 /**

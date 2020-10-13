@@ -24,7 +24,7 @@ rtrclient \- rtr rpki client
 .IR HOST
 .IR PORT
 .IR USERNAME
-.IR PRIVATE_KEY
+(\fIPRIVATE_KEY\fR|\fIPASSWORD\fR)
 [\fIHOST_KEY\fR]
 .SH DESCRIPTION
 \fBrtrclient\fR connects to an RPKI/RTR cache server and prints prefix, origin AS, and router key updates.
@@ -33,7 +33,8 @@ The amount is not limited and different transport types can be mixed arbitrarily
 .LP
 For \fBtcp\fR you must specify the \fIHOST\fR and \fIPORT\fR.
 .LP
-For \fBssh\fR you must specify the \fIHOST\fR, \fIPORT\fR, \fIUSERNAME\fR and a file containing the \fIPRIVATE_KEY\fR.
+For \fBssh\fR you must specify the \fIHOST\fR, \fIPORT\fR, \fIUSERNAME\fR and a file containing the \fIPRIVATE_KEY\fR or a \fIPASSWORD\fR.
+By default the rtrclient will try to guess which of the two was entered. If you want to explicitly specify this see \fB-w\fR and \fB-s\fR.
 You may specify a file containing a list of \fIHOST_KEY\fRs, in the well known
 .B SSH_KNOWN_HOSTS
 file format. See \fIsshd(8)\fR for details.
@@ -53,6 +54,7 @@ Print information about router key updates
 \fB-p\fR
 .RS 4
 Print information about prefix and origin AS updates
+.RE
 \fB-s\fR
 .RS 4
 Print information about connection status updates
@@ -72,6 +74,14 @@ Print available templates and exit. Prints specified templated, when used with -
 \fB-o\fR
 .RS 4
 Output file for export
+.RE
+\fB-w\fR
+.RS 4
+force ssh authentication information to be interpreted as a password
+.RE
+\fB-s\fR
+.RS 4
+force ssh authentication information to be interpreted as a private key
 .SH TEMPLATES
 Templates can be used to export ROA information in a custom format. They are written in the \fBmustache\fR(\fIhttps://mustache.github.io/\fR) templating language.
 

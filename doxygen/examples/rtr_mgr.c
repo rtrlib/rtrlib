@@ -23,6 +23,7 @@ int main()
 		NULL, // data
 		NULL, // new_socket()
 		0, // connect timeout
+		NULL, // password
 	};
 	tr_ssh_init(&config, &tr_ssh);
 

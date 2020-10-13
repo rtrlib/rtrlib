@@ -73,6 +73,10 @@ else (LIBSSH_LIBRARIES AND LIBSSH_INCLUDE_DIRS)
                 string(REGEX MATCH "[0-9]+" LIBSSH_VERSION_PATCH ${LIBSSH_VERSION_PATCH})
 
                 set(LibSSH_VERSION ${LIBSSH_VERSION_MAJOR}.${LIBSSH_VERSION_MINOR}.${LIBSSH_VERSION_PATCH})
+                set(LibSSH_VERSION_MAJOR ${LIBSSH_VERSION_MAJOR})
+                set(LibSSH_VERSION_MINOR ${LIBSSH_VERSION_MINOR})
+                set(LibSSH_VERSION_PATCH ${LIBSSH_VERSION_PATCH})
+                set(LibSSH_VERSION_COUNT "3")
 
                 include(FindPackageVersionCheck)
                 find_package_version_check(LibSSH DEFAULT_MSG)

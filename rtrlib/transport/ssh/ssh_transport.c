@@ -59,7 +59,7 @@ int tr_ssh_open(void *socket)
 
 	ssh_socket->session = ssh_new();
 	if (!ssh_socket->session) {
-		SSH_DBG1("tr_ssh_init: can't create ssh_session", ssh_socket);
+		SSH_DBG("%s: can't create ssh_session", ssh_socket, __func__);
 		goto error;
 	}
 
@@ -96,7 +96,7 @@ int tr_ssh_open(void *socket)
 		ret = ssh_connect(ssh_socket->session);
 
 		if (ret == SSH_ERROR) {
-			SSH_DBG1("tr_ssh_init: opening SSH connection failed", ssh_socket);
+			SSH_DBG("%s: opening SSH connection failed", ssh_socket, __func__);
 			goto error;
 		} else if (ret == SSH_AGAIN) {
 			socket_t fd = ssh_get_fd(ssh_socket->session);
@@ -132,19 +132,38 @@ int tr_ssh_open(void *socket)
 	ssh_set_blocking(ssh_socket->session, 1);
 
 	// check server identity
+#if LIBSSH_VERSION_MAJOR > 0 || LIBSSH_VERSION_MINOR > 8
+	if ((config->server_hostkey_path) && (ssh_session_is_known_server(ssh_socket->session) != SSH_KNOWN_HOSTS_OK)) {
+#else
 	if ((config->server_hostkey_path) && (ssh_is_server_known(ssh_socket->session) != SSH_SERVER_KNOWN_OK)) {
-		SSH_DBG1("tr_ssh_init: Wrong hostkey", ssh_socket);
+#endif
+		SSH_DBG("%s: Wrong hostkey", ssh_socket, __func__);
 		goto error;
 	}
 
+	if (config->client_privkey_path) {
+		SSH_DBG("%s: Trying publickey authentication", ssh_socket, __func__);
+		ssh_options_set(ssh_socket->session, SSH_OPTIONS_IDENTITY, config->client_privkey_path);
+
+		int rtval;
+
 #if LIBSSH_VERSION_MAJOR > 0 || LIBSSH_VERSION_MINOR > 5
-	const int rtval = ssh_userauth_publickey_auto(ssh_socket->session, NULL, NULL);
+		rtval = ssh_userauth_publickey_auto(ssh_socket->session, NULL, NULL);
 #else /* else use libSSH version 0.5.0 */
-	const int rtval = ssh_userauth_autopubkey(ssh_socket->session, NULL);
+		rtval = ssh_userauth_autopubkey(ssh_socket->session, NULL);
 #endif
-	if (rtval != SSH_AUTH_SUCCESS) {
-		SSH_DBG1("tr_ssh_init: Authentication failed", ssh_socket);
-		goto error;
+		if (rtval != SSH_AUTH_SUCCESS) {
+			SSH_DBG("%s: Publickey authentication failed", ssh_socket, __func__);
+			goto error;
+		}
+
+	} else {
+		SSH_DBG("%s: Trying password authentication", ssh_socket, __func__);
+
+		if (ssh_userauth_password(ssh_socket->session, NULL, config->password) != SSH_AUTH_SUCCESS) {
+			SSH_DBG("%s: Password authentication failed", ssh_socket, __func__);
+			goto error;
+		}
 	}
 
 	ssh_socket->channel = ssh_channel_new(ssh_socket->session);
@@ -155,7 +174,7 @@ int tr_ssh_open(void *socket)
 		goto error;
 
 	if (ssh_channel_request_subsystem(ssh_socket->channel, "rpki-rtr") == SSH_ERROR) {
-		SSH_DBG1("tr_ssh_init: Error requesting subsystem rpki-rtr", ssh_socket);
+		SSH_DBG("%s: Error requesting subsystem rpki-rtr", ssh_socket, __func__);
 		goto error;
 	}
 	SSH_DBG1("Connection established", ssh_socket);
@@ -224,17 +243,20 @@ int tr_ssh_recv_async(const struct tr_ssh_socket *tr_ssh_sock, void *buf, const 
 	return rtval;
 }
 
-int tr_ssh_recv(const void *tr_ssh_sock, void *buf, const size_t buf_len,
-		const time_t timeout __attribute__((unused)))
+int tr_ssh_recv(const void *tr_ssh_sock, void *buf, const size_t buf_len, const time_t timeout)
 {
 	ssh_channel rchans[2] = {((struct tr_ssh_socket *)tr_ssh_sock)->channel, NULL};
-	struct timeval timev = {1, 0};
+	struct timeval timev = {timeout, 0};
+	int ret;
 
-	if (ssh_channel_select(rchans, NULL, NULL, &timev) == SSH_EINTR)
+	ret = ssh_channel_select(rchans, NULL, NULL, &timev);
+	if (ret == SSH_EINTR)
 		return TR_INTR;
+	else if (ret == SSH_ERROR)
+		return TR_ERROR;
 
 	if (ssh_channel_is_eof(((struct tr_ssh_socket *)tr_ssh_sock)->channel) != 0)
-		return SSH_ERROR;
+		return TR_ERROR;
 
 	if (!rchans[0])
 		return TR_WOULDBLOCK;
@@ -245,7 +267,12 @@ int tr_ssh_recv(const void *tr_ssh_sock, void *buf, const size_t buf_len,
 int tr_ssh_send(const void *tr_ssh_sock, const void *pdu, const size_t len,
 		const time_t timeout __attribute__((unused)))
 {
-	return ssh_channel_write(((struct tr_ssh_socket *)tr_ssh_sock)->channel, pdu, len);
+	int ret = ssh_channel_write(((struct tr_ssh_socket *)tr_ssh_sock)->channel, pdu, len);
+
+	if (ret == SSH_ERROR)
+		return TR_ERROR;
+
+	return ret;
 }
 
 const char *tr_ssh_ident(void *tr_ssh_sock)
@@ -275,39 +302,91 @@ RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_sock
 	socket->send_fp = &tr_ssh_send;
 	socket->ident_fp = &tr_ssh_ident;
 
-	socket->socket = lrtr_malloc(sizeof(struct tr_ssh_socket));
+	socket->socket = lrtr_calloc(1, sizeof(struct tr_ssh_socket));
 	struct tr_ssh_socket *ssh_socket = socket->socket;
 
 	ssh_socket->channel = NULL;
 	ssh_socket->session = NULL;
 	ssh_socket->config.host = lrtr_strdup(config->host);
+	if (!ssh_socket->config.host)
+		goto error;
 	ssh_socket->config.port = config->port;
+
 	ssh_socket->config.username = lrtr_strdup(config->username);
+	if (!ssh_socket->config.username)
+		goto error;
 
-	if (config->bindaddr)
+	if ((config->password && config->client_privkey_path) || (!config->password && !config->client_privkey_path))
+		return TR_ERROR;
+
+	if (config->bindaddr) {
 		ssh_socket->config.bindaddr = lrtr_strdup(config->bindaddr);
-	else
+
+		if (!ssh_socket->config.bindaddr)
+			goto error;
+
+	} else {
 		ssh_socket->config.bindaddr = NULL;
+	}
 
-	if (config->client_privkey_path)
+	if (config->client_privkey_path) {
 		ssh_socket->config.client_privkey_path = lrtr_strdup(config->client_privkey_path);
-	else
-		ssh_socket->config.client_privkey_path = NULL;
+		if (!ssh_socket->config.client_privkey_path)
+			goto error;
 
-	if (config->server_hostkey_path)
+	} else {
+		ssh_socket->config.client_privkey_path = NULL;
+	}
+
+	if (config->server_hostkey_path) {
 		ssh_socket->config.server_hostkey_path = lrtr_strdup(config->server_hostkey_path);
-	else
+
+		if (!ssh_socket->config.client_privkey_path)
+			goto error;
+
+	} else {
 		ssh_socket->config.server_hostkey_path = NULL;
+	}
 
 	if (config->connect_timeout == 0)
 		ssh_socket->config.connect_timeout = RTRLIB_TRANSPORT_CONNECT_TIMEOUT_DEFAULT;
 	else
 		ssh_socket->config.connect_timeout = config->connect_timeout;
 
+	if (config->password) {
+		ssh_socket->config.password = lrtr_strdup(config->password);
+
+		if (!ssh_socket->config.password)
+			goto error;
+
+	} else {
+		ssh_socket->config.password = NULL;
+	}
+
 	ssh_socket->ident = NULL;
 	ssh_socket->config.data = config->data;
 	ssh_socket->config.new_socket = config->new_socket;
-	;
 
 	return TR_SUCCESS;
+
+error:
+	if (ssh_socket->config.host)
+		free(ssh_socket->config.host);
+
+	if (ssh_socket->config.username)
+		free(ssh_socket->config.username);
+
+	if (ssh_socket->config.bindaddr)
+		free(ssh_socket->config.bindaddr);
+
+	if (ssh_socket->config.client_privkey_path)
+		free(ssh_socket->config.client_privkey_path);
+
+	if (ssh_socket->config.server_hostkey_path)
+		free(ssh_socket->config.server_hostkey_path);
+
+	if (ssh_socket->config.password)
+		free(ssh_socket->config.password);
+
+	return TR_ERROR;
 }
