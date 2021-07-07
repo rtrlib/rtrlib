@@ -26,7 +26,7 @@ cd $SCRIPT_DIR/..
 for i in $CHECKSOURCE; do
 	echo "> check coding style of $i ..."
     IGNORE="PREFER_KERNEL_TYPES,CONST_STRUCT,OPEN_BRACE,SPDX_LICENSE_TAG,OPEN_ENDED_LINE,UNNECESSARY_PARENTHESES,PREFER_PRINTF,GLOBAL_INITIALISERS,PREFER_PACKED,BOOL_MEMBER,STATIC_CONST_CHAR_ARRAY,LONG_LINE_STRING"
-    if [[ $i == *"unittest"* ]]; then
+    if [[ $i == *"unittest"* ]] || [[ $i == *"bgpsec"* ]]; then
         IGNORE="${IGNORE},CAMELCASE"
     fi
         $SCRIPT_DIR/checkpatch.pl -f --strict --no-tree --terse --show-types \

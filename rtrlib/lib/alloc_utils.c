@@ -35,7 +35,6 @@ inline void *lrtr_malloc(size_t size)
 	return MALLOC_PTR(size);
 }
 
-/* cppcheck-suppress unusedFunction */
 void *lrtr_calloc(size_t nmemb, size_t size)
 {
 	int bytes = 0;

@@ -27,6 +27,11 @@ add_coverage(test_getbits)
 add_executable(test_dynamic_groups test_dynamic_groups.c)
 target_link_libraries(test_dynamic_groups rtrlib_static)
 add_coverage(test_dynamic_groups)
+if(RTRLIB_BGPSEC_ENABLED)
+    add_executable(test_bgpsec test_bgpsec.c)
+    target_link_libraries(test_bgpsec rtrlib_static)
+    add_coverage(test_bgpsec)
+endif(RTRLIB_BGPSEC_ENABLED)
 
 
 if(UNIT_TESTING AND NOT APPLE)

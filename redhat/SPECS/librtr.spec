@@ -6,27 +6,29 @@ Group:          Development/Libraries
 License:        MIT
 URL:            http://rpki.realmv6.org/
 Source0:        %{name}-%{version}.tar.gz
-BuildRequires:  binutils gcc tar cmake libssh-devel >= 0.5.0 doxygen
-Requires:       libssh >= 0.5.0
+BuildRequires:  binutils gcc tar cmake libssh-devel >= 0.5.0 openssl-devel >= 1.0 doxygen
+Requires:       libssh >= 0.5.0 openssl >= 1.0
 
 %description
-RTRlib is an open-source C implementation of the  RPKI/Router Protocol
+RTRlib is an open-source C implementation of the RPKI/Router Protocol
 client. The library allows one to fetch and store validated prefix origin
-data from a RTR-cache and performs origin verification of prefixes. It
-supports different types of transport sessions (e.g., SSH, unprotected TCP)
-and is easily extendable.
+data from a RTR-cache and performs origin verification of prefixes. It also
+allows validating and signing BGPsec AS paths. It supports different
+types of transport sessions (e.g., SSH, unprotected TCP) and is easily
+extendable.
 
 %package devel
 Summary:        Small extensible RPKI-RTR-Client C library. Development files
 Group:          Development/Libraries
-Requires:       %{name} = %{version}-%{release} libssh-devel >= 0.5.0
+Requires:       %{name} = %{version}-%{release} libssh-devel >= 0.5.0 openssl-devel >= 1.0
 
 %description devel
-RTRlib is an open-source C implementation of the  RPKI/Router Protocol
+RTRlib is an open-source C implementation of the RPKI/Router Protocol
 client. The library allows one to fetch and store validated prefix origin
-data from a RTR-cache and performs origin verification of prefixes. It
-supports different types of transport sessions (e.g., SSH, unprotected TCP)
-and is easily extendable.
+data from a RTR-cache and performs origin verification of prefixes. It also
+allows validating and signing BGPsec AS paths. It supports different
+types of transport sessions (e.g., SSH, unprotected TCP) and is easily
+extendable.
 .
 This package contains development files.
 
@@ -37,11 +39,12 @@ Requires:       %{name} = %{version}-%{release}
 BuildArch:      noarch
 
 %description doc
-RTRlib is an open-source C implementation of the  RPKI/Router Protocol
+RTRlib is an open-source C implementation of the RPKI/Router Protocol
 client. The library allows one to fetch and store validated prefix origin
-data from a RTR-cache and performs origin verification of prefixes. It
-supports different types of transport sessions (e.g., SSH, unprotected TCP)
-and is easily extendable.
+data from a RTR-cache and performs origin verification of prefixes. It also
+allows validating and signing BGPsec AS paths. It supports different
+types of transport sessions (e.g., SSH, unprotected TCP) and is easily
+extendable.
 .
 This package contains documentation files.
 

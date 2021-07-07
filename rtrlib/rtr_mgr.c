@@ -16,6 +16,9 @@
 #include "rtrlib/rtrlib_export_private.h"
 #include "rtrlib/spki/hashtable/ht-spkitable_private.h"
 #include "rtrlib/transport/transport_private.h"
+#ifdef RTRLIB_BGPSEC_ENABLED
+#include "rtrlib/bgpsec/bgpsec_private.h"
+#endif
 
 #include <arpa/inet.h>
 #include <pthread.h>
@@ -673,3 +676,151 @@ RTRLIB_EXPORT inline void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *co
 {
 	pfx_table_for_each_ipv6_record(config->pfx_table, fp, data);
 }
+
+#ifdef RTRLIB_BGPSEC_ENABLED
+/* cppcheck-suppress unusedFunction */
+RTRLIB_EXPORT int rtr_mgr_bgpsec_validate_as_path(
+			const struct rtr_bgpsec *data,
+			struct rtr_mgr_config *config)
+{
+	int retval = rtr_bgpsec_validate_as_path(data,
+						 config->spki_table);
+
+	return retval;
+}
+
+/* cppcheck-suppress unusedFunction */
+RTRLIB_EXPORT int rtr_mgr_bgpsec_generate_signature(
+			const struct rtr_bgpsec *data,
+			uint8_t *private_key,
+			struct rtr_signature_seg **new_signature)
+{
+	int retval = rtr_bgpsec_generate_signature(data,
+						   private_key,
+						   new_signature);
+
+	return retval;
+}
+
+/* cppcheck-suppress unusedFunction */
+RTRLIB_EXPORT int rtr_mgr_bgpsec_get_version(void)
+{
+	return rtr_bgpsec_get_version();
+}
+
+/* cppcheck-suppress unusedFunction */
+RTRLIB_EXPORT int rtr_mgr_bgpsec_has_algorithm_suite(uint8_t alg_suite)
+{
+	return rtr_bgpsec_has_algorithm_suite(alg_suite);
+}
+
+/* cppcheck-suppress unusedFunction */
+RTRLIB_EXPORT int rtr_mgr_bgpsec_get_algorithm_suites(const uint8_t **algs_arr)
+{
+	return rtr_bgpsec_get_algorithm_suites(algs_arr);
+}
+
+/* cppcheck-suppress unusedFunction */
+RTRLIB_EXPORT void rtr_mgr_bgpsec_free_signatures(struct rtr_signature_seg *seg)
+{
+	rtr_bgpsec_free_signatures(seg);
+}
+
+/* cppcheck-suppress unusedFunction */
+RTRLIB_EXPORT struct rtr_secure_path_seg *rtr_mgr_bgpsec_new_secure_path_seg(
+				uint8_t pcount,
+				uint8_t flags,
+				uint32_t asn)
+{
+	return rtr_bgpsec_new_secure_path_seg(pcount, flags, asn);
+}
+
+/* cppcheck-suppress unusedFunction */
+RTRLIB_EXPORT void rtr_mgr_bgpsec_prepend_sec_path_seg(
+				struct rtr_bgpsec *bgpsec,
+				struct rtr_secure_path_seg *new_seg)
+{
+	rtr_bgpsec_prepend_sec_path_seg(bgpsec, new_seg);
+}
+
+/* cppcheck-suppress unusedFunction */
+RTRLIB_EXPORT struct rtr_signature_seg *rtr_mgr_bgpsec_new_signature_seg(
+				uint8_t *ski,
+				uint16_t sig_len,
+				uint8_t *signature)
+{
+	return rtr_bgpsec_new_signature_seg(ski, sig_len, signature);
+}
+
+/* cppcheck-suppress unusedFunction */
+RTRLIB_EXPORT int rtr_mgr_bgpsec_prepend_sig_seg(
+				struct rtr_bgpsec *bgpsec,
+				struct rtr_signature_seg *new_seg)
+{
+	return rtr_bgpsec_prepend_sig_seg(bgpsec, new_seg);
+}
+
+/* cppcheck-suppress unusedFunction */
+RTRLIB_EXPORT struct rtr_bgpsec *rtr_mgr_bgpsec_new(
+				uint8_t alg, uint8_t safi, uint16_t afi,
+				uint32_t my_as, uint32_t target_as,
+				struct rtr_bgpsec_nlri nlri)
+{
+	return rtr_bgpsec_new(alg, safi, afi, my_as, target_as, nlri);
+}
+
+/* cppcheck-suppress unusedFunction */
+RTRLIB_EXPORT void rtr_mgr_bgpsec_free(struct rtr_bgpsec *bgpsec)
+{
+	rtr_bgpsec_free(bgpsec);
+}
+
+/* cppcheck-suppress unusedFunction */
+RTRLIB_EXPORT void rtr_mgr_free_secure_path(struct rtr_secure_path_seg *seg)
+{
+	rtr_bgpsec_free_secure_path(seg);
+}
+
+/* cppcheck-suppress unusedFunction */
+RTRLIB_EXPORT struct rtr_secure_path_seg *rtr_mgr_bgpsec_pop_secure_path_seg(
+						struct rtr_bgpsec *bgpsec)
+{
+	return rtr_bgpsec_pop_secure_path_seg(bgpsec);
+}
+
+/* cppcheck-suppress unusedFunction */
+RTRLIB_EXPORT struct rtr_signature_seg *rtr_mgr_bgpsec_pop_signature_seg(
+						struct rtr_bgpsec *bgpsec)
+{
+	return rtr_bgpsec_pop_signature_seg(bgpsec);
+}
+
+RTRLIB_EXPORT void rtr_mgr_bgpsec_append_sec_path_seg(
+				struct rtr_bgpsec *bgpsec,
+				struct rtr_secure_path_seg *new_seg)
+{
+	rtr_bgpsec_append_sec_path_seg(bgpsec, new_seg);
+}
+
+RTRLIB_EXPORT int rtr_mgr_bgpsec_append_sig_seg(struct rtr_bgpsec *bgpsec,
+						struct rtr_signature_seg *new_seg)
+{
+	return rtr_bgpsec_append_sig_seg(bgpsec, new_seg);
+}
+
+RTRLIB_EXPORT struct rtr_bgpsec_nlri *rtr_mgr_bgpsec_nlri_new(void)
+{
+	return rtr_bgpsec_nlri_new();
+}
+
+RTRLIB_EXPORT void rtr_mgr_bgpsec_nlri_free(struct rtr_bgpsec_nlri *nlri)
+{
+	rtr_bgpsec_nlri_free(nlri);
+}
+
+RTRLIB_EXPORT void rtr_mgr_bgpsec_add_spki_record(struct rtr_mgr_config *config,
+						  struct spki_record *record)
+{
+	rtr_bgpsec_add_spki_record(config->spki_table, record);
+}
+#endif

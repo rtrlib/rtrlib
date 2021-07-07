@@ -28,6 +28,9 @@ To build the RTRlib, the CMake build system must be installed.
 To establish an SSH connection between RTR-Client and RTR-Server, the
 libssh 0.6.x or higher library must also be installed.
 
+To enable BGPsec support for validating and signing AS paths, libssl
+1.0 or higher needs to be installed.
+
 cmocka (optional) is required for unit tests
 Doxygen (optional) is required to create the HTML documentation.
 
@@ -64,6 +67,18 @@ Compilation
   can pass the following argument to cmake:
 
       -D CMAKE_INSTALL_PREFIX=<path>
+
+  BGPsec support is enabled by default. If dependencies cannot be
+  resolved, rtrlib builds without BGPsec.
+  
+  To explicitly disable BGPsec:
+
+      -D WITH_BGPSEC=No
+
+  To explicitly enable BGPsec and fail the build if dependencies
+  cannot be resolved:
+
+      -D WITH_BGPSEC=Yes
 
 * Build library, tests, and tools
 
