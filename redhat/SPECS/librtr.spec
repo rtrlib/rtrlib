@@ -1,5 +1,5 @@
 Name:           librtr
-Version:        0.7.0
+Version:        0.8.0
 Release:        1%{?dist}
 Summary:        Small extensible RPKI-RTR-Client C library
 Group:          Development/Libraries

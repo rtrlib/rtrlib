@@ -122,7 +122,7 @@ ADD_TEST(test_dynamic_groups tests/test_dynamic_groups)
 
 #install lib
 set (RTRLIB_VERSION_MAJOR 0)
-set (RTRLIB_VERSION_MINOR 7)
+set (RTRLIB_VERSION_MINOR 8)
 set (RTRLIB_VERSION_PATCH 0)
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/rtrlib/rtrlib.h.cmake ${CMAKE_SOURCE_DIR}/rtrlib/rtrlib.h)
 set(LIBRARY_VERSION ${RTRLIB_VERSION_MAJOR}.${RTRLIB_VERSION_MINOR}.${RTRLIB_VERSION_PATCH})

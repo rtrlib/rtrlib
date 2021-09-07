@@ -1,3 +1,20 @@
+librtr0 (0.8.0) stable; urgency=high
+    * Fix blocking when stopping sockets in some cases
+    * Add callback to allow user created sockets
+    * Add ability to change the connect timeout
+    * Add support for password authentication to ssh transport
+    * Update tools to allow for password authentication when using ssh transport
+    * Improve error handling in ssh transport
+    * Improve error output in TCP transport
+    * Improve libssh detection when running configure
+    * Initialise structures properly in rtrclient
+    * Fix several compiler warnings
+    * Extend log messages to include prefixes when using ssh transport
+    * Fix bug that constantly called tr_recv because of ignoring timeout argument when using ssh transport
+    * Apply kernel coding style in all source files
+
+ -- Marcel Röthke <marcel.roethke@haw-hamburg.de>  Tue, 7 Sep 2021 12:00:00 +0200
+
 librtr0 (0.7.0.0) stable; urgency=high
     * Fix to ensure shadow tables are only freed when initialized before
     * Fix SSH transport w/o bind address and add host key verification
