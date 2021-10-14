@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <pthread.h>
 #include <signal.h>
+#include <time.h>
 #include <unistd.h>
 
 static void rtr_purge_outdated_records(struct rtr_socket *rtr_socket);

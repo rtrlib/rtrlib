@@ -9,6 +9,7 @@
 
 #include "packets_private.h"
 
+#include "rtrlib/config.h"
 #include "rtrlib/lib/alloc_utils_private.h"
 #include "rtrlib/lib/convert_byte_order_private.h"
 #include "rtrlib/lib/log_private.h"
@@ -17,6 +18,9 @@
 #include "rtrlib/rtr/rtr_private.h"
 #include "rtrlib/spki/hashtable/ht-spkitable_private.h"
 #include "rtrlib/transport/transport_private.h"
+#ifdef RTRLIB_BGPSEC_ENABLED
+#include "rtrlib/bgpsec/bgpsec_utils_private.h"
+#endif
 
 #include <assert.h>
 #include <stdint.h>
