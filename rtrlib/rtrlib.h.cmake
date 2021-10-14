@@ -19,6 +19,7 @@ extern "C" {
 #define RTRLIB_VERSION_MINOR @RTRLIB_VERSION_MINOR@
 #define RTRLIB_VERSION_PATCH @RTRLIB_VERSION_PATCH@
 
+#include "config.h"
 #include "lib/alloc_utils.h"
 #include "lib/ip.h"
 #include "lib/ipv4.h"
@@ -31,6 +32,9 @@ extern "C" {
 #include "transport/transport.h"
 #ifdef RTRLIB_HAVE_LIBSSH
 #include "rtrlib/transport/ssh/ssh_transport.h"
+#endif
+#ifdef RTRLIB_BGPSEC_ENABLED
+#include "rtrlib/bgpsec/bgpsec.h"
 #endif
 
 #endif

@@ -19,6 +19,7 @@ tags
 *.so*
 */Makefile
 rtrlib/rtrlib.h
+rtrlib/config.h
 tools/rpki-rov
 tools/rtrclient
 
