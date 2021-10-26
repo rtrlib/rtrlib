@@ -541,8 +541,6 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
 	error = tr_recv_all(rtr_socket->tr_socket, pdu, sizeof(struct pdu_header), timeout);
 	if (error < 0)
 		goto error;
-	else
-		error = RTR_SUCCESS;
 
 	// header in hostbyte order, retain original received pdu, in case we need to detach it to an error pdu
 	struct pdu_header header;
@@ -586,8 +584,6 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
 				    RTR_RECV_TIMEOUT);
 		if (error < 0)
 			goto error;
-		else
-			error = RTR_SUCCESS;
 	}
 	// copy header in host_byte_order to pdu
 	memcpy(pdu, &header, sizeof(header));
@@ -1236,11 +1232,9 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 						retval = rtr_undo_update_pfx_table(rtr_socket, pfx_update_table,
 										   &(ipv6_pdus[j]));
 					for (unsigned int j = 0;
-					// cppcheck-suppress duplicateExpression
 					     j < i && (retval == PFX_SUCCESS || retval == SPKI_SUCCESS); j++)
 						retval = rtr_undo_update_spki_table(rtr_socket, spki_update_table,
 										    &(router_key_pdus[j]));
-					// cppcheck-suppress duplicateExpression
 					if (retval == RTR_ERROR || retval == SPKI_ERROR) {
 						RTR_DBG1(
 							"Couldn't undo all update operations from failed data synchronisation: Purging all key entries");
@@ -1472,6 +1466,9 @@ static int rtr_send_error_pdu_from_host(const struct rtr_socket *rtr_socket, con
 					const char *err_text, const uint32_t err_text_len)
 {
 	char pdu[erroneous_pdu_len];
+
+	if (!erroneous_pdu)
+		return RTR_ERROR;
 
 	memcpy(&pdu, erroneous_pdu, erroneous_pdu_len);
 

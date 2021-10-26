@@ -720,7 +720,6 @@ static int parse_cli(int argc, char **argv)
 
 			} else {
 				print_error_exit("\"%s\" is not a valid socket type\n", argv[optind]);
-				break;
 			}
 
 			++optind;
