@@ -48,14 +48,18 @@ function checkpatch {
 run_command_with_cwd "$BASE_DIR" "$SCRIPT_DIR"/cppcheck.sh
 run_command_with_cwd "$BASE_DIR" "$SCRIPT_DIR"/check-coding-style.sh
 [[ $TRAVIS_EVENT_TYPE = "pull_request" ]] && run_command checkpatch
-run_command cmake -D RTRLIB_TRANSPORT_SSH=Off "$BASE_DIR"
+run_command cmake -D RTRLIB_TRANSPORT_SSH=Off -DENABLE_COVERAGE=No "$BASE_DIR"
 run_command make
 run_command make test
+run_command make clean
+run_command cmake -D CMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=No -DRTRLIB_TRANSPORT_SSH=On "$BASE_DIR"
+run_command make
+run_command make test
+run_command "$SCRIPT_DIR"/check-exports.sh "$BASE_DIR"
 run_command make clean
 run_command cmake -D CMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=On -DUNIT_TESTING=On -DRTRLIB_TRANSPORT_SSH=On "$BASE_DIR"
 run_command make
 run_command make test
 run_command make gcov
-run_command scripts/check-exports.sh
 
 exit $BUILDSTEP_FAILED
