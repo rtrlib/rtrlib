@@ -1,5 +1,6 @@
 #!/bin/bash
 
-cppcheck --error-exitcode=1 --enable=all --inline-suppr \
+cppcheck  --error-exitcode=1 --enable=all --inline-suppr \
 	--template='{id}:{file}({line}):({severity}) {message}' \
-	-i rtrlib/spki/hashtable/tommyds-2.2/ tools/ rtrlib/
+	--suppress=missingInclude --suppress=constParameter --suppress=unmatchedSuppression \
+	-i third-party/ tools/ rtrlib/
