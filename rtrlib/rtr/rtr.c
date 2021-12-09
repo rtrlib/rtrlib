@@ -241,6 +241,7 @@ void rtr_stop(struct rtr_socket *rtr_socket)
 		pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
 		spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
 		rtr_socket->thread_id = 0;
+		rtr_socket->state = RTR_CLOSED;
 	}
 	RTR_DBG1("Socket shut down");
 }
