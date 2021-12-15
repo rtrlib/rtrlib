@@ -11,8 +11,8 @@
 extern "C" {
 #endif
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef RTR_CONFIG_H
+#define RTR_CONFIG_H
 
 #cmakedefine RTRLIB_BGPSEC_ENABLED
 
