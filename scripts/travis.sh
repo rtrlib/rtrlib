@@ -36,7 +36,7 @@ function run_command_with_cwd {
 }
 
 function checkpatch {
-	git diff "$TRAVIS_BRANCH" {rtrlib,tools,tests}/**/*.[ch] > /tmp/patch
+	git diff "origin/$CHANGE_TARGET" {rtrlib,tools,tests}/**/*.[ch] > /tmp/patch
 	run_command scripts/checkpatch.pl --ignore FILE_PATH_CHANGES,PREFER_KERNEL_TYPES,CONST_STRUCT,OPEN_BRACE,SPDX_LICENSE_TAG,OPEN_ENDED_LINE,UNNECESSARY_PARENTHESES,PREFER_PRINTF,GLOBAL_INITIALISERS,PREFER_PACKED,BOOL_MEMBER,STATIC_CONST_CHAR_ARRAY,LONG_LINE_STRING --terse --no-tree --strict --show-types --max-line-length 120 /tmp/patch
 	ret=$?
 	if [ $ret != 0 ]; then
@@ -44,10 +44,9 @@ function checkpatch {
 	fi
 }
 
-[[ $TRAVIS = "true" ]] && run_command git fetch --unshallow
 run_command_with_cwd "$BASE_DIR" "$SCRIPT_DIR"/cppcheck.sh
 run_command_with_cwd "$BASE_DIR" "$SCRIPT_DIR"/check-coding-style.sh
-[[ $TRAVIS_EVENT_TYPE = "pull_request" ]] && run_command checkpatch
+[[ -n $CHANGE_TARGET ]] && run_command checkpatch
 run_command cmake -D RTRLIB_TRANSPORT_SSH=Off -DENABLE_COVERAGE=No "$BASE_DIR"
 run_command make
 run_command make test
