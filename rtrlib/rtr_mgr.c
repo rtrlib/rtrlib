@@ -94,7 +94,7 @@ bool rtr_mgr_config_status_is_synced(const struct rtr_mgr_group *group)
 static void rtr_mgr_close_less_preferable_groups(const struct rtr_socket *sock, struct rtr_mgr_config *config,
 						 struct rtr_mgr_group *group)
 {
-	pthread_mutex_lock(&config->mutex);
+	pthread_rwlock_rdlock(&config->mutex);
 	tommy_node *node = tommy_list_head(&config->groups->list);
 
 	while (node) {
@@ -109,12 +109,12 @@ static void rtr_mgr_close_less_preferable_groups(const struct rtr_socket *sock, 
 		}
 		node = node->next;
 	}
-	pthread_mutex_unlock(&config->mutex);
+	pthread_rwlock_unlock(&config->mutex);
 }
 
 static struct rtr_mgr_group *get_best_inactive_rtr_mgr_group(struct rtr_mgr_config *config, struct rtr_mgr_group *group)
 {
-	pthread_mutex_lock(&config->mutex);
+	pthread_rwlock_rdlock(&config->mutex);
 	tommy_node *node = tommy_list_head(&config->groups->list);
 
 	while (node) {
@@ -122,30 +122,30 @@ static struct rtr_mgr_group *get_best_inactive_rtr_mgr_group(struct rtr_mgr_conf
 		struct rtr_mgr_group *current_group = group_node->group;
 
 		if ((current_group != group) && (current_group->status == RTR_MGR_CLOSED)) {
-			pthread_mutex_unlock(&config->mutex);
+			pthread_rwlock_unlock(&config->mutex);
 			return current_group;
 		}
 		node = node->next;
 	}
-	pthread_mutex_unlock(&config->mutex);
+	pthread_rwlock_unlock(&config->mutex);
 	return NULL;
 }
 
 static bool is_some_rtr_mgr_group_established(struct rtr_mgr_config *config)
 {
-	pthread_mutex_lock(&config->mutex);
+	pthread_rwlock_rdlock(&config->mutex);
 	tommy_node *node = tommy_list_head(&config->groups->list);
 
 	while (node) {
 		struct rtr_mgr_group_node *group_node = node->data;
 
 		if (group_node->group->status == RTR_MGR_ESTABLISHED) {
-			pthread_mutex_unlock(&config->mutex);
+			pthread_rwlock_unlock(&config->mutex);
 			return true;
 		}
 		node = node->next;
 	}
-	pthread_mutex_unlock(&config->mutex);
+	pthread_rwlock_unlock(&config->mutex);
 	return false;
 }
 
@@ -189,7 +189,7 @@ static inline void _rtr_mgr_cb_state_established(const struct rtr_socket *sock, 
 		 */
 		bool all_error = true;
 
-		pthread_mutex_lock(&config->mutex);
+		pthread_rwlock_rdlock(&config->mutex);
 		tommy_node *node = tommy_list_head(&config->groups->list);
 
 		while (node) {
@@ -203,7 +203,7 @@ static inline void _rtr_mgr_cb_state_established(const struct rtr_socket *sock, 
 			}
 			node = node->next;
 		}
-		pthread_mutex_unlock(&config->mutex);
+		pthread_rwlock_unlock(&config->mutex);
 
 		if (all_error && rtr_mgr_config_status_is_synced(group)) {
 			set_status(config, group, RTR_MGR_ESTABLISHED, sock);
@@ -320,7 +320,7 @@ RTRLIB_EXPORT int rtr_mgr_init(struct rtr_mgr_config **config_out, struct rtr_mg
 
 	config->len = groups_len;
 
-	if (pthread_mutex_init(&config->mutex, NULL) != 0) {
+	if (pthread_rwlock_init(&config->mutex, NULL) != 0) {
 		MGR_DBG1("Mutex initialization failed");
 		goto err;
 	}
@@ -426,7 +426,7 @@ RTRLIB_EXPORT int rtr_mgr_start(struct rtr_mgr_config *config)
 
 RTRLIB_EXPORT bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config)
 {
-	pthread_mutex_lock(&config->mutex);
+	pthread_rwlock_rdlock(&config->mutex);
 	tommy_node *node = tommy_list_head(&config->groups->list);
 
 	while (node) {
@@ -438,19 +438,19 @@ RTRLIB_EXPORT bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config)
 				all_sync = false;
 		}
 		if (all_sync) {
-			pthread_mutex_unlock(&config->mutex);
+			pthread_rwlock_unlock(&config->mutex);
 			return true;
 		}
 		node = node->next;
 	}
-	pthread_mutex_unlock(&config->mutex);
+	pthread_rwlock_unlock(&config->mutex);
 	return false;
 }
 
 RTRLIB_EXPORT void rtr_mgr_free(struct rtr_mgr_config *config)
 {
 	MGR_DBG("%s()", __func__);
-	pthread_mutex_lock(&config->mutex);
+	pthread_rwlock_wrlock(&config->mutex);
 
 	pfx_table_free(config->pfx_table);
 	spki_table_free(config->spki_table);
@@ -474,8 +474,8 @@ RTRLIB_EXPORT void rtr_mgr_free(struct rtr_mgr_config *config)
 
 	lrtr_free(config->groups);
 
-	pthread_mutex_unlock(&config->mutex);
-	pthread_mutex_destroy(&config->mutex);
+	pthread_rwlock_unlock(&config->mutex);
+	pthread_rwlock_destroy(&config->mutex);
 	lrtr_free(config);
 }
 
@@ -496,7 +496,7 @@ RTRLIB_EXPORT inline int rtr_mgr_get_spki(struct rtr_mgr_config *config, const u
 
 RTRLIB_EXPORT void rtr_mgr_stop(struct rtr_mgr_config *config)
 {
-	pthread_mutex_lock(&config->mutex);
+	pthread_rwlock_rdlock(&config->mutex);
 	tommy_node *node = tommy_list_head(&config->groups->list);
 
 	MGR_DBG("%s()", __func__);
@@ -507,7 +507,7 @@ RTRLIB_EXPORT void rtr_mgr_stop(struct rtr_mgr_config *config)
 			rtr_stop(group_node->group->sockets[j]);
 		node = node->next;
 	}
-	pthread_mutex_unlock(&config->mutex);
+	pthread_rwlock_unlock(&config->mutex);
 }
 
 /* cppcheck-suppress unusedFunction */
@@ -522,7 +522,7 @@ RTRLIB_EXPORT int rtr_mgr_add_group(struct rtr_mgr_config *config, const struct 
 	struct rtr_mgr_group *new_group = NULL;
 	struct rtr_mgr_group_node *gnode;
 
-	pthread_mutex_lock(&config->mutex);
+	pthread_rwlock_wrlock(&config->mutex);
 
 	tommy_node *node = tommy_list_head(&config->groups->list);
 
@@ -574,11 +574,11 @@ RTRLIB_EXPORT int rtr_mgr_add_group(struct rtr_mgr_config *config, const struct 
 	if (best_group->status == RTR_MGR_CLOSED)
 		rtr_mgr_start_sockets(best_group);
 
-	pthread_mutex_unlock(&config->mutex);
+	pthread_rwlock_unlock(&config->mutex);
 	return RTR_SUCCESS;
 
 err:
-	pthread_mutex_unlock(&config->mutex);
+	pthread_rwlock_unlock(&config->mutex);
 
 	if (new_group)
 		lrtr_free(new_group);
@@ -589,7 +589,7 @@ err:
 /* cppcheck-suppress unusedFunction */
 RTRLIB_EXPORT int rtr_mgr_remove_group(struct rtr_mgr_config *config, unsigned int preference)
 {
-	pthread_mutex_lock(&config->mutex);
+	pthread_rwlock_wrlock(&config->mutex);
 	tommy_node *remove_node = NULL;
 	tommy_node *node = tommy_list_head(&config->groups->list);
 	struct rtr_mgr_group_node *group_node;
@@ -597,7 +597,7 @@ RTRLIB_EXPORT int rtr_mgr_remove_group(struct rtr_mgr_config *config, unsigned i
 
 	if (config->len == 1) {
 		MGR_DBG1("Cannot remove last remaining group!");
-		pthread_mutex_unlock(&config->mutex);
+		pthread_rwlock_unlock(&config->mutex);
 		return RTR_ERROR;
 	}
 
@@ -611,7 +611,7 @@ RTRLIB_EXPORT int rtr_mgr_remove_group(struct rtr_mgr_config *config, unsigned i
 
 	if (!remove_node) {
 		MGR_DBG1("The group that should be removed does not exist!");
-		pthread_mutex_unlock(&config->mutex);
+		pthread_rwlock_unlock(&config->mutex);
 		return RTR_ERROR;
 	}
 
@@ -621,7 +621,7 @@ RTRLIB_EXPORT int rtr_mgr_remove_group(struct rtr_mgr_config *config, unsigned i
 	config->len--;
 	MGR_DBG("Group with preference %d successfully removed!", preference);
 	// tommy_list_sort(&config->groups->list, &rtr_mgr_config_cmp);
-	pthread_mutex_unlock(&config->mutex);
+	pthread_rwlock_unlock(&config->mutex);
 
 	// If group isn't closed, make it so!
 	if (remove_group->status != RTR_MGR_CLOSED) {
