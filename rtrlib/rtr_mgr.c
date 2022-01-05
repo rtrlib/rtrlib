@@ -189,7 +189,7 @@ static inline void _rtr_mgr_cb_state_established(const struct rtr_socket *sock, 
 		 */
 		bool all_error = true;
 
-		pthread_rwlock_wrlock(&config->mutex);
+		pthread_rwlock_rdlock(&config->mutex);
 		tommy_node *node = tommy_list_head(&config->groups->list);
 
 		while (node) {
