@@ -83,7 +83,7 @@ struct tommy_list_wrapper;
 struct rtr_mgr_config {
 	struct tommy_list_wrapper *groups;
 	unsigned int len;
-	pthread_mutex_t mutex;
+	pthread_rwlock_t mutex;
 	rtr_mgr_status_fp status_fp;
 	void *status_fp_data;
 	struct pfx_table *pfx_table;
