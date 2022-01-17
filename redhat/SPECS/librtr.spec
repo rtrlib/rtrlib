@@ -9,6 +9,14 @@ Source0:        %{name}-%{version}.tar.gz
 BuildRequires:  binutils gcc tar cmake libssh-devel >= 0.5.0 openssl-devel >= 1.0 doxygen
 Requires:       libssh >= 0.5.0 openssl >= 1.0
 
+# Fedora 33 and up changed cmake in rpm's
+# See https://fedoraproject.org/wiki/Changes/CMake_to_do_out-of-source_builds
+%if 0%{?fedora} >= 33 || 0%{?rhel} >= 9
+    %global use_cmake_macros 1
+%else
+    %global use_cmake_macros 0
+%endif
+
 %description
 RTRlib is an open-source C implementation of the RPKI/Router Protocol
 client. The library allows one to fetch and store validated prefix origin
@@ -63,8 +71,10 @@ allows to validate given IP prefixes and origin ASes.
 %prep
 if [ ! -f %{SOURCE0} ]; then
   # Build Source Tarball first
+  mkdir -p %{_topdir}/SOURCES
   pushd `dirname %_topdir`; tar czf %{SOURCE0} --exclude-vcs --exclude=redhat . ; popd
 fi
+mkdir -p %{_topdir}/BUILD
 cd %{_topdir}/BUILD
 rm -rf %{name}-%{version}
 tar xzf %{SOURCE0}
@@ -72,10 +82,18 @@ tar xzf %{SOURCE0}
 
 %build
 %cmake -D CMAKE_BUILD_TYPE=Release .
-make %{?_smp_mflags}
+%if %{use_cmake_macros}
+    %cmake_build %{?_smp_mflags}
+%else
+    make %{?_smp_mflags}
+%endif
 
 %install
-%make_install
+%if %{use_cmake_macros}
+    %cmake_install
+%else
+    %make_install
+%endif
 strip $RPM_BUILD_ROOT/usr/lib64/librtr.so.%{version}
 strip $RPM_BUILD_ROOT/usr/bin/rpki-rov
 strip $RPM_BUILD_ROOT/usr/bin/rtrclient
@@ -83,7 +101,11 @@ cp %{_topdir}/BUILD/CHANGELOG %{buildroot}/%{_docdir}/rtrlib/
 cp %{_topdir}/BUILD/LICENSE %{buildroot}/%{_docdir}/rtrlib/
 
 %check
-export LD_LIBRARY_PATH=.; make test
+%if %{use_cmake_macros}
+    export LD_LIBRARY_PATH=.; %cmake_build --target test
+%else
+    export LD_LIBRARY_PATH=.; make test
+%endif
 
 %post -p /sbin/ldconfig
 
@@ -114,7 +136,11 @@ export LD_LIBRARY_PATH=.; make test
 %doc LICENSE
 
 %changelog
-* Sun Mar 15 2020 Martin Winter <mwinter@opensourcerouting.org> - %{version}-%{release}
+* Mon Jan 17 2022 Martin Winter <mwinter@opensourcerouting.org> - %{version}-%{release}
+- Use cmake macros for builds on Fedora 33 and up and RedHat 9 and up
+- Fix missing SOURCES directory during rpmbuild on newer systems
+
+* Sun Mar 15 2020 Martin Winter <mwinter@opensourcerouting.org> - 0.7.0
 - Update RPM spec changelog to fix changelog error
 
 * Thu Dec 14 2017 Martin Winter <mwinter@opensourcerouting.org> - 0.5.0
