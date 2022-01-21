@@ -112,6 +112,7 @@ typedef void (*rtr_connection_state_fp)(const struct rtr_socket *rtr_socket, con
  * @param version Protocol version used by this socket
  * @param has_received_pdus True, if this socket has already received PDUs
  * @param spki_table spki_table that stores the router keys obtained from the connected rtr server
+ * @param mutex mutex to protect members of this struct that are accesed from multiple threads
  */
 struct rtr_socket {
 	struct tr_socket *tr_socket;
@@ -133,6 +134,7 @@ struct rtr_socket {
 	bool has_received_pdus;
 	struct spki_table *spki_table;
 	bool is_resetting;
+	pthread_mutex_t mutex;
 };
 
 /**
