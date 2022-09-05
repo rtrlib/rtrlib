@@ -51,8 +51,8 @@ Compilation
   If the libssh isn't installed within the systems include and library
   directories you can run cmake with the following parameters:
 
-      -D LIBSSH_LIBRARY=<path-to-libssh.so>
-      -D LIBSSH_INCLUDE=<include-directory>
+      -D LIBSSH_LIBRARIES=<path-to-libssh.so>
+      -D LIBSSH_INCLUDE_DIRS=<include-directory>
 
   If libssh is installed but you do not want to build rtrlib with ssh
   support, you can disable it with the following parameter:
