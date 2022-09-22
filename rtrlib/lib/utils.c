@@ -13,14 +13,14 @@
 #include <stdint.h>
 #include <time.h>
 
-#ifdef __MACH__
+#if defined(__MACH__) && defined(__APPLE__)
 #include <mach/mach_time.h>
 static double timeconvert = 0.0;
 #endif
 
 int lrtr_get_monotonic_time(time_t *seconds)
 {
-#ifdef __MACH__
+#if defined(__MACH__) && defined(__APPLE__)
 	if (timeconvert == 0.0) {
 		mach_timebase_info_data_t time_base;
 		(void)mach_timebase_info(&time_base);
