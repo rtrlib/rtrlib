@@ -39,3 +39,8 @@ redhat/RPMS
 redhat/SOURCES
 redhat/SRPMS
 
+## Jetbrains ##
+.idea
+cmake-build-debug
+cmake-build-release
+
