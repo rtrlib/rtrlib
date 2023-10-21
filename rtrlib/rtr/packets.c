@@ -56,7 +56,8 @@ enum pdu_type {
 	EOD = 7,
 	CACHE_RESET = 8,
 	ROUTER_KEY = 9,
-	ERROR = 10
+	ERROR = 10,
+	ASPA = 11
 };
 
 struct pdu_header {
@@ -152,6 +153,18 @@ struct pdu_reset_query {
 	uint8_t type;
 	uint16_t flags;
 	uint32_t len;
+};
+
+struct pdu_aspa {
+	uint8_t ver;
+	uint8_t type;
+	uint16_t zero;
+	uint32_t len;
+	uint8_t flags;
+	uint8_t afi_flags;
+	uint16_t provider_count;
+	uint32_t customer_asn;
+	uint32_t provider_asns[];
 };
 
 struct pdu_end_of_data_v0 {
@@ -367,6 +380,25 @@ static void rtr_pdu_convert_footer_byte_order(void *pdu, const enum target_byte_
 			lrtr_convert_long(target_byte_order, ((struct pdu_router_key *)pdu)->asn);
 		break;
 
+	case ASPA:
+		((struct pdu_aspa *)pdu)->provider_count =
+			lrtr_convert_short(target_byte_order, ((struct pdu_aspa *)pdu)->provider_count);
+		((struct pdu_aspa *)pdu)->customer_asn =
+			lrtr_convert_long(target_byte_order, ((struct pdu_aspa *)pdu)->customer_asn);
+
+		uint16_t asn_count = ((struct pdu_aspa *)pdu)->provider_count;
+
+		// prevent converting twice
+		if (target_byte_order != TO_HOST_HOST_BYTE_ORDER) {
+			asn_count = lrtr_convert_short(TO_HOST_HOST_BYTE_ORDER, asn_count);
+		}
+
+		for (size_t i = 0; i < asn_count; i++) {
+			((struct pdu_aspa *)pdu)->provider_asns[i] =
+				lrtr_convert_long(target_byte_order, ((struct pdu_aspa *)pdu)->provider_asns[i]);
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -408,8 +440,9 @@ static bool rtr_pdu_check_size(const struct pdu_header *pdu)
 {
 	const enum pdu_type type = rtr_get_pdu_type(pdu);
 	const struct pdu_error *err_pdu = NULL;
+	const struct pdu_aspa *aspa_pdu = NULL;
 	bool retval = false;
-	uint64_t min_size = 0;
+	size_t expected_size = 0;
 
 	switch (type) {
 	case SERIAL_NOTIFY:
@@ -445,8 +478,8 @@ static bool rtr_pdu_check_size(const struct pdu_header *pdu)
 	case ERROR:
 		err_pdu = (const struct pdu_error *)pdu;
 		// +4 because of the "Length of Error Text" field
-		min_size = 4 + sizeof(struct pdu_error);
-		if (err_pdu->len < min_size) {
+		expected_size = 4 + sizeof(struct pdu_error);
+		if (err_pdu->len < expected_size) {
 			RTR_DBG1("PDU is too small to contain \"Length of Error Text\" field!");
 			break;
 		}
@@ -455,8 +488,8 @@ static bool rtr_pdu_check_size(const struct pdu_header *pdu)
 		uint32_t enc_pdu_len = ntohl(err_pdu->len_enc_pdu);
 
 		RTR_DBG("enc_pdu_len: %u", enc_pdu_len);
-		min_size += enc_pdu_len;
-		if (err_pdu->len < min_size) {
+		expected_size += enc_pdu_len;
+		if (err_pdu->len < expected_size) {
 			RTR_DBG1("PDU is too small to contain erroneous PDU!");
 			break;
 		}
@@ -465,8 +498,8 @@ static bool rtr_pdu_check_size(const struct pdu_header *pdu)
 		uint32_t err_msg_len = ntohl(*((uint32_t *)(err_pdu->rest + enc_pdu_len)));
 
 		RTR_DBG("err_msg_len: %u", err_msg_len);
-		min_size += err_msg_len;
-		if (err_pdu->len != min_size) {
+		expected_size += err_msg_len;
+		if (err_pdu->len != expected_size) {
 			RTR_DBG1("PDU is too small to contain error_msg!");
 			break;
 		}
@@ -480,6 +513,27 @@ static bool rtr_pdu_check_size(const struct pdu_header *pdu)
 	case RESET_QUERY:
 		if (sizeof(struct pdu_reset_query) == pdu->len)
 			retval = true;
+		break;
+	case ASPA:
+		aspa_pdu = (const struct pdu_aspa *)pdu;
+		expected_size = sizeof(struct pdu_aspa);
+		if (aspa_pdu->len < expected_size) {
+			RTR_DBG1("PDU is too small to contain ASPA PDU!");
+			break;
+		}
+
+		// Check if the PDU really contains the ASPA PDU
+		uint16_t asn_count = ntohs(aspa_pdu->provider_count);
+
+		RTR_DBG("provider_asn_count: %u", asn_count);
+		// ASN is 4 bytes each
+		expected_size += asn_count * sizeof(aspa_pdu->provider_asns[0]);
+		if (aspa_pdu->len != expected_size) {
+			RTR_DBG1("PDU is too small to contain valid ASPA PDU!");
+			break;
+		}
+
+		retval = true;
 		break;
 	case RESERVED:
 	default:
@@ -1069,6 +1123,9 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 				retval = RTR_ERROR;
 				goto cleanup;
 			}
+		} else if (type == ASPA) {
+			RTR_DBG1("ASPA PDU received.");
+			// TODO: Store ASPA PDU somewhere
 		} else if (type == EOD) {
 			RTR_DBG1("EOD PDU received.");
 			struct pdu_end_of_data_v0 *eod_pdu = (struct pdu_end_of_data_v0 *)pdu;
