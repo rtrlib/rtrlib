@@ -1,5 +1,8 @@
 set(CMAKE_BUILD_TYPE Debug)
 
+add_executable(test_aspa_vector test_aspa_vector.c)
+target_link_libraries(test_aspa_vector rtrlib_static)
+add_coverage(test_aspa_vector)
 add_executable(test_pfx test_pfx.c)
 target_link_libraries(test_pfx rtrlib_static)
 add_coverage(test_pfx)
