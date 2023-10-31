@@ -66,7 +66,7 @@ enum rtr_interval_type { RTR_INTERVAL_TYPE_EXPIRATION, RTR_INTERVAL_TYPE_REFRESH
  * @return RTR_SUCCESS On success.
  */
 int rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr_socket, struct pfx_table *pfx_table,
-	     struct spki_table *spki_table, const unsigned int refresh_interval, const unsigned int expire_interval,
+	     struct spki_table *spki_table, struct aspa_table *aspa_table, const unsigned int refresh_interval, const unsigned int expire_interval,
 	     const unsigned int retry_interval, enum rtr_interval_mode iv_mode, rtr_connection_state_fp fp,
 	     void *fp_data_config, void *fp_data_group);
 

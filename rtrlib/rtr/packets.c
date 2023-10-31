@@ -15,6 +15,7 @@
 #include "rtrlib/lib/log_private.h"
 #include "rtrlib/lib/utils_private.h"
 #include "rtrlib/pfx/pfx_private.h"
+#include "rtrlib/aspa/aspa_private.h"
 #include "rtrlib/rtr/rtr_private.h"
 #include "rtrlib/spki/hashtable/ht-spkitable_private.h"
 #include "rtrlib/transport/transport_private.h"
@@ -831,15 +832,12 @@ static void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, con
 }
 
 static void rtr_aspa_pdu_2_aspa_record(const struct rtr_socket *rtr_socket, const struct pdu_aspa *pdu,
-					  struct aspas_record *entry, const enum pdu_type type)
+					  struct aspa_record *record, const enum pdu_type type)
 {
 	assert(type == ASPA);
-	entry->customer_asn = pdu->customer_asn;
-	entry->provider_count = pdu->provider_count;
-	memcpy(entry->provider_asns, pdu->provider_asns, pdu->provider_count * sizeof(pdu->provider_asns[0]));
-
-	// TODO: rename aspas_record to aspa_record
-	// TODO: add socket to aspa_record ????? + y?
+	record->customer_asn = pdu->customer_asn;
+	record->provider_count = pdu->provider_count;
+	memcpy(record->provider_asns, pdu->provider_asns, pdu->provider_count * sizeof(pdu->provider_asns[0]));
 }
 
 /*
@@ -885,6 +883,29 @@ static int rtr_undo_update_spki_table(struct rtr_socket *rtr_socket, struct spki
 		rtval = spki_table_remove_entry(spki_table, &entry);
 	else if (((struct pdu_router_key *)pdu)->flags == 0)
 		rtval = spki_table_add_entry(spki_table, &entry);
+	return rtval;
+}
+
+/*
+ * @brief Removes aspa_record from the aspa_table with flag field == ADD, ADDs aASPA PDU to the aspa_table with flag
+ * field == REMOVE.
+ */
+static int rtr_undo_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_table *aspa_table, void *pdu)
+{
+	const enum pdu_type type = rtr_get_pdu_type(pdu);
+
+	assert(type == ASPA);
+
+	struct aspa_record record;
+
+	rtr_aspa_pdu_2_aspa_record(rtr_socket, pdu, &record, type);
+
+	int rtval = RTR_ERROR;
+	// invert add/remove operation
+	if (((struct pdu_aspa *)pdu)->flags == 1)
+		rtval = aspa_table_remove(aspa_table, &record, rtr_socket);
+	else if (((struct pdu_aspa *)pdu)->flags == 0)
+		rtval = aspa_table_add(aspa_table, &record, rtr_socket);
 	return rtval;
 }
 
@@ -987,7 +1008,7 @@ static int rtr_store_aspa_pdu(struct rtr_socket *rtr_socket, const void *pdu, co
 		*ary = tmp;
 	}
 
-	memcpy((struct pdu_router_key *)*ary + *ind, pdu, pdu_size);
+	memcpy((struct pdu_aspa *)*ary + *ind, pdu, pdu_size);
 	(*ind)++;
 	return RTR_SUCCESS;
 }
@@ -1100,17 +1121,18 @@ static int rtr_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_tabl
 
 	assert(type == ASPA);
 
-	struct aspas_record entry;
+	struct aspa_record record;
+	
+	size_t pdu_size = sizeof(struct pdu_aspa) + ((struct pdu_aspa *)pdu)->provider_count * sizeof(((struct pdu_aspa *)pdu)->provider_asns[0]);
 
-	rtr_aspa_pdu_2_aspa_record(rtr_socket, pdu, &entry, type)
+	rtr_aspa_pdu_2_aspa_record(rtr_socket, pdu, &record, type);
 
 	int rtval;
-	// TODO: are there any other flags different from 0x01?
-	if (((struct pdu_aspa *)pdu)->flags & 1 == 1) {
-		rtval = aspa_table_add_entry(aspa_table, &entry);
+	if (((struct pdu_aspa *)pdu)->flags == 1) {
+		rtval = aspa_table_add(aspa_table, &record, rtr_socket);
 
-	} else if (((struct pdu_aspa *)pdu)->flags & 1 == 0) {
-		rtval = aspa_table_remove_entry(aspa_table, &entry);
+	} else if (((struct pdu_aspa *)pdu)->flags == 0) {
+		rtval = aspa_table_remove(aspa_table, &record, rtr_socket);
 
 	} else {
 		const char txt[] = "ASPA PDU with invalid flags value received";
@@ -1122,12 +1144,12 @@ static int rtr_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_tabl
 
 	if (rtval == ASPA_DUPLICATE_RECORD) {
 		// TODO: This debug message isn't working yet, how to display SKI/SPKI without %x?
-		RTR_DBG("Duplicate Announcement for ASPA customer ASN: %u received", entry.asn);
+		RTR_DBG("Duplicate Announcement for ASPA customer ASN: %u received", record.customer_asn);
 		rtr_send_error_pdu_from_host(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT, NULL, 0);
 		rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
 		return RTR_ERROR;
 	} else if (rtval == ASPA_RECORD_NOT_FOUND) {
-		RTR_DBG1("Withdrawal of unknown ASPA customer ASN: %u", entry.customer_asn);
+		RTR_DBG("Withdrawal of unknown ASPA customer ASN: %u", record.customer_asn);
 		rtr_send_error_pdu_from_host(rtr_socket, pdu, pdu_size, WITHDRAWAL_OF_UNKNOWN_RECORD, NULL, 0);
 		rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
 		return RTR_ERROR;
@@ -1177,7 +1199,7 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 
 	struct pfx_table *pfx_shadow_table = NULL;
 	struct spki_table *spki_shadow_table = NULL;
-	struct aspa_table *aspa_shadow_table = NULL;
+	struct aspa_table *aspa_cache_table = NULL;
 
 	int oldcancelstate;
 	struct recv_loop_cleanup_args cleanup_args = {
@@ -1304,8 +1326,6 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 
 			if (rtr_socket->is_resetting) {
 				RTR_DBG1("Reset in progress creating shadow table for atomic reset");
-
-				/* Prefix */
 				
 				pfx_shadow_table = lrtr_malloc(sizeof(struct pfx_table));
 				if (!pfx_shadow_table) {
@@ -1322,8 +1342,6 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 					goto cleanup;
 				}
 				
-				/* SPKI */
-
 				spki_shadow_table = lrtr_malloc(sizeof(struct spki_table));
 				if (!spki_shadow_table) {
 					RTR_DBG1("Memory allocation for spki shadow table failed");
@@ -1339,24 +1357,20 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 					retval = RTR_ERROR;
 					goto cleanup;
 				}
-				
-				/* ASPA */
-				
-				aspa_shadow_table = lrtr_malloc(sizeof(struct aspa_table));
-				if (!aspa_shadow_table) {
+								
+				aspa_update_table = lrtr_malloc(sizeof(struct aspa_table));
+				if (!aspa_update_table) {
 					RTR_DBG1("Memory allocation for aspa shadow table failed");
 					retval = RTR_ERROR;
 					goto cleanup;
 				}
-				aspa_table_init(aspa_shadow_table, NULL);
-				aspa_update_table = aspa_shadow_table;
-				if (aspa_table_copy_except_socket(rtr_socket->aspa_table, aspa_update_table,
-								  rtr_socket) != SPKI_SUCCESS) {
-					RTR_DBG1("Creation of aspa shadow table failed");
+				if (aspa_table_cache_init(aspa_update_table, rtr_socket) != ASPA_SUCCESS) {
+					RTR_DBG1("Creation of aspa cache table failed");
 					rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
 					retval = RTR_ERROR;
 					goto cleanup;
 				}
+				aspa_cache_table = aspa_update_table;
 
 				RTR_DBG1("Shadow table created");
 				
@@ -1478,7 +1492,7 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 					// cppcheck-suppress duplicateExpression
 					if (retval == RTR_ERROR || retval == SPKI_SUCCESS || retval == ASPA_ERROR) {
 						RTR_DBG1(
-							"Couldn't undo all update operations from failed data synchronisation: Purging all key entries");
+							"Couldn't undo all update operations from failed data synchronisation: Purging all aspa records");
 						aspa_table_src_remove(aspa_update_table, rtr_socket);
 						rtr_socket->request_session_id = true;
 					}
@@ -1493,7 +1507,7 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 				RTR_DBG1("Reset finished. Swapping new table in.");
 				pfx_table_swap(rtr_socket->pfx_table, pfx_shadow_table);
 				spki_table_swap(rtr_socket->spki_table, spki_shadow_table);
-				aspa_table_swap(rtr_socket->aspa_table, aspa_shadow_table);
+				aspa_table_cache_writeback(aspa_update_table, rtr_socket->aspa_table);
 
 				if (rtr_socket->pfx_table->update_fp) {
 					RTR_DBG1("Calculating and notifying pfx diff");
@@ -1507,13 +1521,6 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 					spki_table_notify_diff(rtr_socket->spki_table, spki_shadow_table, rtr_socket);
 				} else {
 					RTR_DBG1("No spki update callback. Skipping diff");
-				}
-				
-				if (rtr_socket->aspa_table->update_fp) {
-					RTR_DBG1("Calculating and notifying aspa diff");
-					aspa_table_notify_diff(rtr_socket->aspa_table, aspa_shadow_table, rtr_socket);
-				} else {
-					RTR_DBG1("No aspa update callback. Skipping diff");
 				}
 			}
 
@@ -1553,9 +1560,9 @@ cleanup:
 			lrtr_free(spki_shadow_table);
 		}
 		
-		if (aspa_shadow_table) {
-			aspa_table_free_without_notify(aspa_shadow_table);
-			lrtr_free(aspa_shadow_table);
+		if (aspa_cache_table) {
+			aspa_table_free(aspa_cache_table);
+			lrtr_free(aspa_cache_table);
 		}
 		rtr_socket->is_resetting = false;
 	}

@@ -12,6 +12,7 @@
 #include "rtrlib/lib/log_private.h"
 #include "rtrlib/lib/utils_private.h"
 #include "rtrlib/pfx/pfx_private.h"
+#include "rtrlib/aspa/aspa_private.h"
 #include "rtrlib/rtr/packets_private.h"
 #include "rtrlib/rtrlib_export_private.h"
 #include "rtrlib/spki/hashtable/ht-spkitable_private.h"
@@ -38,7 +39,7 @@ static const char *socket_str_states[] = {[RTR_CONNECTING] = "RTR_CONNECTING",
 					  [RTR_SHUTDOWN] = "RTR_SHUTDOWN"};
 
 int rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_table *pfx_table,
-	     struct spki_table *spki_table, const unsigned int refresh_interval, const unsigned int expire_interval,
+	     struct spki_table *spki_table, struct aspa_table *aspa_table, const unsigned int refresh_interval, const unsigned int expire_interval,
 	     const unsigned int retry_interval, enum rtr_interval_mode iv_mode, rtr_connection_state_fp fp,
 	     void *fp_param_config, void *fp_param_group)
 {
@@ -100,6 +101,8 @@ void rtr_purge_outdated_records(struct rtr_socket *rtr_socket)
 		RTR_DBG1("Removed outdated records from pfx_table");
 		spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
 		RTR_DBG1("Removed outdated router keys from spki_table");
+		aspa_table_src_remove(rtr_socket->aspa_table, rtr_socket);
+		RTR_DBG1("Removed outdated records from aspa_table");
 		rtr_socket->request_session_id = true;
 		rtr_socket->serial_number = 0;
 		rtr_socket->last_update = 0;
@@ -126,6 +129,7 @@ void *rtr_fsm_start(struct rtr_socket *rtr_socket)
 
 			// old pfx_record could exists in the pfx_table, check if they are too old and must be removed
 			// old key_entry could exists in the spki_table, check if they are too old and must be removed
+			// old aspa_Record could exists in the aspa_table, check if they are too old and must be removed
 			rtr_purge_outdated_records(rtr_socket);
 
 			if (tr_open(rtr_socket->tr_socket) == TR_ERROR) {
@@ -241,6 +245,7 @@ void rtr_stop(struct rtr_socket *rtr_socket)
 		rtr_socket->last_update = 0;
 		pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
 		spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
+		aspa_table_src_remove(rtr_socket->aspa_table, rtr_socket);
 		rtr_socket->thread_id = 0;
 		rtr_socket->state = RTR_CLOSED;
 	}

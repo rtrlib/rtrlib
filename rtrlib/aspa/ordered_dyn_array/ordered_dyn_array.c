@@ -7,19 +7,20 @@
 * Website: http://rtrlib.realmv6.org/
 */
 
-#include "alloc_utils_private.h"
 #include "ordered_dyn_array.h"
+#include "rtrlib/aspa/aspa_private.h"
+#include "rtrlib/lib/alloc_utils_private.h"
+
+#define ordered_dyn_array_createIAL_SIZE 128
 
 int ordered_dyn_array_create(struct ordered_dyn_array **vector_pointer)
 {
-	const size_t DEFAULT_INITIAL_SIZE = 128;
-
 	// allocation the chunk of memory of the provider as numbers
-	struct aspas_record *data_field =
-		(struct aspas_record *)lrtr_malloc(sizeof(struct aspas_record) * DEFAULT_INITIAL_SIZE);
+	struct aspa_record *data_field =
+		(struct aspa_record *)lrtr_malloc(sizeof(struct aspa_record) * ordered_dyn_array_createIAL_SIZE);
 
 	// malloc failed so returning an error
-	if (data_field == NULL) {
+	if (!data_field) {
 		return -1;
 	}
 
@@ -27,12 +28,12 @@ int ordered_dyn_array_create(struct ordered_dyn_array **vector_pointer)
 	struct ordered_dyn_array *vector = (struct ordered_dyn_array *)lrtr_malloc(sizeof(struct ordered_dyn_array));
 
 	// malloc for aspa_record failed hence we return an error
-	if (vector == NULL) {
+	if (!vector) {
 		return -1;
 	}
 
 	// initializing member variables of the aspa record
-	vector->capacity = DEFAULT_INITIAL_SIZE;
+	vector->capacity = ordered_dyn_array_createIAL_SIZE;
 	vector->size = 0;
 	vector->data = data_field;
 
@@ -42,7 +43,37 @@ int ordered_dyn_array_create(struct ordered_dyn_array **vector_pointer)
 	return 0;
 }
 
-int ordered_dyn_array_delete(struct ordered_dyn_array *vector)
+int ordered_dyn_array_copy(struct ordered_dyn_array **dst, struct ordered_dyn_array *src)
+{
+
+	// allocation the new chunk of memory
+	struct aspa_record *new_data_field = (struct aspa_record *)lrtr_malloc(
+		sizeof(struct aspa_record) * src->capacity);
+
+	// malloc failed so returning an error
+	if (new_data_field == NULL) {
+		return -1;
+	}
+
+	// copying the data from the old location to the new one
+	memcpy(new_data_field, src->data, src->capacity * sizeof(struct aspa_record));
+	
+	// allocating the aspa_record itself
+	struct ordered_dyn_array *new_vector = (struct ordered_dyn_array *)lrtr_malloc(sizeof(struct ordered_dyn_array));
+
+	// malloc for aspa_record failed hence we return an error
+	if (!new_vector) {
+		return -1;
+	}
+
+	// assigning the new array to the vector and incrementing the capacity
+	new_vector->data = new_data_field;
+	new_vector->capacity = src->capacity;
+	
+	return 0;
+}
+
+int ordered_dyn_array_free(struct ordered_dyn_array *vector)
 {
 	// if the vector is null just return
 	if (vector == NULL) {
@@ -51,11 +82,11 @@ int ordered_dyn_array_delete(struct ordered_dyn_array *vector)
 
 	if (vector->data != NULL) {
 		// freeing the data
-		free(vector->data);
+		lrtr_free(vector->data);
 	}
 
 	// freeing the object itself
-	free(vector);
+	lrtr_free(vector);
 
 	return 0;
 }
@@ -66,8 +97,8 @@ int ordered_dyn_array_reallocate(struct ordered_dyn_array *vector)
 	const size_t SIZE_INCREASE_EXPONENTIAL = 2;
 
 	// allocation the new chunk of memory
-	struct aspas_record *new_data_field = (struct aspas_record *)lrtr_malloc(
-		sizeof(struct aspas_record) * vector->capacity * SIZE_INCREASE_EXPONENTIAL);
+	struct aspa_record *new_data_field = (struct aspa_record *)lrtr_malloc(
+		sizeof(struct aspa_record) * vector->capacity * SIZE_INCREASE_EXPONENTIAL);
 
 	// malloc failed so returning an error
 	if (new_data_field == NULL) {
@@ -75,10 +106,10 @@ int ordered_dyn_array_reallocate(struct ordered_dyn_array *vector)
 	}
 
 	// copying the data from the old location to the new one
-	memcpy(new_data_field, vector->data, vector->capacity * sizeof(struct aspas_record));
+	memcpy(new_data_field, vector->data, vector->capacity * sizeof(struct aspa_record));
 
 	// deleting the old vector
-	free(vector->data);
+	lrtr_free(vector->data);
 
 	// assigning the new array to the vector and incrementing the capacity
 	vector->data = new_data_field;
@@ -87,7 +118,7 @@ int ordered_dyn_array_reallocate(struct ordered_dyn_array *vector)
 	return 0;
 }
 
-void ordered_dyn_array_private_insert(struct ordered_dyn_array *vector, struct aspas_record record)
+void ordered_dyn_array_private_insert(struct ordered_dyn_array *vector, struct aspa_record record)
 {
 	// iterator running from the back of the array to the front
 	size_t j = vector->size;
@@ -104,12 +135,12 @@ void ordered_dyn_array_private_insert(struct ordered_dyn_array *vector, struct a
 	vector->data[j] = record;
 }
 
-int ordered_dyn_array_insert(struct ordered_dyn_array *vector, struct aspas_record record)
+int ordered_dyn_array_insert(struct ordered_dyn_array *vector, struct aspa_record record)
 {
 	// check if this element will fit into the vector
 	if (vector->size + 1 > vector->capacity) {
 		// increasing the vectors size so the new element fits
-		if (ordered_dyn_array_reallocate(vector) == -1) {
+		if (ordered_dyn_array_reallocate(vector) < 0) {
 			return -1;
 		}
 	}
@@ -121,7 +152,7 @@ int ordered_dyn_array_insert(struct ordered_dyn_array *vector, struct aspas_reco
 	return 0;
 }
 
-size_t ordered_dyn_array_search(struct ordered_dyn_array *vector, uint32_t customer_as)
+size_t ordered_dyn_array_search(struct ordered_dyn_array *vector, uint32_t customer_asn)
 {
 	// if the vector is empty we return an error
 	if (vector->size == 0 || vector->capacity == 0) {
@@ -138,10 +169,10 @@ size_t ordered_dyn_array_search(struct ordered_dyn_array *vector, uint32_t custo
 		size_t center = left + ((right - left) / 2);
 		uint32_t center_value = vector->data[center].customer_asn;
 
-		if (center_value == customer_as) {
+		if (center_value == customer_asn) {
 			// success found the value
 			return center;
-		} else if (center_value > customer_as) {
+		} else if (center_value > customer_asn) {
 			// value should be on the left side
 			right = center - 1;
 		} else {
@@ -154,7 +185,7 @@ size_t ordered_dyn_array_search(struct ordered_dyn_array *vector, uint32_t custo
 	return -1;
 }
 
-int ordered_dyn_array_delete_at(struct ordered_dyn_array *vector, size_t index)
+int ordered_dyn_array_free_at(struct ordered_dyn_array *vector, size_t index)
 {
 	if (vector->size <= index || vector->size == 0) {
 		return -1;
@@ -166,7 +197,7 @@ int ordered_dyn_array_delete_at(struct ordered_dyn_array *vector, size_t index)
 	// if 1 or more elements needs to be copied
 	if (number_of_elements > 0) {
 		memcpy(vector->data + index, vector->data + index + 1,
-		       number_of_elements * sizeof(struct aspas_record));
+		       number_of_elements * sizeof(struct aspa_record));
 	}
 
 	// decrementing the size by one

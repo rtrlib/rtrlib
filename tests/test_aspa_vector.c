@@ -8,7 +8,8 @@
 */
 
 #include "rtrlib/lib/alloc_utils_private.h"
-#include "rtrlib/lib/ordered_dyn_array.h"
+#include "rtrlib/aspa/aspa.h"
+#include "rtrlib/aspa/ordered_dyn_array/ordered_dyn_array.h"
 
 #include <assert.h>
 
@@ -21,9 +22,9 @@ static void test_create_vector()
 	assert(vector->capacity >= 128);
 };
 
-static void generate_fake_aspas_record(uint32_t cas, uint32_t random_number, struct aspas_record **record)
+static void generate_fake_aspa_record(uint32_t cas, uint32_t random_number, struct aspa_record **record)
 {
-	struct aspas_record *new_record = (struct aspas_record *)lrtr_malloc(sizeof(struct aspas_record));
+	struct aspa_record *new_record = (struct aspa_record *)lrtr_malloc(sizeof(struct aspa_record));
 	new_record->customer_asn = cas;
 	uint32_t *provider_as_numbers = (uint32_t *)lrtr_malloc(sizeof(*new_record->provider_asns) * 3);
 
@@ -42,8 +43,8 @@ static void test_add_element()
 	struct ordered_dyn_array *vector;
 	assert(ordered_dyn_array_create(&vector) == 0);
 
-	struct aspas_record *record;
-	generate_fake_aspas_record(42, 300, &record);
+	struct aspa_record *record;
+	generate_fake_aspa_record(42, 300, &record);
 	assert(ordered_dyn_array_insert(vector, *record) == 0);
 
 	assert(vector->data[0].customer_asn == 42);
@@ -52,7 +53,7 @@ static void test_add_element()
 	assert(vector->data[0].provider_asns[1] == 300 + 1);
 	assert(vector->data[0].provider_asns[2] == 300 + 2);
 
-	assert(ordered_dyn_array_delete(vector) == 0);
+	assert(ordered_dyn_array_free(vector) == 0);
 }
 
 static void test_relocate()
@@ -60,24 +61,24 @@ static void test_relocate()
 	struct ordered_dyn_array *vector;
 	assert(ordered_dyn_array_create(&vector) == 0);
 	vector->capacity = 2;
-	struct aspas_record *old_pointer = vector->data;
+	struct aspa_record *old_pointer = vector->data;
 
 	// this is on purpose wrongly ordered so we check that it does the sort properly
 
-	struct aspas_record *record_4;
-	generate_fake_aspas_record(4, 600, &record_4);
+	struct aspa_record *record_4;
+	generate_fake_aspa_record(4, 600, &record_4);
 	assert(ordered_dyn_array_insert(vector, *record_4) == 0);
 
-	struct aspas_record *record_2;
-	generate_fake_aspas_record(2, 400, &record_2);
+	struct aspa_record *record_2;
+	generate_fake_aspa_record(2, 400, &record_2);
 	assert(ordered_dyn_array_insert(vector, *record_2) == 0);
 
-	struct aspas_record *record_1;
-	generate_fake_aspas_record(1, 300, &record_1);
+	struct aspa_record *record_1;
+	generate_fake_aspa_record(1, 300, &record_1);
 	assert(ordered_dyn_array_insert(vector, *record_1) == 0);
 
-	struct aspas_record *record_3;
-	generate_fake_aspas_record(3, 500, &record_3);
+	struct aspa_record *record_3;
+	generate_fake_aspa_record(3, 500, &record_3);
 	assert(ordered_dyn_array_insert(vector, *record_3) == 0);
 
 	assert(old_pointer != vector->data); // new pointer because relocated
@@ -90,7 +91,7 @@ static void test_relocate()
 	assert(vector->data[2].customer_asn == 3);
 	assert(vector->data[3].customer_asn == 4);
 
-	assert(ordered_dyn_array_delete(vector) == 0);
+	assert(ordered_dyn_array_free(vector) == 0);
 }
 
 static void test_remove_element()
@@ -98,33 +99,33 @@ static void test_remove_element()
 	struct ordered_dyn_array *vector;
 	assert(ordered_dyn_array_create(&vector) == 0);
 
-	struct aspas_record *record_1;
-	generate_fake_aspas_record(1, 300, &record_1);
+	struct aspa_record *record_1;
+	generate_fake_aspa_record(1, 300, &record_1);
 	assert(ordered_dyn_array_insert(vector, *record_1) == 0);
 
-	struct aspas_record *record_2;
-	generate_fake_aspas_record(2, 400, &record_2);
+	struct aspa_record *record_2;
+	generate_fake_aspa_record(2, 400, &record_2);
 	assert(ordered_dyn_array_insert(vector, *record_2) == 0);
 
-	struct aspas_record *record_3;
-	generate_fake_aspas_record(3, 500, &record_3);
+	struct aspa_record *record_3;
+	generate_fake_aspa_record(3, 500, &record_3);
 	assert(ordered_dyn_array_insert(vector, *record_3) == 0);
 
-	struct aspas_record *record_4;
-	generate_fake_aspas_record(4, 600, &record_4);
+	struct aspa_record *record_4;
+	generate_fake_aspa_record(4, 600, &record_4);
 	assert(ordered_dyn_array_insert(vector, *record_4) == 0);
 
 	assert(vector->data[2].customer_asn == 3);
 
-	assert(ordered_dyn_array_delete_at(vector, 2) == 0);
-	assert(ordered_dyn_array_delete_at(vector, 100) == -1);
+	assert(ordered_dyn_array_free_at(vector, 2) == 0);
+	assert(ordered_dyn_array_free_at(vector, 100) == -1);
 
 	assert(vector->size == 3);
 	assert(vector->data[0].customer_asn == 1);
 	assert(vector->data[1].customer_asn == 2);
 	assert(vector->data[2].customer_asn == 4);
 
-	assert(ordered_dyn_array_delete(vector) == 0);
+	assert(ordered_dyn_array_free(vector) == 0);
 }
 
 static void test_find_element()
@@ -132,24 +133,24 @@ static void test_find_element()
 	struct ordered_dyn_array *vector;
 	assert(ordered_dyn_array_create(&vector) == 0);
 
-	struct aspas_record *record_1;
-	generate_fake_aspas_record(1, 300, &record_1);
+	struct aspa_record *record_1;
+	generate_fake_aspa_record(1, 300, &record_1);
 	assert(ordered_dyn_array_insert(vector, *record_1) == 0);
 
-	struct aspas_record *record_2;
-	generate_fake_aspas_record(2, 400, &record_2);
+	struct aspa_record *record_2;
+	generate_fake_aspa_record(2, 400, &record_2);
 	assert(ordered_dyn_array_insert(vector, *record_2) == 0);
 
-	struct aspas_record *record_3;
-	generate_fake_aspas_record(3, 500, &record_3);
+	struct aspa_record *record_3;
+	generate_fake_aspa_record(3, 500, &record_3);
 	assert(ordered_dyn_array_insert(vector, *record_3) == 0);
 
-	struct aspas_record *record_4;
-	generate_fake_aspas_record(4, 600, &record_4);
+	struct aspa_record *record_4;
+	generate_fake_aspa_record(4, 600, &record_4);
 	assert(ordered_dyn_array_insert(vector, *record_4) == 0);
 
-	struct aspas_record *record_5;
-	generate_fake_aspas_record(5, 700, &record_5);
+	struct aspa_record *record_5;
+	generate_fake_aspa_record(5, 700, &record_5);
 	assert(ordered_dyn_array_insert(vector, *record_5) == 0);
 
 	assert(ordered_dyn_array_search(vector, 1) == 0);
@@ -158,7 +159,7 @@ static void test_find_element()
 	assert(ordered_dyn_array_search(vector, 4) == 3);
 	assert(ordered_dyn_array_search(vector, 5) == 4);
 
-	assert(ordered_dyn_array_delete(vector) == 0);
+	assert(ordered_dyn_array_free(vector) == 0);
 }
 
 int main()

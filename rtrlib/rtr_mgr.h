@@ -37,6 +37,7 @@
 
 #include "rtrlib/pfx/pfx.h"
 #include "rtrlib/spki/spkitable.h"
+#include "rtrlib/aspa/aspa.h"
 #ifdef RTRLIB_BGPSEC_ENABLED
 #include "rtrlib/bgpsec/bgpsec.h"
 #endif
@@ -88,6 +89,7 @@ struct rtr_mgr_config {
 	void *status_fp_data;
 	struct pfx_table *pfx_table;
 	struct spki_table *spki_table;
+	struct aspa_table *aspa_table;
 };
 
 /**
@@ -131,6 +133,7 @@ struct rtr_mgr_config {
 int rtr_mgr_init(struct rtr_mgr_config **config_out, struct rtr_mgr_group groups[], const unsigned int groups_len,
 		 const unsigned int refresh_interval, const unsigned int expire_interval,
 		 const unsigned int retry_interval, const pfx_update_fp update_fp, const spki_update_fp spki_update_fp,
+		 const aspa_update_fp aspa_update_fp,
 		 const rtr_mgr_status_fp status_fp, void *status_fp_data);
 
 /**
