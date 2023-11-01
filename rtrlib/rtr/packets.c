@@ -837,7 +837,9 @@ static void rtr_aspa_pdu_2_aspa_record(const struct rtr_socket *rtr_socket, cons
 	assert(type == ASPA);
 	record->customer_asn = pdu->customer_asn;
 	record->provider_count = pdu->provider_count;
-	memcpy(record->provider_asns, pdu->provider_asns, pdu->provider_count * sizeof(pdu->provider_asns[0]));
+	size_t provider_size = pdu->provider_count * sizeof(pdu->provider_asns[0]);
+	record->provider_asns = lrtr_malloc(provider_size);
+	memcpy(record->provider_asns, pdu->provider_asns, provider_size);
 }
 
 /*
@@ -905,7 +907,7 @@ static int rtr_undo_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa
 	if (((struct pdu_aspa *)pdu)->flags == 1)
 		rtval = aspa_table_remove(aspa_table, &record, rtr_socket);
 	else if (((struct pdu_aspa *)pdu)->flags == 0)
-		rtval = aspa_table_add(aspa_table, &record, rtr_socket);
+		rtval = aspa_table_add(aspa_table, &record, rtr_socket, true);
 	return rtval;
 }
 
@@ -922,7 +924,7 @@ static int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, 
 	const enum pdu_type type = rtr_get_pdu_type(pdu);
 
 	assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
-	if ((*ind) >= *size) {
+	if (*ind >= *size) {
 		*size += TEMPORARY_PDU_STORE_INCREMENT_VALUE;
 		void *tmp = lrtr_realloc(*ary, *size * pdu_size);
 
@@ -961,7 +963,7 @@ static int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *p
 {
 	assert(rtr_get_pdu_type(pdu) == ROUTER_KEY);
 
-	if ((*ind) >= *size) {
+	if (*ind >= *size) {
 		*size += TEMPORARY_PDU_STORE_INCREMENT_VALUE;
 		void *tmp = lrtr_realloc(*ary, *size * pdu_size);
 
@@ -993,7 +995,7 @@ static int rtr_store_aspa_pdu(struct rtr_socket *rtr_socket, const void *pdu, co
 {
 	assert(rtr_get_pdu_type(pdu) == ASPA);
 
-	if ((*ind) >= *size) {
+	if (*ind >= *size) {
 		*size += TEMPORARY_PDU_STORE_INCREMENT_VALUE;
 		void *tmp = lrtr_realloc(*ary, *size * pdu_size);
 
@@ -1126,10 +1128,12 @@ static int rtr_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_tabl
 	size_t pdu_size = sizeof(struct pdu_aspa) + ((struct pdu_aspa *)pdu)->provider_count * sizeof(((struct pdu_aspa *)pdu)->provider_asns[0]);
 
 	rtr_aspa_pdu_2_aspa_record(rtr_socket, pdu, &record, type);
+	
+	struct pdu_aspa *_tmp = (struct pdu_aspa *)pdu;
 
 	int rtval;
 	if (((struct pdu_aspa *)pdu)->flags == 1) {
-		rtval = aspa_table_add(aspa_table, &record, rtr_socket);
+		rtval = aspa_table_add(aspa_table, &record, rtr_socket, true);
 
 	} else if (((struct pdu_aspa *)pdu)->flags == 0) {
 		rtval = aspa_table_remove(aspa_table, &record, rtr_socket);

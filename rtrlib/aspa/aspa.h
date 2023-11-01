@@ -134,7 +134,7 @@ void aspa_table_free(struct aspa_table *aspa_table);
  * @return aspa_ERROR On error.
  * @return aspa_DUPLICATE_RECORD If an identical aspa_record already exists
  */
-int aspa_table_add(struct aspa_table *aspa_table, struct aspa_record *aspa_record, struct rtr_socket *rtr_socket);
+int aspa_table_add(struct aspa_table *aspa_table, struct aspa_record *aspa_record, struct rtr_socket *rtr_socket, bool replace);
 
 /**
  * @brief Removes aspa_record from aspa_table

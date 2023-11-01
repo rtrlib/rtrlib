@@ -11,13 +11,13 @@
 #include "rtrlib/aspa/aspa_private.h"
 #include "rtrlib/lib/alloc_utils_private.h"
 
-#define ordered_dyn_array_createIAL_SIZE 128
-
 int ordered_dyn_array_create(struct ordered_dyn_array **vector_pointer)
 {
+	const size_t default_initial_size = 128;
+	
 	// allocation the chunk of memory of the provider as numbers
 	struct aspa_record *data_field =
-		(struct aspa_record *)lrtr_malloc(sizeof(struct aspa_record) * ordered_dyn_array_createIAL_SIZE);
+		(struct aspa_record *)lrtr_malloc(sizeof(struct aspa_record) * default_initial_size);
 
 	// malloc failed so returning an error
 	if (!data_field) {
@@ -33,7 +33,7 @@ int ordered_dyn_array_create(struct ordered_dyn_array **vector_pointer)
 	}
 
 	// initializing member variables of the aspa record
-	vector->capacity = ordered_dyn_array_createIAL_SIZE;
+	vector->capacity = default_initial_size;
 	vector->size = 0;
 	vector->data = data_field;
 

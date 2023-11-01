@@ -21,14 +21,17 @@ static void aspa_table_notify_clients(struct aspa_table *aspa_table, const struc
 {
 	if (aspa_table->update_fp) {
 		// Realloc in order not to expose internal record
-		struct aspa_record *rec = lrtr_realloc((void *)record, sizeof(record) + record->provider_count * sizeof(record->provider_asns[0]));
-		aspa_table->update_fp(aspa_table, *rec, rtr_socket, added);
+		size_t record_size = sizeof(struct aspa_record) + record->provider_count * sizeof(record->provider_asns[0]);
+		struct aspa_record *copy = lrtr_malloc(record_size);
+		memcpy(copy, record, record_size);
+		aspa_table->update_fp(aspa_table, *copy, rtr_socket, added);
 	}
 }
 
 RTRLIB_EXPORT void aspa_table_init(struct aspa_table *aspa_table, aspa_update_fp update_fp)
 {
 	aspa_table->update_fp = update_fp;
+	aspa_table->cache = NULL;
 	pthread_rwlock_init(&(aspa_table->lock), NULL);
 }
 
@@ -125,9 +128,11 @@ RTRLIB_EXPORT void aspa_table_free(struct aspa_table *aspa_table)
 	pthread_rwlock_destroy(&(aspa_table->lock));
 }
 
-RTRLIB_EXPORT int aspa_table_add(struct aspa_table *aspa_table, struct aspa_record *record, struct rtr_socket *rtr_socket)
+RTRLIB_EXPORT int aspa_table_add(struct aspa_table *aspa_table, struct aspa_record *record, struct rtr_socket *rtr_socket, bool replace)
 {
 	pthread_rwlock_wrlock(&(aspa_table->lock));
+	
+	// TODO: replace if existing
 	
 	struct ordered_dyn_array *array;
 	bool is_cache = false;
@@ -198,10 +203,12 @@ RTRLIB_EXPORT int aspa_table_remove(struct aspa_table *aspa_table, struct aspa_r
 	// TODO: Could deleting be optimited any further? like not searching by CAS ASN (?)
 	size_t i = ordered_dyn_array_search(array, record->customer_asn);
 	
+	if (i < 0)
+		return ASPA_RECORD_NOT_FOUND;
+	
 	// Remove record from socket's ordered_dyn_array
-	if (i < 0 || ordered_dyn_array_free_at(array, i) < 0) {
+	if (ordered_dyn_array_free_at(array, i) < 0)
 		return ASPA_ERROR;
-	}
 	
 	pthread_rwlock_unlock(&aspa_table->lock);
 	

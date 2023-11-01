@@ -581,7 +581,7 @@ static void parse_global_opts(int argc, char **argv)
 
 	bool print_template = false;
 
-	while ((opt = getopt(argc, argv, "+kphelo:t:s")) != -1) {
+	while ((opt = getopt(argc, argv, "+kpahelo:t:s")) != -1) {
 		switch (opt) {
 		case 'k':
 			activate_spki_update_cb = true;
@@ -640,7 +640,7 @@ static void parse_socket_opts(int argc, char **argv, struct socket_config *confi
 {
 	int opt;
 
-	while ((opt = getopt(argc, argv, "+kphwrb:")) != -1) {
+	while ((opt = getopt(argc, argv, "+kpahwrb:")) != -1) {
 		switch (opt) {
 		case 'k':
 			activate_spki_update_cb = true;

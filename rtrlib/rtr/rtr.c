@@ -65,6 +65,7 @@ int rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_tab
 	rtr_socket->last_update = 0;
 	rtr_socket->pfx_table = pfx_table;
 	rtr_socket->spki_table = spki_table;
+	rtr_socket->aspa_table = aspa_table;
 	rtr_socket->connection_state_fp = fp;
 	rtr_socket->connection_state_fp_param_config = fp_param_config;
 	rtr_socket->connection_state_fp_param_group = fp_param_group;
