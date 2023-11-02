@@ -251,7 +251,7 @@ RTRLIB_EXPORT int aspa_table_src_remove(struct aspa_table *aspa_table, struct rt
 
 	struct aspa_array *array = aspa_store_search(aspa_table->store, rtr_socket);
 
-	// Try not find array with fast lookup
+	// Try to find array with fast lookup
 	if (array == NULL && rtr_socket->aspa_table == aspa_table) {
 		array = rtr_socket->aspa_array;
 		rtr_socket->aspa_array = NULL;

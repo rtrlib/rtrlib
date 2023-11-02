@@ -1344,7 +1344,7 @@ static int rtr_sync_update_tables(struct rtr_socket *rtr_socket, struct pfx_tabl
 	}
 
 	// update failed
-	if (update_res == RTR_ERROR) {
+	else {
 		// undo failed too, so request new session
 		if (undo_res == RTR_ERROR)
 			rtr_socket->request_session_id = true;
