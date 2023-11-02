@@ -373,6 +373,6 @@ void aspa_table_notify_diff(struct aspa_table *new_table, struct aspa_table *old
 	if (new_array != NULL) {
 		// Notify clients about these records being added
 		for (size_t i = 0; i < old_array->size; i++)
-			aspa_table_notify_clients(new_table, &(old_array->data[i]), socket, false);
+			aspa_table_notify_clients(new_table, &(old_array->data[i]), socket, true);
 	}
 }

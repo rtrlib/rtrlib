@@ -9,10 +9,10 @@
 
 #include "rtr_private.h"
 
+#include "rtrlib/aspa/aspa_private.h"
 #include "rtrlib/lib/log_private.h"
 #include "rtrlib/lib/utils_private.h"
 #include "rtrlib/pfx/pfx_private.h"
-#include "rtrlib/aspa/aspa_private.h"
 #include "rtrlib/rtr/packets_private.h"
 #include "rtrlib/rtrlib_export_private.h"
 #include "rtrlib/spki/hashtable/ht-spkitable_private.h"
@@ -39,9 +39,9 @@ static const char *socket_str_states[] = {[RTR_CONNECTING] = "RTR_CONNECTING",
 					  [RTR_SHUTDOWN] = "RTR_SHUTDOWN"};
 
 int rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_table *pfx_table,
-	     struct spki_table *spki_table, struct aspa_table *aspa_table, const unsigned int refresh_interval, const unsigned int expire_interval,
-	     const unsigned int retry_interval, enum rtr_interval_mode iv_mode, rtr_connection_state_fp fp,
-	     void *fp_param_config, void *fp_param_group)
+	     struct spki_table *spki_table, struct aspa_table *aspa_table, const unsigned int refresh_interval,
+	     const unsigned int expire_interval, const unsigned int retry_interval, enum rtr_interval_mode iv_mode,
+	     rtr_connection_state_fp fp, void *fp_param_config, void *fp_param_group)
 {
 	if (tr)
 		rtr_socket->tr_socket = tr;
