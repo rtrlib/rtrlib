@@ -18,7 +18,7 @@
  * @brief Struct which is similar in function to std::vector from C++.
  * If the vector is running full a larger chunk of memory is allocated and the data is copied over.
  */
-struct ordered_dyn_array {
+struct aspa_array {
 	uint32_t size;
 	size_t capacity;
 	struct aspa_record *data;
@@ -27,17 +27,17 @@ struct ordered_dyn_array {
 /**
  * @brief Creates an vector object
  * @param[vector_pointer] the pointer to the newly created pointer will be written to *vector_pointer
- * @result Valid pointer to an ordered_dyn_array struct
+ * @result Valid pointer to an aspa_array struct
  * @result Null On error.
  */
-int ordered_dyn_array_create(struct ordered_dyn_array **vector_pointer);
+int aspa_array_create(struct aspa_array **vector_pointer);
 
 /**
- * @brief Copies the given vecto.
+ * @brief Copies the given vector.
  * @param[out] dst The pointer to where the newly copied vector's pointer will be written.
  * @param[in] src The pointer to the vector that will be copied.
  */
-int ordered_dyn_array_copy(struct ordered_dyn_array **dst, struct ordered_dyn_array *src);
+int aspa_array_copy(struct aspa_array **dst, struct aspa_array *src);
 
 /**
  * @brief Deletes the given vector
@@ -45,7 +45,7 @@ int ordered_dyn_array_copy(struct ordered_dyn_array **dst, struct ordered_dyn_ar
  * @result 0 On success.
  * @result -1 On error.
  */
-int ordered_dyn_array_free(struct ordered_dyn_array *vector);
+int aspa_array_free(struct aspa_array *vector);
 
 /**
  * @brief Reallocates the vector to increase its size
@@ -53,17 +53,17 @@ int ordered_dyn_array_free(struct ordered_dyn_array *vector);
  * @result 0 On success.
  * @result -1 On error.
  */
-int ordered_dyn_array_reallocate(struct ordered_dyn_array *vector);
+int aspa_array_reallocate(struct aspa_array *vector);
 
 /**
  * @brief Wiill insert the element at the correct place in the list so the ascending order is preserved
  * This function assumes that the data field is large enough to fit one more element
- * This method is intended for internal use please use ordered_dyn_array_insert instead.
+ * This method is intended for internal use please use aspa_array_insert instead.
  *
  * @param[vector] list of ASPA entries
  * @param[size] size of the ASPA entries list
  */
-void ordered_dyn_array_private_insert(struct ordered_dyn_array *vector, struct aspa_record record);
+void aspa_array_private_insert(struct aspa_array *vector, struct aspa_record record);
 
 /**
  * @brief adds a new aspa record to the list
@@ -72,7 +72,7 @@ void ordered_dyn_array_private_insert(struct ordered_dyn_array *vector, struct a
  * @result 0 On success.
  * @result -1 On error.
  */
-int ordered_dyn_array_insert(struct ordered_dyn_array *vector, struct aspa_record record);
+int aspa_array_insert(struct aspa_array *vector, struct aspa_record record);
 
 /**
  * @brief deletes the element at the index
@@ -81,7 +81,7 @@ int ordered_dyn_array_insert(struct ordered_dyn_array *vector, struct aspa_recor
  * @result 0 On success.
  * @result -1 On error.
  */
-int ordered_dyn_array_free_at(struct ordered_dyn_array *vector, size_t index);
+int aspa_array_free_at(struct aspa_array *vector, size_t index);
 
 /**
  * @brief returns the index in the vector for a given customer as number (CAS)
@@ -90,6 +90,6 @@ int ordered_dyn_array_free_at(struct ordered_dyn_array *vector, size_t index);
  * @result index of the element on success
  * @result -1 On error or not if the element coulnd't be located
  */
-size_t ordered_dyn_array_search(struct ordered_dyn_array *vector, uint32_t customer_asn);
+size_t aspa_array_search(struct aspa_array *vector, uint32_t customer_asn);
 
 #endif

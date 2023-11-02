@@ -7,11 +7,11 @@
 * Website: http://rtrlib.realmv6.org/
 */
 
-#include "ordered_dyn_array.h"
+#include "aspa_array.h"
 #include "rtrlib/aspa/aspa_private.h"
 #include "rtrlib/lib/alloc_utils_private.h"
 
-int ordered_dyn_array_create(struct ordered_dyn_array **vector_pointer)
+int aspa_array_create(struct aspa_array **vector_pointer)
 {
 	const size_t default_initial_size = 128;
 	
@@ -25,7 +25,7 @@ int ordered_dyn_array_create(struct ordered_dyn_array **vector_pointer)
 	}
 
 	// allocating the aspa_record itself
-	struct ordered_dyn_array *vector = (struct ordered_dyn_array *)lrtr_malloc(sizeof(struct ordered_dyn_array));
+	struct aspa_array *vector = (struct aspa_array *)lrtr_malloc(sizeof(struct aspa_array));
 
 	// malloc for aspa_record failed hence we return an error
 	if (!vector) {
@@ -43,7 +43,7 @@ int ordered_dyn_array_create(struct ordered_dyn_array **vector_pointer)
 	return 0;
 }
 
-int ordered_dyn_array_copy(struct ordered_dyn_array **dst, struct ordered_dyn_array *src)
+int aspa_array_copy(struct aspa_array **dst, struct aspa_array *src)
 {
 
 	// allocation the new chunk of memory
@@ -59,7 +59,7 @@ int ordered_dyn_array_copy(struct ordered_dyn_array **dst, struct ordered_dyn_ar
 	memcpy(new_data_field, src->data, src->capacity * sizeof(struct aspa_record));
 	
 	// allocating the aspa_record itself
-	struct ordered_dyn_array *new_vector = (struct ordered_dyn_array *)lrtr_malloc(sizeof(struct ordered_dyn_array));
+	struct aspa_array *new_vector = (struct aspa_array *)lrtr_malloc(sizeof(struct aspa_array));
 
 	// malloc for aspa_record failed hence we return an error
 	if (!new_vector) {
@@ -73,7 +73,7 @@ int ordered_dyn_array_copy(struct ordered_dyn_array **dst, struct ordered_dyn_ar
 	return 0;
 }
 
-int ordered_dyn_array_free(struct ordered_dyn_array *vector)
+int aspa_array_free(struct aspa_array *vector)
 {
 	// if the vector is null just return
 	if (vector == NULL) {
@@ -91,7 +91,7 @@ int ordered_dyn_array_free(struct ordered_dyn_array *vector)
 	return 0;
 }
 
-int ordered_dyn_array_reallocate(struct ordered_dyn_array *vector)
+int aspa_array_reallocate(struct aspa_array *vector)
 {
 	// the factor by how much the capacity will increase: new_capacity = old_capacity * SIZE_INCREASE_EXPONENTIAL
 	const size_t SIZE_INCREASE_EXPONENTIAL = 2;
@@ -118,8 +118,9 @@ int ordered_dyn_array_reallocate(struct ordered_dyn_array *vector)
 	return 0;
 }
 
-void ordered_dyn_array_private_insert(struct ordered_dyn_array *vector, struct aspa_record record)
+void aspa_array_private_insert(struct aspa_array *vector, struct aspa_record record)
 {
+	// TODO: Handle replacements
 	// iterator running from the back of the array to the front
 	size_t j = vector->size;
 
@@ -135,24 +136,24 @@ void ordered_dyn_array_private_insert(struct ordered_dyn_array *vector, struct a
 	vector->data[j] = record;
 }
 
-int ordered_dyn_array_insert(struct ordered_dyn_array *vector, struct aspa_record record)
+int aspa_array_insert(struct aspa_array *vector, struct aspa_record record)
 {
 	// check if this element will fit into the vector
 	if (vector->size + 1 > vector->capacity) {
 		// increasing the vectors size so the new element fits
-		if (ordered_dyn_array_reallocate(vector) < 0) {
+		if (aspa_array_reallocate(vector) < 0) {
 			return -1;
 		}
 	}
 
 	// insert the element at the correct place
-	ordered_dyn_array_private_insert(vector, record);
+	aspa_array_private_insert(vector, record);
 	vector->size += 1;
 
 	return 0;
 }
 
-size_t ordered_dyn_array_search(struct ordered_dyn_array *vector, uint32_t customer_asn)
+size_t aspa_array_search(struct aspa_array *vector, uint32_t customer_asn)
 {
 	// if the vector is empty we return an error
 	if (vector->size == 0 || vector->capacity == 0) {
@@ -185,7 +186,7 @@ size_t ordered_dyn_array_search(struct ordered_dyn_array *vector, uint32_t custo
 	return -1;
 }
 
-int ordered_dyn_array_free_at(struct ordered_dyn_array *vector, size_t index)
+int aspa_array_free_at(struct aspa_array *vector, size_t index)
 {
 	if (vector->size <= index || vector->size == 0) {
 		return -1;

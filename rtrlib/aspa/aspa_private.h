@@ -25,19 +25,30 @@
 #include <stdbool.h>
 
 /**
- * @brief Initializes a new ASPA table serving a cache for records associated with the given `rtr_socket`.
- * Note that records not associated with the given socket cannot be added or removed from the table.
- * @param aspa_table The ASPA table to initialize as a cache.
- * @param rtr_socket The socket whose records are to be cached.
+ * @brief Swap root nodes of the argument tables
+ * @param[in,out] a First table
+ * @param[in,out] b second table
  */
-int aspa_table_cache_init(struct aspa_table *aspa_table, struct rtr_socket *rtr_socket);
+void aspa_table_swap(struct aspa_table *a, struct aspa_table *b);
 
 /**
- * @brief Writes all cached records from the cache table into the destination table.
- * @param cache_table The ASPA table initialized as a cache.
- * @param dest_table The ASPA table where the cached records are written into.
+ * @brief Copy content of @p src_table into @p dst_table
+ * @details dst must be empty and initialized
+ * @param[in] src_table Source table
+ * @param[out] dst_table Destination table
+ * @param[in] socket socket which prefixes should not be copied
  */
-int aspa_table_cache_writeback(struct aspa_table *cache_table, struct aspa_table *dest_table);
+int aspa_table_copy_except_socket(struct aspa_table *src_table, struct aspa_table *dst_table,
+				 const struct rtr_socket *socket);
+
+/**
+ * @brief Notify client about changes between to aspa tables regarding one specific socket
+ * @details @c old_table will be modified it should be freed after calling this function
+ * @param[in] new_table New table
+ * @param[in] old_table Old table
+ * @param[in] socket socket which prefixes should be diffed
+ */
+void aspa_table_notify_diff(struct aspa_table *new_table, struct aspa_table *old_table, const struct rtr_socket *socket);
 
 #endif
 /** @} */

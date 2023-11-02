@@ -133,7 +133,7 @@ struct rtr_socket {
 	unsigned int version;
 	bool has_received_pdus;
 	struct spki_table *spki_table;
-	struct ordered_dyn_array *aspa_array;
+	struct aspa_array *aspa_array;
 	struct aspa_table *aspa_table;
 	bool is_resetting;
 };

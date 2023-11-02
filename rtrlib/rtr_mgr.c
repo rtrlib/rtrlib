@@ -407,7 +407,7 @@ err:
 	if (pfxt)
 		pfx_table_free(pfxt);
 	if (aspa_table)
-		aspa_table_free(aspa_table);
+		aspa_table_free(aspa_table, false);
 	lrtr_free(pfxt);
 	lrtr_free(spki_table);
 	lrtr_free(aspa_table);
@@ -468,7 +468,7 @@ RTRLIB_EXPORT void rtr_mgr_free(struct rtr_mgr_config *config)
 
 	pfx_table_free(config->pfx_table);
 	spki_table_free(config->spki_table);
-	aspa_table_free(config->aspa_table);
+	aspa_table_free(config->aspa_table, true);
 	lrtr_free(config->spki_table);
 	lrtr_free(config->pfx_table);
 
