@@ -8,13 +8,14 @@
 */
 
 #include "aspa_array.h"
+
 #include "rtrlib/aspa/aspa_private.h"
 #include "rtrlib/lib/alloc_utils_private.h"
 
 int aspa_array_create(struct aspa_array **vector_pointer)
 {
 	const size_t default_initial_size = 128;
-	
+
 	// allocation the chunk of memory of the provider as numbers
 	struct aspa_record *data_field =
 		(struct aspa_record *)lrtr_malloc(sizeof(struct aspa_record) * default_initial_size);
@@ -45,10 +46,9 @@ int aspa_array_create(struct aspa_array **vector_pointer)
 
 int aspa_array_copy(struct aspa_array **dst, struct aspa_array *src)
 {
-
 	// allocation the new chunk of memory
-	struct aspa_record *new_data_field = (struct aspa_record *)lrtr_malloc(
-		sizeof(struct aspa_record) * src->capacity);
+	struct aspa_record *new_data_field =
+		(struct aspa_record *)lrtr_malloc(sizeof(struct aspa_record) * src->capacity);
 
 	// malloc failed so returning an error
 	if (new_data_field == NULL) {
@@ -57,7 +57,7 @@ int aspa_array_copy(struct aspa_array **dst, struct aspa_array *src)
 
 	// copying the data from the old location to the new one
 	memcpy(new_data_field, src->data, src->capacity * sizeof(struct aspa_record));
-	
+
 	// allocating the aspa_record itself
 	struct aspa_array *new_vector = (struct aspa_array *)lrtr_malloc(sizeof(struct aspa_array));
 
@@ -69,7 +69,7 @@ int aspa_array_copy(struct aspa_array **dst, struct aspa_array *src)
 	// assigning the new array to the vector and incrementing the capacity
 	new_vector->data = new_data_field;
 	new_vector->capacity = src->capacity;
-	
+
 	return 0;
 }
 
@@ -197,8 +197,7 @@ int aspa_array_free_at(struct aspa_array *vector, size_t index)
 
 	// if 1 or more elements needs to be copied
 	if (number_of_elements > 0) {
-		memcpy(vector->data + index, vector->data + index + 1,
-		       number_of_elements * sizeof(struct aspa_record));
+		memcpy(vector->data + index, vector->data + index + 1, number_of_elements * sizeof(struct aspa_record));
 	}
 
 	// decrementing the size by one

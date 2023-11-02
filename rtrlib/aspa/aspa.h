@@ -19,8 +19,9 @@
 #ifndef RTR_ASPA_H
 #define RTR_ASPA_H
 
-#include "rtrlib/rtr/rtr.h"
 #include "aspa_array/aspa_array.h"
+
+#include "rtrlib/rtr/rtr.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -50,10 +51,8 @@ struct aspa_table;
  * @param record aspa_record that was modified.
  * @param added True if the record was added, false if the record was removed.
  */
-typedef void (*aspa_update_fp)(struct aspa_table *aspa_table,
-							   const struct aspa_record record,
-							   const struct rtr_socket *rtr_socket,
-							   const bool added);
+typedef void (*aspa_update_fp)(struct aspa_table *aspa_table, const struct aspa_record record,
+			       const struct rtr_socket *rtr_socket, const bool added);
 
 struct aspa_store_node {
 	struct aspa_array *aspa_array;
@@ -134,7 +133,8 @@ void aspa_table_free(struct aspa_table *aspa_table, bool notify);
  * @return aspa_ERROR On error.
  * @return aspa_DUPLICATE_RECORD If an identical aspa_record already exists
  */
-int aspa_table_add(struct aspa_table *aspa_table, struct aspa_record *aspa_record, struct rtr_socket *rtr_socket, bool replace);
+int aspa_table_add(struct aspa_table *aspa_table, struct aspa_record *aspa_record, struct rtr_socket *rtr_socket,
+		   bool replace);
 
 /**
  * @brief Removes aspa_record from aspa_table
@@ -168,8 +168,8 @@ int aspa_table_src_remove(struct aspa_table *aspa_table, struct rtr_socket *rtr_
  * @return aspa_SUCCESS On success
  * @return aspa_ERROR On error
  */
-int aspa_table_search_by_customer_asn(struct aspa_table *aspa_table, uint32_t *customer_asn, struct aspa_record **result,
-				 unsigned int *result_size);
+int aspa_table_search_by_customer_asn(struct aspa_table *aspa_table, uint32_t *customer_asn,
+				      struct aspa_record **result, unsigned int *result_size);
 
 #endif
 /** @} */

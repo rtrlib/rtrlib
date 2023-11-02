@@ -9,11 +9,11 @@
 
 #include "rtr_mgr_private.h"
 
+#include "rtrlib/aspa/aspa_private.h"
 #include "rtrlib/config.h"
 #include "rtrlib/lib/alloc_utils_private.h"
 #include "rtrlib/lib/log_private.h"
 #include "rtrlib/pfx/pfx_private.h"
-#include "rtrlib/aspa/aspa_private.h"
 #include "rtrlib/rtr/rtr_private.h"
 #include "rtrlib/rtrlib_export_private.h"
 #include "rtrlib/spki/hashtable/ht-spkitable_private.h"
@@ -71,9 +71,9 @@ static int rtr_mgr_init_sockets(struct rtr_mgr_group *group, struct rtr_mgr_conf
 				const unsigned int retry_interval, enum rtr_interval_mode iv_mode)
 {
 	for (unsigned int i = 0; i < group->sockets_len; i++) {
-		enum rtr_rtvals err_code = rtr_init(group->sockets[i], NULL, config->pfx_table, config->spki_table, config->aspa_table,
-						    refresh_interval, expire_interval, retry_interval, iv_mode,
-						    rtr_mgr_cb, config, group);
+		enum rtr_rtvals err_code = rtr_init(group->sockets[i], NULL, config->pfx_table, config->spki_table,
+						    config->aspa_table, refresh_interval, expire_interval,
+						    retry_interval, iv_mode, rtr_mgr_cb, config, group);
 		if (err_code)
 			return err_code;
 	}
@@ -293,14 +293,13 @@ int rtr_mgr_config_cmp_tommy(const void *a, const void *b)
 	return rtr_mgr_config_cmp(ar->group, br->group);
 }
 
-
 // TODO: Additional arguments trailing?
 RTRLIB_EXPORT int rtr_mgr_init(struct rtr_mgr_config **config_out, struct rtr_mgr_group groups[],
 			       const unsigned int groups_len, const unsigned int refresh_interval,
 			       const unsigned int expire_interval, const unsigned int retry_interval,
 			       const pfx_update_fp update_fp, const spki_update_fp spki_update_fp,
-			       const aspa_update_fp aspa_update_fp,
-			       const rtr_mgr_status_fp status_fp, void *status_fp_data)
+			       const aspa_update_fp aspa_update_fp, const rtr_mgr_status_fp status_fp,
+			       void *status_fp_data)
 {
 	enum rtr_rtvals err_code = RTR_ERROR;
 	enum rtr_interval_mode iv_mode = RTR_INTERVAL_MODE_DEFAULT_MIN_MAX;
@@ -356,7 +355,7 @@ RTRLIB_EXPORT int rtr_mgr_init(struct rtr_mgr_config **config_out, struct rtr_mg
 	if (!spki_table)
 		goto err;
 	spki_table_init(spki_table, spki_update_fp);
-	
+
 	aspa_table = lrtr_malloc(sizeof(*aspa_table));
 	if (!aspa_table)
 		goto err;
@@ -504,7 +503,7 @@ RTRLIB_EXPORT inline int rtr_mgr_validate(struct rtr_mgr_config *config, const u
 
 /* cppcheck-suppress unusedFunction */
 RTRLIB_EXPORT inline int rtr_mgr_validate_as_path(struct rtr_mgr_config *config, const uint32_t customer_asn,
-					  const uint32_t provider_asn, enum pfxv_state *result)
+						  const uint32_t provider_asn, enum pfxv_state *result)
 {
 	// TODO: implement
 	return -1;

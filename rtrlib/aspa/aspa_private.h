@@ -21,8 +21,8 @@
 
 #include "aspa.h"
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 /**
  * @brief Swap root nodes of the argument tables
@@ -39,7 +39,7 @@ void aspa_table_swap(struct aspa_table *a, struct aspa_table *b);
  * @param[in] socket socket which prefixes should not be copied
  */
 int aspa_table_copy_except_socket(struct aspa_table *src_table, struct aspa_table *dst_table,
-				 const struct rtr_socket *socket);
+				  const struct rtr_socket *socket);
 
 /**
  * @brief Notify client about changes between to aspa tables regarding one specific socket
@@ -48,7 +48,8 @@ int aspa_table_copy_except_socket(struct aspa_table *src_table, struct aspa_tabl
  * @param[in] old_table Old table
  * @param[in] socket socket which prefixes should be diffed
  */
-void aspa_table_notify_diff(struct aspa_table *new_table, struct aspa_table *old_table, const struct rtr_socket *socket);
+void aspa_table_notify_diff(struct aspa_table *new_table, struct aspa_table *old_table,
+			    const struct rtr_socket *socket);
 
 #endif
 /** @} */
