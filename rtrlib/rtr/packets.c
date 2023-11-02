@@ -1611,7 +1611,7 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 						RTR_DBG1("No spki update callback. Skipping diff");
 					}
 					if (rtr_socket->aspa_table->update_fp) {
-						RTR_DBG1("Calculating and notifying spki diff");
+						RTR_DBG1("Calculating and notifying aspa diff");
 						aspa_table_notify_diff(rtr_socket->aspa_table, aspa_shadow_table,
 								       rtr_socket);
 					} else {
