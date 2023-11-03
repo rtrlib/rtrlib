@@ -1326,8 +1326,8 @@ static int rtr_sync_update_tables(struct rtr_socket *rtr_socket, struct pfx_tabl
 				if (rtr_undo_update_aspa_table_batch(rtr_socket, aspa_table, aspa_pdus, i) == RTR_ERROR)
 					undo_res = RTR_ERROR;
 
-				if (rtr_undo_update_spki_table_batch(rtr_socket, spki_table, router_key_pdus, i) ==
-				    RTR_ERROR)
+				if (rtr_undo_update_spki_table_batch(rtr_socket, spki_table, router_key_pdus,
+								     router_key_pdu_count) == RTR_ERROR)
 					undo_res = RTR_ERROR;
 
 				if (rtr_undo_update_pfx_table_batch(rtr_socket, pfx_table, ipv4_pdus, ipv4_pdu_count,
