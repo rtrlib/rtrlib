@@ -332,6 +332,9 @@ int aspa_table_src_move(struct aspa_table *dst, struct aspa_table *src, struct r
 		// with new one
 		rtr_socket->aspa_array = new_array;
 	}
+	
+	pthread_rwlock_unlock(&src->lock);
+	pthread_rwlock_unlock(&dst->lock);
 
 	if (notify_src)
 		// Notify src clients their records are being removed
@@ -352,8 +355,6 @@ int aspa_table_src_move(struct aspa_table *dst, struct aspa_table *src, struct r
 		// Notify dst clients the records from src are added
 		for (size_t i = 0; i < new_array->size; i++)
 			aspa_table_notify_clients(src, &(new_array->data[i]), rtr_socket, true);
-
-	pthread_rwlock_unlock(&src->lock);
-	pthread_rwlock_unlock(&dst->lock);
+	
 	return res;
 }
