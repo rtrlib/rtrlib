@@ -979,7 +979,7 @@ static int rtr_undo_update_aspa_table_batch(struct rtr_socket *rtr_socket, struc
 	for (size_t i = 0; i < pdu_count; i++) {
 		int res = rtr_undo_update_aspa_table(rtr_socket, aspa_table, &(pdus[i]));
 
-		if (res == RTR_ERROR || res == SPKI_ERROR) {
+		if (res == RTR_ERROR || res == ASPA_ERROR) {
 			// Undo failed, cannot recover, remove all records associated with the socket instead
 			RTR_DBG1(
 				"Couldn't undo all update operations from failed data synchronisation: Purging all ASPA records");

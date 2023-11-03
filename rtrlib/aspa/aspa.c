@@ -56,7 +56,7 @@ static int aspa_store_insert(struct aspa_store_node **store, struct rtr_socket *
 	new->aspa_array = aspa_array;
 
 	if (*store == NULL) {
-		store = &new;
+		*store = new;
 	} else {
 		// prepend new node
 		new->next = *store;
