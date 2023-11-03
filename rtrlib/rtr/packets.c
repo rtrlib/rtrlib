@@ -1593,7 +1593,7 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 					RTR_DBG1("Reset finished. Swapping new table in.");
 					pfx_table_swap(rtr_socket->pfx_table, pfx_shadow_table);
 					spki_table_swap(rtr_socket->spki_table, spki_shadow_table);
-					aspa_table_swap(rtr_socket->aspa_table, aspa_shadow_table);
+					aspa_table_swap(rtr_socket->aspa_table, aspa_shadow_table, rtr_socket);
 
 					if (rtr_socket->pfx_table->update_fp) {
 						RTR_DBG1("Calculating and notifying pfx diff");

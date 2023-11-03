@@ -148,7 +148,7 @@ RTRLIB_EXPORT int aspa_table_add(struct aspa_table *aspa_table, struct aspa_reco
 	pthread_rwlock_wrlock(&aspa_table->lock);
 
 	struct aspa_array *array;
-	
+
 	// Find the socket's corresponding aspa_array.
 	// If fast lookup suceeds (rtr_socket->aspa_table == aspa_table),
 	// access rtr_socket->aspa_array directly,
@@ -206,7 +206,7 @@ RTRLIB_EXPORT int aspa_table_remove(struct aspa_table *aspa_table, struct aspa_r
 	pthread_rwlock_wrlock(&aspa_table->lock);
 
 	struct aspa_array *array;
-	
+
 	// Find the socket's corresponding aspa_array.
 	// If fast lookup suceeds (rtr_socket->aspa_table == aspa_table),
 	// access rtr_socket->aspa_array directly,
@@ -288,11 +288,28 @@ RTRLIB_EXPORT int aspa_table_src_remove(struct aspa_table *aspa_table, struct rt
 	return ASPA_SUCCESS;
 }
 
-void aspa_table_swap(struct aspa_table *a, struct aspa_table *b)
+void aspa_table_swap(struct aspa_table *a, struct aspa_table *b, struct rtr_socket *rtr_socket)
 {
 	pthread_rwlock_wrlock(&a->lock);
 	pthread_rwlock_wrlock(&b->lock);
 
+	// This functions swaps the store references inside the two aspa_tables.
+	if (rtr_socket) {
+		// To keep fast lookup working, swap aspa_array in socket, too
+		// Swap aspa_array only if one of the tables a und b are the socket's
+		// current primary table (the table the socket holds a reference to)
+		if (rtr_socket->aspa_table == a)
+			// Primary table is a, so replace aspa_array in socket with
+			// the one stored in b
+			rtr_socket->aspa_array = aspa_store_search(b->store, rtr_socket);
+
+		else if (rtr_socket->aspa_table == b)
+			// Primary table is b, so replace aspa_array in socket with
+			// the one stored in a
+			rtr_socket->aspa_array = aspa_store_search(a->store, rtr_socket);
+	}
+
+	// switch stores in aspa_table
 	struct aspa_store_node *tmp = a->store;
 	a->store = b->store;
 	b->store = tmp;
@@ -317,7 +334,7 @@ int aspa_table_copy_except_socket(struct aspa_table *src_table, struct aspa_tabl
 
 	if (new_head == NULL)
 		return ASPA_ERROR;
-	
+
 	if (original->rtr_socket == socket)
 		original = original->next;
 
@@ -332,15 +349,15 @@ int aspa_table_copy_except_socket(struct aspa_table *src_table, struct aspa_tabl
 	while (original != NULL) {
 		if (original->rtr_socket != socket) {
 			node->next = lrtr_malloc(sizeof(struct aspa_store_node));
-			
+
 			if (node->next == NULL) {
 				// if malloc failed
 				lrtr_free(new_head);
 				return ASPA_ERROR;
 			}
-			
+
 			node = node->next;
-			
+
 			if (aspa_array_copy(&node->aspa_array, original->aspa_array) < 0) {
 				lrtr_free(new_head);
 				lrtr_free(node);

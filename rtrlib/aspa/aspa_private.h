@@ -28,8 +28,9 @@
  * @brief Swap root nodes of the argument tables
  * @param[in,out] a First table
  * @param[in,out] b second table
+ * @param[in,out] rtr_socket Socket whose @c aspa_array should be swapped (optional)
  */
-void aspa_table_swap(struct aspa_table *a, struct aspa_table *b);
+void aspa_table_swap(struct aspa_table *a, struct aspa_table *b, struct rtr_socket *rtr_socket);
 
 /**
  * @brief Copy content of @p src_table into @p dst_table
