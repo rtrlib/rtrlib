@@ -66,26 +66,27 @@ static int aspa_store_insert(struct aspa_store_node **store, struct rtr_socket *
 	return ASPA_SUCCESS;
 }
 
-static void aspa_store_remove(struct aspa_store_node *head, struct rtr_socket *rtr_socket)
+static void aspa_store_remove(struct aspa_store_node **head, struct rtr_socket *rtr_socket)
 {
-	if (head == NULL)
+	if (head == NULL || *head == NULL)
 		return;
-
-	struct aspa_store_node *node = head;
-	struct aspa_store_node *prev;
 
 	// If first node matches
-	if (node != NULL && node->rtr_socket == rtr_socket) {
-		node = head;
-		head = node->next;
-		lrtr_free(node);
+	if (*head != NULL && (*head)->rtr_socket == rtr_socket) {
+		struct aspa_store_node *tmp = *head;
+		*head = (*head)->next;
+		lrtr_free(tmp);
 		return;
 	}
 
-	while (node != NULL && node->rtr_socket != rtr_socket) {
+	struct aspa_store_node *node = *head;
+	struct aspa_store_node *prev;
+
+	// First node is guaranteed not to match
+	do {
 		prev = node;
 		node = node->next;
-	}
+	} while (node != NULL && node->rtr_socket != rtr_socket);
 
 	if (node == NULL)
 		return;
@@ -94,18 +95,18 @@ static void aspa_store_remove(struct aspa_store_node *head, struct rtr_socket *r
 	lrtr_free(node);
 }
 
-static struct aspa_array *aspa_store_search(struct aspa_store_node *head, const struct rtr_socket *rtr_socket)
+static struct aspa_array **aspa_store_search(struct aspa_store_node **node, const struct rtr_socket *rtr_socket)
 {
-	if (head == NULL)
+	if (node == NULL || *node == NULL)
 		return NULL;
 
-	struct aspa_store_node *node = head;
+	//	struct aspa_store_node *node = *head;
 
-	while (node != NULL) {
-		if (node->rtr_socket == rtr_socket) {
-			return node->aspa_array;
+	while (*node != NULL) {
+		if ((*node)->rtr_socket == rtr_socket) {
+			return &(*node)->aspa_array;
 		}
-		node = node->next;
+		node = &(*node)->next;
 	}
 
 	return NULL;
@@ -170,7 +171,7 @@ RTRLIB_EXPORT int aspa_table_add(struct aspa_table *aspa_table, struct aspa_reco
 	} else {
 		// This isn't the primary table (not the table the socket holds a reference to)
 		// Find node matching the given socket
-		array = aspa_store_search(aspa_table->store, rtr_socket);
+		array = *aspa_store_search(&aspa_table->store, rtr_socket);
 
 		if (array == NULL) {
 			// Create a new ASPA array, store that array algonside with the socket in the table
@@ -224,7 +225,7 @@ RTRLIB_EXPORT int aspa_table_remove(struct aspa_table *aspa_table, struct aspa_r
 	} else {
 		// This isn't the primary table (not the table the socket holds a reference to)
 		// Find node matching the given socket
-		array = aspa_store_search(aspa_table->store, rtr_socket);
+		array = *aspa_store_search(&aspa_table->store, rtr_socket);
 
 		if (array == NULL) {
 			pthread_rwlock_unlock(&aspa_table->lock);
@@ -257,7 +258,7 @@ RTRLIB_EXPORT int aspa_table_src_remove(struct aspa_table *aspa_table, struct rt
 {
 	pthread_rwlock_rdlock(&aspa_table->lock);
 
-	struct aspa_array *array = aspa_store_search(aspa_table->store, rtr_socket);
+	struct aspa_array *array = *aspa_store_search(&aspa_table->store, rtr_socket);
 
 	// Try to find array with fast lookup
 	if (array == NULL && rtr_socket->aspa_table == aspa_table) {
@@ -276,7 +277,7 @@ RTRLIB_EXPORT int aspa_table_src_remove(struct aspa_table *aspa_table, struct rt
 		aspa_table_notify_clients(aspa_table, &(array->data[i]), rtr_socket, false);
 
 	// Remove node for socket
-	aspa_store_remove(aspa_table->store, rtr_socket);
+	aspa_store_remove(&aspa_table->store, rtr_socket);
 
 	// Release all records associated with the socket
 	if (aspa_array_free(array) < 0) {
@@ -288,125 +289,69 @@ RTRLIB_EXPORT int aspa_table_src_remove(struct aspa_table *aspa_table, struct rt
 	return ASPA_SUCCESS;
 }
 
-void aspa_table_swap(struct aspa_table *a, struct aspa_table *b, struct rtr_socket *rtr_socket)
+int aspa_table_src_move(struct aspa_table *dst, struct aspa_table *src, struct rtr_socket *rtr_socket, bool notify)
 {
-	pthread_rwlock_wrlock(&a->lock);
-	pthread_rwlock_wrlock(&b->lock);
-
-	// This functions swaps the store references inside the two aspa_tables.
-	// We keep a reference to the corresponding aspa_array in each rtr_socket,
-	// so we need to swap out that reference, too!
-	if (rtr_socket) {
-		// To keep fast lookup working, swap aspa_array in socket:
-		// Swap aspa_array only if one of the tables a und b is the socket's
-		// current primary table (the table the socket holds a reference to)
-		if (rtr_socket->aspa_table == a)
-			// Primary table is a, so replace aspa_array in socket with
-			// the one stored in b. Currently the aspa_array in rtr_socket
-			// still points to an ASPA array stored in table a.
-			rtr_socket->aspa_array = aspa_store_search(b->store, rtr_socket);
-
-		else if (rtr_socket->aspa_table == b)
-			// Primary table is b, so replace aspa_array in socket with
-			// the one stored in a. Currently the aspa_array in rtr_socket
-			// still points to an ASPA array stored in table b.
-			rtr_socket->aspa_array = aspa_store_search(a->store, rtr_socket);
-	}
-
-	// switch stores in aspa_table
-	struct aspa_store_node *tmp = a->store;
-	a->store = b->store;
-	b->store = tmp;
-
-	pthread_rwlock_unlock(&b->lock);
-	pthread_rwlock_unlock(&a->lock);
-}
-
-int aspa_table_copy_except_socket(struct aspa_table *src_table, struct aspa_table *dst_table,
-				  const struct rtr_socket *socket)
-{
-	if (src_table == NULL || dst_table == NULL)
+	if (dst == NULL || src == NULL || rtr_socket == NULL)
 		return ASPA_ERROR;
 
-	// Check if we need to copy anything
-	if (src_table->store == NULL)
-		return ASPA_SUCCESS;
+	pthread_rwlock_wrlock(&dst->lock);
+	pthread_rwlock_wrlock(&src->lock);
 
-	struct aspa_store_node *original = src_table->store;
+	struct aspa_array *new_array = *aspa_store_search(&src->store, rtr_socket);
+	struct aspa_array **old_array_ptr = aspa_store_search(&dst->store, rtr_socket);
+	struct aspa_array *old_array = *old_array_ptr;
 
-	struct aspa_store_node *new_head = lrtr_malloc(sizeof(struct aspa_store_node));
-
-	if (new_head == NULL)
-		return ASPA_ERROR;
-
-	if (original->rtr_socket == socket)
-		original = original->next;
-
-	if (aspa_array_copy(&new_head->aspa_array, original->aspa_array) < 0) {
-		lrtr_free(new_head);
+	if (new_array == NULL) {
+		pthread_rwlock_unlock(&src->lock);
+		pthread_rwlock_unlock(&dst->lock);
 		return ASPA_ERROR;
 	}
 
-	struct aspa_store_node *node = new_head;
-	original = original->next;
+	int res = ASPA_SUCCESS;
 
-	while (original != NULL) {
-		if (original->rtr_socket != socket) {
-			node->next = lrtr_malloc(sizeof(struct aspa_store_node));
+	if (old_array == NULL) {
+		// If destination table has no aspa_array associated to the given socket
+		res = aspa_store_insert(&dst->store, rtr_socket, new_array);
+	} else {
+		// Destination table has an aspa_array associated to the given socket
+		// Replace ref with new array
+		*old_array_ptr = new_array;
+	}
 
-			if (node->next == NULL) {
-				// if malloc failed
-				lrtr_free(new_head);
-				return ASPA_ERROR;
-			}
+	// Remove socket from source table's store
+	aspa_store_remove(&src->store, rtr_socket);
 
-			node = node->next;
+	// We may need to replace the aspa_array reference in rtr_socket too
+	if (rtr_socket->aspa_table == src) {
+		// Socket is associated with source table, remove reference since
+		// the array is being moved to the destination table
+		rtr_socket->aspa_array = NULL;
+	} else if (rtr_socket->aspa_table == dst) {
+		// Socket is associated with the destination table, replace
+		// with new one
+		rtr_socket->aspa_array = new_array;
+	}
 
-			if (aspa_array_copy(&node->aspa_array, original->aspa_array) < 0) {
-				lrtr_free(new_head);
-				lrtr_free(node);
-				return ASPA_ERROR;
-			}
+	if (notify) {
+		// Notify src clients their records are being removed
+		for (size_t i = 0; i < new_array->size; i++)
+			aspa_table_notify_clients(src, &(new_array->data[i]), rtr_socket, false);
+
+		if (old_array != NULL) {
+			// Notify dst clients of their existing records are being removed
+			for (size_t i = 0; i < old_array->size; i++)
+				aspa_table_notify_clients(dst, &(old_array->data[i]), rtr_socket, false);
+
+			// Free the old array
+			aspa_array_free(old_array);
 		}
 
-		original = original->next;
+		// Notify dst clients the records from src are added
+		for (size_t i = 0; i < new_array->size; i++)
+			aspa_table_notify_clients(src, &(new_array->data[i]), rtr_socket, true);
 	}
 
-	node->next = NULL;
-	dst_table->store = new_head;
-
-	return ASPA_SUCCESS;
-}
-
-void aspa_table_notify_diff(struct aspa_table *new_table, struct aspa_table *old_table, const struct rtr_socket *socket)
-{
-	if (new_table == NULL || old_table == NULL || new_table == old_table)
-		return;
-
-	struct aspa_array *new_array;
-	struct aspa_array *old_array;
-
-	// Try fast lookup
-	if (socket->aspa_table == new_table)
-		new_array = socket->aspa_array;
-	else if (socket->aspa_table == old_table)
-		old_array = socket->aspa_array;
-
-	if (new_array == NULL)
-		new_array = aspa_store_search(new_table->store, socket);
-
-	if (old_array == NULL)
-		new_array = aspa_store_search(old_table->store, socket);
-
-	if (old_array != NULL) {
-		// Notify clients about these records being removed
-		for (size_t i = 0; i < old_array->size; i++)
-			aspa_table_notify_clients(new_table, &(old_array->data[i]), socket, false);
-	}
-
-	if (new_array != NULL) {
-		// Notify clients about these records being added
-		for (size_t i = 0; i < old_array->size; i++)
-			aspa_table_notify_clients(new_table, &(old_array->data[i]), socket, true);
-	}
+	pthread_rwlock_unlock(&src->lock);
+	pthread_rwlock_unlock(&dst->lock);
+	return res;
 }

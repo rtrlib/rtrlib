@@ -25,32 +25,13 @@
 #include <stdint.h>
 
 /**
- * @brief Swap root nodes of the argument tables
- * @param[in,out] a First table
- * @param[in,out] b second table
- * @param[in,out] rtr_socket Socket whose @c aspa_array should be swapped (optional)
+ * @brief Moves all ASPA records associated with the given socket from the source table into the destination table.
+ * @param[in,out] dest The destination table. Existing records associated with the socket are replaced.
+ * @param[in,out] src The source table.
+ * @param[in,out] rtr_socket The socket the records are associated with.
+ * @param notify A boolean value determining whether to notify the tables's clients of updates to these tables.
  */
-void aspa_table_swap(struct aspa_table *a, struct aspa_table *b, struct rtr_socket *rtr_socket);
-
-/**
- * @brief Copy content of @p src_table into @p dst_table
- * @details dst must be empty and initialized
- * @param[in] src_table Source table
- * @param[out] dst_table Destination table
- * @param[in] socket socket which prefixes should not be copied
- */
-int aspa_table_copy_except_socket(struct aspa_table *src_table, struct aspa_table *dst_table,
-				  const struct rtr_socket *socket);
-
-/**
- * @brief Notify client about changes between to aspa tables regarding one specific socket
- * @details @c old_table will be modified it should be freed after calling this function
- * @param[in] new_table New table
- * @param[in] old_table Old table
- * @param[in] socket socket which prefixes should be diffed
- */
-void aspa_table_notify_diff(struct aspa_table *new_table, struct aspa_table *old_table,
-			    const struct rtr_socket *socket);
+int aspa_table_src_move(struct aspa_table *dst, struct aspa_table *src, struct rtr_socket *rtr_socket, bool notify);
 
 #endif
 /** @} */

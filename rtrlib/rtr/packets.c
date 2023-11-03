@@ -1573,13 +1573,8 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 					goto cleanup;
 				}
 				aspa_table_init(aspa_shadow_table, NULL);
-				if (aspa_table_copy_except_socket(rtr_socket->aspa_table, aspa_shadow_table,
-								  rtr_socket) != ASPA_SUCCESS) {
-					RTR_DBG1("Creation of aspa shadow table failed");
-					rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-					retval = RTR_ERROR;
-					goto cleanup;
-				}
+				// Don't need to copy data into the ASPA shadow table because
+				// an aspa_table stores records associated with any socket separately.
 
 				RTR_DBG1("Shadow tables created");
 
@@ -1593,7 +1588,16 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 					RTR_DBG1("Reset finished. Swapping new table in.");
 					pfx_table_swap(rtr_socket->pfx_table, pfx_shadow_table);
 					spki_table_swap(rtr_socket->spki_table, spki_shadow_table);
-					aspa_table_swap(rtr_socket->aspa_table, aspa_shadow_table, rtr_socket);
+
+					bool notify_aspa_clients = rtr_socket->spki_table->update_fp != NULL;
+					if (notify_aspa_clients) {
+						RTR_DBG1("Calculating and notifying aspa diff");
+					} else {
+						RTR_DBG1("No aspa update callback. Skipping diff");
+					}
+
+					aspa_table_src_move(rtr_socket->aspa_table, aspa_shadow_table, rtr_socket,
+							    notify_aspa_clients);
 
 					if (rtr_socket->pfx_table->update_fp) {
 						RTR_DBG1("Calculating and notifying pfx diff");
@@ -1609,13 +1613,6 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 								       rtr_socket);
 					} else {
 						RTR_DBG1("No spki update callback. Skipping diff");
-					}
-					if (rtr_socket->aspa_table->update_fp) {
-						RTR_DBG1("Calculating and notifying aspa diff");
-						aspa_table_notify_diff(rtr_socket->aspa_table, aspa_shadow_table,
-								       rtr_socket);
-					} else {
-						RTR_DBG1("No aspa update callback. Skipping diff");
 					}
 				}
 
