@@ -148,6 +148,11 @@ RTRLIB_EXPORT int aspa_table_add(struct aspa_table *aspa_table, struct aspa_reco
 	pthread_rwlock_wrlock(&aspa_table->lock);
 
 	struct aspa_array *array;
+	
+	// Find the socket's corresponding aspa_array.
+	// If fast lookup suceeds (rtr_socket->aspa_table == aspa_table),
+	// access rtr_socket->aspa_array directly,
+	// perform lookup on aspa_table->store insted.
 
 	// Use fast lookup
 	if (rtr_socket->aspa_table == aspa_table) {
@@ -177,7 +182,7 @@ RTRLIB_EXPORT int aspa_table_add(struct aspa_table *aspa_table, struct aspa_reco
 		}
 	}
 
-	// Insert record into socket's aspa_array
+	// Insert record aspa_array
 	// TODO: This function does not handle duplicates/replacing the record
 	if (aspa_array_insert(array, *record) < 0) {
 		pthread_rwlock_unlock(&aspa_table->lock);
@@ -186,7 +191,6 @@ RTRLIB_EXPORT int aspa_table_add(struct aspa_table *aspa_table, struct aspa_reco
 
 	pthread_rwlock_unlock(&aspa_table->lock);
 
-	// table may have changed, so capture if table is cache table
 	// Notify clients that the record has been added
 	aspa_table_notify_clients(aspa_table, record, rtr_socket, true);
 
@@ -202,6 +206,11 @@ RTRLIB_EXPORT int aspa_table_remove(struct aspa_table *aspa_table, struct aspa_r
 	pthread_rwlock_wrlock(&aspa_table->lock);
 
 	struct aspa_array *array;
+	
+	// Find the socket's corresponding aspa_array.
+	// If fast lookup suceeds (rtr_socket->aspa_table == aspa_table),
+	// access rtr_socket->aspa_array directly,
+	// perform lookup on aspa_table->store insted.
 
 	// Use fast lookup
 	if (rtr_socket->aspa_table == aspa_table) {
@@ -230,7 +239,7 @@ RTRLIB_EXPORT int aspa_table_remove(struct aspa_table *aspa_table, struct aspa_r
 		return ASPA_RECORD_NOT_FOUND;
 	}
 
-	// Remove record from socket's aspa_array
+	// Remove record aspa_array
 	if (aspa_array_free_at(array, i) < 0) {
 		pthread_rwlock_unlock(&aspa_table->lock);
 		return ASPA_ERROR;
@@ -238,7 +247,6 @@ RTRLIB_EXPORT int aspa_table_remove(struct aspa_table *aspa_table, struct aspa_r
 
 	pthread_rwlock_unlock(&aspa_table->lock);
 
-	// table may have changed, so capture if table is cache table
 	// Notify clients that the record has been removed
 	aspa_table_notify_clients(aspa_table, record, rtr_socket, false);
 
