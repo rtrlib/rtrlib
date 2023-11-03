@@ -30,7 +30,7 @@
  * @param[in,out] src The source table.
  * @param[in,out] rtr_socket The socket the records are associated with.
  * @param notify_dst A boolean value determining whether to notify the destination tables' clients.
- * @param notify_src A boolean value determining whether to notify the destination tables' clients.
+ * @param notify_src A boolean value determining whether to notify the source tables' clients.
  */
 int aspa_table_src_move(struct aspa_table *dst, struct aspa_table *src, struct rtr_socket *rtr_socket, bool notify_dst,
 			bool notify_src);

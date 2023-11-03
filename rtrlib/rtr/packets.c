@@ -1591,7 +1591,7 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 
 					bool notify_aspa_clients = rtr_socket->spki_table->update_fp != NULL;
 					if (notify_aspa_clients) {
-						RTR_DBG1("Calculating and notifying aspa diff");
+						RTR_DBG1("Notifying aspa diff");
 					} else {
 						RTR_DBG1("No aspa update callback. Skipping diff");
 					}
