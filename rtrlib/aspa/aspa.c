@@ -294,18 +294,22 @@ void aspa_table_swap(struct aspa_table *a, struct aspa_table *b, struct rtr_sock
 	pthread_rwlock_wrlock(&b->lock);
 
 	// This functions swaps the store references inside the two aspa_tables.
+	// We keep a reference to the corresponding aspa_array in each rtr_socket,
+	// so we need to swap out that reference, too!
 	if (rtr_socket) {
-		// To keep fast lookup working, swap aspa_array in socket, too
-		// Swap aspa_array only if one of the tables a und b are the socket's
+		// To keep fast lookup working, swap aspa_array in socket:
+		// Swap aspa_array only if one of the tables a und b is the socket's
 		// current primary table (the table the socket holds a reference to)
 		if (rtr_socket->aspa_table == a)
 			// Primary table is a, so replace aspa_array in socket with
-			// the one stored in b
+			// the one stored in b. Currently the aspa_array in rtr_socket
+			// still points to an ASPA array stored in table a.
 			rtr_socket->aspa_array = aspa_store_search(b->store, rtr_socket);
 
 		else if (rtr_socket->aspa_table == b)
 			// Primary table is b, so replace aspa_array in socket with
-			// the one stored in a
+			// the one stored in a. Currently the aspa_array in rtr_socket
+			// still points to an ASPA array stored in table b.
 			rtr_socket->aspa_array = aspa_store_search(a->store, rtr_socket);
 	}
 
