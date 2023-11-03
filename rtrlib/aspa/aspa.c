@@ -317,6 +317,9 @@ int aspa_table_copy_except_socket(struct aspa_table *src_table, struct aspa_tabl
 
 	if (new_head == NULL)
 		return ASPA_ERROR;
+	
+	if (original->rtr_socket == socket)
+		original = original->next;
 
 	if (aspa_array_copy(&new_head->aspa_array, original->aspa_array) < 0) {
 		lrtr_free(new_head);
@@ -327,20 +330,22 @@ int aspa_table_copy_except_socket(struct aspa_table *src_table, struct aspa_tabl
 	original = original->next;
 
 	while (original != NULL) {
-		node->next = lrtr_malloc(sizeof(struct aspa_store_node));
-
-		if (node->next == NULL) {
-			// if malloc failed
-			lrtr_free(new_head);
-			return ASPA_ERROR;
-		}
-
-		node = node->next;
-
-		if (aspa_array_copy(&node->aspa_array, original->aspa_array) < 0) {
-			lrtr_free(new_head);
-			lrtr_free(node);
-			return ASPA_ERROR;
+		if (original->rtr_socket != socket) {
+			node->next = lrtr_malloc(sizeof(struct aspa_store_node));
+			
+			if (node->next == NULL) {
+				// if malloc failed
+				lrtr_free(new_head);
+				return ASPA_ERROR;
+			}
+			
+			node = node->next;
+			
+			if (aspa_array_copy(&node->aspa_array, original->aspa_array) < 0) {
+				lrtr_free(new_head);
+				lrtr_free(node);
+				return ASPA_ERROR;
+			}
 		}
 
 		original = original->next;
