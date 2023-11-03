@@ -1597,7 +1597,7 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 					}
 
 					aspa_table_src_move(rtr_socket->aspa_table, aspa_shadow_table, rtr_socket,
-							    notify_aspa_clients);
+							    notify_aspa_clients, false);
 
 					if (rtr_socket->pfx_table->update_fp) {
 						RTR_DBG1("Calculating and notifying pfx diff");

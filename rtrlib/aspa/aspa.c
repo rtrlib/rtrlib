@@ -289,7 +289,8 @@ RTRLIB_EXPORT int aspa_table_src_remove(struct aspa_table *aspa_table, struct rt
 	return ASPA_SUCCESS;
 }
 
-int aspa_table_src_move(struct aspa_table *dst, struct aspa_table *src, struct rtr_socket *rtr_socket, bool notify)
+int aspa_table_src_move(struct aspa_table *dst, struct aspa_table *src, struct rtr_socket *rtr_socket, bool notify_dst,
+			bool notify_src)
 {
 	if (dst == NULL || src == NULL || rtr_socket == NULL)
 		return ASPA_ERROR;
@@ -332,24 +333,25 @@ int aspa_table_src_move(struct aspa_table *dst, struct aspa_table *src, struct r
 		rtr_socket->aspa_array = new_array;
 	}
 
-	if (notify) {
+	if (notify_src)
 		// Notify src clients their records are being removed
 		for (size_t i = 0; i < new_array->size; i++)
 			aspa_table_notify_clients(src, &(new_array->data[i]), rtr_socket, false);
 
-		if (old_array != NULL) {
+	if (old_array != NULL) {
+		if (notify_dst)
 			// Notify dst clients of their existing records are being removed
 			for (size_t i = 0; i < old_array->size; i++)
 				aspa_table_notify_clients(dst, &(old_array->data[i]), rtr_socket, false);
 
-			// Free the old array
-			aspa_array_free(old_array);
-		}
+		// Free the old array
+		aspa_array_free(old_array);
+	}
 
+	if (notify_dst)
 		// Notify dst clients the records from src are added
 		for (size_t i = 0; i < new_array->size; i++)
 			aspa_table_notify_clients(src, &(new_array->data[i]), rtr_socket, true);
-	}
 
 	pthread_rwlock_unlock(&src->lock);
 	pthread_rwlock_unlock(&dst->lock);
