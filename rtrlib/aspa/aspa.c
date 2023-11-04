@@ -290,10 +290,37 @@ int aspa_table_src_move(struct aspa_table *dst, struct aspa_table *src, struct r
 	return res;
 }
 
-static int as_path_hop(struct aspa_table *aspa_table, uint32_t cas, uint32_t pas)
+static int as_path_hop(struct aspa_table *aspa_table, uint32_t customer_asn, uint32_t provider_asn)
 {
-	//TODO: implement
-	return AS_NO_ATTESTATION;
+	pthread_rwlock_rdlock(&aspa_table->lock);
+
+	struct aspa_store_node *node = aspa_table->store;
+
+	bool customer_found = 0;
+
+	while (node != NULL) {
+		struct aspa_array *aspa_array = node->aspa_array;
+
+		int pos = aspa_array_search(aspa_array, customer_asn);
+
+		if (pos == -1)
+			goto cont;
+
+		customer_found = 1;
+
+		for (size_t i = 0; i < aspa_array->data[pos].provider_count; i++) {
+			if (aspa_array->data[pos].provider_asns[i] == provider_asn) {
+				pthread_rwlock_unlock(&aspa_table->lock);
+				return AS_PROVIDER;
+			}
+		}
+
+		cont:
+			node = node->next;
+	}
+
+	pthread_rwlock_unlock(&aspa_table->lock);
+	return customer_found ? AS_NOT_PROVIDER : AS_NO_ATTESTATION;
 }
 
 RTRLIB_EXPORT int as_path_verify_upstream(struct aspa_table *aspa_table, uint32_t *as_path, size_t as_path_length)
