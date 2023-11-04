@@ -9,7 +9,7 @@
 
 /**
  * @defgroup mod_aspa_h ASPA validation table
- * 
+ *
  * @brief The aspa_table is an abstract data structure to organize the validated Autonomous System Provider Authorization  data
  * received from an RPKI-RTR cache server.
  *
@@ -135,7 +135,7 @@ void aspa_table_free(struct aspa_table *aspa_table, bool notify);
  * @param[in] aspa_table aspa_table to use.
  * @param[in] aspa_record aspa_record that will be added.
  * @return aspa_SUCCESS On success.
- 
+
  * @return aspa_ERROR On error.
  * @return aspa_DUPLICATE_RECORD If an identical aspa_record already exists
  */
@@ -183,7 +183,7 @@ enum as_providership {
     AS_NO_ATTESTATION,
 };
 
-static int as_path_hop(struct aspa_table *aspa_table, uint32_t cas, uint32_t pas);
+int as_path_hop(struct aspa_table *aspa_table, uint32_t customer_asn, uint32_t provider_asn);
 
 enum as_path_verification_result {
     AS_PATH_VALID,

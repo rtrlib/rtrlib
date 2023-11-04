@@ -290,7 +290,7 @@ int aspa_table_src_move(struct aspa_table *dst, struct aspa_table *src, struct r
 	return res;
 }
 
-static int as_path_hop(struct aspa_table *aspa_table, uint32_t customer_asn, uint32_t provider_asn)
+int as_path_hop(struct aspa_table *aspa_table, uint32_t customer_asn, uint32_t provider_asn)
 {
 	pthread_rwlock_rdlock(&aspa_table->lock);
 
@@ -330,17 +330,18 @@ RTRLIB_EXPORT int as_path_verify_upstream(struct aspa_table *aspa_table, uint32_
 	if (as_path_length == 1)
 		return AS_PATH_VALID;
 
+	bool found_no_attestation = 0;
+
 	for (size_t i = 1; i < as_path_length; i++) {
-		if (as_path_hop(aspa_table, as_path[i-1], as_path[i]) == AS_NOT_PROVIDER)
+		switch(as_path_hop(aspa_table, as_path[i-1], as_path[i])) {
+		case AS_NOT_PROVIDER:
 			return AS_PATH_INVALID;
+		case AS_NO_ATTESTATION:
+			found_no_attestation = 1;
+		}
 	}
 
-	for (size_t i = 1; i < as_path_length; i++) {
-		if (as_path_hop(aspa_table, as_path[i-1], as_path[i]) == AS_NO_ATTESTATION)
-			return AS_PATH_UNKNOWN;
-	}
-
-	return AS_PATH_VALID;
+	return found_no_attestation ? AS_PATH_UNKNOWN : AS_PATH_VALID;
 }
 
 RTRLIB_EXPORT int as_path_verify_downstream(struct aspa_table *aspa_table, uint32_t *as_path, size_t as_path_length)
