@@ -45,35 +45,6 @@ int aspa_array_create(struct aspa_array **vector_pointer)
 	return 0;
 }
 
-int aspa_array_copy(struct aspa_array **dst, struct aspa_array *src)
-{
-	// allocation the new chunk of memory
-	struct aspa_record *new_data_field =
-		(struct aspa_record *)lrtr_malloc(sizeof(struct aspa_record) * src->capacity);
-
-	// malloc failed so returning an error
-	if (new_data_field == NULL) {
-		return -1;
-	}
-
-	// copying the data from the old location to the new one
-	memcpy(new_data_field, src->data, src->capacity * sizeof(struct aspa_record));
-
-	// allocating the aspa_record itself
-	struct aspa_array *new_vector = (struct aspa_array *)lrtr_malloc(sizeof(struct aspa_array));
-
-	// malloc for aspa_record failed hence we return an error
-	if (!new_vector) {
-		return -1;
-	}
-
-	// assigning the new array to the vector and incrementing the capacity
-	new_vector->data = new_data_field;
-	new_vector->capacity = src->capacity;
-
-	return 0;
-}
-
 int aspa_array_free(struct aspa_array *vector)
 {
 	// if the vector is null just return
@@ -119,8 +90,7 @@ int aspa_array_reallocate(struct aspa_array *vector)
 	return 0;
 }
 
-void aspa_array_private_insert(struct aspa_array *vector, struct aspa_record record)
-{
+enum aspa_rtvals aspa_array_private_insert(struct aspa_array *vector, struct aspa_record record, bool overwrite) {
 	// TODO: Handle replacements
 	// iterator running from the back of the array to the front
 	size_t j = vector->size;
@@ -133,11 +103,22 @@ void aspa_array_private_insert(struct aspa_array *vector, struct aspa_record rec
 		j -= 1;
 	}
 
-	// inserting the record
-	vector->data[j] = record;
+	if (j < vector->size && vector->data[j].customer_asn == record.customer_asn ) {
+		if (overwrite) {
+			// overwrite the existing object
+			vector->data[j] = record;
+		} else {
+			// merge with existing object
+			merge_aspa_records(&record, &vector->data[j]);
+		}
+	} else {
+		vector->data[j] = record;
+	}
+
+	return 0;
 }
 
-int aspa_array_insert(struct aspa_array *vector, struct aspa_record record)
+int aspa_array_insert(struct aspa_array *vector, struct aspa_record record, bool overwrite)
 {
 	// check if this element will fit into the vector
 	if (vector->size + 1 > vector->capacity) {
@@ -148,7 +129,7 @@ int aspa_array_insert(struct aspa_array *vector, struct aspa_record record)
 	}
 
 	// insert the element at the correct place
-	aspa_array_private_insert(vector, record);
+	aspa_array_private_insert(vector, record, overwrite);
 	vector->size += 1;
 
 	return 0;
@@ -158,7 +139,7 @@ size_t aspa_array_search(struct aspa_array *vector, uint32_t customer_asn)
 {
 	// if the vector is empty we return an error
 	if (vector->size == 0 || vector->capacity == 0) {
-		return -1;
+		return 0xFFFFFFFF;
 	}
 
 	// left and right bound of our search space

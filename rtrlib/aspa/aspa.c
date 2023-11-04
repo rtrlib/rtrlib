@@ -72,7 +72,7 @@ RTRLIB_EXPORT void aspa_table_free(struct aspa_table *aspa_table, bool notify)
 }
 
 RTRLIB_EXPORT int aspa_table_add(struct aspa_table *aspa_table, struct aspa_record *record,
-				 struct rtr_socket *rtr_socket, bool replace)
+				 struct rtr_socket *rtr_socket, bool overwrite)
 {
 	if (!aspa_table)
 		return ASPA_ERROR;
@@ -116,7 +116,7 @@ RTRLIB_EXPORT int aspa_table_add(struct aspa_table *aspa_table, struct aspa_reco
 
 	// Insert record aspa_array
 	// TODO: This function does not handle duplicates/replacing the record
-	if (aspa_array_insert(array, *record) < 0) {
+	if (aspa_array_insert(array, *record, overwrite) < 0) { //TODO: check if we want to overwrite here
 		pthread_rwlock_unlock(&aspa_table->lock);
 		return ASPA_ERROR;
 	}
@@ -166,7 +166,7 @@ RTRLIB_EXPORT int aspa_table_remove(struct aspa_table *aspa_table, struct aspa_r
 
 	size_t i = aspa_array_search(array, record->customer_asn);
 
-	if (i < 0) {
+	if (i == 0XFFFFFFFF) { // error occured
 		pthread_rwlock_unlock(&aspa_table->lock);
 		return ASPA_RECORD_NOT_FOUND;
 	}
