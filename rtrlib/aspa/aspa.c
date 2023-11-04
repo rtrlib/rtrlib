@@ -306,10 +306,12 @@ int as_path_hop(struct aspa_table *aspa_table, uint32_t customer_asn, uint32_t p
 		if (pos == -1)
 			goto cont;
 
+
 		customer_found = 1;
 
 		for (size_t i = 0; i < aspa_array->data[pos].provider_count; i++) {
 			if (aspa_array->data[pos].provider_asns[i] == provider_asn) {
+
 				pthread_rwlock_unlock(&aspa_table->lock);
 				return AS_PROVIDER;
 			}
@@ -344,32 +346,45 @@ RTRLIB_EXPORT int as_path_verify_upstream(struct aspa_table *aspa_table, uint32_
 	return found_no_attestation ? AS_PATH_UNKNOWN : AS_PATH_VALID;
 }
 
+// implements 6.2.2. "Formal Procedure for Verification of Downstream Paths" of aspa verification draft
 RTRLIB_EXPORT int as_path_verify_downstream(struct aspa_table *aspa_table, uint32_t *as_path, size_t as_path_length)
 {
+	// zero length as_paths are invalid (design choice)
 	if (as_path_length < 1)
 		return AS_PATH_INVALID;
+
+	// as_paths of length 1 or 2 are always valid
 	if (as_path_length <= 2)
 		return AS_PATH_VALID;
 
-	size_t u_min = as_path_length + 1;
-	for (size_t u = 2; u <= as_path_length; u++) {
-		if (as_path_hop(aspa_table, as_path[(u - 1) - 1], as_path[(u - 1)]) == AS_NOT_PROVIDER) {
+	// find the lowest value 1 <= u < as_path_length
+	//     for which (as_path[u-1], as_path[u]) is not provider
+	size_t u_min = as_path_length;
+	for (size_t u = 1; u < as_path_length; u++) {
+		if (as_path_hop(aspa_table, as_path[u-1], as_path[u]) == AS_NOT_PROVIDER) {
 			u_min = u;
 			break;
 		}
 	}
 
+	// find the highest value 1 <= v < as_path_length
+	//     for which (as_path[v], as_path[v-1]) is not provider
 	size_t v_max = 0;
-	for (size_t v = as_path_length - 1; v >= 1; v--) {
-		if (as_path_hop(aspa_table, as_path[(v - 1) + 1], as_path[(v - 1)]) == AS_NOT_PROVIDER) {
+	for (size_t v = as_path_length-1; v >= 1; v--) {
+		if (as_path_hop(aspa_table, as_path[v], as_path[v-1]) == AS_NOT_PROVIDER) {
 			v_max = v;
 			break;
 		}
 	}
 
-	if (u_min < v_max)
+	// if there is more than 1 hop with NOT_PROVIDER, as_path is invalid
+	if (u_min + 1 < v_max)
 		return AS_PATH_INVALID;
 
+
+	// find up-ramp (streak of upstream providerships):
+	//     smallest K such that for all 1 <= i <= K,
+	//     the hop i -> i+1 is customer -> provider
 	size_t K = 0;
 	for (size_t i = 1; i < as_path_length; i++) {
 		if (as_path_hop(aspa_table, as_path[i - 1], as_path[i]) == AS_PROVIDER)
@@ -378,16 +393,24 @@ RTRLIB_EXPORT int as_path_verify_downstream(struct aspa_table *aspa_table, uint3
 			break;
 	}
 
-	size_t L = as_path_length - 1;
-	for (size_t j = as_path_length - 2; j >= 0; j--) {
-		if (as_path_hop(aspa_table, as_path[j + 1], as_path[j]) == AS_PROVIDER)
+	// find down-ramp (streak of downstream providerships):
+	//     smallest L such that for all N-2 >= j >= L,
+	//     the hop j -> j+1 is provider -> customer
+	size_t L = as_path_length-1;
+	for (size_t j = as_path_length-2; j >= 0; j--) {
+		if (as_path_hop(aspa_table, as_path[j+1], as_path[j]) == AS_PROVIDER)
 			L--;
 		else
 			break;
 	}
 
-	if (L - K <= 1)
+	// the providership-streaks up-ramp and down-ramp may have
+	//    max. one [AS_NO_ATTESTATION, AS_NOT_PROVIDER] hop inbetween
+	//    (overlap allowed)
+	if (L-K <= 1)
 		return AS_PATH_VALID;
+
+	// there were too many AS_NO_ATTESTATION along the as_path
 	return AS_PATH_UNKNOWN;
 }
 
