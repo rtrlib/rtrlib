@@ -358,7 +358,8 @@ RTRLIB_EXPORT int as_path_verify_downstream(struct aspa_table *aspa_table, uint3
 		return AS_PATH_VALID;
 
 	// find the lowest value 1 <= u < as_path_length
-	//     for which (as_path[u-1], as_path[u]) is not provider
+	//     for which as_path[u-1] is not customer of as_path[u]
+	//     i.e. u_min marks the upper end of the lowest not-customer-of-hop
 	size_t u_min = as_path_length;
 	for (size_t u = 1; u < as_path_length; u++) {
 		if (as_path_hop(aspa_table, as_path[u-1], as_path[u]) == AS_NOT_PROVIDER) {
@@ -368,7 +369,8 @@ RTRLIB_EXPORT int as_path_verify_downstream(struct aspa_table *aspa_table, uint3
 	}
 
 	// find the highest value 1 <= v < as_path_length
-	//     for which (as_path[v], as_path[v-1]) is not provider
+	//     for which as_path[v-1] is not provider of as_path[v]
+	//     i.e. v_max marks the upper end of the lowest not-provider-of-hop
 	size_t v_max = 0;
 	for (size_t v = as_path_length-1; v >= 1; v--) {
 		if (as_path_hop(aspa_table, as_path[v], as_path[v-1]) == AS_NOT_PROVIDER) {
@@ -377,8 +379,10 @@ RTRLIB_EXPORT int as_path_verify_downstream(struct aspa_table *aspa_table, uint3
 		}
 	}
 
+	// u_min == v_max if there's only 1 hop where neither is the other's provider
+	// u_min > v_max if for each hop, one is the other's provider
 	// if there is more than 1 hop with NOT_PROVIDER, as_path is invalid
-	if (u_min + 1 < v_max)
+	if (u_min < v_max)
 		return AS_PATH_INVALID;
 
 
