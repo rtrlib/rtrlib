@@ -112,8 +112,8 @@ static void test_upstream(struct aspa_table* aspa_table) {
 	assert(as_path_verify_upstream(aspa_table, (uint32_t []){ 100, 999, 999 }, 3) == AS_PATH_INVALID);
 	assert(as_path_verify_upstream(aspa_table, (uint32_t []){ 999, 100, 999 }, 3) == AS_PATH_INVALID);
 
-	// if one is unknown: no attestation
-	assert(as_path_verify_upstream(aspa_table, (uint32_t []){ 300, 400, 500, 999 }, 4) == AS_NO_ATTESTATION);
+	// if one cannot be attested: is unknown
+	assert(as_path_verify_upstream(aspa_table, (uint32_t []){ 300, 400, 500, 999 }, 4) == AS_PATH_UNKNOWN);
 }
 
 static void test_downstream(struct aspa_table* aspa_table) {
