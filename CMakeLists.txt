@@ -140,6 +140,8 @@ ADD_TEST(test_getbits tests/test_getbits)
 
 ADD_TEST(test_dynamic_groups tests/test_dynamic_groups)
 
+ADD_TEST(test_as_path_verification tests/test_as_path_verification)
+
 if(RTRLIB_BGPSEC_ENABLED)
     ADD_TEST(test_bgpsec tests/test_bgpsec)
 endif(RTRLIB_BGPSEC_ENABLED)
