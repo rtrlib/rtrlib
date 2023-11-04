@@ -289,3 +289,77 @@ int aspa_table_src_move(struct aspa_table *dst, struct aspa_table *src, struct r
 
 	return res;
 }
+
+static int as_path_hop(struct aspa_table *aspa_table, uint32_t cas, uint32_t pas)
+{
+	//TODO: implement
+	return AS_NO_ATTESTATION;
+}
+
+RTRLIB_EXPORT int as_path_verify_upstream(struct aspa_table *aspa_table, uint32_t *as_path, size_t as_path_length)
+{
+	if (as_path_length < 1)
+		return AS_PATH_INVALID;
+	if (as_path_length == 1)
+		return AS_PATH_VALID;
+
+	for (size_t i = 1; i < as_path_length; i++) {
+		if (as_path_hop(aspa_table, as_path[i-1], as_path[i]) == AS_NOT_PROVIDER)
+			return AS_PATH_INVALID;
+	}
+
+	for (size_t i = 1; i < as_path_length; i++) {
+		if (as_path_hop(aspa_table, as_path[i-1], as_path[i]) == AS_NO_ATTESTATION)
+			return AS_PATH_UNKNOWN;
+	}
+
+	return AS_PATH_VALID;
+}
+
+RTRLIB_EXPORT int as_path_verify_downstream(struct aspa_table *aspa_table, uint32_t *as_path, size_t as_path_length)
+{
+	if (as_path_length < 1)
+		return AS_PATH_INVALID;
+	if (as_path_length <= 2)
+		return AS_PATH_VALID;
+
+	size_t u_min = as_path_length+1;
+	for (size_t u = 2; u <= as_path_length; u++) {
+		if (as_path_hop(aspa_table, as_path[(u-1)-1], as_path[(u-1)]) == AS_NOT_PROVIDER) {
+			u_min = u;
+			break;
+		}
+	}
+
+	size_t v_max = 0;
+	for (size_t v = as_path_length-1; v >= 1; v--) {
+		if (as_path_hop(aspa_table, as_path[(v-1)+1], as_path[(v-1)]) == AS_NOT_PROVIDER) {
+			v_max = v;
+			break;
+		}
+	}
+
+	if (u_min < v_max)
+		return AS_PATH_INVALID;
+
+
+	size_t K = 0;
+	for (size_t i = 1; i < as_path_length; i++) {
+		if (as_path_hop(aspa_table, as_path[i-1], as_path[i]) == AS_PROVIDER)
+			K++;
+		else
+			break;
+	}
+
+	size_t L = as_path_length-1;
+	for (size_t j = as_path_length-2; j >= 0; j--) {
+		if (as_path_hop(aspa_table, as_path[j+1], as_path[j]) == AS_PROVIDER)
+			L--;
+		else
+			break;
+	}
+
+	if (L-K <= 1)
+		return AS_PATH_VALID;
+	return AS_PATH_UNKNOWN;
+}

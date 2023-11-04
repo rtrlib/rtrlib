@@ -17,7 +17,7 @@
  * the socket they originated from so they can be purged easily right after any given socket dies, so filtering is not needed. The ASPA
  * records themselves are stored in an @c aspa_array dynamically ordering the records inside in order to make searching faster. The table
  * stores each of these @c aspa_array references alongside a reference to the beforementioned @c rtr_socket inside a linked
- * list. The linked list is needed for validation and in cases where the table is copied, like in @c rtr_sync_receive_and_store_apdus .
+ * list. The linked list is needed for validation and in cases where the table is copied, like in @c rtr_sync_receive_and_store_pdus .
  * Adding or removing records, or purging all records for any given socket would involve performing a lookup on the linked list. This
  * issue is addressed by storing a reference to the corresponding @c aspa_array in each @c rtr_socket . All possible operations
  * on the ASPA table therefore check if the given @c aspa_table matches the one in the @c rtr_socket and use the
@@ -176,6 +176,24 @@ int aspa_table_src_remove(struct aspa_table *aspa_table, struct rtr_socket *rtr_
  */
 int aspa_table_search_by_customer_asn(struct aspa_table *aspa_table, uint32_t *customer_asn,
 				      struct aspa_record **result, unsigned int *result_size);
+
+enum as_providership {
+    AS_PROVIDER,
+    AS_NOT_PROVIDER,
+    AS_NO_ATTESTATION,
+};
+
+static int as_path_hop(struct aspa_table *aspa_table, uint32_t cas, uint32_t pas);
+
+enum as_path_verification_result {
+    AS_PATH_VALID,
+    AS_PATH_INVALID,
+    AS_PATH_UNKNOWN,
+};
+
+int as_path_verify_upstream(struct aspa_table *aspa_table, uint32_t *as_path, size_t as_path_length);
+
+int as_path_verify_downstream(struct aspa_table *aspa_table, uint32_t *as_path, size_t as_path_length);
 
 #endif
 /** @} */
