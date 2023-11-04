@@ -290,7 +290,7 @@ int aspa_table_src_move(struct aspa_table *dst, struct aspa_table *src, struct r
 	return res;
 }
 
-int as_path_hop(struct aspa_table *aspa_table, uint32_t customer_asn, uint32_t provider_asn)
+enum as_providership as_path_hop(struct aspa_table *aspa_table, uint32_t customer_asn, uint32_t provider_asn)
 {
 	pthread_rwlock_rdlock(&aspa_table->lock);
 
@@ -325,7 +325,7 @@ int as_path_hop(struct aspa_table *aspa_table, uint32_t customer_asn, uint32_t p
 	return customer_found ? AS_NOT_PROVIDER : AS_NO_ATTESTATION;
 }
 
-RTRLIB_EXPORT int as_path_verify_upstream(struct aspa_table *aspa_table, uint32_t *as_path, size_t as_path_length)
+RTRLIB_EXPORT enum as_path_verification_result as_path_verify_upstream(struct aspa_table *aspa_table, uint32_t *as_path, size_t as_path_length)
 {
 	if (as_path_length < 1)
 		return AS_PATH_INVALID;
@@ -347,7 +347,7 @@ RTRLIB_EXPORT int as_path_verify_upstream(struct aspa_table *aspa_table, uint32_
 }
 
 // implements 6.2.2. "Formal Procedure for Verification of Downstream Paths" of aspa verification draft
-RTRLIB_EXPORT int as_path_verify_downstream(struct aspa_table *aspa_table, uint32_t *as_path, size_t as_path_length)
+RTRLIB_EXPORT enum as_path_verification_result as_path_verify_downstream(struct aspa_table *aspa_table, uint32_t *as_path, size_t as_path_length)
 {
 	// zero length as_paths are invalid (design choice)
 	if (as_path_length < 1)
