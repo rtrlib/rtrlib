@@ -13,6 +13,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+
+#include "../aspa.h"
 
 /**
  * @brief Struct which is similar in function to std::vector from C++.
@@ -31,13 +34,6 @@ struct aspa_array {
  * @result Null On error.
  */
 int aspa_array_create(struct aspa_array **vector_pointer);
-
-/**
- * @brief Copies the given vector.
- * @param[out] dst The pointer to where the newly copied vector's pointer will be written.
- * @param[in] src The pointer to the vector that will be copied.
- */
-int aspa_array_copy(struct aspa_array **dst, struct aspa_array *src);
 
 /**
  * @brief Deletes the given vector
@@ -63,7 +59,7 @@ int aspa_array_reallocate(struct aspa_array *vector);
  * @param[vector] list of ASPA entries
  * @param[size] size of the ASPA entries list
  */
-void aspa_array_private_insert(struct aspa_array *vector, struct aspa_record record);
+enum aspa_rtvals aspa_array_private_insert(struct aspa_array *vector, struct aspa_record record, bool overwrite);
 
 /**
  * @brief adds a new aspa record to the list
@@ -72,7 +68,7 @@ void aspa_array_private_insert(struct aspa_array *vector, struct aspa_record rec
  * @result 0 On success.
  * @result -1 On error.
  */
-int aspa_array_insert(struct aspa_array *vector, struct aspa_record record);
+enum aspa_rtvals aspa_array_insert(struct aspa_array *vector, struct aspa_record record, bool overwrite);
 
 /**
  * @brief deletes the element at the index

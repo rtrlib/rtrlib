@@ -32,12 +32,16 @@
 #define RTR_ASPA_H
 
 #include "aspa_array/aspa_array.h"
+#include "rtrlib/lib/alloc_utils_private.h"
 
 #include "rtrlib/rtr/rtr.h"
 
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+
 /**
  * @brief ASPA Record
  * Customer (Customer Autonomous Systen, CAS) authorizes a set of provider AS numbers
@@ -47,6 +51,51 @@ struct aspa_record {
 	size_t provider_count;
 	uint32_t *provider_asns;
 };
+
+static int merge_aspa_records(const struct aspa_record* source_record, struct aspa_record* destination_record) {
+	size_t new_size = source_record->provider_count + destination_record->provider_count;
+	uint32_t* new_provider_asns = lrtr_malloc(new_size * sizeof(uint32_t));
+
+	if (new_provider_asns == NULL) {
+		return -1;
+	}
+
+	size_t src_counter = 0;
+	size_t dst_counter = 0;
+	size_t insert_counter = 0;
+	while (source_record->provider_count > src_counter || destination_record->provider_count > dst_counter) {
+		uint32_t src_value = 0xFFFFFFF;
+		uint32_t dst_value = 0xFFFFFFF;
+		if (src_counter < source_record->provider_count) {
+			src_value = source_record->provider_asns[src_counter];
+		}
+
+		if (dst_counter < destination_record->provider_count) {
+			dst_value = destination_record->provider_asns[dst_counter];
+		}
+
+		if (src_value == dst_value ) {
+			new_provider_asns[insert_counter] = src_value;
+			src_counter++;
+			dst_counter++;
+		} else if (src_value < dst_value) {
+			new_provider_asns[insert_counter] = src_value;
+			src_counter++;
+		}else {
+			new_provider_asns[insert_counter] = dst_value;
+			dst_counter++;
+		}
+
+		insert_counter++;
+	}
+
+	free(destination_record->provider_asns);
+	destination_record->provider_count = insert_counter;
+	destination_record->provider_asns = new_provider_asns;
+
+	return 0;
+}
+
 
 /**
  * @brief Computes size of a given ASPA record.
