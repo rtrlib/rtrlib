@@ -9,6 +9,7 @@
 
 #include "aspa_array/aspa_array.h"
 #include "aspa_private.h"
+#include "aspa_store/aspa_store.h"
 
 #include "rtrlib/lib/alloc_utils_private.h"
 #include "rtrlib/rtrlib_export_private.h"
@@ -40,76 +41,6 @@ RTRLIB_EXPORT void aspa_table_init(struct aspa_table *aspa_table, aspa_update_fp
 	aspa_table->update_fp = update_fp;
 	aspa_table->store = NULL;
 	pthread_rwlock_init(&(aspa_table->lock), NULL);
-}
-
-static int aspa_store_insert(struct aspa_store_node **store, struct rtr_socket *rtr_socket,
-			     struct aspa_array *aspa_array)
-{
-	// Allocate new node
-	struct aspa_store_node *new = lrtr_malloc(sizeof(struct aspa_store_node));
-
-	if (new == NULL)
-		return ASPA_ERROR;
-
-	// Store socket and ASPA array
-	new->rtr_socket = rtr_socket;
-	new->aspa_array = aspa_array;
-
-	if (*store == NULL) {
-		*store = new;
-	} else {
-		// prepend new node
-		new->next = *store;
-		*store = new;
-	}
-
-	return ASPA_SUCCESS;
-}
-
-static void aspa_store_remove(struct aspa_store_node **head, struct rtr_socket *rtr_socket)
-{
-	if (head == NULL || *head == NULL)
-		return;
-
-	// If first node matches
-	if (*head != NULL && (*head)->rtr_socket == rtr_socket) {
-		struct aspa_store_node *tmp = *head;
-		*head = (*head)->next;
-		lrtr_free(tmp);
-		return;
-	}
-
-	struct aspa_store_node *node = *head;
-	struct aspa_store_node *prev;
-
-	// First node is guaranteed not to match
-	do {
-		prev = node;
-		node = node->next;
-	} while (node != NULL && node->rtr_socket != rtr_socket);
-
-	if (node == NULL)
-		return;
-
-	prev->next = node->next;
-	lrtr_free(node);
-}
-
-static struct aspa_array **aspa_store_search(struct aspa_store_node **node, const struct rtr_socket *rtr_socket)
-{
-	if (node == NULL || *node == NULL)
-		return NULL;
-
-	//	struct aspa_store_node *node = *head;
-
-	while (*node != NULL) {
-		if ((*node)->rtr_socket == rtr_socket) {
-			return &(*node)->aspa_array;
-		}
-		node = &(*node)->next;
-	}
-
-	return NULL;
 }
 
 RTRLIB_EXPORT void aspa_table_free(struct aspa_table *aspa_table, bool notify)
@@ -332,7 +263,7 @@ int aspa_table_src_move(struct aspa_table *dst, struct aspa_table *src, struct r
 		// with new one
 		rtr_socket->aspa_array = new_array;
 	}
-	
+
 	pthread_rwlock_unlock(&src->lock);
 	pthread_rwlock_unlock(&dst->lock);
 
@@ -355,6 +286,6 @@ int aspa_table_src_move(struct aspa_table *dst, struct aspa_table *src, struct r
 		// Notify dst clients the records from src are added
 		for (size_t i = 0; i < new_array->size; i++)
 			aspa_table_notify_clients(src, &(new_array->data[i]), rtr_socket, true);
-	
+
 	return res;
 }

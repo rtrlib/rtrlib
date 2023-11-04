@@ -11,6 +11,7 @@
 
 #include "rtrlib/aspa/aspa_private.h"
 #include "rtrlib/lib/alloc_utils_private.h"
+#include "rtrlib/rtr/rtr.h"
 
 int aspa_array_create(struct aspa_array **vector_pointer)
 {

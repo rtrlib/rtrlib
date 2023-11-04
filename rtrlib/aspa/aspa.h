@@ -66,12 +66,6 @@ struct aspa_table;
 typedef void (*aspa_update_fp)(struct aspa_table *aspa_table, const struct aspa_record record,
 			       const struct rtr_socket *rtr_socket, const bool added);
 
-struct aspa_store_node {
-	struct aspa_array *aspa_array;
-	struct rtr_socket *rtr_socket;
-	struct aspa_store_node *next;
-};
-
 /**
  * @brief ASPA Table
 
