@@ -411,7 +411,7 @@ RTRLIB_EXPORT int as_path_verify_downstream(struct aspa_table *aspa_table, uint3
 	// the providership-streaks up-ramp and down-ramp may have
 	//    max. one [AS_NO_ATTESTATION, AS_NOT_PROVIDER] hop inbetween
 	//    (overlap allowed)
-	if (L-K <= 1)
+	if (K+1 >= L)
 		return AS_PATH_VALID;
 
 	// there were too many AS_NO_ATTESTATION along the as_path
