@@ -109,7 +109,9 @@ enum aspa_rtvals aspa_array_private_insert(struct aspa_array *vector, struct asp
 			vector->data[j] = record;
 		} else {
 			// merge with existing object
-			merge_aspa_records(&record, &vector->data[j]);
+			if(merge_aspa_records(&record, &vector->data[j]) == -1) {
+				return ASPA_ERROR;
+			};
 		}
 	} else {
 		vector->data[j] = record;
