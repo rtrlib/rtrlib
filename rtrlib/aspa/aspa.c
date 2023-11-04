@@ -315,8 +315,8 @@ int as_path_hop(struct aspa_table *aspa_table, uint32_t customer_asn, uint32_t p
 			}
 		}
 
-		cont:
-			node = node->next;
+	cont:
+		node = node->next;
 	}
 
 	pthread_rwlock_unlock(&aspa_table->lock);
@@ -333,7 +333,7 @@ RTRLIB_EXPORT int as_path_verify_upstream(struct aspa_table *aspa_table, uint32_
 	bool found_no_attestation = 0;
 
 	for (size_t i = 1; i < as_path_length; i++) {
-		switch(as_path_hop(aspa_table, as_path[i-1], as_path[i])) {
+		switch (as_path_hop(aspa_table, as_path[i - 1], as_path[i])) {
 		case AS_NOT_PROVIDER:
 			return AS_PATH_INVALID;
 		case AS_NO_ATTESTATION:
@@ -351,17 +351,17 @@ RTRLIB_EXPORT int as_path_verify_downstream(struct aspa_table *aspa_table, uint3
 	if (as_path_length <= 2)
 		return AS_PATH_VALID;
 
-	size_t u_min = as_path_length+1;
+	size_t u_min = as_path_length + 1;
 	for (size_t u = 2; u <= as_path_length; u++) {
-		if (as_path_hop(aspa_table, as_path[(u-1)-1], as_path[(u-1)]) == AS_NOT_PROVIDER) {
+		if (as_path_hop(aspa_table, as_path[(u - 1) - 1], as_path[(u - 1)]) == AS_NOT_PROVIDER) {
 			u_min = u;
 			break;
 		}
 	}
 
 	size_t v_max = 0;
-	for (size_t v = as_path_length-1; v >= 1; v--) {
-		if (as_path_hop(aspa_table, as_path[(v-1)+1], as_path[(v-1)]) == AS_NOT_PROVIDER) {
+	for (size_t v = as_path_length - 1; v >= 1; v--) {
+		if (as_path_hop(aspa_table, as_path[(v - 1) + 1], as_path[(v - 1)]) == AS_NOT_PROVIDER) {
 			v_max = v;
 			break;
 		}
@@ -370,31 +370,31 @@ RTRLIB_EXPORT int as_path_verify_downstream(struct aspa_table *aspa_table, uint3
 	if (u_min < v_max)
 		return AS_PATH_INVALID;
 
-
 	size_t K = 0;
 	for (size_t i = 1; i < as_path_length; i++) {
-		if (as_path_hop(aspa_table, as_path[i-1], as_path[i]) == AS_PROVIDER)
+		if (as_path_hop(aspa_table, as_path[i - 1], as_path[i]) == AS_PROVIDER)
 			K++;
 		else
 			break;
 	}
 
-	size_t L = as_path_length-1;
-	for (size_t j = as_path_length-2; j >= 0; j--) {
-		if (as_path_hop(aspa_table, as_path[j+1], as_path[j]) == AS_PROVIDER)
+	size_t L = as_path_length - 1;
+	for (size_t j = as_path_length - 2; j >= 0; j--) {
+		if (as_path_hop(aspa_table, as_path[j + 1], as_path[j]) == AS_PROVIDER)
 			L--;
 		else
 			break;
 	}
 
-	if (L-K <= 1)
+	if (L - K <= 1)
 		return AS_PATH_VALID;
 	return AS_PATH_UNKNOWN;
 }
 
-int merge_aspa_records(const struct aspa_record* source_record, struct aspa_record* destination_record) {
+int merge_aspa_records(const struct aspa_record *source_record, struct aspa_record *destination_record)
+{
 	size_t new_size = source_record->provider_count + destination_record->provider_count;
-	uint32_t* new_provider_asns = lrtr_malloc(new_size * sizeof(uint32_t));
+	uint32_t *new_provider_asns = lrtr_malloc(new_size * sizeof(uint32_t));
 
 	if (new_provider_asns == NULL) {
 		return -1;
@@ -414,14 +414,14 @@ int merge_aspa_records(const struct aspa_record* source_record, struct aspa_reco
 			dst_value = destination_record->provider_asns[dst_counter];
 		}
 
-		if (src_value == dst_value ) {
+		if (src_value == dst_value) {
 			new_provider_asns[insert_counter] = src_value;
 			src_counter++;
 			dst_counter++;
 		} else if (src_value < dst_value) {
 			new_provider_asns[insert_counter] = src_value;
 			src_counter++;
-		}else {
+		} else {
 			new_provider_asns[insert_counter] = dst_value;
 			dst_counter++;
 		}

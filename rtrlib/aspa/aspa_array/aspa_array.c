@@ -90,7 +90,8 @@ int aspa_array_reallocate(struct aspa_array *vector)
 	return 0;
 }
 
-enum aspa_rtvals aspa_array_private_insert(struct aspa_array *vector, struct aspa_record record, bool overwrite) {
+enum aspa_rtvals aspa_array_private_insert(struct aspa_array *vector, struct aspa_record record, bool overwrite)
+{
 	// TODO: Handle replacements
 	// iterator running from the back of the array to the front
 	size_t j = vector->size;
@@ -103,13 +104,13 @@ enum aspa_rtvals aspa_array_private_insert(struct aspa_array *vector, struct asp
 		j -= 1;
 	}
 
-	if (j < vector->size && vector->data[j].customer_asn == record.customer_asn ) {
+	if (j < vector->size && vector->data[j].customer_asn == record.customer_asn) {
 		if (overwrite) {
 			// overwrite the existing object
 			vector->data[j] = record;
 		} else {
 			// merge with existing object
-			if(merge_aspa_records(&record, &vector->data[j]) == -1) {
+			if (merge_aspa_records(&record, &vector->data[j]) == -1) {
 				return ASPA_ERROR;
 			};
 		}
@@ -183,7 +184,8 @@ int aspa_array_free_at(struct aspa_array *vector, size_t index)
 
 	// if 1 or more elements needs to be copied
 	if (number_of_elements > 0) {
-		memmove(vector->data + index, vector->data + index + 1, number_of_elements * sizeof(struct aspa_record));
+		memmove(vector->data + index, vector->data + index + 1,
+			number_of_elements * sizeof(struct aspa_record));
 	}
 
 	// decrementing the size by one

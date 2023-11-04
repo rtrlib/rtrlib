@@ -10,12 +10,12 @@
 #ifndef RTR_ASPA_DYN_ARRAY_H
 #define RTR_ASPA_DYN_ARRAY_H
 
+#include "../aspa.h"
+
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-
-#include "../aspa.h"
 
 /**
  * @brief Struct which is similar in function to std::vector from C++.

@@ -32,8 +32,8 @@
 #define RTR_ASPA_H
 
 #include "aspa_array/aspa_array.h"
-#include "rtrlib/lib/alloc_utils_private.h"
 
+#include "rtrlib/lib/alloc_utils_private.h"
 #include "rtrlib/rtr/rtr.h"
 
 #include <stdint.h>
@@ -57,7 +57,7 @@ struct aspa_record {
  * @param source_record record to merge which is not being touched
  * @param destination_record record which will be overwritten
  */
-int merge_aspa_records(const struct aspa_record* source_record, struct aspa_record* destination_record);
+int merge_aspa_records(const struct aspa_record *source_record, struct aspa_record *destination_record);
 
 /**
  * @brief Computes size of a given ASPA record.
@@ -189,17 +189,17 @@ int aspa_table_search_by_customer_asn(struct aspa_table *aspa_table, uint32_t *c
 				      struct aspa_record **result, unsigned int *result_size);
 
 enum as_providership {
-    AS_PROVIDER,
-    AS_NOT_PROVIDER,
-    AS_NO_ATTESTATION,
+	AS_PROVIDER,
+	AS_NOT_PROVIDER,
+	AS_NO_ATTESTATION,
 };
 
 int as_path_hop(struct aspa_table *aspa_table, uint32_t customer_asn, uint32_t provider_asn);
 
 enum as_path_verification_result {
-    AS_PATH_VALID,
-    AS_PATH_INVALID,
-    AS_PATH_UNKNOWN,
+	AS_PATH_VALID,
+	AS_PATH_INVALID,
+	AS_PATH_UNKNOWN,
 };
 
 int as_path_verify_upstream(struct aspa_table *aspa_table, uint32_t *as_path, size_t as_path_length);
