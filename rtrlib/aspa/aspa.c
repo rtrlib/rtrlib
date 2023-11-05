@@ -164,9 +164,9 @@ RTRLIB_EXPORT int aspa_table_remove(struct aspa_table *aspa_table, struct aspa_r
 		}
 	}
 
-	size_t i = aspa_array_search(array, record->customer_asn);
+	long i = aspa_array_search(array, record->customer_asn);
 
-	if (i == 0XFFFFFFFF) { // error occured
+	if (i < 0) { // error occured
 		pthread_rwlock_unlock(&aspa_table->lock);
 		return ASPA_RECORD_NOT_FOUND;
 	}

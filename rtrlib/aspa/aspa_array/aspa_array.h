@@ -86,6 +86,6 @@ int aspa_array_free_at(struct aspa_array *vector, size_t index);
  * @result index of the element on success
  * @result -1 On error or not if the element coulnd't be located
  */
-size_t aspa_array_search(struct aspa_array *vector, uint32_t customer_asn);
+long aspa_array_search(struct aspa_array *vector, uint32_t customer_asn);
 
 #endif

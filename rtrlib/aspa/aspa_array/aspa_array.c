@@ -137,11 +137,11 @@ int aspa_array_insert(struct aspa_array *vector, struct aspa_record record, bool
 	return 0;
 }
 
-size_t aspa_array_search(struct aspa_array *vector, uint32_t customer_asn)
+long aspa_array_search(struct aspa_array *vector, uint32_t customer_asn)
 {
 	// if the vector is empty we return an error
 	if (vector->size == 0 || vector->capacity == 0) {
-		return 0xFFFFFFFF;
+		return -1;
 	}
 
 	// left and right bound of our search space
