@@ -52,7 +52,7 @@ int aspa_array_free(struct aspa_array *vector);
 int aspa_array_reallocate(struct aspa_array *vector);
 
 /**
- * @brief Wiill insert the element at the correct place in the list so the ascending order is preserved
+ * @brief Will insert the element at the correct place in the list so the ascending order is preserved
  * This function assumes that the data field is large enough to fit one more element
  * This method is intended for internal use please use aspa_array_insert instead.
  *

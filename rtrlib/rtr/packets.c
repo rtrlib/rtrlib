@@ -835,6 +835,12 @@ static void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, con
 	}
 }
 
+/**
+ * @brief converting an given aspa pdu to a aspa_record
+ * @param pdu pdu which should be converted
+ * @param record output record
+ * @param type
+ */
 static void rtr_aspa_pdu_2_aspa_record(const struct pdu_aspa *pdu, struct aspa_record *record, const enum pdu_type type)
 {
 	assert(type == ASPA);
@@ -1109,9 +1115,9 @@ static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, struct pfx_table 
 
 	int rtval;
 
-	if (((struct pdu_ipv4 *)pdu)->flags == 1) {
+	if (((struct pdu_ipv4 *)pdu)->flags == 1) { // add record
 		rtval = pfx_table_add(pfx_table, &pfxr);
-	} else if (((struct pdu_ipv4 *)pdu)->flags == 0) {
+	} else if (((struct pdu_ipv4 *)pdu)->flags == 0) { // remove record
 		rtval = pfx_table_remove(pfx_table, &pfxr);
 	} else {
 		const char txt[] = "Prefix PDU with invalid flags value received";
@@ -1211,12 +1217,12 @@ static int rtr_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_tabl
 
 	rtr_aspa_pdu_2_aspa_record(pdu, &record, type);
 
-	int rtval;
+	int return_value;
 	if (((struct pdu_aspa *)pdu)->flags == 1) {
-		rtval = aspa_table_add(aspa_table, &record, rtr_socket, true);
+		return_value = aspa_table_add(aspa_table, &record, rtr_socket, true);
 
 	} else if (((struct pdu_aspa *)pdu)->flags == 0) {
-		rtval = aspa_table_remove(aspa_table, &record, rtr_socket);
+		return_value = aspa_table_remove(aspa_table, &record, rtr_socket);
 
 	} else {
 		const char txt[] = "ASPA PDU with invalid flags value received";
@@ -1226,18 +1232,18 @@ static int rtr_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_tabl
 		return RTR_ERROR;
 	}
 
-	if (rtval == ASPA_DUPLICATE_RECORD) {
+	if (return_value == ASPA_DUPLICATE_RECORD) {
 		// TODO: This debug message isn't working yet, how to display SKI/SPKI without %x?
 		RTR_DBG("Duplicate Announcement for ASPA customer ASN: %u received", record.customer_asn);
 		rtr_send_error_pdu_from_host(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT, NULL, 0);
 		rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
 		return RTR_ERROR;
-	} else if (rtval == ASPA_RECORD_NOT_FOUND) {
+	} else if (return_value == ASPA_RECORD_NOT_FOUND) {
 		RTR_DBG("Withdrawal of unknown ASPA customer ASN: %u", record.customer_asn);
 		rtr_send_error_pdu_from_host(rtr_socket, pdu, pdu_size, WITHDRAWAL_OF_UNKNOWN_RECORD, NULL, 0);
 		rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
 		return RTR_ERROR;
-	} else if (rtval == ASPA_ERROR) {
+	} else if (return_value == ASPA_ERROR) {
 		const char txt[] = "aspa_table Error";
 
 		RTR_DBG("%s", txt);

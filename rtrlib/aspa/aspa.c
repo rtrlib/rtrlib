@@ -392,7 +392,7 @@ RTRLIB_EXPORT int as_path_verify_downstream(struct aspa_table *aspa_table, uint3
 	return AS_PATH_UNKNOWN;
 }
 
-static int merge_aspa_records(const struct aspa_record* source_record, struct aspa_record* destination_record) {
+int merge_aspa_records(const struct aspa_record* source_record, struct aspa_record* destination_record) {
 	size_t new_size = source_record->provider_count + destination_record->provider_count;
 	uint32_t* new_provider_asns = lrtr_malloc(new_size * sizeof(uint32_t));
 
