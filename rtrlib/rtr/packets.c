@@ -1085,10 +1085,12 @@ static int rtr_store_aspa_pdu(struct pdu_aspa *pdu, struct aspa_pdu_list_node **
 	assert(rtr_get_pdu_type(pdu) == ASPA);
 	struct aspa_pdu_list_node *node = lrtr_malloc(sizeof(struct aspa_pdu_list_node));
 	
-	struct pdu_aspa *pdu_copy;
-	memcpy(pdu_copy, pdu, rtr_size_of_aspa_pdu(pdu));
+	size_t pdu_size = rtr_size_of_aspa_pdu(pdu);
 	
-	node->pdu = pdu;
+	struct pdu_aspa *pdu_copy = lrtr_malloc(pdu_size);
+	memcpy(pdu_copy, pdu, pdu_size);
+	
+	node->pdu = pdu_copy;
 	
 	if (*pdu_list == NULL)
 		*pdu_list = node;
@@ -1216,13 +1218,16 @@ static int rtr_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_tabl
 	rtr_aspa_pdu_2_aspa_record(pdu, &record, type);
 
 	int return_value;
-	if ((pdu->flags & 1) == 1)
+	if ((pdu->flags & 1) == 1) {
+		RTR_DBG("+ aspa");
 		// Announcement
 		return_value = aspa_table_add(aspa_table, &record, rtr_socket, true);
-	else
+	} else {
+		RTR_DBG("- aspa");
 		// Withdrawal
 		return_value = aspa_table_remove(aspa_table, &record, rtr_socket);
-
+	}
+	
 	if (return_value == ASPA_DUPLICATE_RECORD) {
 		// TODO: This debug message isn't working yet, how to display SKI/SPKI without %x?
 		RTR_DBG("Duplicate Announcement for ASPA customer ASN: %u received", record.customer_asn);

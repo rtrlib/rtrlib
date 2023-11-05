@@ -149,7 +149,7 @@ RTRLIB_EXPORT int aspa_table_remove(struct aspa_table *aspa_table, struct aspa_r
 		// Check if an ASPA array exists for this socket
 		if (rtr_socket->aspa_array == NULL) {
 			pthread_rwlock_unlock(&aspa_table->lock);
-			return ASPA_ERROR;
+			return ASPA_SUCCESS;
 		}
 
 		array = rtr_socket->aspa_array;
