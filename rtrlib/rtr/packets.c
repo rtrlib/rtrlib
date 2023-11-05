@@ -1210,15 +1210,15 @@ static int rtr_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_tabl
 
 	rtr_aspa_pdu_2_aspa_record(pdu, &record, type);
 
-	int rtval;
+	int return_value;
 	if ((pdu->flags & 1) == 1)
 		// Announcement
-		rtval = aspa_table_add(aspa_table, &record, rtr_socket, true);
+		return_value = aspa_table_add(aspa_table, &record, rtr_socket, true);
 	else
 		// Withdrawal
-		rtval = aspa_table_remove(aspa_table, &record, rtr_socket);
+		return_value = aspa_table_remove(aspa_table, &record, rtr_socket);
 
-	if (rtval == ASPA_DUPLICATE_RECORD) {
+	if (return_value == ASPA_DUPLICATE_RECORD) {
 		// TODO: This debug message isn't working yet, how to display SKI/SPKI without %x?
 		RTR_DBG("Duplicate Announcement for ASPA customer ASN: %u received", record.customer_asn);
 		rtr_send_error_pdu_from_host(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT, NULL, 0);
