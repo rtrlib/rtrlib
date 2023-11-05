@@ -1082,7 +1082,12 @@ static int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *p
  */
 static int rtr_store_aspa_pdu(struct pdu_aspa *pdu, struct aspa_pdu_list_node **pdu_list)
 {
+	assert(rtr_get_pdu_type(pdu) == ASPA);
 	struct aspa_pdu_list_node *node = lrtr_malloc(sizeof(struct aspa_pdu_list_node));
+	
+	struct pdu_aspa *pdu_copy;
+	memcpy(pdu_copy, pdu, rtr_size_of_aspa_pdu(pdu));
+	
 	node->pdu = pdu;
 	
 	if (*pdu_list == NULL)
