@@ -179,6 +179,8 @@ int aspa_array_free_at(struct aspa_array *vector, size_t index)
 	// number of element that need to be moved left
 	size_t number_of_elements = vector->size - index - 1;
 
+	free(vector->data[index].provider_asns);
+
 	// if 1 or more elements needs to be copied
 	if (number_of_elements > 0) {
 		memcpy(vector->data + index, vector->data + index + 1, number_of_elements * sizeof(struct aspa_record));
