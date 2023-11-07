@@ -1438,6 +1438,7 @@ void recv_loop_cleanup(void *p)
 	while (*args->aspa_pdus != NULL) {
 		struct aspa_pdu_list_node *node = *args->aspa_pdus;
 		*args->aspa_pdus = (*args->aspa_pdus)->next;
+		lrtr_free(node->pdu);
 		lrtr_free(node);
 	}
 }
