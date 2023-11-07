@@ -35,5 +35,12 @@
 int aspa_table_src_move(struct aspa_table *dst, struct aspa_table *src, struct rtr_socket *rtr_socket, bool notify_dst,
 			bool notify_src);
 
+
+/**
+ * @brief Checks a hop in the given @c AS_PATH .
+ * @return @c aspa_hop_result .
+ */
+enum aspa_hop_result aspa_check_hop(struct aspa_table *aspa_table, uint32_t customer_asn, uint32_t provider_asn);
+
 #endif
 /** @} */

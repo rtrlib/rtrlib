@@ -185,6 +185,53 @@ RTRLIB_EXPORT int aspa_table_remove(struct aspa_table *aspa_table, struct aspa_r
 	return ASPA_SUCCESS;
 }
 
+
+int merge_aspa_records(const struct aspa_record *source_record, struct aspa_record *destination_record)
+{
+	size_t new_size = source_record->provider_count + destination_record->provider_count;
+	uint32_t *new_provider_asns = lrtr_malloc(new_size * sizeof(uint32_t));
+
+	if (new_provider_asns == NULL) {
+		return -1;
+	}
+
+	size_t src_counter = 0;
+	size_t dst_counter = 0;
+	size_t insert_counter = 0;
+	while (source_record->provider_count > src_counter || destination_record->provider_count > dst_counter) {
+		uint32_t src_value = 0xFFFFFFF;
+		uint32_t dst_value = 0xFFFFFFF;
+		if (src_counter < source_record->provider_count) {
+			src_value = source_record->provider_asns[src_counter];
+		}
+
+		if (dst_counter < destination_record->provider_count) {
+			dst_value = destination_record->provider_asns[dst_counter];
+		}
+
+		if (src_value == dst_value) {
+			new_provider_asns[insert_counter] = src_value;
+			src_counter++;
+			dst_counter++;
+		} else if (src_value < dst_value) {
+			new_provider_asns[insert_counter] = src_value;
+			src_counter++;
+		} else {
+			new_provider_asns[insert_counter] = dst_value;
+			dst_counter++;
+		}
+
+		insert_counter++;
+	}
+
+	free(destination_record->provider_asns);
+	destination_record->provider_count = insert_counter;
+	destination_record->provider_asns = new_provider_asns;
+
+	return 0;
+}
+
+
 RTRLIB_EXPORT int aspa_table_src_remove(struct aspa_table *aspa_table, struct rtr_socket *rtr_socket)
 {
 	pthread_rwlock_rdlock(&aspa_table->lock);
@@ -290,175 +337,141 @@ int aspa_table_src_move(struct aspa_table *dst, struct aspa_table *src, struct r
 	return res;
 }
 
-enum as_providership as_path_hop(struct aspa_table *aspa_table, uint32_t customer_asn, uint32_t provider_asn)
+enum aspa_hop_result aspa_check_hop(struct aspa_table *aspa_table, uint32_t customer_asn, uint32_t provider_asn)
 {
 	pthread_rwlock_rdlock(&aspa_table->lock);
 
-	struct aspa_store_node *node = aspa_table->store;
+	bool customer_found = false;
+	
+	for (struct aspa_store_node *node = aspa_table->store; node != NULL; node = node->next) {
+		int pos = aspa_array_search(node->aspa_array, customer_asn);
 
-	bool customer_found = 0;
-
-	while (node != NULL) {
-		struct aspa_array *aspa_array = node->aspa_array;
-
-		int pos = aspa_array_search(aspa_array, customer_asn);
-
-		if (pos == -1)
-			goto cont;
-
-
-		customer_found = 1;
-
-		for (size_t i = 0; i < aspa_array->data[pos].provider_count; i++) {
-			if (aspa_array->data[pos].provider_asns[i] == provider_asn) {
-
+		if (pos <= 0)
+			continue;
+			
+		customer_found = true;
+			
+		for (size_t i = 0; i < node->aspa_array->data[pos].provider_count; i++) {
+			if (node->aspa_array->data[pos].provider_asns[i] == provider_asn) {
+				
 				pthread_rwlock_unlock(&aspa_table->lock);
-				return AS_PROVIDER;
+				return ASPA_PROVIDER_PLUS;
 			}
 		}
-
-	cont:
-		node = node->next;
 	}
 
 	pthread_rwlock_unlock(&aspa_table->lock);
-	return customer_found ? AS_NOT_PROVIDER : AS_NO_ATTESTATION;
+	return customer_found ? ASPA_NOT_PROVIDER_PLUS : ASPA_NO_ATTESTATION;
 }
 
-RTRLIB_EXPORT enum as_path_verification_result as_path_verify_upstream(struct aspa_table *aspa_table, uint32_t *as_path, size_t as_path_length)
+static enum aspa_verification_result aspa_verify_upstream(struct aspa_table *aspa_table, uint32_t as_path[], size_t len)
 {
-	if (as_path_length < 1)
-		return AS_PATH_INVALID;
-	if (as_path_length == 1)
-		return AS_PATH_VALID;
+	if (len < 1)
+		return ASPA_AS_PATH_INVALID;
+	if (len == 1)
+		return ASPA_AS_PATH_VALID;
 
-	bool found_no_attestation = 0;
+	bool has_unattested_hop = false;
 
-	for (size_t i = 1; i < as_path_length; i++) {
-		switch (as_path_hop(aspa_table, as_path[i - 1], as_path[i])) {
-		case AS_NOT_PROVIDER:
-			return AS_PATH_INVALID;
-		case AS_NO_ATTESTATION:
-			found_no_attestation = 1;
+	for (size_t i = 1; i < len; i++) {
+		switch (aspa_check_hop(aspa_table, as_path[i - 1], as_path[i])) {
+		case ASPA_NO_ATTESTATION:
+			has_unattested_hop = true;
+			break;
+		case ASPA_NOT_PROVIDER_PLUS:
+			return ASPA_AS_PATH_INVALID;
+		case ASPA_PROVIDER_PLUS:
+			break;
 		}
 	}
 
-	return found_no_attestation ? AS_PATH_UNKNOWN : AS_PATH_VALID;
+	return has_unattested_hop ? ASPA_AS_PATH_UNKNOWN : ASPA_AS_PATH_VALID;
 }
 
-// implements 6.2.2. "Formal Procedure for Verification of Downstream Paths" of aspa verification draft
-RTRLIB_EXPORT enum as_path_verification_result as_path_verify_downstream(struct aspa_table *aspa_table, uint32_t *as_path, size_t as_path_length)
+/**
+ * @brief Implements 6.2.2. "Formal Procedure for Verification of Downstream Paths" of aspa verification draft
+ */
+static enum aspa_verification_result aspa_verify_downstream(struct aspa_table *aspa_table, uint32_t as_path[], size_t len)
 {
-	// zero length as_paths are invalid (design choice)
-	if (as_path_length < 1)
-		return AS_PATH_INVALID;
+	// zero length as_paths are invalid
+	if (len < 1)
+		return ASPA_AS_PATH_INVALID;
 
-	// as_paths of length 1 or 2 are always valid
-	if (as_path_length <= 2)
-		return AS_PATH_VALID;
+	// AS_PATH of length 1 or 2 are always valid
+	if (len <= 2)
+		return ASPA_AS_PATH_VALID;
 
-	// find the lowest value 1 <= u < as_path_length
-	//     for which as_path[u-1] is not customer of as_path[u]
-	//     i.e. u_min marks the upper end of the lowest not-customer-of-hop
-	size_t u_min = as_path_length;
-	for (size_t u = 1; u < as_path_length; u++) {
-		if (as_path_hop(aspa_table, as_path[u-1], as_path[u]) == AS_NOT_PROVIDER) {
+	// Find the lowest value 1 <= u < len such that AS_PATH[u] is not provider of AS_PATH[u-1].
+	// u_min marks the first AS breaking the customer-provider relationship chain.
+	size_t u_min = len;
+	for (size_t u = 1; u < len; u++) {
+		if (aspa_check_hop(aspa_table, as_path[u-1], as_path[u]) == ASPA_NOT_PROVIDER_PLUS) {
 			u_min = u;
 			break;
 		}
 	}
 
-	// find the highest value 1 <= v < as_path_length
-	//     for which as_path[v-1] is not provider of as_path[v]
-	//     i.e. v_max marks the upper end of the lowest not-provider-of-hop
+	// Find the highest value 1 <= v < len such that AS_PATH[v-1] is not provider of AS_PATH[v].
+	// v_max marks the first AS breaking the customer-provider relationship chain.
 	size_t v_max = 0;
-	for (size_t v = as_path_length-1; v >= 1; v--) {
-		if (as_path_hop(aspa_table, as_path[v], as_path[v-1]) == AS_NOT_PROVIDER) {
+	for (size_t v = len - 1; v >= 1; v--) {
+		if (aspa_check_hop(aspa_table, as_path[v], as_path[v-1]) == ASPA_NOT_PROVIDER_PLUS) {
 			v_max = v;
 			break;
 		}
 	}
 
-	// u_min == v_max if there's only 1 hop where neither is the other's provider
-	// u_min > v_max if for each hop, one is the other's provider
-	// if there is more than 1 hop with NOT_PROVIDER, as_path is invalid
+	// u_min == v_max if there's only a single hop where neither one is the other's provider
+	// u_min > v_max if each AS along the path is the other's provider
+	// if there is more than an single hop with nP, AS_PATH is invalid
 	if (u_min < v_max)
-		return AS_PATH_INVALID;
+		return ASPA_AS_PATH_INVALID;
 
-
-	// find up-ramp (streak of upstream providerships):
-	//     smallest K such that for all 1 <= i <= K,
-	//     the hop i -> i+1 is customer -> provider
+	// Find up-ramp:
+	// smallest K such that for all 1 <= i <= K,
+	// the AS_PATH[i+1] is a provider of AS_PATH[i]
 	size_t K = 0;
-	for (size_t i = 1; i < as_path_length; i++) {
-		if (as_path_hop(aspa_table, as_path[i - 1], as_path[i]) == AS_PROVIDER)
+	for (size_t i = 1; i < len; i++) {
+		if (aspa_check_hop(aspa_table, as_path[i - 1], as_path[i]) == ASPA_PROVIDER_PLUS)
 			K++;
 		else
 			break;
 	}
 
-	// find down-ramp (streak of downstream providerships):
-	//     smallest L such that for all N-2 >= j >= L,
-	//     the hop j -> j+1 is provider -> customer
-	size_t L = as_path_length-1;
-	for (size_t j = as_path_length-2; j >= 0; j--) {
-		if (as_path_hop(aspa_table, as_path[j+1], as_path[j]) == AS_PROVIDER)
+	// Find down-ramp:
+	// smallest L such that for all N-2 >= j >= L,
+	// AS_PATH[j] is a provider of AS_PATH[j+1]
+	// TODO: will not work because size_t is unsigned!!
+	size_t L = len - 1;
+	for (size_t j = len - 2; j >= 0; j--) {
+		if (aspa_check_hop(aspa_table, as_path[j + 1], as_path[j]) == ASPA_PROVIDER_PLUS)
 			L--;
 		else
 			break;
 	}
 
-	// the providership-streaks up-ramp and down-ramp may have
-	//    max. one [AS_NO_ATTESTATION, AS_NOT_PROVIDER] hop inbetween
-	//    (overlap allowed)
-	if (K+1 >= L)
-		return AS_PATH_VALID;
+	// there's only a single unattested (nA) or not-provider (nP) hops allowed between the up and down ramp.
+	if (K + 1 >= L)
+		return ASPA_AS_PATH_VALID;
 
-	// there were too many AS_NO_ATTESTATION along the as_path
-	return AS_PATH_UNKNOWN;
+	// too many unattested (nA) or not-provider (nP) hops in the AS_PATH
+	return ASPA_AS_PATH_UNKNOWN;
 }
 
-int merge_aspa_records(const struct aspa_record *source_record, struct aspa_record *destination_record)
+RTRLIB_EXPORT enum aspa_verification_result aspa_verify_as_path(struct aspa_table *aspa_table, enum aspa_direction direction, uint32_t as_path[], size_t len)
 {
-	size_t new_size = source_record->provider_count + destination_record->provider_count;
-	uint32_t *new_provider_asns = lrtr_malloc(new_size * sizeof(uint32_t));
-
-	if (new_provider_asns == NULL) {
-		return -1;
+	switch (direction) {
+		case ASPA_UPSTREAM:
+			return aspa_verify_upstream(aspa_table, as_path, len);
+		case ASPA_DOWNSTREAM:
+			return aspa_verify_downstream(aspa_table, as_path, len);
 	}
+	
+	return ASPA_AS_PATH_UNKNOWN;
+}
 
-	size_t src_counter = 0;
-	size_t dst_counter = 0;
-	size_t insert_counter = 0;
-	while (source_record->provider_count > src_counter || destination_record->provider_count > dst_counter) {
-		uint32_t src_value = 0xFFFFFFF;
-		uint32_t dst_value = 0xFFFFFFF;
-		if (src_counter < source_record->provider_count) {
-			src_value = source_record->provider_asns[src_counter];
-		}
 
-		if (dst_counter < destination_record->provider_count) {
-			dst_value = destination_record->provider_asns[dst_counter];
-		}
-
-		if (src_value == dst_value) {
-			new_provider_asns[insert_counter] = src_value;
-			src_counter++;
-			dst_counter++;
-		} else if (src_value < dst_value) {
-			new_provider_asns[insert_counter] = src_value;
-			src_counter++;
-		} else {
-			new_provider_asns[insert_counter] = dst_value;
-			dst_counter++;
-		}
-
-		insert_counter++;
-	}
-
-	free(destination_record->provider_asns);
-	destination_record->provider_count = insert_counter;
-	destination_record->provider_asns = new_provider_asns;
-
-	return 0;
+RTRLIB_EXPORT void aspa_collapse_as_path(uint32_t as_path[], size_t len)
+{
+	
 }
