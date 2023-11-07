@@ -183,7 +183,7 @@ int aspa_array_free_at(struct aspa_array *vector, size_t index)
 
 	// if 1 or more elements needs to be copied
 	if (number_of_elements > 0) {
-		memcpy(vector->data + index, vector->data + index + 1, number_of_elements * sizeof(struct aspa_record));
+		memmove(vector->data + index, vector->data + index + 1, number_of_elements * sizeof(struct aspa_record));
 	}
 
 	// decrementing the size by one
