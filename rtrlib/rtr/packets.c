@@ -538,7 +538,6 @@ static bool rtr_pdu_check_size(const struct pdu_header *pdu)
 		// Check if the PDU really contains the ASPA PDU
 		uint16_t asn_count = ntohs(aspa_pdu->provider_count);
 
-		RTR_DBG("provider_asn_count: %u", asn_count);
 		// ASN is 4 bytes each
 		expected_size += asn_count * sizeof(aspa_pdu->provider_asns[0]);
 		if (aspa_pdu->len != expected_size) {
@@ -1325,7 +1324,6 @@ static int rtr_sync_update_tables(struct rtr_socket *rtr_socket, struct pfx_tabl
 		RTR_DBG1("spki data added");
 
 		// add aspa records to the aspa_table
-
 		while (aspa_pdus != NULL) {
 			aspa_pdu_count++;
 			if (rtr_update_aspa_table(rtr_socket, aspa_table, aspa_pdus->pdu) == RTR_ERROR) {
