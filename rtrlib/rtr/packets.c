@@ -199,6 +199,8 @@ struct recv_loop_cleanup_args {
 	struct aspa_pdu_list_node *aspa_pdus;
 };
 
+
+//static void recv_loop_cleanup(struct recv_loop_cleanup_args *args);
 static void recv_loop_cleanup(void *p);
 
 static int rtr_send_error_pdu_from_network(const struct rtr_socket *rtr_socket, const void *erroneous_pdu,
@@ -1429,8 +1431,7 @@ static inline int rtr_handle_eod_pdu(struct rtr_socket *rtr_socket, struct pdu_e
 
 void recv_loop_cleanup(void *p)
 {
-	struct recv_loop_cleanup_args *args = p;
-
+	struct recv_loop_cleanup_args* args = p;
 	lrtr_free(args->ipv4_pdus);
 	lrtr_free(args->ipv6_pdus);
 	lrtr_free(args->router_key_pdus);
@@ -1666,6 +1667,7 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 		}
 	} while (type != EOD && retval != RTR_ERROR);
 
+	lrtr_free(pdu_data); //TODO: check
 	recv_loop_cleanup(&cleanup_args);
 	return retval;
 }
