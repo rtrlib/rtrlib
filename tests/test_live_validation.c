@@ -78,7 +78,7 @@ int main(void)
 
 	struct rtr_mgr_config *conf;
 
-	if (rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL, &connection_status_callback, NULL) < 0)
+	if (rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL, NULL, &connection_status_callback, NULL) < 0)
 		return EXIT_FAILURE;
 
 	rtr_mgr_start(conf);

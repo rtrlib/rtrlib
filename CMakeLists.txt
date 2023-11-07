@@ -44,10 +44,11 @@ endif(NOT APPLE AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "OpenBSD")
 include(GNUInstallDirs) # for man page install path
 
 set(RTRLIB_SRC rtrlib/rtr_mgr.c rtrlib/lib/utils.c rtrlib/lib/alloc_utils.c rtrlib/lib/convert_byte_order.c
-    rtrlib/lib/ip.c rtrlib/lib/ipv4.c rtrlib/lib/ipv6.c rtrlib/lib/log.c rtrlib/lib/ordered_dyn_array.c
+    rtrlib/lib/ip.c rtrlib/lib/ipv4.c rtrlib/lib/ipv6.c rtrlib/lib/log.c
     rtrlib/pfx/trie/trie.c rtrlib/pfx/trie/trie-pfx.c rtrlib/transport/transport.c
     rtrlib/transport/tcp/tcp_transport.c rtrlib/rtr/rtr.c rtrlib/rtr/packets.c
-    rtrlib/spki/hashtable/ht-spkitable.c ${tommyds})
+    rtrlib/spki/hashtable/ht-spkitable.c  rtrlib/aspa/aspa_array/aspa_array.c
+    rtrlib/aspa/aspa_store/aspa_store.c rtrlib/aspa/aspa.c ${tommyds})
 set(RTRLIB_LINK ${RT_LIB} ${CMAKE_THREAD_LIBS_INIT})
 
 include(FindPkgConfig)

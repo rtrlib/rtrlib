@@ -124,7 +124,7 @@ int spki_table_copy_except_socket(struct spki_table *src, struct spki_table *des
 
 /**
  * @brief Notify client about changes between two spki tables regarding one specific socket
- * @details old_table will be modified and should probebly be freed after calling this function
+ * @details old_table will be modified and should probably be freed after calling this function
  * @param[in] new_table
  * @param[in] old_table
  * @param[in] socket socket which entries should be diffed
