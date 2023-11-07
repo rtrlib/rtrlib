@@ -193,10 +193,10 @@ struct aspa_pdu_list_node {
 };
 
 struct recv_loop_cleanup_args {
-	struct pdu_ipv4 *ipv4_pdus;
-	struct pdu_ipv6 *ipv6_pdus;
-	struct pdu_router_key *router_key_pdus;
-	struct aspa_pdu_list_node *aspa_pdus;
+	struct pdu_ipv4 **ipv4_pdus;
+	struct pdu_ipv6 **ipv6_pdus;
+	struct pdu_router_key **router_key_pdus;
+	struct aspa_pdu_list_node **aspa_pdus;
 };
 
 
@@ -1432,15 +1432,14 @@ static inline int rtr_handle_eod_pdu(struct rtr_socket *rtr_socket, struct pdu_e
 void recv_loop_cleanup(void *p)
 {
 	struct recv_loop_cleanup_args* args = p;
-	lrtr_free(args->ipv4_pdus);
-	lrtr_free(args->ipv6_pdus);
-	lrtr_free(args->router_key_pdus);
-	while (args->aspa_pdus != NULL) {
-		struct aspa_pdu_list_node *node = args->aspa_pdus;
-		args->aspa_pdus = args->aspa_pdus->next;
+	lrtr_free(*args->ipv4_pdus);
+	lrtr_free(*args->ipv6_pdus);
+	lrtr_free(*args->router_key_pdus);
+	while (*args->aspa_pdus != NULL) {
+		struct aspa_pdu_list_node *node = *args->aspa_pdus;
+		*args->aspa_pdus = (*args->aspa_pdus)->next;
 		lrtr_free(node);
 	}
-	lrtr_free(args->aspa_pdus);
 }
 
 /* WARNING: This Function has cancelable sections*/
@@ -1466,10 +1465,10 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 	struct aspa_pdu_list_node *aspa_pdus_tail = NULL;
 
 	int oldcancelstate;
-	struct recv_loop_cleanup_args cleanup_args = {.ipv4_pdus = ipv4_pdus,
-						      .ipv6_pdus = ipv6_pdus,
-						      .router_key_pdus = router_key_pdus,
-						      .aspa_pdus = aspa_pdus_head};
+	struct recv_loop_cleanup_args cleanup_args = {.ipv4_pdus = &ipv4_pdus,
+						      .ipv6_pdus = &ipv6_pdus,
+						      .router_key_pdus = &router_key_pdus,
+						      .aspa_pdus = &aspa_pdus_head};
 
 	// receive LRTR_IPV4/IPV6/ASPA PDUs till EOD
 	do {
@@ -1667,7 +1666,7 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 		}
 	} while (type != EOD && retval != RTR_ERROR);
 
-	lrtr_free(pdu_data); //TODO: check
+//	lrtr_free(pdu_data); //TODO: check
 	recv_loop_cleanup(&cleanup_args);
 	return retval;
 }
