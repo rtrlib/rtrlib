@@ -174,9 +174,9 @@ struct pdu_end_of_data_v1 {
 };
 
 struct recv_loop_cleanup_args {
-	struct pdu_ipv4 *ipv4_pdus;
-	struct pdu_ipv6 *ipv6_pdus;
-	struct pdu_router_key *router_key_pdus;
+	struct pdu_ipv4 **ipv4_pdus;
+	struct pdu_ipv6 **ipv6_pdus;
+	struct pdu_router_key **router_key_pdus;
 };
 
 static void recv_loop_cleanup(void *p);
@@ -1199,9 +1199,9 @@ void recv_loop_cleanup(void *p)
 {
 	struct recv_loop_cleanup_args *args = p;
 
-	lrtr_free(args->ipv4_pdus);
-	lrtr_free(args->ipv6_pdus);
-	lrtr_free(args->router_key_pdus);
+	lrtr_free(*args->ipv4_pdus);
+	lrtr_free(*args->ipv6_pdus);
+	lrtr_free(*args->router_key_pdus);
 }
 
 /* WARNING: This Function has cancelable sections*/
@@ -1225,7 +1225,7 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 
 	int oldcancelstate;
 	struct recv_loop_cleanup_args cleanup_args = {
-		.ipv4_pdus = ipv4_pdus, .ipv6_pdus = ipv6_pdus, .router_key_pdus = router_key_pdus};
+		.ipv4_pdus = &ipv4_pdus, .ipv6_pdus = &ipv6_pdus, .router_key_pdus = &router_key_pdus};
 
 	// receive LRTR_IPV4/IPV6 PDUs till EOD
 	do {
