@@ -24,8 +24,8 @@ int main(void)
 	//create a TCP transport socket
 	int retval = 0;
 	struct tr_socket tr_tcp;
-	char tcp_host[] = "rpki-validator.realmv6.org";
-	char tcp_port[] = "8283";
+	char tcp_host[] = "rpki-cache.netd.cs.tu-dresden.de";
+	char tcp_port[] = "3323";
 
 	struct tr_tcp_config tcp_config = {
 		tcp_host, //IP
