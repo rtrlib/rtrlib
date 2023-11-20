@@ -34,7 +34,7 @@ const struct test_validity_query queries[] = {{"93.175.146.0", 24, 12654, BGP_PF
 					      {"2001:7fb:ff03::", 48, 12654, BGP_PFXV_STATE_NOT_FOUND},
 					      {NULL, 0, 0, 0} };
 
-const int connection_timeout = 20;
+const int connection_timeout = 60;
 enum rtr_mgr_status connection_status = -1;
 
 static void connection_status_callback(const struct rtr_mgr_group *group __attribute__((unused)),
@@ -58,11 +58,18 @@ int main(void)
 	 * because it would cause warnings about discarding constness
 	 */
 	char RPKI_CACHE_HOST[] = "rpki-cache.netd.cs.tu-dresden.de";
-	char RPKI_CACHE_PORT[] = "3323";
+	char RPKI_CACHE_POST[] = "3323";
 
 	/* create a TCP transport socket */
 	struct tr_socket tr_tcp;
-	struct tr_tcp_config tcp_config = {RPKI_CACHE_HOST, RPKI_CACHE_PORT, NULL, NULL, NULL, 0};
+	struct tr_tcp_config tcp_config = {
+		RPKI_CACHE_HOST, //IP
+		RPKI_CACHE_POST, //Port
+		NULL, //source address
+		NULL, //data
+		NULL, //new_socket()
+		0, //connection timeout
+	};
 	struct rtr_socket rtr_tcp;
 	struct rtr_mgr_group groups[1];
 
