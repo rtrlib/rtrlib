@@ -57,12 +57,12 @@ int main(void)
 	/* These variables are not in the global scope
 	 * because it would cause warnings about discarding constness
 	 */
-	char RPKI_CACHE_HOST[] = "rpki-validator.realmv6.org";
-	char RPKI_CACHE_POST[] = "8283";
+	char RPKI_CACHE_HOST[] = "rpki-cache.netd.cs.tu-dresden.de";
+	char RPKI_CACHE_PORT[] = "3323";
 
 	/* create a TCP transport socket */
 	struct tr_socket tr_tcp;
-	struct tr_tcp_config tcp_config = {RPKI_CACHE_HOST, RPKI_CACHE_POST, NULL, NULL, NULL, 0};
+	struct tr_tcp_config tcp_config = {RPKI_CACHE_HOST, RPKI_CACHE_PORT, NULL, NULL, NULL, 0};
 	struct rtr_socket rtr_tcp;
 	struct rtr_mgr_group groups[1];
 
