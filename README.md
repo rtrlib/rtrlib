@@ -129,8 +129,8 @@ RTR-Server using the rtrclient command line tool:
 
     bin/rtrclient tcp rpki-validator.realmv6.org 8282
 
-`rpki-validator.realmv6.org` is an open RTR-Server instance for testing
-purposes, which runs the RIPE Validator. It listens on port 8282 and
+`rpki-cache.netd.cs.tu-dresden.de` is an open RTR-Server instance for testing
+purposes, which runs the RIPE Validator. It listens on port 3323 and
 validates ROAs from the following trust anchors: AfriNIC, APNIC, ARIN,
 LACNIC, RIPE.
 
