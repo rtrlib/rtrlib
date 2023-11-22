@@ -53,6 +53,12 @@ int rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_tab
 		RTR_DBG("Interval value not in range.");
 		return RTR_INVALID_PARAM;
 	}
+
+	if (pthread_mutex_init(&rtr_socket->mutex, NULL) != 0) {
+		RTR_DBG("mutex init failed");
+		return RTR_ERROR;
+	}
+
 	rtr_socket->refresh_interval = refresh_interval;
 	rtr_socket->expire_interval = expire_interval;
 	rtr_socket->retry_interval = retry_interval;
@@ -76,14 +82,25 @@ int rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_tab
 
 int rtr_start(struct rtr_socket *rtr_socket)
 {
-	if (rtr_socket->thread_id)
-		return RTR_ERROR;
+	pthread_mutex_lock(&rtr_socket->mutex);
+
+	int ret;
+
+	if (rtr_socket->thread_id) {
+		ret = RTR_ERROR;
+		goto unlock;
+	}
 
 	int rtval = pthread_create(&(rtr_socket->thread_id), NULL, (void *(*)(void *)) &rtr_fsm_start, rtr_socket);
 
 	if (rtval == 0)
-		return RTR_SUCCESS;
-	return RTR_ERROR;
+		ret = RTR_SUCCESS;
+	else
+		ret = RTR_ERROR;
+
+unlock:
+	pthread_mutex_unlock(&rtr_socket->mutex);
+	return ret;
 }
 
 void rtr_purge_outdated_records(struct rtr_socket *rtr_socket)
@@ -228,6 +245,7 @@ void *rtr_fsm_start(struct rtr_socket *rtr_socket)
 void rtr_stop(struct rtr_socket *rtr_socket)
 {
 	RTR_DBG("%s()", __func__);
+	pthread_mutex_lock(&rtr_socket->mutex);
 	rtr_change_socket_state(rtr_socket, RTR_SHUTDOWN);
 	if (rtr_socket->thread_id != 0) {
 		RTR_DBG1("pthread_cancel()");
@@ -244,7 +262,18 @@ void rtr_stop(struct rtr_socket *rtr_socket)
 		rtr_socket->thread_id = 0;
 		rtr_socket->state = RTR_CLOSED;
 	}
+	pthread_mutex_unlock(&rtr_socket->mutex);
 	RTR_DBG1("Socket shut down");
+}
+
+void rtr_free(struct rtr_socket *rtr_socket)
+{
+	RTR_DBG("%s()", __func__);
+
+	pthread_mutex_destroy(&rtr_socket->mutex);
+	tr_free(rtr_socket->tr_socket);
+
+	RTR_DBG1("Socket freed");
 }
 
 RTRLIB_EXPORT const char *rtr_state_to_str(enum rtr_socket_state state)
