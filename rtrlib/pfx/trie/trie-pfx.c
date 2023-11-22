@@ -414,13 +414,15 @@ RTRLIB_EXPORT int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_r
 			unsigned int r_len_old = *reason_len;
 			*reason_len += ((struct node_data *)node->data)->len;
 			*reason = lrtr_realloc(*reason, *reason_len * sizeof(struct pfx_record));
-			struct pfx_record *start = *reason + r_len_old;
 
 			if (!*reason) {
 				pthread_rwlock_unlock(&pfx_table->lock);
 				pfx_table_free_reason(reason, reason_len);
 				return PFX_ERROR;
 			}
+
+			struct pfx_record *start = *reason + r_len_old;
+
 			if (pfx_table_node2pfx_record(node, start, ((struct node_data *)node->data)->len) ==
 			    PFX_ERROR) {
 				pthread_rwlock_unlock(&pfx_table->lock);

@@ -17,7 +17,7 @@ EXIT_CODE=0
 if [ -z "$1" ] ; then
     for dir in ${SOURCE_DIR_NAMES}; do
         normalized_dir=$($READLINK -f "${SCRIPT_DIR}/../${dir}")
-        CHECKSOURCE+=" $(find ${normalized_dir} -name '*.c' -or -name '*.h')"
+        CHECKSOURCE+=" $(find ${normalized_dir} \( -name '*.c' -or -name '*.h' \) -and -not -name 'templates.h' )"
     done
 else
 	CHECKSOURCE=$($READLINK -f "$1")

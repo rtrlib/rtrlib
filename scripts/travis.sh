@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+READLINK=$(which greadlink)
+[ -z "$READLINK" ] && {
+	READLINK=$(which readlink)
+}
+SCRIPT_DIR=$(dirname "$($READLINK -f "$0")")
+BASE_DIR=$(dirname "${SCRIPT_DIR}")
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
@@ -7,7 +14,7 @@ NC='\033[0m' # No Color
 BUILDSTEP_FAILED=0
 
 function run_command {
-	eval $@
+	eval "$@"
 
 	ret=$?
 	if [ $ret != 0 ]; then
@@ -21,8 +28,15 @@ function run_command {
 	return $ret
 }
 
+function run_command_with_cwd {
+	pushd "$1"
+	shift
+	run_command "$@"
+	popd
+}
+
 function checkpatch {
-	git diff $TRAVIS_BRANCH {rtrlib,tools,tests}/**/*.[ch] > /tmp/patch
+	git diff "origin/$CHANGE_TARGET" {rtrlib,tools,tests}/**/*.[ch] > /tmp/patch
 	run_command scripts/checkpatch.pl --ignore FILE_PATH_CHANGES,PREFER_KERNEL_TYPES,CONST_STRUCT,OPEN_BRACE,SPDX_LICENSE_TAG,OPEN_ENDED_LINE,UNNECESSARY_PARENTHESES,PREFER_PRINTF,GLOBAL_INITIALISERS,PREFER_PACKED,BOOL_MEMBER,STATIC_CONST_CHAR_ARRAY,LONG_LINE_STRING --terse --no-tree --strict --show-types --max-line-length 120 /tmp/patch
 	ret=$?
 	if [ $ret != 0 ]; then
@@ -30,18 +44,21 @@ function checkpatch {
 	fi
 }
 
-[[ $TRAVIS = "true" ]] && run_command git fetch --unshallow
-run_command scripts/cppcheck.sh
-run_command scripts/check-coding-style.sh
-[[ $TRAVIS_EVENT_TYPE = "pull_request" ]] && run_command checkpatch
-run_command cmake -D RTRLIB_TRANSPORT_SSH=Off .
+run_command_with_cwd "$BASE_DIR" "$SCRIPT_DIR"/cppcheck.sh
+run_command_with_cwd "$BASE_DIR" "$SCRIPT_DIR"/check-coding-style.sh
+[[ -n $CHANGE_TARGET ]] && run_command checkpatch
+run_command cmake -D RTRLIB_TRANSPORT_SSH=Off -DENABLE_COVERAGE=No "$BASE_DIR"
 run_command make
 run_command make test
 run_command make clean
-run_command cmake -D CMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=On -DUNIT_TESTING=On -DRTRLIB_TRANSPORT_SSH=On .
+run_command cmake -D CMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=No -DRTRLIB_TRANSPORT_SSH=On "$BASE_DIR"
+run_command make
+run_command make test
+run_command "$SCRIPT_DIR"/check-exports.sh "$BASE_DIR"
+run_command make clean
+run_command cmake -D CMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=On -DUNIT_TESTING=On -DRTRLIB_TRANSPORT_SSH=On "$BASE_DIR"
 run_command make
 run_command make test
 run_command make gcov
-run_command scripts/check-exports.sh
 
 exit $BUILDSTEP_FAILED

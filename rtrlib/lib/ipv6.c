@@ -191,7 +191,7 @@ int lrtr_ipv6_addr_to_str(const struct lrtr_ipv6_addr *ip_addr, char *b, const u
 	{
 		uint32_t x = a[3];
 
-		b += sprintf(b, "::%s%d.%d.%d.%d", a[2] ? "ffff:" : "", ((x >> 24) & 0xff), ((x >> 16) & 0xff),
+		b += sprintf(b, "::%s%u.%u.%u.%u", a[2] ? "ffff:" : "", ((x >> 24) & 0xff), ((x >> 16) & 0xff),
 			     ((x >> 8) & 0xff), (x & 0xff));
 		return 0;
 	}

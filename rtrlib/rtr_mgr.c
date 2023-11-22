@@ -777,26 +777,31 @@ RTRLIB_EXPORT struct rtr_signature_seg *rtr_mgr_bgpsec_pop_signature_seg(struct 
 	return rtr_bgpsec_pop_signature_seg(bgpsec);
 }
 
+/* cppcheck-suppress unusedFunction */
 RTRLIB_EXPORT void rtr_mgr_bgpsec_append_sec_path_seg(struct rtr_bgpsec *bgpsec, struct rtr_secure_path_seg *new_seg)
 {
 	rtr_bgpsec_append_sec_path_seg(bgpsec, new_seg);
 }
 
+/* cppcheck-suppress unusedFunction */
 RTRLIB_EXPORT int rtr_mgr_bgpsec_append_sig_seg(struct rtr_bgpsec *bgpsec, struct rtr_signature_seg *new_seg)
 {
 	return rtr_bgpsec_append_sig_seg(bgpsec, new_seg);
 }
 
+/* cppcheck-suppress unusedFunction */
 RTRLIB_EXPORT struct rtr_bgpsec_nlri *rtr_mgr_bgpsec_nlri_new(int nlri_len)
 {
 	return rtr_bgpsec_nlri_new(nlri_len);
 }
 
+/* cppcheck-suppress unusedFunction */
 RTRLIB_EXPORT void rtr_mgr_bgpsec_nlri_free(struct rtr_bgpsec_nlri *nlri)
 {
 	rtr_bgpsec_nlri_free(nlri);
 }
 
+/* cppcheck-suppress unusedFunction */
 RTRLIB_EXPORT void rtr_mgr_bgpsec_add_spki_record(struct rtr_mgr_config *config, struct spki_record *record)
 {
 	rtr_bgpsec_add_spki_record(config->spki_table, record);
