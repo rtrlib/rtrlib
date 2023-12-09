@@ -24,13 +24,9 @@ int aspa_store_insert(struct aspa_store_node **store, struct rtr_socket *rtr_soc
 	new->rtr_socket = rtr_socket;
 	new->aspa_array = aspa_array;
 
-	if (*store == NULL) {
-		*store = new;
-	} else {
-		// prepend new node
-		new->next = *store;
-		*store = new;
-	}
+	// prepend new node
+	new->next = *store; // may be NULL
+	*store = new;
 
 	return ASPA_SUCCESS;
 }
