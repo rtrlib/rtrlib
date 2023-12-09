@@ -129,7 +129,8 @@ RTRLIB_EXPORT int aspa_table_add(struct aspa_table *aspa_table, struct aspa_reco
 	return ASPA_SUCCESS;
 }
 
-RTRLIB_EXPORT int aspa_table_remove(struct aspa_table *aspa_table, struct aspa_record *record,
+RTRLIB_EXPORT int aspa_table_remove(struct aspa_table *aspa_table,
+					struct aspa_record *record,
 				    struct rtr_socket *rtr_socket)
 {
 	if (!aspa_table)
@@ -164,15 +165,15 @@ RTRLIB_EXPORT int aspa_table_remove(struct aspa_table *aspa_table, struct aspa_r
 		}
 	}
 
-	long i = aspa_array_search(array, record->customer_asn);
+	struct aspa_record *aspa_record = aspa_array_search(array, record->customer_asn);
 
-	if (i < 0) { // error occured
+	if (aspa_record == NULL) { // error occured
 		pthread_rwlock_unlock(&aspa_table->lock);
 		return ASPA_RECORD_NOT_FOUND;
 	}
 
 	// Remove record aspa_array
-	if (aspa_array_free_at(array, i) < 0) {
+	if (aspa_array_free_entry(array, aspa_record) < 0) {
 		pthread_rwlock_unlock(&aspa_table->lock);
 		return ASPA_ERROR;
 	}
@@ -344,15 +345,15 @@ enum aspa_hop_result aspa_check_hop(struct aspa_table *aspa_table, uint32_t cust
 	bool customer_found = false;
 	
 	for (struct aspa_store_node *node = aspa_table->store; node != NULL; node = node->next) {
-		int pos = aspa_array_search(node->aspa_array, customer_asn);
+		struct aspa_record *aspa_record = aspa_array_search(node->aspa_array, customer_asn);
 
-		if (pos <= 0)
+		if (aspa_record == NULL)
 			continue;
 			
 		customer_found = true;
 			
-		for (size_t i = 0; i < node->aspa_array->data[pos].provider_count; i++) {
-			if (node->aspa_array->data[pos].provider_asns[i] == provider_asn) {
+		for (size_t i = 0; i < aspa_record->provider_count; i++) {
+			if (aspa_record->provider_asns[i] == provider_asn) {
 				
 				pthread_rwlock_unlock(&aspa_table->lock);
 				return ASPA_PROVIDER_PLUS;

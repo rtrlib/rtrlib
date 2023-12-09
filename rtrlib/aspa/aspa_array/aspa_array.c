@@ -138,7 +138,7 @@ int aspa_array_insert(struct aspa_array *vector, struct aspa_record record, bool
 	return 0;
 }
 
-long aspa_array_search(struct aspa_array *vector, uint32_t customer_asn)
+struct aspa_record *aspa_array_search(struct aspa_array *vector, uint32_t customer_asn)
 {
 	// if the vector is empty we return an error
 	if (vector->size == 0 || vector->capacity == 0) {
@@ -157,7 +157,7 @@ long aspa_array_search(struct aspa_array *vector, uint32_t customer_asn)
 
 		if (center_value == customer_asn) {
 			// success found the value
-			return center;
+			return &vector->data[center];
 		} else if (center_value > customer_asn) {
 			// value should be on the left side
 			right = center - 1;
@@ -168,23 +168,25 @@ long aspa_array_search(struct aspa_array *vector, uint32_t customer_asn)
 	}
 
 	// element not found
-	return -1;
+	return NULL;
 }
 
-int aspa_array_free_at(struct aspa_array *vector, size_t index)
+int aspa_array_free_entry(struct aspa_array *vector, struct aspa_record *entry)
 {
-	if (vector->size <= index || vector->size == 0) {
+	if (vector->size == 0 || entry < vector->data ||
+			entry >= vector->data + vector->size) {
 		return -1;
 	}
 
-	// number of element that need to be moved left
+	// number of elements that need to be moved left
+	size_t index = (size_t)(entry - vector->data);
 	size_t number_of_elements = vector->size - index - 1;
 
-	lrtr_free(vector->data[index].provider_asns);
+	lrtr_free(entry->provider_asns);
 
 	// if 1 or more elements needs to be copied
 	if (number_of_elements > 0) {
-		memmove(vector->data + index, vector->data + index + 1,
+		memmove(entry, entry + 1,
 			number_of_elements * sizeof(struct aspa_record));
 	}
 

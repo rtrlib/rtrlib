@@ -117,8 +117,8 @@ static void test_remove_element()
 
 	assert(vector->data[2].customer_asn == 3);
 
-	assert(aspa_array_free_at(vector, 2) == 0);
-	assert(aspa_array_free_at(vector, 100) == -1);
+	assert(aspa_array_free_entry(vector, &vector->data[2]) == 0);
+	assert(aspa_array_free_entry(vector, &vector->data[100]) == -1);
 
 	assert(vector->size == 3);
 	assert(vector->data[0].customer_asn == 1);
@@ -153,11 +153,11 @@ static void test_find_element()
 	generate_fake_aspa_record(5, 700, &record_5);
 	assert(aspa_array_insert(vector, *record_5, false) == 0);
 
-	assert(aspa_array_search(vector, 1) == 0);
-	assert(aspa_array_search(vector, 2) == 1);
-	assert(aspa_array_search(vector, 3) == 2);
-	assert(aspa_array_search(vector, 4) == 3);
-	assert(aspa_array_search(vector, 5) == 4);
+	assert(aspa_array_search(vector, 1) == &vector->data[0]);
+	assert(aspa_array_search(vector, 2) == &vector->data[1]);
+	assert(aspa_array_search(vector, 3) == &vector->data[2]);
+	assert(aspa_array_search(vector, 4) == &vector->data[3]);
+	assert(aspa_array_search(vector, 5) == &vector->data[4]);
 
 	assert(aspa_array_free(vector) == 0);
 }

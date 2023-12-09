@@ -71,21 +71,21 @@ enum aspa_rtvals aspa_array_private_insert(struct aspa_array *vector, struct asp
 enum aspa_rtvals aspa_array_insert(struct aspa_array *vector, struct aspa_record record, bool overwrite);
 
 /**
- * @brief deletes the element at the index
- * @param[vector] aspa_vector from where the element should be removed
- * @param[index] index of the element which should be removed
+ * @brief deletes the element from the vector
+ * @param[vector] aspa_vector from which the element is to be removed
+ * @param[entry] pointer to the element which is to be removed
  * @result 0 On success.
  * @result -1 On error.
  */
-int aspa_array_free_at(struct aspa_array *vector, size_t index);
+int aspa_array_free_entry(struct aspa_array *vector, struct aspa_record *entry);
 
 /**
  * @brief returns the index in the vector for a given customer as number (CAS)
  * @param[vector] aspa_vector in which the algorithm will search
  * @param[custom_as] value for which will be searched
- * @result index of the element on success
- * @result -1 On error or not if the element coulnd't be located
+ * @result pointer to the record on success
+ * @result NULL On error or if the element coulnd't be located
  */
-long aspa_array_search(struct aspa_array *vector, uint32_t customer_asn);
+struct aspa_record *aspa_array_search(struct aspa_array *vector, uint32_t customer_asn);
 
 #endif
