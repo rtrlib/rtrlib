@@ -511,7 +511,32 @@ RTRLIB_EXPORT enum aspa_verification_result aspa_verify_as_path(struct aspa_tabl
 }
 
 
-RTRLIB_EXPORT void aspa_collapse_as_path(uint32_t as_path[], size_t len)
+RTRLIB_EXPORT size_t aspa_collapse_as_path(uint32_t as_path[], size_t len)
 {
-	
+	if (len == 0)
+		return 0;
+
+	size_t i = 1;
+
+	while (i < len && as_path[i-1] != as_path[i])
+		i++;
+
+	if (i == len)
+		return len;
+
+	size_t j = i;
+
+	i++;
+
+	while (true) { // equivalent to while (i < len)
+		while (i < len && as_path[i-1] == as_path[i])
+			i++;
+
+		if (i == len)
+			break;
+
+		as_path[j++] = as_path[i++];
+	}
+
+	return j;
 }

@@ -164,10 +164,34 @@ static void test_downstream(struct aspa_table* aspa_table) {
 	assert(aspa_verify_as_path(aspa_table, ASPA_DOWNSTREAM, (uint32_t []){ 103, 203, 303, 403, 304 }, 5) == ASPA_AS_PATH_VALID);
 }
 
+
+static void test_single_collapse(uint32_t input[], size_t input_len, uint32_t output[], size_t output_len)
+{
+	size_t retlen = aspa_collapse_as_path(input, input_len);
+	assert(retlen == output_len);
+	for (int i = 0; i < output_len; i++) {
+		assert(input[i] == output[i]);
+	}
+}
+
+static void test_collapse()
+{
+	test_single_collapse((uint32_t []){}, 0, (uint32_t []){}, 0);
+	test_single_collapse((uint32_t []){1}, 1, (uint32_t []){1}, 1);
+	test_single_collapse((uint32_t []){1, 1}, 2, (uint32_t []){1}, 1);
+	test_single_collapse((uint32_t []){1, 2}, 2, (uint32_t []){1, 2}, 2);
+	test_single_collapse((uint32_t []){1, 1, 1}, 3, (uint32_t []){1}, 1);
+	test_single_collapse((uint32_t []){1, 1, 2}, 3, (uint32_t []){1, 2}, 2);
+	test_single_collapse((uint32_t []){1, 2, 2}, 3, (uint32_t []){1, 2}, 2);
+	test_single_collapse((uint32_t []){1, 2, 2, 2}, 4, (uint32_t []){1, 2}, 2);
+	test_single_collapse((uint32_t []){1, 2, 2, 3}, 4, (uint32_t []){1, 2, 3}, 3);
+}
+
 int main()
 {
 	struct aspa_table *aspa_table = test_create_aspa_table();
 	test_hopping(aspa_table);
 	test_upstream(aspa_table);
 	test_downstream(aspa_table);
+	test_collapse();
 }

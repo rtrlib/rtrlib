@@ -224,9 +224,10 @@ enum aspa_verification_result {
 enum aspa_verification_result aspa_verify_as_path(struct aspa_table *aspa_table, enum aspa_direction direction, uint32_t as_path[], size_t len);
 
 /**
- * @brief Collapses an @c AS_PATH
+ * @brief Collapses an @c AS_PATH in-place, replacing in-series repetitions with single occurences
+ * @return len of collapsed array
  */
-void aspa_collapse_as_path(uint32_t as_path[], size_t len);
+size_t aspa_collapse_as_path(uint32_t as_path[], size_t len);
 
 #endif
 /** @} */
