@@ -852,9 +852,14 @@ static void rtr_aspa_pdu_2_aspa_record(const struct pdu_aspa *pdu, struct aspa_r
 	assert(type == ASPA);
 	record->customer_asn = pdu->customer_asn;
 	record->provider_count = pdu->provider_count;
-	size_t provider_size = pdu->provider_count * sizeof(*pdu->provider_asns);
-	record->provider_asns = lrtr_malloc(provider_size);
-	memcpy(record->provider_asns, pdu->provider_asns, provider_size);
+
+	if (pdu->provider_count == 0) {
+		record->provider_asns = NULL;
+	} else {
+		size_t provider_size = pdu->provider_count * sizeof(*pdu->provider_asns);
+		record->provider_asns = lrtr_malloc(provider_size);
+		memcpy(record->provider_asns, pdu->provider_asns, provider_size);
+	}
 }
 
 /**
