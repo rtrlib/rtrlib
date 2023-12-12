@@ -489,7 +489,9 @@ enum aspa_verification_result aspa_verify_downstream(struct aspa_table *aspa_tab
 		found_nP_from_right = true;
 	} else {
 		while (rr > l) {
-			if (aspa_check_hop(aspa_table, as_path[rr--], as_path[rr])
+			size_t c = rr;
+			rr--;
+			if (aspa_check_hop(aspa_table, as_path[c], as_path[rr])
 					== ASPA_NOT_PROVIDER_PLUS) {
 				found_nP_from_right = true;
 				break;
@@ -522,7 +524,9 @@ enum aspa_verification_result aspa_verify_downstream(struct aspa_table *aspa_tab
 			found_nP_from_left = true;
 		} else {
 			while (ll < rr) {
-				if (aspa_check_hop(aspa_table, as_path[ll++], as_path[ll])
+				size_t c = ll;
+				ll++;
+				if (aspa_check_hop(aspa_table, as_path[c], as_path[ll])
 						== ASPA_NOT_PROVIDER_PLUS) {
 					found_nP_from_left = true;
 					break;
