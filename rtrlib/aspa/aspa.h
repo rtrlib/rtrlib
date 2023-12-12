@@ -203,7 +203,23 @@ enum aspa_verification_result {
 /**
  * @brief Verifies an @c AS_PATH .
  *
- * Implements the ASPA verification algorithm described in section 6.1 of
+ * Implements an optimized version of the ASPA verification algorithm described in section 6.1 of
+ * https://datatracker.ietf.org/doc/draft-ietf-sidrops-aspa-verification/16/ .
+ *
+ * @param[in] aspa_table ASPA table to use
+ * @param[in] direction @c AS_PATH direction, as explained in the draft
+ * @param[in] as_path @c AS_PATH array to be validated: concatenated of BGP UPDATE's @c AS_PATHs
+ * @param[in] len the length of @p as_path array
+ * @return @c ASPA_AS_PATH_UNKNOWN if the @c AS_PATH cannot be fully verified
+ * @return @c ASPA_AS_PATH_INVALID if @c AS_PATH is invalid
+ * @return @c ASPA_AS_PATH_VALID if @c AS_PATH is valid
+ */
+enum aspa_verification_result aspa_verify_as_path(struct aspa_table *aspa_table, enum aspa_direction direction, uint32_t as_path[], size_t len);
+
+/**
+ * @brief Verifies an upstream @c AS_PATH .
+ *
+ * Implements an optimized version of the ASPA verification algorithm described in section 6.1 of
  * https://datatracker.ietf.org/doc/draft-ietf-sidrops-aspa-verification/16/ .
  *
  * @param[in] aspa_table ASPA table to use
@@ -213,8 +229,22 @@ enum aspa_verification_result {
  * @return @c ASPA_AS_PATH_INVALID if @c AS_PATH is invalid
  * @return @c ASPA_AS_PATH_VALID if @c AS_PATH is valid
  */
+enum aspa_verification_result aspa_verify_upstream(struct aspa_table *aspa_table, uint32_t as_path[], size_t len);
 
-enum aspa_verification_result aspa_verify_as_path(struct aspa_table *aspa_table, enum aspa_direction direction, uint32_t as_path[], size_t len);
+/**
+ * @brief Verifies a downstream @c AS_PATH .
+ *
+ * Implements an optimized version of the ASPA verification algorithm described in section 6.1 of
+ * https://datatracker.ietf.org/doc/draft-ietf-sidrops-aspa-verification/16/ .
+ *
+ * @param[in] aspa_table ASPA table to use
+ * @param[in] as_path @c AS_PATH array to be validated: concatenated of BGP UPDATE's @c AS_PATHs
+ * @param[in] len the length of @p as_path array
+ * @return @c ASPA_AS_PATH_UNKNOWN if the @c AS_PATH cannot be fully verified
+ * @return @c ASPA_AS_PATH_INVALID if @c AS_PATH is invalid
+ * @return @c ASPA_AS_PATH_VALID if @c AS_PATH is valid
+ */
+enum aspa_verification_result aspa_verify_downstream(struct aspa_table *aspa_table, uint32_t as_path[], size_t len);
 
 /**
  * @brief Collapses an @c AS_PATH in-place, replacing in-series repetitions with single occurences

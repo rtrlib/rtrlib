@@ -357,97 +357,184 @@ enum aspa_hop_result aspa_check_hop(struct aspa_table *aspa_table, uint32_t cust
 	return customer_found ? ASPA_NOT_PROVIDER_PLUS : ASPA_NO_ATTESTATION;
 }
 
-static enum aspa_verification_result aspa_verify_upstream(struct aspa_table *aspa_table, uint32_t as_path[], size_t len)
+enum aspa_verification_result aspa_verify_upstream(struct aspa_table *aspa_table, uint32_t as_path[], size_t len)
 {
+	// Optimized AS_PATH verification algorithm using zero based array
+	// where the origin AS has index N - 1 and the latest AS in the AS_PATH
+	// has index 0.
+	// Doesn't check any hop twice.
 	if (len < 1)
 		return ASPA_AS_PATH_INVALID;
 	if (len == 1)
 		return ASPA_AS_PATH_VALID;
 
-	bool has_unattested_hop = false;
+	// Find apex of up-ramp
+	size_t r = len - 1;
+	enum aspa_hop_result last_hop_right;
+	while (r > 0 &&
+			(last_hop_right = aspa_check_hop(aspa_table, as_path[r], as_path[r - 1]))
+				== ASPA_PROVIDER_PLUS)
+		r -= 1;
 
-	for (size_t i = 1; i < len; i++) {
-		switch (aspa_check_hop(aspa_table, as_path[i - 1], as_path[i])) {
-		case ASPA_NO_ATTESTATION:
-			has_unattested_hop = true;
-			break;
-		case ASPA_NOT_PROVIDER_PLUS:
-			return ASPA_AS_PATH_INVALID;
-		case ASPA_PROVIDER_PLUS:
-			break;
+	if (r == 0)
+		return ASPA_AS_PATH_VALID;
+
+	bool found_nP_from_right = false;
+
+	/*
+	 * I. Look for nP+ in the right-to-left/upwards direction
+	 * Check if there's a nP+ hop in the gap from the right (facing left/up).
+	 * a, The next hop right after the up-ramp was already retrieved from the database,
+	 *    so just check if that hop was nP+.
+	 * b, Also, don't check last hop before down-ramp starts
+	 *    because there must be a hop of space in order for two
+	 *    nP+ hops to oppose each other.
+	 * c, RR points to the left end of the hop last checked.
+	 * d, Checking stops if the hop is nP+.
+	 *
+	 *        Last chance of finding a relevant nP+ hop
+	 *           /
+	 *   L      /\                  R
+	 *   * -- * -- * . . . . . * -- *
+	 *   0   L+1              R-1    \
+	 *         |<------------------|  *
+	 *                               N-1
+	 *
+	 */
+
+	size_t rr = r - 1;
+	if (last_hop_right == ASPA_NOT_PROVIDER_PLUS) {
+		found_nP_from_right = true;
+	} else {
+		while (rr > 0) {
+			size_t c = rr;
+			rr--;
+			if (aspa_check_hop(aspa_table, as_path[c], as_path[rr])
+					== ASPA_NOT_PROVIDER_PLUS) {
+				found_nP_from_right = true;
+				break;
+			}
 		}
 	}
 
-	return has_unattested_hop ? ASPA_AS_PATH_UNKNOWN : ASPA_AS_PATH_VALID;
+	// If nP+ occurs upstream customer-provider chain, return INVALID.
+	if (found_nP_from_right)
+		return ASPA_AS_PATH_INVALID;
+
+	return ASPA_AS_PATH_UNKNOWN;
 }
 
-/**
- * @brief Implements 6.2.2. "Formal Procedure for Verification of Downstream Paths" of aspa verification draft
- */
-static enum aspa_verification_result aspa_verify_downstream(struct aspa_table *aspa_table, uint32_t as_path[], size_t len)
+enum aspa_verification_result aspa_verify_downstream(struct aspa_table *aspa_table, uint32_t as_path[], size_t len)
 {
-	// zero length as_paths are invalid
+	// Optimized AS_PATH verification algorithm using zero based array
+	// where the origin AS has index N - 1 and the latest AS in the AS_PATH
+	// has index 0.
+	// Doesn't check any hop twice.
 	if (len < 1)
 		return ASPA_AS_PATH_INVALID;
-
-	// AS_PATH of length 1 or 2 are always valid
-	if (len <= 2)
+	if (len == 1)
+		return ASPA_AS_PATH_VALID;
+	if (len == 2)
 		return ASPA_AS_PATH_VALID;
 
-	// Find the lowest value 1 <= u < len such that AS_PATH[u] is not provider of AS_PATH[u-1].
-	// u_min marks the first AS breaking the customer-provider relationship chain.
-	size_t u_min = len;
-	for (size_t u = 1; u < len; u++) {
-		if (aspa_check_hop(aspa_table, as_path[u-1], as_path[u]) == ASPA_NOT_PROVIDER_PLUS) {
-			u_min = u;
-			break;
+	// Find apex of up-ramp
+	size_t r = len - 1;
+	enum aspa_hop_result last_hop_right;
+	while (r > 0 &&
+			(last_hop_right = aspa_check_hop(aspa_table, as_path[r], as_path[r - 1]))
+				== ASPA_PROVIDER_PLUS)
+		r--;
+
+	bool found_nP_from_right = false;
+	bool found_nP_from_left = false;
+
+	size_t l = 0;
+	enum aspa_hop_result last_hop_left;
+
+	// Find down-ramp end
+	while (l < r &&
+		   (last_hop_left = aspa_check_hop(aspa_table, as_path[l], as_path[l + 1]))
+				== ASPA_PROVIDER_PLUS)
+		l++;
+	assert(l <= r);
+
+	// If gap does not exist (sharp tip) or is just a single hop wide,
+	// there's no way to create a route leak, return VALID.
+	if (r - l <= 1)
+		return ASPA_AS_PATH_VALID;
+
+	/*
+	 * I. Look for nP+ in the right-to-left/upwards direction
+	 * Check if there's a nP+ hop in the gap from the right (facing left/up).
+	 * a, The next hop right after the up-ramp was already retrieved from the database,
+	 *    so just check if that hop was nP+.
+	 * b, Also, don't check last hop before down-ramp starts
+	 *    because there must be a hop of space in order for two
+	 *    nP+ hops to oppose each other.
+	 * c, RR points to the left end of the hop last checked.
+	 * d, Checking stops if the hop is nP+.
+	 *
+	 *        Last chance of finding a relevant nP+ hop
+	 *           /
+	 *   L      /\                  R
+	 *   * -- * -- * . . . . . * -- *
+	 *  /    L+1              R-1    \
+	 * *       |<------------------|  *
+	 * 0                             N-1
+	 *
+	 */
+
+	size_t rr = r - 1;
+	if (last_hop_right == ASPA_NOT_PROVIDER_PLUS) {
+		found_nP_from_right = true;
+	} else {
+		while (rr > l) {
+			if (aspa_check_hop(aspa_table, as_path[rr--], as_path[rr])
+					== ASPA_NOT_PROVIDER_PLUS) {
+				found_nP_from_right = true;
+				break;
+			}
 		}
 	}
 
-	// Find the highest value 1 <= v < len such that AS_PATH[v-1] is not provider of AS_PATH[v].
-	// v_max marks the first AS breaking the customer-provider relationship chain.
-	size_t v_max = 0;
-	for (size_t v = len - 1; v >= 1; v--) {
-		if (aspa_check_hop(aspa_table, as_path[v], as_path[v-1]) == ASPA_NOT_PROVIDER_PLUS) {
-			v_max = v;
-			break;
+	// II. Look for nP+ in the left-to-right/down direction
+	// Check if there's a nP+ hop in the gap from the right (facing left/down).
+	if (found_nP_from_right) {
+		/*
+		 * a, There's no need to check for an nP+ from the left if we
+		 *    didn't find an nP+ from the right before.
+		 * b, The next hop right after the down-ramp was already retrieved from the database,
+		 *    so just check if that hop was nP+.
+		 * c, LL points to the right end of the hop last checked.
+		 * d, Checking stops if the hop is nP+.
+		 *
+		 *                    Last chance of finding a relevant nP+ hop
+		 *                       /
+		 *  L    LL             /\
+		 *   * -- * . . . . . * -- * . . . . .
+		 *  /    L+1               RR
+		 * *       |------------->|
+		 * 0
+		 *
+		 */
+		size_t ll = l + 1;
+		if (last_hop_left == ASPA_NOT_PROVIDER_PLUS) {
+			found_nP_from_left = true;
+		} else {
+			while (ll < rr) {
+				if (aspa_check_hop(aspa_table, as_path[ll++], as_path[ll])
+						== ASPA_NOT_PROVIDER_PLUS) {
+					found_nP_from_left = true;
+					break;
+				}
+			}
 		}
 	}
 
-	// u_min == v_max if there's only a single hop where neither one is the other's provider
-	// u_min > v_max if each AS along the path is the other's provider
-	// if there is more than an single hop with nP, AS_PATH is invalid
-	if (u_min < v_max)
+	// If two nP+ occur in opposing directions, return INVALID.
+	if (found_nP_from_right && found_nP_from_left)
 		return ASPA_AS_PATH_INVALID;
 
-	// Find up-ramp:
-	// smallest K such that for all 1 <= i <= K,
-	// the AS_PATH[i+1] is a provider of AS_PATH[i]
-	size_t K = 0;
-	for (size_t i = 1; i < len; i++) {
-		if (aspa_check_hop(aspa_table, as_path[i - 1], as_path[i]) == ASPA_PROVIDER_PLUS)
-			K++;
-		else
-			break;
-	}
-
-	// Find down-ramp:
-	// smallest L such that for all N-2 >= j >= L,
-	// AS_PATH[j] is a provider of AS_PATH[j+1]
-	// TODO: will not work because size_t is unsigned!!
-	size_t L = len - 1;
-	for (size_t j = len - 2; j >= 0; j--) {
-		if (aspa_check_hop(aspa_table, as_path[j + 1], as_path[j]) == ASPA_PROVIDER_PLUS)
-			L--;
-		else
-			break;
-	}
-
-	// there's only a single unattested (nA) or not-provider (nP) hops allowed between the up and down ramp.
-	if (K + 1 >= L)
-		return ASPA_AS_PATH_VALID;
-
-	// too many unattested (nA) or not-provider (nP) hops in the AS_PATH
 	return ASPA_AS_PATH_UNKNOWN;
 }
 
