@@ -59,7 +59,7 @@ int aspa_array_reallocate(struct aspa_array *vector);
  * @param[vector] list of ASPA entries
  * @param[size] size of the ASPA entries list
  */
-enum aspa_rtvals aspa_array_private_insert(struct aspa_array *vector, struct aspa_record record, bool overwrite);
+void aspa_array_private_insert(struct aspa_array *vector, struct aspa_record record);
 
 /**
  * @brief adds a new aspa record to the list
@@ -68,7 +68,7 @@ enum aspa_rtvals aspa_array_private_insert(struct aspa_array *vector, struct asp
  * @result 0 On success.
  * @result -1 On error.
  */
-enum aspa_rtvals aspa_array_insert(struct aspa_array *vector, struct aspa_record record, bool overwrite);
+enum aspa_rtvals aspa_array_insert(struct aspa_array *vector, struct aspa_record record);
 
 /**
  * @brief deletes the element from the vector

@@ -53,13 +53,6 @@ struct aspa_record {
 };
 
 /**
- * @brief Merges two aspa records and overwrites the desination_record
- * @param source_record record to merge which is not being touched
- * @param destination_record record which will be overwritten
- */
-int merge_aspa_records(const struct aspa_record *source_record, struct aspa_record *destination_record);
-
-/**
  * @brief Computes size of a given ASPA record.
  * @param record The record whose size to compute.
  */

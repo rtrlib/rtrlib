@@ -90,7 +90,7 @@ int aspa_array_reallocate(struct aspa_array *vector)
 	return 0;
 }
 
-enum aspa_rtvals aspa_array_private_insert(struct aspa_array *vector, struct aspa_record record, bool overwrite)
+void aspa_array_private_insert(struct aspa_array *vector, struct aspa_record record)
 {
 	// TODO: Handle replacements
 	// iterator running from the back of the array to the front
@@ -104,24 +104,10 @@ enum aspa_rtvals aspa_array_private_insert(struct aspa_array *vector, struct asp
 		j -= 1;
 	}
 
-	if (j < vector->size && vector->data[j].customer_asn == record.customer_asn) {
-		if (overwrite) {
-			// overwrite the existing object
-			vector->data[j] = record;
-		} else {
-			// merge with existing object
-			if (merge_aspa_records(&record, &vector->data[j]) == -1) {
-				return ASPA_ERROR;
-			};
-		}
-	} else {
-		vector->data[j] = record;
-	}
-
-	return 0;
+	vector->data[j] = record;
 }
 
-int aspa_array_insert(struct aspa_array *vector, struct aspa_record record, bool overwrite)
+int aspa_array_insert(struct aspa_array *vector, struct aspa_record record)
 {
 	// check if this element will fit into the vector
 	if (vector->size + 1 > vector->capacity) {
@@ -132,7 +118,7 @@ int aspa_array_insert(struct aspa_array *vector, struct aspa_record record, bool
 	}
 
 	// insert the element at the correct place
-	aspa_array_private_insert(vector, record, overwrite);
+	aspa_array_private_insert(vector, record);
 	vector->size += 1;
 
 	return 0;

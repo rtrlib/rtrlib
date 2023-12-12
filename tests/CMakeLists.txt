@@ -2,9 +2,6 @@ set(CMAKE_BUILD_TYPE Debug)
 
 
 
-add_executable(test_aspa_record test_aspa_record.c)
-target_link_libraries(test_aspa_record rtrlib_static)
-add_coverage(test_aspa_record)
 add_executable(test_aspa_vector test_aspa_vector.c)
 target_link_libraries(test_aspa_vector rtrlib_static)
 add_coverage(test_aspa_vector)
