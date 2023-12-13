@@ -90,7 +90,7 @@ int aspa_array_reallocate(struct aspa_array *vector)
 	return 0;
 }
 
-void aspa_array_private_insert(struct aspa_array *vector, struct aspa_record record)
+void aspa_array_private_insert(struct aspa_array *vector, struct aspa_record *record)
 {
 	// TODO: Handle replacements
 	// iterator running from the back of the array to the front
@@ -98,16 +98,16 @@ void aspa_array_private_insert(struct aspa_array *vector, struct aspa_record rec
 
 	// we are moving from the back of the array to the front while looking
 	// for the place where to insert our new record
-	while (j > 0 && vector->data[j - 1].customer_asn > record.customer_asn) {
+	while (j > 0 && vector->data[j - 1].customer_asn > record->customer_asn) {
 		// moving data to the right
 		vector->data[j] = vector->data[j - 1];
 		j -= 1;
 	}
 
-	vector->data[j] = record;
+	vector->data[j] = *record;
 }
 
-int aspa_array_insert(struct aspa_array *vector, struct aspa_record record)
+int aspa_array_insert(struct aspa_array *vector, struct aspa_record *record)
 {
 	// check if this element will fit into the vector
 	if (vector->size + 1 > vector->capacity) {

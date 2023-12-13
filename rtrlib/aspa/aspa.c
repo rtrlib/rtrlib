@@ -125,7 +125,7 @@ RTRLIB_EXPORT int aspa_table_add(struct aspa_table *aspa_table,
 
 	// Insert record aspa_array
 	// TODO: This function does not handle duplicates/replacing the record
-	if (aspa_array_insert(array, *record) < 0) { //TODO: check if we want to overwrite here
+	if (aspa_array_insert(array, record) < 0) {
 		pthread_rwlock_unlock(&aspa_table->lock);
 		return ASPA_ERROR;
 	}
