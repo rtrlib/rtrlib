@@ -44,32 +44,31 @@ static struct aspa_table *test_create_aspa_table()
 	rtr_socket_2->aspa_table = aspa_table;
 	rtr_socket_2->aspa_array = NULL;
 
-
 	// rtr_socket_1
-	aspa_table_add(aspa_table, create_aspa_record(100, (uint32_t []){ 200, 201 }, 2), rtr_socket_1, false);
-	aspa_table_add(aspa_table, create_aspa_record(200, (uint32_t []){ 300 }, 1), rtr_socket_1, false);
-	aspa_table_add(aspa_table, create_aspa_record(300, (uint32_t []){ 400 }, 1), rtr_socket_1, false);
-	aspa_table_add(aspa_table, create_aspa_record(400, (uint32_t []){ 500 }, 1), rtr_socket_1, false);
-
-	aspa_table_add(aspa_table, create_aspa_record(501, (uint32_t []){ 601 }, 1), rtr_socket_1, false);
-	aspa_table_add(aspa_table, create_aspa_record(401, (uint32_t []){ 501 }, 1), rtr_socket_1, false);
-	aspa_table_add(aspa_table, create_aspa_record(301, (uint32_t []){ 401 }, 1), rtr_socket_1, false);
-	aspa_table_add(aspa_table, create_aspa_record(201, (uint32_t []){ 301 }, 1), rtr_socket_1, false);
-
-	aspa_table_add(aspa_table, create_aspa_record(502, (uint32_t []){ 602 }, 1), rtr_socket_1, false);
-	aspa_table_add(aspa_table, create_aspa_record(402, (uint32_t []){ 502 }, 1), rtr_socket_1, false);
-	aspa_table_add(aspa_table, create_aspa_record(302, (uint32_t []){ 402 }, 1), rtr_socket_1, false);
-	aspa_table_add(aspa_table, create_aspa_record(202, (uint32_t []){ 302 }, 1), rtr_socket_1, false);
-
-	// 103 --> 203 <--> 303 <--> 403 <-- 304
-	aspa_table_add(aspa_table, create_aspa_record(103, (uint32_t []){ 203 }, 1), rtr_socket_1, false);
-	aspa_table_add(aspa_table, create_aspa_record(203, (uint32_t []){ 303 }, 1), rtr_socket_1, false);
-	aspa_table_add(aspa_table, create_aspa_record(303, (uint32_t []){ 203, 403 }, 2), rtr_socket_1, false);
-	aspa_table_add(aspa_table, create_aspa_record(403, (uint32_t []){ 303 }, 1), rtr_socket_1, false);
-	aspa_table_add(aspa_table, create_aspa_record(304, (uint32_t []){ 403 }, 1), rtr_socket_1, false);
-
-	// rtr_socket_2
-	aspa_table_add(aspa_table, create_aspa_record(100, (uint32_t []){ 200, 202 }, 2), rtr_socket_2, false);
+//	aspa_table_add(aspa_table, create_aspa_record(100, (uint32_t []){ 200, 201 }, 2), rtr_socket_1, false);
+//	aspa_table_add(aspa_table, create_aspa_record(200, (uint32_t []){ 300 }, 1), rtr_socket_1, false);
+//	aspa_table_add(aspa_table, create_aspa_record(300, (uint32_t []){ 400 }, 1), rtr_socket_1, false);
+//	aspa_table_add(aspa_table, create_aspa_record(400, (uint32_t []){ 500 }, 1), rtr_socket_1, false);
+//
+//	aspa_table_add(aspa_table, create_aspa_record(501, (uint32_t []){ 601 }, 1), rtr_socket_1, false);
+//	aspa_table_add(aspa_table, create_aspa_record(401, (uint32_t []){ 501 }, 1), rtr_socket_1, false);
+//	aspa_table_add(aspa_table, create_aspa_record(301, (uint32_t []){ 401 }, 1), rtr_socket_1, false);
+//	aspa_table_add(aspa_table, create_aspa_record(201, (uint32_t []){ 301 }, 1), rtr_socket_1, false);
+//
+//	aspa_table_add(aspa_table, create_aspa_record(502, (uint32_t []){ 602 }, 1), rtr_socket_1, false);
+//	aspa_table_add(aspa_table, create_aspa_record(402, (uint32_t []){ 502 }, 1), rtr_socket_1, false);
+//	aspa_table_add(aspa_table, create_aspa_record(302, (uint32_t []){ 402 }, 1), rtr_socket_1, false);
+//	aspa_table_add(aspa_table, create_aspa_record(202, (uint32_t []){ 302 }, 1), rtr_socket_1, false);
+//
+//	// 103 --> 203 <--> 303 <--> 403 <-- 304
+//	aspa_table_add(aspa_table, create_aspa_record(103, (uint32_t []){ 203 }, 1), rtr_socket_1, false);
+//	aspa_table_add(aspa_table, create_aspa_record(203, (uint32_t []){ 303 }, 1), rtr_socket_1, false);
+//	aspa_table_add(aspa_table, create_aspa_record(303, (uint32_t []){ 203, 403 }, 2), rtr_socket_1, false);
+//	aspa_table_add(aspa_table, create_aspa_record(403, (uint32_t []){ 303 }, 1), rtr_socket_1, false);
+//	aspa_table_add(aspa_table, create_aspa_record(304, (uint32_t []){ 403 }, 1), rtr_socket_1, false);
+//
+//	// rtr_socket_2
+//	aspa_table_add(aspa_table, create_aspa_record(100, (uint32_t []){ 200, 202 }, 2), rtr_socket_2, false);
 
 	return aspa_table;
 }
@@ -172,7 +171,7 @@ static void test_single_collapse(uint32_t input[], size_t input_len, uint32_t ou
 {
 	size_t retlen = aspa_collapse_as_path(input, input_len);
 	assert(retlen == output_len);
-	for (int i = 0; i < output_len; i++) {
+	for (size_t i = 0; i < output_len; i++) {
 		assert(input[i] == output[i]);
 	}
 }

@@ -49,7 +49,7 @@ int aspa_array_free(struct aspa_array *vector)
 {
 	// if the vector is null just return
 	if (vector == NULL) {
-		return -1;
+		return ASPA_ERROR;
 	}
 
 	if (vector->data != NULL) {
@@ -107,13 +107,13 @@ void aspa_array_private_insert(struct aspa_array *vector, struct aspa_record *re
 	vector->data[j] = *record;
 }
 
-int aspa_array_insert(struct aspa_array *vector, struct aspa_record *record)
+enum aspa_rtvals aspa_array_insert(struct aspa_array *vector, struct aspa_record *record)
 {
 	// check if this element will fit into the vector
-	if (vector->size + 1 > vector->capacity) {
+	if (vector->size >= vector->capacity) {
 		// increasing the vectors size so the new element fits
 		if (aspa_array_reallocate(vector) < 0) {
-			return -1;
+			return ASPA_ERROR;
 		}
 	}
 
@@ -121,14 +121,31 @@ int aspa_array_insert(struct aspa_array *vector, struct aspa_record *record)
 	aspa_array_private_insert(vector, record);
 	vector->size += 1;
 
-	return 0;
+	return ASPA_SUCCESS;
+}
+
+enum aspa_rtvals aspa_array_append(struct aspa_array *vector, struct aspa_record *record)
+{
+    // check if this element will fit into the vector
+    if (vector->size >= vector->capacity) {
+        // increasing the vectors size so the new element fits
+        if (aspa_array_reallocate(vector) < 0) {
+            return ASPA_ERROR;
+        }
+    }
+
+    // append the record at the end
+    vector->data[vector->size] = *record;
+    vector->size += 1;
+
+    return ASPA_SUCCESS;
 }
 
 struct aspa_record *aspa_array_search(struct aspa_array *vector, uint32_t customer_asn)
 {
 	// if the vector is empty we return an error
 	if (vector->size == 0 || vector->capacity == 0) {
-		return -1;
+		return NULL;
 	}
 
 	// left and right bound of our search space

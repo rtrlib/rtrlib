@@ -42,8 +42,16 @@ void aspa_store_remove(struct aspa_store_node **store, struct rtr_socket *rtr_so
  * @brief Searches the given ASPA store for a node associated with the given socket.
  * @param store The store to search in.
  * @param rtr_socket The socket of the node.
+ * @return A pointer to the @c aspa_store_node , if found, @c NULL otherwise.
+ */
+struct aspa_store_node **aspa_store_search_node(struct aspa_store_node **store, const struct rtr_socket *rtr_socket);
+
+/**
+ * @brief Searches the given ASPA store for an ASPA array associated with the given socket.
+ * @param store The store to search in.
+ * @param rtr_socket The socket of the node.
  * @return A pointer to the @c aspa_array of the node, if found, @c NULL otherwise.
  */
-struct aspa_array **aspa_store_search(struct aspa_store_node **store, const struct rtr_socket *rtr_socket);
+struct aspa_array **aspa_store_search_array(struct aspa_store_node **node, const struct rtr_socket *rtr_socket);
 
 #endif

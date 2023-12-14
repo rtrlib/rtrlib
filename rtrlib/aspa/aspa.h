@@ -133,53 +133,41 @@ void aspa_table_init(struct aspa_table *aspa_table, aspa_update_fp update_fp);
  */
 void aspa_table_free(struct aspa_table *aspa_table, bool notify);
 
-/**
- * @brief Adds a aspa_record to a aspa_table.
- *
- * @param[in] aspa_table aspa_table to use.
- * @param[in] aspa_record aspa_record that will be added.
- * @return aspa_SUCCESS On success.
-
- * @return aspa_ERROR On error.
- * @return aspa_DUPLICATE_RECORD If an identical aspa_record already exists
- */
-int aspa_table_add(struct aspa_table *aspa_table, struct aspa_record *aspa_record, struct rtr_socket *rtr_socket,
-		   bool replace);
-
-/**
- * @brief Removes aspa_record from aspa_table
- *
- * @param aspa_table aspa_table to use
- * @param aspa_record aspa_record to remove;
- * @return aspa_SUCCESS On success
- *
- * @return aspa_ERROR On error
- * @return aspa_RECORD_NOT_FOUND On record not found
- */
-int aspa_table_remove(struct aspa_table *aspa_table, struct aspa_record *aspa_record, struct rtr_socket *rtr_socket);
+///**
+// * @brief Adds a aspa_record to a aspa_table.
+// *
+// * @param[in] aspa_table aspa_table to use.
+// * @param[in] aspa_record aspa_record that will be added.
+// * @return aspa_SUCCESS On success.
+//
+// * @return aspa_ERROR On error.
+// * @return aspa_DUPLICATE_RECORD If an identical aspa_record already exists
+// */
+//int aspa_table_add(struct aspa_table *aspa_table, struct aspa_record *aspa_record, struct rtr_socket *rtr_socket,
+//		   bool replace);
+//
+///**
+// * @brief Removes aspa_record from aspa_table
+// *
+// * @param aspa_table aspa_table to use
+// * @param aspa_record aspa_record to remove;
+// * @return aspa_SUCCESS On success
+// *
+// * @return aspa_ERROR On error
+// * @return aspa_RECORD_NOT_FOUND On record not found
+// */
+//int aspa_table_remove(struct aspa_table *aspa_table, struct aspa_record *aspa_record, struct rtr_socket *rtr_socket);
 
 /**
  * @brief Registers a new socket as source.
  *
  * @param[in] aspa_table aspa_table to use.
  * @param[in] rtr_socket origin socket of the record
- * @return aspa_SUCCESS On success.
- * @return aspa_ERROR On error.
+ * @param notify A boolean value determining whether clients about removed records.
+ * @return @c ASPA_SUCCESS On success.
+ * @return @c ASPA_ERROR On error.
  */
-int aspa_table_src_remove(struct aspa_table *aspa_table, struct rtr_socket *rtr_socket);
-
-/**
- * @brief Returns all aspa_record whose SKI number matches the given one.
- *
- * @param[in] aspa_table aspa_table to use
- * @param[in] customer_asn Customer ASN to search for
- * @param[out] result the result array. NULL if no records could be found
- * @param[out] result_size elment count of the result array
- * @return aspa_SUCCESS On success
- * @return aspa_ERROR On error
- */
-int aspa_table_search_by_customer_asn(struct aspa_table *aspa_table, uint32_t *customer_asn,
-				      struct aspa_record **result, unsigned int *result_size);
+enum aspa_rtvals aspa_table_src_remove(struct aspa_table *aspa_table, struct rtr_socket *rtr_socket, bool notify);
 
 enum aspa_direction {
 	ASPA_UPSTREAM,

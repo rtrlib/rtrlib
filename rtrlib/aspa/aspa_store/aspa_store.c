@@ -60,16 +60,26 @@ void aspa_store_remove(struct aspa_store_node **head, struct rtr_socket *rtr_soc
 	lrtr_free(node);
 }
 
-struct aspa_array **aspa_store_search(struct aspa_store_node **node, const struct rtr_socket *rtr_socket)
+struct aspa_array **aspa_store_search_array(struct aspa_store_node **node, const struct rtr_socket *rtr_socket)
 {
-	if (node == NULL || *node == NULL)
+	struct aspa_store_node **found_node = aspa_store_search_node(node, rtr_socket);
+	
+	if (!found_node || !*found_node)
+		return NULL;
+	else
+		return &(*found_node)->aspa_array;
+}
+
+struct aspa_store_node **aspa_store_search_node(struct aspa_store_node **node, const struct rtr_socket *rtr_socket)
+{
+	if (node == NULL || *node == NULL || rtr_socket == NULL)
 		return NULL;
 
 	//	struct aspa_store_node *node = *head;
 
 	while (*node != NULL) {
 		if ((*node)->rtr_socket == rtr_socket) {
-			return &(*node)->aspa_array;
+			return node;
 		}
 		node = &(*node)->next;
 	}

@@ -70,6 +70,7 @@ void aspa_array_private_insert(struct aspa_array *vector, struct aspa_record *re
  */
 enum aspa_rtvals aspa_array_insert(struct aspa_array *vector, struct aspa_record *record);
 
+enum aspa_rtvals aspa_array_append(struct aspa_array *vector, struct aspa_record *record);
 /**
  * @brief deletes the element from the vector
  * @param[vector] aspa_vector from which the element is to be removed
