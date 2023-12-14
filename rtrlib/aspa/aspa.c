@@ -275,14 +275,16 @@ RTRLIB_EXPORT enum aspa_rtvals aspa_table_apply_update(struct aspa_update *updat
 	
 	pthread_rwlock_unlock(&aspa_table->lock);
 	
+	// Free provider arrays which were part of the old aspa array but aren't included in the new array
+	for (size_t i = 0; i < update->stale_provider_arrays_count; i++) {
+		lrtr_free(update->stale_provider_arrays[i]);
+	}
+	
 	if (existing_array) {
 		// store has existing array for given socket
 		// Notify clients the old records are being removed
 		for (size_t i = 0; i < existing_array->size; i++) {
 			aspa_table_notify_clients(aspa_table, &(existing_array->data[i]), update->rtr_socket, false);
-			
-			// Release provider ASN array
-			lrtr_free(existing_array->data[i].provider_asns);
 		}
 		
 		// Free the old array
