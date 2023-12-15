@@ -273,6 +273,15 @@ RTRLIB_EXPORT enum aspa_rtvals aspa_table_apply_update(struct aspa_update *updat
 	// prevent this ASPA array from being freed when the update gets released
 	update->aspa_array = NULL;
 	
+	if (update->stale_provider_arrays && update->stale_provider_arrays_count > 0) {
+		for (size_t i = 0; i < update->stale_provider_arrays_count; i++)
+			lrtr_free(update->stale_provider_arrays[i]);
+		
+		lrtr_free(update->stale_provider_arrays);
+		update->stale_provider_arrays = NULL;
+		update->stale_provider_arrays_count = 0;
+	}
+	
 	pthread_rwlock_unlock(&aspa_table->lock);
 	
 	// Free provider arrays which were part of the old aspa array but aren't included in the new array
@@ -302,11 +311,14 @@ RTRLIB_EXPORT void aspa_table_free_update(struct aspa_update *update)
 {
     if (update->aspa_array)
         aspa_array_free(update->aspa_array);
-    
-    for (size_t i = 0; i < update->stale_provider_arrays_count; i++)
-        lrtr_free(update->stale_provider_arrays[i]);
-    
-    lrtr_free(update->stale_provider_arrays);
+	
+	if (update->stale_provider_arrays && update->stale_provider_arrays_count > 0) {
+		for (size_t i = 0; i < update->stale_provider_arrays_count; i++)
+			lrtr_free(update->stale_provider_arrays[i]);
+		
+		lrtr_free(update->stale_provider_arrays);
+	}
+	
     lrtr_free(update);
 }
 
@@ -359,11 +371,19 @@ RTRLIB_EXPORT enum aspa_rtvals aspa_table_compute_update(struct aspa_table *aspa
     // stable sort operations, so operations dealing with the same customer ASN
     // are located right next to each other
     qsort(operations, count, sizeof(struct aspa_update_operation), compare_update_operations);
+	
+	// Initialize empty update, values are going to be set if update computation succeeds.
+	update->aspa_table = NULL;
+	update->rtr_socket = NULL;
+	update->rtr_socket = NULL;
+	update->stale_provider_arrays = NULL;
+	update->stale_provider_arrays_count = 0;
+	
+	uint32_t **stale_provider_arrays = NULL;
+	size_t stale_size = 0;
+	struct aspa_array *aspa_array = NULL;
     
-    update->stale_provider_arrays = NULL;
-    update->stale_provider_arrays_count = 0;
-    
-    if (aspa_array_create(&update->aspa_array) != ASPA_SUCCESS) {
+    if (aspa_array_create(&aspa_array) != ASPA_SUCCESS) {
         return ASPA_ERROR;
     }
     
@@ -378,8 +398,9 @@ RTRLIB_EXPORT enum aspa_rtvals aspa_table_compute_update(struct aspa_table *aspa
             
 			while (existing_index < existing_size && existing_array->data[existing_index].customer_asn < operations[i].record.customer_asn) {
                 // append record, sorting has been done above.
-				if (aspa_array_append(update->aspa_array, &existing_array->data[existing_index]) != ASPA_SUCCESS) {
-					aspa_array_free(update->aspa_array);
+				if (aspa_array_append(aspa_array, &existing_array->data[existing_index]) != ASPA_SUCCESS) {
+					aspa_array_free(aspa_array);
+					lrtr_free(stale_provider_arrays);
 					return ASPA_ERROR;
 				}
 				
@@ -390,7 +411,8 @@ RTRLIB_EXPORT enum aspa_rtvals aspa_table_compute_update(struct aspa_table *aspa
                 case ASPA_ADD:
                     if (existing_array->data[existing_index].customer_asn == operations[i].record.customer_asn) {
 						*failed_operation = &operations[i];
-						aspa_array_free(update->aspa_array);
+						aspa_array_free(aspa_array);
+						lrtr_free(stale_provider_arrays);
                         return ASPA_DUPLICATE_RECORD;
                     }
                     
@@ -400,19 +422,25 @@ RTRLIB_EXPORT enum aspa_rtvals aspa_table_compute_update(struct aspa_table *aspa
                             case ASPA_ADD:
                                 // adding a record for an ASN already added represents an error.
 								*failed_operation = &operations[i + 1];
-								aspa_array_free(update->aspa_array);
+								aspa_array_free(aspa_array);
+								lrtr_free(stale_provider_arrays);
                                 return ASPA_DUPLICATE_RECORD;
                             case ASPA_REMOVE:
                                 // skip this add operation and the next remove operation because it is nullified by the following remove operation.
-                                i += 1;
-                                continue;
+								// The provider array in this op's record must be released when the update is applied.
+								lrtr_realloc(stale_provider_arrays, sizeof(struct uint32_t *) * (stale_size + 1));
+								stale_provider_arrays[stale_size] = operations[i].record.provider_asns;
+								stale_size += 1;
+								i += 1;
+								continue;
                         }
                     }
                     
                     // append record, sorting has been done above.
-					if (aspa_array_append(update->aspa_array, &operations[i].record) != ASPA_SUCCESS) {
+					if (aspa_array_append(aspa_array, &operations[i].record) != ASPA_SUCCESS) {
 						*failed_operation = &operations[i];
-						aspa_array_free(update->aspa_array);
+						aspa_array_free(aspa_array);
+						lrtr_free(stale_provider_arrays);
 						return ASPA_ERROR;
 					}
                     break;
@@ -421,13 +449,15 @@ RTRLIB_EXPORT enum aspa_rtvals aspa_table_compute_update(struct aspa_table *aspa
 					// removing a records which doesn't exist is considered an error
                     if (existing_array->data[existing_index].customer_asn != operations[i].record.customer_asn) {
 						*failed_operation = &operations[i];
-						aspa_array_free(update->aspa_array);
+						aspa_array_free(aspa_array);
+						lrtr_free(stale_provider_arrays);
                         return ASPA_RECORD_NOT_FOUND;
                     }
 					
 					// In case the update gets applied, this array of provider ASNs needs to be released
-					update->stale_provider_arrays[update->stale_provider_arrays_count] = existing_array->data[existing_index].provider_asns;
-					update->stale_provider_arrays_count += 1;
+					lrtr_realloc(stale_provider_arrays, sizeof(struct uint32_t *) * (stale_size + 1));
+					stale_provider_arrays[stale_size] = existing_array->data[existing_index].provider_asns;
+					stale_size += 1;
                     break;
             }
         }
@@ -441,9 +471,16 @@ RTRLIB_EXPORT enum aspa_rtvals aspa_table_compute_update(struct aspa_table *aspa
                     switch (operations[i + 1].type) {
                         case ASPA_ADD:
                             // adding a record for an ASN already added represents an error.
+							*failed_operation = &operations[i + 1];
+							aspa_array_free(aspa_array);
+							lrtr_free(stale_provider_arrays);
                             return ASPA_DUPLICATE_RECORD;
                         case ASPA_REMOVE:
                             // skip this add operation and the next remove operation because it is nullified by the following remove operation.
+							// The provider array in this op's record must be released when the update is applied.
+							lrtr_realloc(stale_provider_arrays, sizeof(struct uint32_t *) * (stale_size + 1));
+							stale_provider_arrays[stale_size] = operations[i].record.provider_asns;
+							stale_size += 1;
                             i += 1;
                             continue;
                     }
@@ -452,14 +489,26 @@ RTRLIB_EXPORT enum aspa_rtvals aspa_table_compute_update(struct aspa_table *aspa
             
             // trying to remove an unknown record is not allowed.
             if (operations[i].type == ASPA_REMOVE) {
+				*failed_operation = &operations[i];
+				aspa_array_free(aspa_array);
+				lrtr_free(stale_provider_arrays);
                 return ASPA_RECORD_NOT_FOUND;
             }
             
             // append record, sorting has been done above.
-            if (aspa_array_append(update->aspa_array, &operations[i].record) != ASPA_SUCCESS)
-                return ASPA_ERROR;
+			if (aspa_array_append(aspa_array, &operations[i].record) != ASPA_SUCCESS) {
+				aspa_array_free(aspa_array);
+				lrtr_free(stale_provider_arrays);
+				return ASPA_ERROR;
+			}
         }
     }
+	
+	update->aspa_table = aspa_table;
+	update->rtr_socket = rtr_socket;
+	update->aspa_array = aspa_array;
+	update->stale_provider_arrays = stale_provider_arrays;
+	update->stale_provider_arrays_count = stale_size;
 	
 	return ASPA_SUCCESS;
 }

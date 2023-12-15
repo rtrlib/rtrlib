@@ -1217,6 +1217,9 @@ static int rtr_update_spki_table(struct rtr_socket *rtr_socket, struct spki_tabl
 static int rtr_update_aspa_table_atomic(struct rtr_socket *rtr_socket, struct aspa_table *aspa_table,
                                  struct pdu_aspa **aspa_pdus, size_t pdus_size)
 {
+	if (pdus_size == 0)
+		return RTR_SUCCESS;
+	
     struct aspa_update *update = lrtr_malloc(sizeof(struct aspa_update));
     
     if (!update) {
@@ -1249,18 +1252,18 @@ static int rtr_update_aspa_table_atomic(struct rtr_socket *rtr_socket, struct as
     struct aspa_update_operation *failed_op = NULL;
     enum aspa_rtvals return_value = aspa_table_compute_update(aspa_table, operations, pdus_size, rtr_socket, update, &failed_op);
     
-    if (return_value == ASPA_SUCCESS) {
-        return_value = aspa_table_apply_update(update);
-    }
-    
-    aspa_table_free_update(update);
-	
 	if (return_value != ASPA_SUCCESS) {
 		// Computing the update failed, so release all allocated provider ASN arrays
 		for (size_t i = 0; i < pdus_size; i++) {
 			lrtr_free(operations[i].record.provider_asns);
 		}
 	}
+	
+    if (return_value == ASPA_SUCCESS) {
+        return_value = aspa_table_apply_update(update);
+    }
+    
+    aspa_table_free_update(update);
     
     if (failed_op) {
         struct pdu_aspa *pdu = aspa_pdus[failed_op->index];
