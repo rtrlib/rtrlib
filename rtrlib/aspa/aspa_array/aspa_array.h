@@ -33,7 +33,7 @@ struct aspa_array {
  * @result Valid pointer to an aspa_array struct
  * @result Null On error.
  */
-int aspa_array_create(struct aspa_array **vector_pointer);
+enum aspa_rtvals aspa_array_create(struct aspa_array **vector_pointer);
 
 /**
  * @brief Deletes the given vector
@@ -41,7 +41,7 @@ int aspa_array_create(struct aspa_array **vector_pointer);
  * @result 0 On success.
  * @result -1 On error.
  */
-int aspa_array_free(struct aspa_array *vector);
+enum aspa_rtvals aspa_array_free(struct aspa_array *vector);
 
 /**
  * @brief Reallocates the vector to increase its size
@@ -49,7 +49,7 @@ int aspa_array_free(struct aspa_array *vector);
  * @result 0 On success.
  * @result -1 On error.
  */
-int aspa_array_reallocate(struct aspa_array *vector);
+enum aspa_rtvals aspa_array_reallocate(struct aspa_array *vector);
 
 /**
  * @brief Will insert the element at the correct place in the list so the ascending order is preserved
@@ -78,7 +78,7 @@ enum aspa_rtvals aspa_array_append(struct aspa_array *vector, struct aspa_record
  * @result 0 On success.
  * @result -1 On error.
  */
-int aspa_array_free_entry(struct aspa_array *vector, struct aspa_record *entry);
+enum aspa_rtvals aspa_array_free_entry(struct aspa_array *vector, struct aspa_record *entry);
 
 /**
  * @brief returns the index in the vector for a given customer as number (CAS)

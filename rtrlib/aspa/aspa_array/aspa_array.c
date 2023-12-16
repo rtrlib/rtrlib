@@ -13,7 +13,7 @@
 #include "rtrlib/lib/alloc_utils_private.h"
 #include "rtrlib/rtr/rtr.h"
 
-int aspa_array_create(struct aspa_array **vector_pointer)
+enum aspa_rtvals aspa_array_create(struct aspa_array **vector_pointer)
 {
 	const size_t default_initial_size = 128;
 
@@ -23,7 +23,7 @@ int aspa_array_create(struct aspa_array **vector_pointer)
 
 	// malloc failed so returning an error
 	if (!data_field) {
-		return -1;
+		return ASPA_ERROR;
 	}
 
 	// allocating the aspa_record itself
@@ -31,7 +31,7 @@ int aspa_array_create(struct aspa_array **vector_pointer)
 
 	// malloc for aspa_record failed hence we return an error
 	if (!vector) {
-		return -1;
+		return ASPA_ERROR;
 	}
 
 	// initializing member variables of the aspa record
@@ -42,10 +42,10 @@ int aspa_array_create(struct aspa_array **vector_pointer)
 	// returning the vector
 	*vector_pointer = vector;
 
-	return 0;
+	return ASPA_SUCCESS;
 }
 
-int aspa_array_free(struct aspa_array *vector)
+enum aspa_rtvals aspa_array_free(struct aspa_array *vector)
 {
 	// if the vector is null just return
 	if (vector == NULL) {
@@ -60,10 +60,10 @@ int aspa_array_free(struct aspa_array *vector)
 	// freeing the object itself
 	lrtr_free(vector);
 
-	return 0;
+	return ASPA_SUCCESS;
 }
 
-int aspa_array_reallocate(struct aspa_array *vector)
+enum aspa_rtvals aspa_array_reallocate(struct aspa_array *vector)
 {
 	// the factor by how much the capacity will increase: new_capacity = old_capacity * SIZE_INCREASE_EXPONENTIAL
 	const size_t SIZE_INCREASE_EXPONENTIAL = 2;
@@ -74,7 +74,7 @@ int aspa_array_reallocate(struct aspa_array *vector)
 
 	// malloc failed so returning an error
 	if (new_data_field == NULL) {
-		return -1;
+		return ASPA_ERROR;
 	}
 
 	// copying the data from the old location to the new one
@@ -87,7 +87,7 @@ int aspa_array_reallocate(struct aspa_array *vector)
 	vector->data = new_data_field;
 	vector->capacity *= SIZE_INCREASE_EXPONENTIAL;
 
-	return 0;
+	return ASPA_SUCCESS;
 }
 
 void aspa_array_private_insert(struct aspa_array *vector, struct aspa_record *record)
@@ -112,7 +112,7 @@ enum aspa_rtvals aspa_array_insert(struct aspa_array *vector, struct aspa_record
 	// check if this element will fit into the vector
 	if (vector->size >= vector->capacity) {
 		// increasing the vectors size so the new element fits
-		if (aspa_array_reallocate(vector) < 0) {
+		if (aspa_array_reallocate(vector) != ASPA_SUCCESS) {
 			return ASPA_ERROR;
 		}
 	}
@@ -129,7 +129,7 @@ enum aspa_rtvals aspa_array_append(struct aspa_array *vector, struct aspa_record
 	// check if this element will fit into the vector
 	if (vector->size >= vector->capacity) {
 		// increasing the vectors size so the new element fits
-		if (aspa_array_reallocate(vector) < 0) {
+		if (aspa_array_reallocate(vector) != ASPA_SUCCESS) {
 			return ASPA_ERROR;
 		}
 	}
@@ -174,7 +174,7 @@ struct aspa_record *aspa_array_search(struct aspa_array *vector, uint32_t custom
 	return NULL;
 }
 
-int aspa_array_free_entry(struct aspa_array *vector, struct aspa_record *entry)
+enum aspa_rtvals aspa_array_free_entry(struct aspa_array *vector, struct aspa_record *entry)
 {
 	if (vector->size == 0 || entry < vector->data || entry >= vector->data + vector->size) {
 		return -1;
@@ -195,5 +195,5 @@ int aspa_array_free_entry(struct aspa_array *vector, struct aspa_record *entry)
 	vector->size -= 1;
 
 	// we dont need to sort here
-	return 0;
+	return ASPA_SUCCESS;
 }
