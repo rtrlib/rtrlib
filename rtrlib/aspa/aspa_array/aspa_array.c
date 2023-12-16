@@ -48,11 +48,11 @@ enum aspa_rtvals aspa_array_create(struct aspa_array **vector_pointer)
 enum aspa_rtvals aspa_array_free(struct aspa_array *vector)
 {
 	// if the vector is null just return
-	if (vector == NULL) {
+	if (!vector) {
 		return ASPA_ERROR;
 	}
 
-	if (vector->data != NULL) {
+	if (vector->data) {
 		// freeing the data
 		lrtr_free(vector->data);
 	}

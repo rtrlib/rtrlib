@@ -30,9 +30,13 @@ static enum aspa_rtvals aspa_table_notify_clients(struct aspa_table *aspa_table,
 		copy->customer_asn = record->customer_asn;
 		copy->provider_count = record->provider_count;
 
-		size_t provider_size = sizeof(uint32_t) * record->provider_count;
-		copy->provider_asns = lrtr_malloc(provider_size);
-		memcpy(copy->provider_asns, record->provider_asns, provider_size);
+		if (record->provider_count > 0) {
+			size_t provider_size = sizeof(uint32_t) * record->provider_count;
+			copy->provider_asns = lrtr_malloc(provider_size);
+			memcpy(copy->provider_asns, record->provider_asns, provider_size);
+		} else {
+			copy->provider_asns = NULL;
+		}
 
 		aspa_table->update_fp(aspa_table, *copy, rtr_socket, added);
 	}
@@ -50,7 +54,7 @@ RTRLIB_EXPORT void aspa_table_init(struct aspa_table *aspa_table, aspa_update_fp
 static enum aspa_rtvals aspa_table_remove_node(struct aspa_table *aspa_table, struct aspa_store_node **node,
 					       bool notify)
 {
-	if (!node || *node) {
+	if (!node || !*node) {
 		pthread_rwlock_unlock(&(aspa_table->lock));
 		return ASPA_ERROR;
 	}
@@ -63,8 +67,9 @@ static enum aspa_rtvals aspa_table_remove_node(struct aspa_table *aspa_table, st
 		socket->aspa_array = NULL;
 	}
 
-	if (array == NULL) {
+	if (!array) {
 		// Doesn't exist anymore
+		pthread_rwlock_unlock(&(aspa_table->lock));
 		return ASPA_SUCCESS;
 	}
 
@@ -74,7 +79,8 @@ static enum aspa_rtvals aspa_table_remove_node(struct aspa_table *aspa_table, st
 			aspa_table_notify_clients(aspa_table, &(array->data[i]), socket, false);
 
 		// Release provider ASN array
-		lrtr_free(array->data[i].provider_asns);
+		if (array->data[i].provider_asns)
+			lrtr_free(array->data[i].provider_asns);
 	}
 
 	// Remove node for socket
@@ -95,7 +101,7 @@ RTRLIB_EXPORT enum aspa_rtvals aspa_table_src_remove(struct aspa_table *aspa_tab
 
 	struct aspa_store_node **node = aspa_store_search_node(&aspa_table->store, rtr_socket);
 
-	if (!node || *node) {
+	if (!node || !*node) {
 		// Already gone
 		pthread_rwlock_unlock(&(aspa_table->lock));
 		return ASPA_SUCCESS;
@@ -150,9 +156,7 @@ RTRLIB_EXPORT enum aspa_rtvals aspa_table_apply_update(struct aspa_update *updat
 		update->rtr_socket->aspa_array = update->aspa_array;
 	}
 
-	// prevent this ASPA array from being freed when the update gets released
-	update->aspa_array = NULL;
-
+	// Free provider arrays which were part of the old aspa array but aren't included in the new array
 	if (update->stale_provider_arrays && update->stale_provider_arrays_count > 0) {
 		for (size_t i = 0; i < update->stale_provider_arrays_count; i++)
 			lrtr_free(update->stale_provider_arrays[i]);
@@ -164,25 +168,23 @@ RTRLIB_EXPORT enum aspa_rtvals aspa_table_apply_update(struct aspa_update *updat
 
 	pthread_rwlock_unlock(&aspa_table->lock);
 
-	// Free provider arrays which were part of the old aspa array but aren't included in the new array
-	for (size_t i = 0; i < update->stale_provider_arrays_count; i++) {
-		lrtr_free(update->stale_provider_arrays[i]);
-	}
-
 	if (existing_array) {
 		// store has existing array for given socket
 		// Notify clients the old records are being removed
 		for (size_t i = 0; i < existing_array->size; i++) {
 			aspa_table_notify_clients(aspa_table, &(existing_array->data[i]), update->rtr_socket, false);
 		}
-
+		
 		// Free the old array
 		aspa_array_free(existing_array);
-
-		// Notify clients new records have been added
-		for (size_t i = 0; i < update->aspa_array->size; i++)
-			aspa_table_notify_clients(aspa_table, &(update->aspa_array->data[i]), update->rtr_socket, true);
 	}
+
+	// Notify clients new records have been added
+	for (size_t i = 0; i < update->aspa_array->size; i++)
+		aspa_table_notify_clients(aspa_table, &(update->aspa_array->data[i]), update->rtr_socket, true);
+	
+	// prevent this ASPA array from being freed when the update gets released
+	update->aspa_array = NULL;
 
 	return ASPA_SUCCESS;
 }
@@ -291,7 +293,7 @@ RTRLIB_EXPORT enum aspa_rtvals aspa_table_compute_update(struct aspa_table *aspa
 					return ASPA_ERROR;
 				}
 
-				existing_size++;
+				existing_index++;
 			}
 
 			uint32_t **tmp;
@@ -318,16 +320,18 @@ RTRLIB_EXPORT enum aspa_rtvals aspa_table_compute_update(struct aspa_table *aspa
 					case ASPA_REMOVE:
 						// skip this add operation and the next remove operation because it is nullified by the following remove operation.
 						// The provider array in this op's record must be released when the update is applied.
-						tmp = lrtr_realloc(stale_provider_arrays,
-								   sizeof(struct uint32_t *) * (stale_size + 1));
-						if (!tmp) {
-							aspa_array_free(aspa_array);
-							lrtr_free(stale_provider_arrays);
-							return ASPA_ERROR;
+						if (operations[i].record.provider_asns) {
+							tmp = lrtr_realloc(stale_provider_arrays,
+											   sizeof(struct uint32_t *) * (stale_size + 1));
+							if (!tmp) {
+								aspa_array_free(aspa_array);
+								lrtr_free(stale_provider_arrays);
+								return ASPA_ERROR;
+							}
+							stale_provider_arrays = tmp;
+							stale_provider_arrays[stale_size] = operations[i].record.provider_asns;
+							stale_size += 1;
 						}
-						stale_provider_arrays = tmp;
-						stale_provider_arrays[stale_size] = operations[i].record.provider_asns;
-						stale_size += 1;
 						i += 1;
 						continue;
 					}
@@ -356,15 +360,17 @@ RTRLIB_EXPORT enum aspa_rtvals aspa_table_compute_update(struct aspa_table *aspa
 				}
 
 				// In case the update gets applied, this array of provider ASNs needs to be released
-				tmp = lrtr_realloc(stale_provider_arrays, sizeof(struct uint32_t *) * (stale_size + 1));
-				if (!tmp) {
-					aspa_array_free(aspa_array);
-					lrtr_free(stale_provider_arrays);
-					return ASPA_ERROR;
+				if (existing_array->data[existing_index].provider_asns) {
+					tmp = lrtr_realloc(stale_provider_arrays, sizeof(struct uint32_t *) * (stale_size + 1));
+					if (!tmp) {
+						aspa_array_free(aspa_array);
+						lrtr_free(stale_provider_arrays);
+						return ASPA_ERROR;
+					}
+					stale_provider_arrays = tmp;
+					stale_provider_arrays[stale_size] = existing_array->data[existing_index].provider_asns;
+					stale_size += 1;
 				}
-				stale_provider_arrays = tmp;
-				stale_provider_arrays[stale_size] = existing_array->data[existing_index].provider_asns;
-				stale_size += 1;
 				break;
 			}
 		}
@@ -386,16 +392,18 @@ RTRLIB_EXPORT enum aspa_rtvals aspa_table_compute_update(struct aspa_table *aspa
 					case ASPA_REMOVE:
 						// skip this add operation and the next remove operation because it is nullified by the following remove operation.
 						// The provider array in this op's record must be released when the update is applied.
-						tmp = lrtr_realloc(stale_provider_arrays,
-								   sizeof(struct uint32_t *) * (stale_size + 1));
-						if (!tmp) {
-							aspa_array_free(aspa_array);
-							lrtr_free(stale_provider_arrays);
-							return ASPA_ERROR;
+						if (operations[i].record.provider_asns) {
+							tmp = lrtr_realloc(stale_provider_arrays,
+											   sizeof(struct uint32_t *) * (stale_size + 1));
+							if (!tmp) {
+								aspa_array_free(aspa_array);
+								lrtr_free(stale_provider_arrays);
+								return ASPA_ERROR;
+							}
+							stale_provider_arrays = tmp;
+							stale_provider_arrays[stale_size] = operations[i].record.provider_asns;
+							stale_size += 1;
 						}
-						stale_provider_arrays = tmp;
-						stale_provider_arrays[stale_size] = operations[i].record.provider_asns;
-						stale_size += 1;
 						i += 1;
 						continue;
 					}
