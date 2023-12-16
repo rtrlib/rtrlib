@@ -676,6 +676,13 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
 		if (((struct pdu_ipv4 *)pdu)->zero != 0)
 			RTR_DBG1("Warning: Zero field of received Prefix PDU doesn't contain 0");
 	}
+	if (header.type == ASPA) {
+		if (((struct pdu_aspa *)pdu)->zero != 0)
+			RTR_DBG1("Warning: Zero field of received ASPA PDU doesn't contain 0");
+		
+		if (((struct pdu_aspa *)pdu)->afi_flags != 0b11)
+			RTR_DBG1("Warning: AFI flags of received ASPA PDU not set to 0x03");
+	}
 	if (header.type == ROUTER_KEY && ((struct pdu_router_key *)pdu)->zero != 0)
 		RTR_DBG1("Warning: ROUTER_KEY_PDU zero field is != 0");
 
@@ -1102,10 +1109,10 @@ static int rtr_store_aspa_pdu(struct rtr_socket *rtr_socket, const struct pdu_as
         }
         *array = tmp;
     }
+	size_t pdu_size = rtr_size_of_aspa_pdu(pdu);
+    struct pdu_aspa *copy = lrtr_malloc(pdu_size);
     
-    struct pdu_aspa *copy = lrtr_malloc(sizeof(struct pdu_aspa));
-    
-    memcpy(copy, pdu, sizeof(struct pdu_aspa));
+    memcpy(copy, pdu, pdu_size);
 
     *array[*index] = copy;
     (*index)++;
@@ -1618,7 +1625,7 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 				retval = rtr_sync_update_tables(rtr_socket, pfx_shadow_table, spki_shadow_table,
 								rtr_socket->aspa_table, ipv4_pdus, ipv4_pdus_nindex,
 								ipv6_pdus, ipv6_pdus_nindex, router_key_pdus,
-								router_key_pdus_nindex, aspa_pdus, aspa_pdus_size, eod_pdu);
+								router_key_pdus_nindex, aspa_pdus, aspa_pdus_nindex, eod_pdu);
 
 				if (retval == RTR_SUCCESS) {
 					RTR_DBG1("Reset finished. Swapping new table in.");
@@ -1674,7 +1681,7 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 								rtr_socket->spki_table, rtr_socket->aspa_table,
 								ipv4_pdus, ipv4_pdus_nindex, ipv6_pdus,
 								ipv6_pdus_nindex, router_key_pdus,
-                                router_key_pdus_nindex, aspa_pdus, aspa_pdus_size, eod_pdu);
+                                router_key_pdus_nindex, aspa_pdus, aspa_pdus_nindex, eod_pdu);
 			}
 
 			break;

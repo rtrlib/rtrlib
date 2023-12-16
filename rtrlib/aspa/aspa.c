@@ -348,19 +348,21 @@ static struct aspa_array *aspa_table_get_array(struct aspa_table *aspa_table, st
     // access rtr_socket->aspa_array directly,
     // perform lookup on aspa_table->store insted.
 
+	struct aspa_array **array = NULL;
     // Use fast lookup
-    if (rtr_socket->aspa_table == aspa_table) {
+    if (rtr_socket->aspa_table == aspa_table && rtr_socket->aspa_array) {
         // Check if an ASPA array exists for this socket
-        if (!rtr_socket->aspa_array) {
-            rtr_socket->aspa_array = *aspa_store_search_array(&aspa_table->store, rtr_socket);
-        }
-
-        return rtr_socket->aspa_array;
-    } else {
-        // This isn't the primary table (not the table the socket holds a reference to)
-        // Find node matching the given socket
-         return *aspa_store_search_array(&aspa_table->store, rtr_socket);
+		array = &rtr_socket->aspa_array;
     }
+	
+	if (!array) {
+		array = aspa_store_search_array(&aspa_table->store, rtr_socket);
+    }
+	
+	if (!array)
+		return NULL;
+	else
+		return *array;
 }
 
 RTRLIB_EXPORT enum aspa_rtvals aspa_table_compute_update(struct aspa_table *aspa_table, struct aspa_update_operation *operations, size_t count, struct rtr_socket *rtr_socket, struct aspa_update *update, struct aspa_update_operation **failed_operation)
