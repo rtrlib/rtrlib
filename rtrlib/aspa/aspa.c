@@ -334,6 +334,9 @@ RTRLIB_EXPORT enum aspa_rtvals aspa_table_compute_update(struct aspa_table *aspa
 				}
 
 				// append record, sorting has been done above.
+				if (operations[i].record.provider_count == 0)
+					operations[i].record.provider_asns = NULL;
+
 				if (aspa_array_append(aspa_array, &operations[i].record) != ASPA_SUCCESS) {
 					*failed_operation = &operations[i];
 					aspa_array_free(aspa_array);
@@ -408,6 +411,9 @@ RTRLIB_EXPORT enum aspa_rtvals aspa_table_compute_update(struct aspa_table *aspa
 			}
 
 			// append record, sorting has been done above.
+			if (operations[i].record.provider_count == 0)
+				operations[i].record.provider_asns = NULL;
+
 			if (aspa_array_append(aspa_array, &operations[i].record) != ASPA_SUCCESS) {
 				aspa_array_free(aspa_array);
 				lrtr_free(stale_provider_arrays);
