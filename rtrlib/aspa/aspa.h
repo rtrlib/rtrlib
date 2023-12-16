@@ -133,31 +133,6 @@ void aspa_table_init(struct aspa_table *aspa_table, aspa_update_fp update_fp);
  */
 void aspa_table_free(struct aspa_table *aspa_table, bool notify);
 
-///**
-// * @brief Adds a aspa_record to a aspa_table.
-// *
-// * @param[in] aspa_table aspa_table to use.
-// * @param[in] aspa_record aspa_record that will be added.
-// * @return aspa_SUCCESS On success.
-//
-// * @return aspa_ERROR On error.
-// * @return aspa_DUPLICATE_RECORD If an identical aspa_record already exists
-// */
-//int aspa_table_add(struct aspa_table *aspa_table, struct aspa_record *aspa_record, struct rtr_socket *rtr_socket,
-//		   bool replace);
-//
-///**
-// * @brief Removes aspa_record from aspa_table
-// *
-// * @param aspa_table aspa_table to use
-// * @param aspa_record aspa_record to remove;
-// * @return aspa_SUCCESS On success
-// *
-// * @return aspa_ERROR On error
-// * @return aspa_RECORD_NOT_FOUND On record not found
-// */
-//int aspa_table_remove(struct aspa_table *aspa_table, struct aspa_record *aspa_record, struct rtr_socket *rtr_socket);
-
 /**
  * @brief Registers a new socket as source.
  *

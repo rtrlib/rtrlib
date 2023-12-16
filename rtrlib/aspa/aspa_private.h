@@ -89,18 +89,6 @@ enum aspa_rtvals aspa_table_apply_update(struct aspa_update *update);
  */
 void aspa_table_free_update(struct aspa_update *update);
 
-//
-///**
-// * @brief Moves all ASPA records associated with the given socket from the source table into the destination table.
-// * @param[in,out] dst The destination table. Existing records associated with the socket are replaced.
-// * @param[in,out] src The source table.
-// * @param[in,out] rtr_socket The socket the records are associated with.
-// * @param notify_dst A boolean value determining whether to notify the destination tables' clients.
-// * @param notify_src A boolean value determining whether to notify the source tables' clients.
-// */
-//int aspa_table_src_move(struct aspa_table *dst, struct aspa_table *src, struct rtr_socket *rtr_socket, bool notify_dst,
-//			bool notify_src);
-
 /**
  * @brief Checks a hop in the given @c AS_PATH .
  * @return @c aspa_hop_result .
