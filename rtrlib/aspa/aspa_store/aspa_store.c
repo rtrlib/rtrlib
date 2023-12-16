@@ -63,7 +63,7 @@ void aspa_store_remove(struct aspa_store_node **head, struct rtr_socket *rtr_soc
 struct aspa_array **aspa_store_search_array(struct aspa_store_node **node, const struct rtr_socket *rtr_socket)
 {
 	struct aspa_store_node **found_node = aspa_store_search_node(node, rtr_socket);
-	
+
 	if (!found_node || !*found_node)
 		return NULL;
 	else

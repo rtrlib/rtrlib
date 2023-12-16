@@ -126,19 +126,19 @@ enum aspa_rtvals aspa_array_insert(struct aspa_array *vector, struct aspa_record
 
 enum aspa_rtvals aspa_array_append(struct aspa_array *vector, struct aspa_record *record)
 {
-    // check if this element will fit into the vector
-    if (vector->size >= vector->capacity) {
-        // increasing the vectors size so the new element fits
-        if (aspa_array_reallocate(vector) < 0) {
-            return ASPA_ERROR;
-        }
-    }
+	// check if this element will fit into the vector
+	if (vector->size >= vector->capacity) {
+		// increasing the vectors size so the new element fits
+		if (aspa_array_reallocate(vector) < 0) {
+			return ASPA_ERROR;
+		}
+	}
 
-    // append the record at the end
-    vector->data[vector->size] = *record;
-    vector->size += 1;
+	// append the record at the end
+	vector->data[vector->size] = *record;
+	vector->size += 1;
 
-    return ASPA_SUCCESS;
+	return ASPA_SUCCESS;
 }
 
 struct aspa_record *aspa_array_search(struct aspa_array *vector, uint32_t customer_asn)
@@ -176,8 +176,7 @@ struct aspa_record *aspa_array_search(struct aspa_array *vector, uint32_t custom
 
 int aspa_array_free_entry(struct aspa_array *vector, struct aspa_record *entry)
 {
-	if (vector->size == 0 || entry < vector->data ||
-			entry >= vector->data + vector->size) {
+	if (vector->size == 0 || entry < vector->data || entry >= vector->data + vector->size) {
 		return -1;
 	}
 
@@ -189,8 +188,7 @@ int aspa_array_free_entry(struct aspa_array *vector, struct aspa_record *entry)
 
 	// if 1 or more elements needs to be copied
 	if (number_of_elements > 0) {
-		memmove(entry, entry + 1,
-			number_of_elements * sizeof(struct aspa_record));
+		memmove(entry, entry + 1, number_of_elements * sizeof(struct aspa_record));
 	}
 
 	// decrementing the size by one

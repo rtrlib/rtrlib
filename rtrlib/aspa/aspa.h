@@ -169,24 +169,15 @@ void aspa_table_free(struct aspa_table *aspa_table, bool notify);
  */
 enum aspa_rtvals aspa_table_src_remove(struct aspa_table *aspa_table, struct rtr_socket *rtr_socket, bool notify);
 
-enum aspa_direction {
-	ASPA_UPSTREAM,
-	ASPA_DOWNSTREAM
-};
+enum aspa_direction { ASPA_UPSTREAM, ASPA_DOWNSTREAM };
 
-
-enum aspa_hop_result {
-	ASPA_NO_ATTESTATION,
-	ASPA_NOT_PROVIDER_PLUS,
-	ASPA_PROVIDER_PLUS
-};
+enum aspa_hop_result { ASPA_NO_ATTESTATION, ASPA_NOT_PROVIDER_PLUS, ASPA_PROVIDER_PLUS };
 
 enum aspa_verification_result {
 	ASPA_AS_PATH_UNKNOWN,
 	ASPA_AS_PATH_INVALID,
 	ASPA_AS_PATH_VALID,
 };
-
 
 /**
  * @brief Verifies an @c AS_PATH .
@@ -202,7 +193,8 @@ enum aspa_verification_result {
  * @return @c ASPA_AS_PATH_INVALID if @c AS_PATH is invalid
  * @return @c ASPA_AS_PATH_VALID if @c AS_PATH is valid
  */
-enum aspa_verification_result aspa_verify_as_path(struct aspa_table *aspa_table, enum aspa_direction direction, uint32_t as_path[], size_t len);
+enum aspa_verification_result aspa_verify_as_path(struct aspa_table *aspa_table, enum aspa_direction direction,
+						  uint32_t as_path[], size_t len);
 
 /**
  * @brief Verifies an upstream @c AS_PATH .

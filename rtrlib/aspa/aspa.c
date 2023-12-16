@@ -7,12 +7,11 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
+#include "rtrlib/lib/alloc_utils_private.h"
+#include "rtrlib/rtrlib_export_private.h"
 #include "aspa_array/aspa_array.h"
 #include "aspa_private.h"
 #include "aspa_store/aspa_store.h"
-
-#include "../lib/alloc_utils_private.h"
-#include "../rtrlib_export_private.h"
 
 #include <assert.h>
 #include <pthread.h>
@@ -20,24 +19,24 @@
 #include <string.h>
 
 static enum aspa_rtvals aspa_table_notify_clients(struct aspa_table *aspa_table, const struct aspa_record *record,
-				      const struct rtr_socket *rtr_socket, const bool added)
+						  const struct rtr_socket *rtr_socket, const bool added)
 {
 	if (aspa_table->update_fp) {
 		// Realloc in order not to expose internal record
 		struct aspa_record *copy = lrtr_malloc(sizeof(struct aspa_record));
 		if (!copy)
 			return ASPA_ERROR;
-		
+
 		copy->customer_asn = record->customer_asn;
 		copy->provider_count = record->provider_count;
-		
+
 		size_t provider_size = sizeof(uint32_t) * record->provider_count;
 		copy->provider_asns = lrtr_malloc(provider_size);
 		memcpy(copy->provider_asns, record->provider_asns, provider_size);
-		
+
 		aspa_table->update_fp(aspa_table, *copy, rtr_socket, added);
 	}
-	
+
 	return ASPA_SUCCESS;
 }
 
@@ -48,13 +47,14 @@ RTRLIB_EXPORT void aspa_table_init(struct aspa_table *aspa_table, aspa_update_fp
 	pthread_rwlock_init(&(aspa_table->lock), NULL);
 }
 
-static enum aspa_rtvals aspa_table_remove_node(struct aspa_table *aspa_table, struct aspa_store_node **node, bool notify)
+static enum aspa_rtvals aspa_table_remove_node(struct aspa_table *aspa_table, struct aspa_store_node **node,
+					       bool notify)
 {
 	if (!node || *node) {
 		pthread_rwlock_unlock(&(aspa_table->lock));
 		return ASPA_ERROR;
 	}
-	
+
 	struct aspa_array *array = (*node)->aspa_array;
 	struct rtr_socket *socket = (*node)->rtr_socket;
 
@@ -72,7 +72,7 @@ static enum aspa_rtvals aspa_table_remove_node(struct aspa_table *aspa_table, st
 	for (size_t i = 0; i < array->size; i++) {
 		if (notify)
 			aspa_table_notify_clients(aspa_table, &(array->data[i]), socket, false);
-		
+
 		// Release provider ASN array
 		lrtr_free(array->data[i].provider_asns);
 	}
@@ -88,18 +88,19 @@ static enum aspa_rtvals aspa_table_remove_node(struct aspa_table *aspa_table, st
 	return ASPA_SUCCESS;
 }
 
-RTRLIB_EXPORT enum aspa_rtvals aspa_table_src_remove(struct aspa_table *aspa_table, struct rtr_socket *rtr_socket, bool notify)
+RTRLIB_EXPORT enum aspa_rtvals aspa_table_src_remove(struct aspa_table *aspa_table, struct rtr_socket *rtr_socket,
+						     bool notify)
 {
 	pthread_rwlock_wrlock(&aspa_table->lock);
 
 	struct aspa_store_node **node = aspa_store_search_node(&aspa_table->store, rtr_socket);
-	
+
 	if (!node || *node) {
 		// Already gone
 		pthread_rwlock_unlock(&(aspa_table->lock));
 		return ASPA_SUCCESS;
 	}
-	
+
 	return aspa_table_remove_node(aspa_table, node, notify);
 }
 
@@ -118,139 +119,18 @@ RTRLIB_EXPORT void aspa_table_free(struct aspa_table *aspa_table, bool notify)
 	pthread_rwlock_unlock(&aspa_table->lock);
 	pthread_rwlock_destroy(&aspa_table->lock);
 }
-/*
-RTRLIB_EXPORT int aspa_table_add(struct aspa_table *aspa_table,
-				struct aspa_record *record, struct rtr_socket *rtr_socket,
-				bool overwrite)
-{
-	if (!aspa_table)
-		return ASPA_ERROR;
-
-	pthread_rwlock_wrlock(&aspa_table->lock);
-
-	struct aspa_array *array;
-
-	// sort to-be-added providers in ascending order
-	qsort(record->provider_asns, record->provider_count,
-			sizeof(uint32_t), cmp_uint32_t);
-
-	// Find the socket's corresponding aspa_array.
-	// If fast lookup suceeds (rtr_socket->aspa_table == aspa_table),
-	// access rtr_socket->aspa_array directly,
-	// perform lookup on aspa_table->store insted.
-
-	// Use fast lookup
-	if (rtr_socket->aspa_table == aspa_table) {
-		// Check if an ASPA array exists for this socket
-		if (rtr_socket->aspa_array == NULL) {
-			// Create a new ASPA array, store that array alongside with the socket in the table
-			if (aspa_array_create(&rtr_socket->aspa_array) < 0 ||
-			    aspa_store_insert(&aspa_table->store, rtr_socket, rtr_socket->aspa_array) != ASPA_SUCCESS) {
-				pthread_rwlock_unlock(&aspa_table->lock);
-				return ASPA_ERROR;
-			}
-		}
-
-		array = rtr_socket->aspa_array;
-	} else {
-		// This isn't the primary table (not the table the socket holds a reference to)
-		// Find node matching the given socket
-		array = *aspa_store_search(&aspa_table->store, rtr_socket);
-
-		if (array == NULL) {
-			// Create a new ASPA array, store that array algonside with the socket in the table
-			if (aspa_array_create(&array) < 0 ||
-			    aspa_store_insert(&aspa_table->store, rtr_socket, array) != ASPA_SUCCESS) {
-				pthread_rwlock_unlock(&aspa_table->lock);
-				return ASPA_ERROR;
-			}
-		}
-	}
-
-	// Insert record aspa_array
-	// TODO: This function does not handle duplicates/replacing the record
-	if (aspa_array_insert(array, record) < 0) {
-		pthread_rwlock_unlock(&aspa_table->lock);
-		return ASPA_ERROR;
-	}
-
-	pthread_rwlock_unlock(&aspa_table->lock);
-
-	// Notify clients that the record has been added
-	aspa_table_notify_clients(aspa_table, record, rtr_socket, true);
-
-	return ASPA_SUCCESS;
-}
-
-RTRLIB_EXPORT int aspa_table_remove(struct aspa_table *aspa_table,
-					struct aspa_record *record,
-				    struct rtr_socket *rtr_socket)
-{
-	if (!aspa_table)
-		return ASPA_ERROR;
-
-	pthread_rwlock_wrlock(&aspa_table->lock);
-
-	struct aspa_array *array;
-
-	// Find the socket's corresponding aspa_array.
-	// If fast lookup suceeds (rtr_socket->aspa_table == aspa_table),
-	// access rtr_socket->aspa_array directly,
-	// perform lookup on aspa_table->store insted.
-
-	// Use fast lookup
-	if (rtr_socket->aspa_table == aspa_table) {
-		// Check if an ASPA array exists for this socket
-		if (rtr_socket->aspa_array == NULL) {
-			pthread_rwlock_unlock(&aspa_table->lock);
-			return ASPA_ERROR;
-		}
-
-		array = rtr_socket->aspa_array;
-	} else {
-		// This isn't the primary table (not the table the socket holds a reference to)
-		// Find node matching the given socket
-		array = *aspa_store_search(&aspa_table->store, rtr_socket);
-
-		if (array == NULL) {
-			pthread_rwlock_unlock(&aspa_table->lock);
-			return ASPA_ERROR;
-		}
-	}
-
-	struct aspa_record *aspa_record = aspa_array_search(array, record->customer_asn);
-
-	if (aspa_record == NULL) { // error occured
-		pthread_rwlock_unlock(&aspa_table->lock);
-		return ASPA_RECORD_NOT_FOUND;
-	}
-
-	// Remove record aspa_array
-	if (aspa_array_free_entry(array, aspa_record) < 0) {
-		pthread_rwlock_unlock(&aspa_table->lock);
-		return ASPA_ERROR;
-	}
-
-	pthread_rwlock_unlock(&aspa_table->lock);
-
-	// Notify clients that the record has been removed
-	aspa_table_notify_clients(aspa_table, record, rtr_socket, false);
-
-	return ASPA_SUCCESS;
-}
- */
 
 RTRLIB_EXPORT enum aspa_rtvals aspa_table_apply_update(struct aspa_update *update)
 {
 	if (!update->aspa_table || !update->rtr_socket || !update->aspa_array)
 		return ASPA_ERROR;
-	
+
 	struct aspa_table *aspa_table = update->aspa_table;
-	
+
 	pthread_rwlock_wrlock(&aspa_table->lock);
 	struct aspa_array **array_ptr = aspa_store_search_array(&aspa_table->store, update->rtr_socket);
 	struct aspa_array *existing_array = NULL;
-	
+
 	if (array_ptr) {
 		existing_array = *array_ptr;
 		*array_ptr = update->aspa_array;
@@ -263,374 +143,328 @@ RTRLIB_EXPORT enum aspa_rtvals aspa_table_apply_update(struct aspa_update *updat
 			return ASPA_ERROR;
 		}
 	}
-	
+
 	// We may need to replace the aspa_array reference in rtr_socket, too
 	if (update->rtr_socket->aspa_table == aspa_table) {
 		// Replace reference stored in socket so fast lookup keeps working
 		update->rtr_socket->aspa_array = update->aspa_array;
 	}
-	
+
 	// prevent this ASPA array from being freed when the update gets released
 	update->aspa_array = NULL;
-	
+
 	if (update->stale_provider_arrays && update->stale_provider_arrays_count > 0) {
 		for (size_t i = 0; i < update->stale_provider_arrays_count; i++)
 			lrtr_free(update->stale_provider_arrays[i]);
-		
+
 		lrtr_free(update->stale_provider_arrays);
 		update->stale_provider_arrays = NULL;
 		update->stale_provider_arrays_count = 0;
 	}
-	
+
 	pthread_rwlock_unlock(&aspa_table->lock);
-	
+
 	// Free provider arrays which were part of the old aspa array but aren't included in the new array
 	for (size_t i = 0; i < update->stale_provider_arrays_count; i++) {
 		lrtr_free(update->stale_provider_arrays[i]);
 	}
-	
+
 	if (existing_array) {
 		// store has existing array for given socket
 		// Notify clients the old records are being removed
 		for (size_t i = 0; i < existing_array->size; i++) {
 			aspa_table_notify_clients(aspa_table, &(existing_array->data[i]), update->rtr_socket, false);
 		}
-		
+
 		// Free the old array
 		aspa_array_free(existing_array);
-		
+
 		// Notify clients new records have been added
 		for (size_t i = 0; i < update->aspa_array->size; i++)
-			aspa_table_notify_clients(aspa_table, &( update->aspa_array->data[i]), update->rtr_socket, true);
+			aspa_table_notify_clients(aspa_table, &(update->aspa_array->data[i]), update->rtr_socket, true);
 	}
-	
+
 	return ASPA_SUCCESS;
 }
 
 RTRLIB_EXPORT void aspa_table_free_update(struct aspa_update *update)
 {
-    if (update->aspa_array)
-        aspa_array_free(update->aspa_array);
-	
+	if (update->aspa_array)
+		aspa_array_free(update->aspa_array);
+
 	if (update->stale_provider_arrays && update->stale_provider_arrays_count > 0) {
 		for (size_t i = 0; i < update->stale_provider_arrays_count; i++)
 			lrtr_free(update->stale_provider_arrays[i]);
-		
+
 		lrtr_free(update->stale_provider_arrays);
 	}
-	
-    lrtr_free(update);
+
+	lrtr_free(update);
 }
 
-static int compare_update_operations(const void *a, const void *b) {
-    const struct aspa_update_operation *op1 = a;
-    const struct aspa_update_operation *op2 = b;
-    
-    // compare index in case customer ASNs match, so result is stable
-    if (op1->record.customer_asn < op2->record.customer_asn)
-        return -1;
-    else if (op1->record.customer_asn > op2->record.customer_asn)
-        return 1;
-    else if (op1->index > op2->index)
-        return 1;
-    else if (op1->index < op2->index)
-        return -1;
-    else
-        return 0;
+static int compare_update_operations(const void *a, const void *b)
+{
+	const struct aspa_update_operation *op1 = a;
+	const struct aspa_update_operation *op2 = b;
+
+	// compare index in case customer ASNs match, so result is stable
+	if (op1->record.customer_asn < op2->record.customer_asn)
+		return -1;
+	else if (op1->record.customer_asn > op2->record.customer_asn)
+		return 1;
+	else if (op1->index > op2->index)
+		return 1;
+	else if (op1->index < op2->index)
+		return -1;
+	else
+		return 0;
 }
 
 static struct aspa_array *aspa_table_get_array(struct aspa_table *aspa_table, struct rtr_socket *rtr_socket)
 {
-    if (!aspa_table)
-        return NULL;
-    // Find the socket's corresponding aspa_array.
-    // If fast lookup suceeds (rtr_socket->aspa_table == aspa_table),
-    // access rtr_socket->aspa_array directly,
-    // perform lookup on aspa_table->store insted.
+	if (!aspa_table)
+		return NULL;
+	// Find the socket's corresponding aspa_array.
+	// If fast lookup suceeds (rtr_socket->aspa_table == aspa_table),
+	// access rtr_socket->aspa_array directly,
+	// perform lookup on aspa_table->store insted.
 
 	struct aspa_array **array = NULL;
-    // Use fast lookup
-    if (rtr_socket->aspa_table == aspa_table && rtr_socket->aspa_array) {
-        // Check if an ASPA array exists for this socket
+	// Use fast lookup
+	if (rtr_socket->aspa_table == aspa_table && rtr_socket->aspa_array) {
+		// Check if an ASPA array exists for this socket
 		array = &rtr_socket->aspa_array;
-    }
-	
+	}
+
 	if (!array) {
 		array = aspa_store_search_array(&aspa_table->store, rtr_socket);
-    }
-	
+	}
+
 	if (!array)
 		return NULL;
 	else
 		return *array;
 }
 
-RTRLIB_EXPORT enum aspa_rtvals aspa_table_compute_update(struct aspa_table *aspa_table, struct aspa_update_operation *operations, size_t count, struct rtr_socket *rtr_socket, struct aspa_update *update, struct aspa_update_operation **failed_operation)
+RTRLIB_EXPORT enum aspa_rtvals aspa_table_compute_update(struct aspa_table *aspa_table,
+							 struct aspa_update_operation *operations, size_t count,
+							 struct rtr_socket *rtr_socket, struct aspa_update *update,
+							 struct aspa_update_operation **failed_operation)
 {
-    if (!rtr_socket || !operations || !update || count <= 0)
-        return ASPA_ERROR;
-    
-    // stable sort operations, so operations dealing with the same customer ASN
-    // are located right next to each other
-    qsort(operations, count, sizeof(struct aspa_update_operation), compare_update_operations);
-	
+	if (!rtr_socket || !operations || !update || count <= 0)
+		return ASPA_ERROR;
+
+	// stable sort operations, so operations dealing with the same customer ASN
+	// are located right next to each other
+	qsort(operations, count, sizeof(struct aspa_update_operation), compare_update_operations);
+
 	// Initialize empty update, values are going to be set if update computation succeeds.
 	update->aspa_table = NULL;
 	update->rtr_socket = NULL;
 	update->rtr_socket = NULL;
 	update->stale_provider_arrays = NULL;
 	update->stale_provider_arrays_count = 0;
-	
+
 	uint32_t **stale_provider_arrays = NULL;
 	size_t stale_size = 0;
 	struct aspa_array *aspa_array = NULL;
-    
-    if (aspa_array_create(&aspa_array) != ASPA_SUCCESS) {
-        return ASPA_ERROR;
-    }
-    
-    // retrieve existing ASPA array belonging to the table and matching the given socket
-    struct aspa_array *existing_array = aspa_table_get_array(aspa_table, rtr_socket);
-    
-    if (existing_array) {
-        // use existing data
-        size_t existing_index = 0;
-        size_t existing_size = existing_array->size;
-        for (size_t i = 0; i < count; i++) {
-            
-			while (existing_index < existing_size && existing_array->data[existing_index].customer_asn < operations[i].record.customer_asn) {
-                // append record, sorting has been done above.
-				if (aspa_array_append(aspa_array, &existing_array->data[existing_index]) != ASPA_SUCCESS) {
+
+	if (aspa_array_create(&aspa_array) != ASPA_SUCCESS) {
+		return ASPA_ERROR;
+	}
+
+	// retrieve existing ASPA array belonging to the table and matching the given socket
+	struct aspa_array *existing_array = aspa_table_get_array(aspa_table, rtr_socket);
+
+	if (existing_array) {
+		// use existing data
+		size_t existing_index = 0;
+		size_t existing_size = existing_array->size;
+		for (size_t i = 0; i < count; i++) {
+			while (existing_index < existing_size &&
+			       existing_array->data[existing_index].customer_asn < operations[i].record.customer_asn) {
+				// append record, sorting has been done above.
+				if (aspa_array_append(aspa_array, &existing_array->data[existing_index]) !=
+				    ASPA_SUCCESS) {
 					aspa_array_free(aspa_array);
 					lrtr_free(stale_provider_arrays);
 					return ASPA_ERROR;
 				}
-				
+
 				existing_size++;
-            }
-            
-            switch (operations[i].type) {
-                case ASPA_ADD:
-                    if (existing_array->data[existing_index].customer_asn == operations[i].record.customer_asn) {
-						*failed_operation = &operations[i];
+			}
+
+			uint32_t **tmp;
+			switch (operations[i].type) {
+			case ASPA_ADD:
+				if (existing_array->data[existing_index].customer_asn ==
+				    operations[i].record.customer_asn) {
+					*failed_operation = &operations[i];
+					aspa_array_free(aspa_array);
+					lrtr_free(stale_provider_arrays);
+					return ASPA_DUPLICATE_RECORD;
+				}
+
+				bool next_same_asn = i < count - 1 && operations[i + 1].record.customer_asn ==
+									      operations[i].record.customer_asn;
+				if (next_same_asn) {
+					switch (operations[i + 1].type) {
+					case ASPA_ADD:
+						// adding a record for an ASN already added represents an error.
+						*failed_operation = &operations[i + 1];
 						aspa_array_free(aspa_array);
 						lrtr_free(stale_provider_arrays);
-                        return ASPA_DUPLICATE_RECORD;
-                    }
-                    
-                    bool next_same_asn = i < count - 1 && operations[i + 1].record.customer_asn == operations[i].record.customer_asn;
-                    if (next_same_asn) {
-                        switch (operations[i + 1].type) {
-                            case ASPA_ADD:
-                                // adding a record for an ASN already added represents an error.
-								*failed_operation = &operations[i + 1];
-								aspa_array_free(aspa_array);
-								lrtr_free(stale_provider_arrays);
-                                return ASPA_DUPLICATE_RECORD;
-                            case ASPA_REMOVE:
-                                // skip this add operation and the next remove operation because it is nullified by the following remove operation.
-								// The provider array in this op's record must be released when the update is applied.
-								lrtr_realloc(stale_provider_arrays, sizeof(struct uint32_t *) * (stale_size + 1));
-								stale_provider_arrays[stale_size] = operations[i].record.provider_asns;
-								stale_size += 1;
-								i += 1;
-								continue;
-                        }
-                    }
-                    
-                    // append record, sorting has been done above.
-					if (aspa_array_append(aspa_array, &operations[i].record) != ASPA_SUCCESS) {
-						*failed_operation = &operations[i];
-						aspa_array_free(aspa_array);
-						lrtr_free(stale_provider_arrays);
-						return ASPA_ERROR;
-					}
-                    break;
-                    
-                case ASPA_REMOVE:
-					// removing a records which doesn't exist is considered an error
-                    if (existing_array->data[existing_index].customer_asn != operations[i].record.customer_asn) {
-						*failed_operation = &operations[i];
-						aspa_array_free(aspa_array);
-						lrtr_free(stale_provider_arrays);
-                        return ASPA_RECORD_NOT_FOUND;
-                    }
-					
-					// In case the update gets applied, this array of provider ASNs needs to be released
-					lrtr_realloc(stale_provider_arrays, sizeof(struct uint32_t *) * (stale_size + 1));
-					stale_provider_arrays[stale_size] = existing_array->data[existing_index].provider_asns;
-					stale_size += 1;
-                    break;
-            }
-        }
-    } else {
-        // no existing data to use, so just append records from add operations.
-        for (size_t i = 0; i < count; i++) {
-            
-            if (operations[i].type == ASPA_ADD) {
-                bool next_same_asn = i < count - 1 && operations[i + 1].record.customer_asn == operations[i].record.customer_asn;
-                if (next_same_asn) {
-                    switch (operations[i + 1].type) {
-                        case ASPA_ADD:
-                            // adding a record for an ASN already added represents an error.
-							*failed_operation = &operations[i + 1];
+						return ASPA_DUPLICATE_RECORD;
+					case ASPA_REMOVE:
+						// skip this add operation and the next remove operation because it is nullified by the following remove operation.
+						// The provider array in this op's record must be released when the update is applied.
+						tmp = lrtr_realloc(stale_provider_arrays,
+								   sizeof(struct uint32_t *) * (stale_size + 1));
+						if (!tmp) {
 							aspa_array_free(aspa_array);
 							lrtr_free(stale_provider_arrays);
-                            return ASPA_DUPLICATE_RECORD;
-                        case ASPA_REMOVE:
-                            // skip this add operation and the next remove operation because it is nullified by the following remove operation.
-							// The provider array in this op's record must be released when the update is applied.
-							lrtr_realloc(stale_provider_arrays, sizeof(struct uint32_t *) * (stale_size + 1));
-							stale_provider_arrays[stale_size] = operations[i].record.provider_asns;
-							stale_size += 1;
-                            i += 1;
-                            continue;
-                    }
-                }
-            }
-            
-            // trying to remove an unknown record is not allowed.
-            if (operations[i].type == ASPA_REMOVE) {
+							return ASPA_ERROR;
+						}
+						stale_provider_arrays = tmp;
+						stale_provider_arrays[stale_size] = operations[i].record.provider_asns;
+						stale_size += 1;
+						i += 1;
+						continue;
+					}
+				}
+
+				// append record, sorting has been done above.
+				if (aspa_array_append(aspa_array, &operations[i].record) != ASPA_SUCCESS) {
+					*failed_operation = &operations[i];
+					aspa_array_free(aspa_array);
+					lrtr_free(stale_provider_arrays);
+					return ASPA_ERROR;
+				}
+				break;
+
+			case ASPA_REMOVE:
+				// removing a records which doesn't exist is considered an error
+				if (existing_array->data[existing_index].customer_asn !=
+				    operations[i].record.customer_asn) {
+					*failed_operation = &operations[i];
+					aspa_array_free(aspa_array);
+					lrtr_free(stale_provider_arrays);
+					return ASPA_RECORD_NOT_FOUND;
+				}
+
+				// In case the update gets applied, this array of provider ASNs needs to be released
+				tmp = lrtr_realloc(stale_provider_arrays, sizeof(struct uint32_t *) * (stale_size + 1));
+				if (!tmp) {
+					aspa_array_free(aspa_array);
+					lrtr_free(stale_provider_arrays);
+					return ASPA_ERROR;
+				}
+				stale_provider_arrays = tmp;
+				stale_provider_arrays[stale_size] = existing_array->data[existing_index].provider_asns;
+				stale_size += 1;
+				break;
+			}
+		}
+	} else {
+		// no existing data to use, so just append records from add operations.
+		for (size_t i = 0; i < count; i++) {
+			if (operations[i].type == ASPA_ADD) {
+				bool next_same_asn = i < count - 1 && operations[i + 1].record.customer_asn ==
+									      operations[i].record.customer_asn;
+				if (next_same_asn) {
+					uint32_t **tmp;
+					switch (operations[i + 1].type) {
+					case ASPA_ADD:
+						// adding a record for an ASN already added represents an error.
+						*failed_operation = &operations[i + 1];
+						aspa_array_free(aspa_array);
+						lrtr_free(stale_provider_arrays);
+						return ASPA_DUPLICATE_RECORD;
+					case ASPA_REMOVE:
+						// skip this add operation and the next remove operation because it is nullified by the following remove operation.
+						// The provider array in this op's record must be released when the update is applied.
+						tmp = lrtr_realloc(stale_provider_arrays,
+								   sizeof(struct uint32_t *) * (stale_size + 1));
+						if (!tmp) {
+							aspa_array_free(aspa_array);
+							lrtr_free(stale_provider_arrays);
+							return ASPA_ERROR;
+						}
+						stale_provider_arrays = tmp;
+						stale_provider_arrays[stale_size] = operations[i].record.provider_asns;
+						stale_size += 1;
+						i += 1;
+						continue;
+					}
+				}
+			}
+
+			// trying to remove an unknown record is not allowed.
+			if (operations[i].type == ASPA_REMOVE) {
 				*failed_operation = &operations[i];
 				aspa_array_free(aspa_array);
 				lrtr_free(stale_provider_arrays);
-                return ASPA_RECORD_NOT_FOUND;
-            }
-            
-            // append record, sorting has been done above.
+				return ASPA_RECORD_NOT_FOUND;
+			}
+
+			// append record, sorting has been done above.
 			if (aspa_array_append(aspa_array, &operations[i].record) != ASPA_SUCCESS) {
 				aspa_array_free(aspa_array);
 				lrtr_free(stale_provider_arrays);
 				return ASPA_ERROR;
 			}
-        }
-    }
-	
+		}
+	}
+
 	update->aspa_table = aspa_table;
 	update->rtr_socket = rtr_socket;
 	update->aspa_array = aspa_array;
 	update->stale_provider_arrays = stale_provider_arrays;
 	update->stale_provider_arrays_count = stale_size;
-	
+
 	return ASPA_SUCCESS;
 }
 
-
-/*
-int aspa_table_src_move(struct aspa_table *dst, struct aspa_table *src, struct rtr_socket *rtr_socket, bool notify_dst,
-			bool notify_src)
-{
-	if (dst == NULL || src == NULL || rtr_socket == NULL)
-		return ASPA_ERROR;
-
-	pthread_rwlock_wrlock(&dst->lock);
-	pthread_rwlock_wrlock(&src->lock);
-
-	struct aspa_array *src_array = *aspa_store_search(&src->store, rtr_socket);
-	struct aspa_array **dst_array_ptr = aspa_store_search(&dst->store, rtr_socket);
-	struct aspa_array *dst_array = *dst_array_ptr;
-
-	if (src_array == NULL) {
-		pthread_rwlock_unlock(&src->lock);
-		pthread_rwlock_unlock(&dst->lock);
-		return ASPA_ERROR;
-	}
-
-	int res = ASPA_SUCCESS;
-
-	if (dst_array == NULL) {
-		// If destination table has no aspa_array associated with the given socket
-		res = aspa_store_insert(&dst->store, rtr_socket, src_array);
-	} else {
-		// Destination table has an aspa_array associated with the given socket
-		// Replace ref with new array
-		*dst_array_ptr = src_array;
-	}
-
-	// Remove socket from source table's store
-	aspa_store_remove(&src->store, rtr_socket);
-
-	// We may need to replace the aspa_array reference in rtr_socket too
-	if (rtr_socket->aspa_table == src) {
-		// Socket is associated with source table, remove reference since
-		// the array is being moved to the destination table
-		rtr_socket->aspa_array = NULL;
-	} else if (rtr_socket->aspa_table == dst) {
-		// Socket is associated with the destination table, replace
-		// with new one
-		rtr_socket->aspa_array = src_array;
-	}
-
-	pthread_rwlock_unlock(&src->lock);
-	pthread_rwlock_unlock(&dst->lock);
-
-	if (notify_src)
-		// Notify src clients their records are being removed
-		for (size_t i = 0; i < src_array->size; i++)
-			aspa_table_notify_clients(src, &(src_array->data[i]), rtr_socket, false);
-
-	if (dst_array != NULL) {
-		if (notify_dst)
-			// Notify dst clients of their existing records are being removed
-			for (size_t i = 0; i < dst_array->size; i++)
-				aspa_table_notify_clients(dst, &(dst_array->data[i]), rtr_socket, false);
-
-		// Free the old array
-		aspa_array_free(dst_array);
-	}
-
-	if (notify_dst)
-		// Notify dst clients the records from src are added
-		for (size_t i = 0; i < src_array->size; i++)
-			aspa_table_notify_clients(src, &(src_array->data[i]), rtr_socket, true);
-
-	return res;
-}
-*/
 static void *binary_search_asns(const uint32_t key, uint32_t *array, size_t n)
 {
-       size_t mid, top;
-       int val;
-       uint32_t *piv, *base = array;
+	size_t mid, top;
+	int val;
+	uint32_t *piv, *base = array;
 
-       mid = top = n;
+	mid = top = n;
 
-       while (mid) {
-               mid = top / 2;
+	while (mid) {
+		mid = top / 2;
 
-               piv = base + mid;
+		piv = base + mid;
 
-               val = key - *piv;
+		val = key - *piv;
 
-
-               if (val == 0) {
-                       return piv;
-               }
-               if (val >= 0) {
-                       base = piv;
-               }
-               top -= mid;
-       }
-       return NULL;
+		if (val == 0) {
+			return piv;
+		}
+		if (val >= 0) {
+			base = piv;
+		}
+		top -= mid;
+	}
+	return NULL;
 }
 
 enum aspa_hop_result aspa_check_hop(struct aspa_table *aspa_table, uint32_t customer_asn, uint32_t provider_asn)
 {
 	bool customer_found = false;
-	
-	for (struct aspa_store_node *node = aspa_table->store; node != NULL;
-				node = node->next) {
 
-		struct aspa_record *aspa_record = aspa_array_search(node->aspa_array,
-				customer_asn);
+	for (struct aspa_store_node *node = aspa_table->store; node != NULL; node = node->next) {
+		struct aspa_record *aspa_record = aspa_array_search(node->aspa_array, customer_asn);
 
 		if (!aspa_record)
 			continue;
-			
+
 		customer_found = true;
 
-		uint32_t* provider = binary_search_asns(provider_asn, aspa_record->provider_asns,
-				aspa_record->provider_count);
+		uint32_t *provider =
+			binary_search_asns(provider_asn, aspa_record->provider_asns, aspa_record->provider_count);
 
 		if (!provider) {
 			return ASPA_PROVIDER_PLUS;
@@ -648,21 +482,19 @@ enum aspa_verification_result aspa_verify_upstream(struct aspa_table *aspa_table
 	// Doesn't check any hop twice.
 	if (len <= 1)
 		return ASPA_AS_PATH_VALID;
-    
-    pthread_rwlock_rdlock(&aspa_table->lock);
+
+	pthread_rwlock_rdlock(&aspa_table->lock);
 
 	// Find apex of up-ramp
 	size_t r = len - 1;
 	enum aspa_hop_result last_hop_right;
-	while (r > 0 &&
-			(last_hop_right = aspa_check_hop(aspa_table, as_path[r], as_path[r - 1]))
-				== ASPA_PROVIDER_PLUS)
+	while (r > 0 && (last_hop_right = aspa_check_hop(aspa_table, as_path[r], as_path[r - 1])) == ASPA_PROVIDER_PLUS)
 		r -= 1;
 
-    if (r == 0) {
-        pthread_rwlock_unlock(&aspa_table->lock);
-        return ASPA_AS_PATH_VALID;
-    }
+	if (r == 0) {
+		pthread_rwlock_unlock(&aspa_table->lock);
+		return ASPA_AS_PATH_VALID;
+	}
 
 	bool found_nP_from_right = false;
 
@@ -694,8 +526,7 @@ enum aspa_verification_result aspa_verify_upstream(struct aspa_table *aspa_table
 		while (rr > 0) {
 			size_t c = rr;
 			rr--;
-			if (aspa_check_hop(aspa_table, as_path[c], as_path[rr])
-					== ASPA_NOT_PROVIDER_PLUS) {
+			if (aspa_check_hop(aspa_table, as_path[c], as_path[rr]) == ASPA_NOT_PROVIDER_PLUS) {
 				found_nP_from_right = true;
 				break;
 			}
@@ -703,12 +534,12 @@ enum aspa_verification_result aspa_verify_upstream(struct aspa_table *aspa_table
 	}
 
 	// If nP+ occurs upstream customer-provider chain, return INVALID.
-    if (found_nP_from_right) {
-        pthread_rwlock_unlock(&aspa_table->lock);
-        return ASPA_AS_PATH_INVALID;
-    }
+	if (found_nP_from_right) {
+		pthread_rwlock_unlock(&aspa_table->lock);
+		return ASPA_AS_PATH_INVALID;
+	}
 
-    pthread_rwlock_unlock(&aspa_table->lock);
+	pthread_rwlock_unlock(&aspa_table->lock);
 	return ASPA_AS_PATH_UNKNOWN;
 }
 
@@ -720,15 +551,13 @@ enum aspa_verification_result aspa_verify_downstream(struct aspa_table *aspa_tab
 	// Doesn't check any hop twice.
 	if (len <= 2)
 		return ASPA_AS_PATH_VALID;
-    
-    pthread_rwlock_rdlock(&aspa_table->lock);
+
+	pthread_rwlock_rdlock(&aspa_table->lock);
 
 	// Find apex of up-ramp
 	size_t r = len - 1;
 	enum aspa_hop_result last_hop_right;
-	while (r > 0 &&
-			(last_hop_right = aspa_check_hop(aspa_table, as_path[r], as_path[r - 1]))
-				== ASPA_PROVIDER_PLUS)
+	while (r > 0 && (last_hop_right = aspa_check_hop(aspa_table, as_path[r], as_path[r - 1])) == ASPA_PROVIDER_PLUS)
 		r--;
 
 	bool found_nP_from_right = false;
@@ -738,18 +567,16 @@ enum aspa_verification_result aspa_verify_downstream(struct aspa_table *aspa_tab
 	enum aspa_hop_result last_hop_left;
 
 	// Find down-ramp end
-	while (l < r &&
-		   (last_hop_left = aspa_check_hop(aspa_table, as_path[l], as_path[l + 1]))
-				== ASPA_PROVIDER_PLUS)
+	while (l < r && (last_hop_left = aspa_check_hop(aspa_table, as_path[l], as_path[l + 1])) == ASPA_PROVIDER_PLUS)
 		l++;
 	assert(l <= r);
 
 	// If gap does not exist (sharp tip) or is just a single hop wide,
 	// there's no way to create a route leak, return VALID.
-    if (r - l <= 1) {
-        pthread_rwlock_unlock(&aspa_table->lock);
-        return ASPA_AS_PATH_VALID;
-    }
+	if (r - l <= 1) {
+		pthread_rwlock_unlock(&aspa_table->lock);
+		return ASPA_AS_PATH_VALID;
+	}
 
 	/*
 	 * I. Look for nP+ in the right-to-left/upwards direction
@@ -779,8 +606,7 @@ enum aspa_verification_result aspa_verify_downstream(struct aspa_table *aspa_tab
 		while (rr > l) {
 			size_t c = rr;
 			rr--;
-			if (aspa_check_hop(aspa_table, as_path[c], as_path[rr])
-					== ASPA_NOT_PROVIDER_PLUS) {
+			if (aspa_check_hop(aspa_table, as_path[c], as_path[rr]) == ASPA_NOT_PROVIDER_PLUS) {
 				found_nP_from_right = true;
 				break;
 			}
@@ -814,8 +640,7 @@ enum aspa_verification_result aspa_verify_downstream(struct aspa_table *aspa_tab
 			while (ll < rr) {
 				size_t c = ll;
 				ll++;
-				if (aspa_check_hop(aspa_table, as_path[c], as_path[ll])
-						== ASPA_NOT_PROVIDER_PLUS) {
+				if (aspa_check_hop(aspa_table, as_path[c], as_path[ll]) == ASPA_NOT_PROVIDER_PLUS) {
 					found_nP_from_left = true;
 					break;
 				}
@@ -824,27 +649,27 @@ enum aspa_verification_result aspa_verify_downstream(struct aspa_table *aspa_tab
 	}
 
 	// If two nP+ occur in opposing directions, return INVALID.
-    if (found_nP_from_right && found_nP_from_left) {
-        pthread_rwlock_unlock(&aspa_table->lock);
-        return ASPA_AS_PATH_INVALID;
-    }
+	if (found_nP_from_right && found_nP_from_left) {
+		pthread_rwlock_unlock(&aspa_table->lock);
+		return ASPA_AS_PATH_INVALID;
+	}
 
-    pthread_rwlock_unlock(&aspa_table->lock);
+	pthread_rwlock_unlock(&aspa_table->lock);
 	return ASPA_AS_PATH_UNKNOWN;
 }
 
-RTRLIB_EXPORT enum aspa_verification_result aspa_verify_as_path(struct aspa_table *aspa_table, enum aspa_direction direction, uint32_t as_path[], size_t len)
+RTRLIB_EXPORT enum aspa_verification_result
+aspa_verify_as_path(struct aspa_table *aspa_table, enum aspa_direction direction, uint32_t as_path[], size_t len)
 {
 	switch (direction) {
-		case ASPA_UPSTREAM:
-			return aspa_verify_upstream(aspa_table, as_path, len);
-		case ASPA_DOWNSTREAM:
-			return aspa_verify_downstream(aspa_table, as_path, len);
+	case ASPA_UPSTREAM:
+		return aspa_verify_upstream(aspa_table, as_path, len);
+	case ASPA_DOWNSTREAM:
+		return aspa_verify_downstream(aspa_table, as_path, len);
 	}
-	
+
 	return ASPA_AS_PATH_UNKNOWN;
 }
-
 
 RTRLIB_EXPORT size_t aspa_collapse_as_path(uint32_t as_path[], size_t len)
 {
@@ -853,7 +678,7 @@ RTRLIB_EXPORT size_t aspa_collapse_as_path(uint32_t as_path[], size_t len)
 
 	size_t i = 1;
 
-	while (i < len && as_path[i-1] != as_path[i])
+	while (i < len && as_path[i - 1] != as_path[i])
 		i++;
 
 	if (i == len)
@@ -864,7 +689,7 @@ RTRLIB_EXPORT size_t aspa_collapse_as_path(uint32_t as_path[], size_t len)
 	i++;
 
 	while (true) { // equivalent to while (i < len)
-		while (i < len && as_path[i-1] == as_path[i])
+		while (i < len && as_path[i - 1] == as_path[i])
 			i++;
 
 		if (i == len)

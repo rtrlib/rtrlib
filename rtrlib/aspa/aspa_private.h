@@ -19,8 +19,8 @@
 #ifndef RTR_ASPA_PRIVATE_H
 #define RTR_ASPA_PRIVATE_H
 
-#include "aspa.h"
 #include "../rtr/rtr.h"
+#include "aspa.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -29,11 +29,11 @@
  * @brief An enum describing the type of operation the ASPA table should perform using any given ASPA record.
  */
 enum aspa_operation_type {
-    /** The existing record, identified by its customer ASN, shall be withdrawn from the ASPA table. */
-    ASPA_REMOVE = 0,
-    
-    /** The new record, identified by its customer ASN, shall be added to the ASPA table. */
-    ASPA_ADD = 1
+	/** The existing record, identified by its customer ASN, shall be withdrawn from the ASPA table. */
+	ASPA_REMOVE = 0,
+
+	/** The new record, identified by its customer ASN, shall be added to the ASPA table. */
+	ASPA_ADD = 1
 };
 
 /**
@@ -43,20 +43,20 @@ enum aspa_operation_type {
  * @param record The record that should be added or removed.
  */
 struct aspa_update_operation {
-    size_t index;
-    enum aspa_operation_type type;
-    struct aspa_record record;
+	size_t index;
+	enum aspa_operation_type type;
+	struct aspa_record record;
 };
 
 /**
  * @brief A type describing an update to an ASPA table than can be later be applied.
  */
 struct aspa_update {
-    struct aspa_table *aspa_table;
-    struct rtr_socket *rtr_socket;
-    struct aspa_array *aspa_array;
-    size_t stale_provider_arrays_count;
-    uint32_t **stale_provider_arrays;
+	struct aspa_table *aspa_table;
+	struct rtr_socket *rtr_socket;
+	struct aspa_array *aspa_array;
+	size_t stale_provider_arrays_count;
+	uint32_t **stale_provider_arrays;
 };
 
 /**
@@ -73,7 +73,9 @@ struct aspa_update {
  * @return @c ASPA_DUPLICATE_RECORD If a records is supposed to be added but its corresponding customer ASN already exists.
  * @return @c ASPA_ERROR On on failure.
  */
-enum aspa_rtvals aspa_table_compute_update(struct aspa_table *aspa_table, struct aspa_update_operation *operations, size_t count, struct rtr_socket *rtr_socket, struct aspa_update *update, struct aspa_update_operation **failed_operation);
+enum aspa_rtvals aspa_table_compute_update(struct aspa_table *aspa_table, struct aspa_update_operation *operations,
+					   size_t count, struct rtr_socket *rtr_socket, struct aspa_update *update,
+					   struct aspa_update_operation **failed_operation);
 
 /**
  * @brief Applies a previously computed ASPA update.
@@ -104,7 +106,6 @@ void aspa_table_free_update(struct aspa_update *update);
  * @return @c aspa_hop_result .
  */
 enum aspa_hop_result aspa_check_hop(struct aspa_table *aspa_table, uint32_t customer_asn, uint32_t provider_asn);
-
 
 #endif
 /** @} */
