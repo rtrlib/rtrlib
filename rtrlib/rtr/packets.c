@@ -1214,7 +1214,8 @@ static int rtr_update_aspa_table_atomic(struct rtr_socket *rtr_socket, struct as
 	}
 
 	for (size_t i = 0; i < pdus_size; i++) {
-		operations[i].type = (aspa_pdus[i]->flags & 1) == 1 ? ASPA_ADD : ASPA_REMOVE, operations[i].index = i;
+		operations[i].type = (aspa_pdus[i]->flags & 1) == 1 ? ASPA_ADD : ASPA_REMOVE;
+		operations[i].index = i;
 		rtr_aspa_pdu_2_aspa_record(aspa_pdus[i], &operations[i].record);
 	}
 

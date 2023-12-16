@@ -36,6 +36,8 @@ enum aspa_operation_type {
 	ASPA_ADD = 1
 };
 
+enum aspa_hop_result { ASPA_NO_ATTESTATION, ASPA_NOT_PROVIDER_PLUS, ASPA_PROVIDER_PLUS };
+
 /**
  * @brief A struct describing a specific type of operation that should be performed using the attached ASPA record.
  * @param index A value uniquely identifying this operation's position within the array of operations.

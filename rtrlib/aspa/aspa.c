@@ -474,7 +474,7 @@ enum aspa_hop_result aspa_check_hop(struct aspa_table *aspa_table, uint32_t cust
 	return customer_found ? ASPA_NOT_PROVIDER_PLUS : ASPA_NO_ATTESTATION;
 }
 
-enum aspa_verification_result aspa_verify_upstream(struct aspa_table *aspa_table, uint32_t as_path[], size_t len)
+enum aspa_verification_result aspa_verify_as_path_upstream(struct aspa_table *aspa_table, uint32_t as_path[], size_t len)
 {
 	// Optimized AS_PATH verification algorithm using zero based array
 	// where the origin AS has index N - 1 and the latest AS in the AS_PATH
@@ -543,7 +543,7 @@ enum aspa_verification_result aspa_verify_upstream(struct aspa_table *aspa_table
 	return ASPA_AS_PATH_UNKNOWN;
 }
 
-enum aspa_verification_result aspa_verify_downstream(struct aspa_table *aspa_table, uint32_t as_path[], size_t len)
+enum aspa_verification_result aspa_verify_as_path_downstream(struct aspa_table *aspa_table, uint32_t as_path[], size_t len)
 {
 	// Optimized AS_PATH verification algorithm using zero based array
 	// where the origin AS has index N - 1 and the latest AS in the AS_PATH
@@ -663,9 +663,9 @@ aspa_verify_as_path(struct aspa_table *aspa_table, enum aspa_direction direction
 {
 	switch (direction) {
 	case ASPA_UPSTREAM:
-		return aspa_verify_upstream(aspa_table, as_path, len);
+		return aspa_verify_as_path_upstream(aspa_table, as_path, len);
 	case ASPA_DOWNSTREAM:
-		return aspa_verify_downstream(aspa_table, as_path, len);
+		return aspa_verify_as_path_downstream(aspa_table, as_path, len);
 	}
 
 	return ASPA_AS_PATH_UNKNOWN;
