@@ -676,6 +676,11 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
 			RTR_DBG1("Warning: Zero field of received Prefix PDU doesn't contain 0");
 	}
 	if (header.type == ASPA) {
+		if (((struct pdu_aspa *)pdu)->ver != 2) {
+			error = UNSUPPORTED_PROTOCOL_VER;
+			goto error;
+		}
+
 		if (((struct pdu_aspa *)pdu)->zero != 0)
 			RTR_DBG1("Warning: Zero field of received ASPA PDU doesn't contain 0");
 
