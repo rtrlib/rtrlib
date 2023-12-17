@@ -168,6 +168,11 @@ static int compare_update_operations(const void *a, const void *b)
 		return 0;
 }
 
+static int compare_asns(const void *a, const void *b)
+{
+	return *(uint32_t *)a - *(uint32_t *)b;
+}
+
 #define UNUSED_PROVIDER_SETS_INCREASE_SIZE 10
 
 static enum aspa_status append_to_set_array(uint32_t ***sets, size_t *size, size_t *capacity, uint32_t *new_set)
@@ -202,11 +207,18 @@ static enum aspa_status aspa_table_update_internal(struct aspa_table *aspa_table
 	if (!revert && !unused_provider_sets)
 		return ASPA_ERROR;
 
+	if (revert && !failed_operation)
+		return ASPA_ERROR;
+
 	size_t unused_capacity = 0;
 	size_t existing_i = 0;
 
 	for (size_t i = 0; i < len; i++) {
 		struct aspa_update_operation *current = &operations[i];
+
+		if (current->record.provider_count > 0 && current->record.provider_asns)
+			qsort(current->record.provider_asns, current->record.provider_count, sizeof(uint32_t),
+			      compare_asns);
 
 		if (revert && current->index == (*failed_operation)->index)
 			break;
@@ -225,20 +237,19 @@ static enum aspa_status aspa_table_update_internal(struct aspa_table *aspa_table
 		if (current->type == ASPA_ADD) {
 			// $CAS has already been added
 			// Error: Duplicate Add.
-			if (existing_record && current->record.customer_asn == existing_record->customer_asn) {
-				*failed_operation = next;
+			if (!revert && existing_record &&
+			    current->record.customer_asn == existing_record->customer_asn) {
+				*failed_operation = current;
 				return ASPA_DUPLICATE_RECORD;
 			}
 
-			if (next) {
-				//				// Operations has ADD $CAS [..], ADD $CAS [..]
-				//				// Error: Duplicate Add.
-				//				if (next->type == ASPA_ADD &&
-				//					next->record.customer_asn == current->record.customer_asn) {
-				//					*failed_operation = next;
-				//					return ASPA_DUPLICATE_RECORD;
-				//				}
+			if (revert &&
+			    (!existing_record || current->record.customer_asn != existing_record->customer_asn)) {
+				*failed_operation = current;
+				return ASPA_RECORD_NOT_FOUND;
+			}
 
+			if (next && next->record.customer_asn == current->record.customer_asn) {
 				// Operations contains ADD $CAS [..], REMOVE $CAS and $CAS is not stored
 				// No-op, skip next.
 				if (current->type == ASPA_ADD && next->type == ASPA_REMOVE &&
@@ -268,44 +279,41 @@ static enum aspa_status aspa_table_update_internal(struct aspa_table *aspa_table
 				}
 				existing_i -= 1;
 			} else {
-				if (aspa_array_insert(array, existing_i + 1, &current->record) != ASPA_SUCCESS) {
+				if (aspa_array_insert(array, existing_i, &current->record) != ASPA_SUCCESS) {
 					*failed_operation = current;
 					return ASPA_ERROR;
 				}
-				existing_i += 1;
 				aspa_table_notify_clients(aspa_table, aspa_array_get_record(array, existing_i),
 							  rtr_socket, true);
+				existing_i += 1;
 			}
 		}
 		// MARK: Removing a record
 		else if (current->type == ASPA_REMOVE) {
 			// $CAS is not stored
 			// Error: Duplicate Remove.
-			if (!existing_record || current->record.customer_asn != existing_record->customer_asn) {
-				*failed_operation = next;
+			if (!revert &&
+			    (!existing_record || current->record.customer_asn != existing_record->customer_asn)) {
+				*failed_operation = current;
 				return ASPA_RECORD_NOT_FOUND;
 			}
 
-			//			if (next) {
-			//				// Operations contains REMOVE $CAS [..], REMOVE $CAS
-			//				// Error: Duplicate Remove.
-			//				if (next->type == ASPA_REMOVE &&
-			//					next->record.customer_asn == current->record.customer_asn) {
-			//					*failed_operation = next;
-			//					return ASPA_RECORD_NOT_FOUND;
-			//				}
-			//			}
+			if (revert && existing_record &&
+			    current->record.customer_asn == existing_record->customer_asn) {
+				*failed_operation = current;
+				return ASPA_DUPLICATE_RECORD;
+				;
+			}
 
 			// REMOVE $CAS and $CAS is already stored
 			// Remove $CAS or Store $CAS if revert == true
 			if (revert) {
-				if (aspa_array_insert(array, existing_i + 1, &current->record) != ASPA_SUCCESS) {
+				if (aspa_array_insert(array, existing_i, &current->record) != ASPA_SUCCESS) {
 					*failed_operation = current;
 					return ASPA_ERROR;
 				}
-
-				existing_i += 1;
 				aspa_table_notify_clients(aspa_table, &current->record, rtr_socket, true);
+				existing_i += 1;
 			} else {
 				uint32_t *old_set = NULL;
 				if (append_to_set_array(unused_provider_sets, unused_size, &unused_capacity, old_set) !=

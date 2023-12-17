@@ -1243,13 +1243,11 @@ static int rtr_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_tabl
 			RTR_DBG("Duplicate Announcement for ASPA customer ASN: %u received", pdu->customer_asn);
 			rtr_send_error_pdu_from_host(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT, NULL, 0);
 			rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-			lrtr_free(operations);
 			return RTR_ERROR;
 		} else if (res == ASPA_RECORD_NOT_FOUND) {
 			RTR_DBG("Withdrawal of unknown ASPA customer ASN: %u", pdu->customer_asn);
 			rtr_send_error_pdu_from_host(rtr_socket, pdu, pdu_size, WITHDRAWAL_OF_UNKNOWN_RECORD, NULL, 0);
 			rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-			lrtr_free(operations);
 			return RTR_ERROR;
 		}
 	} else if (res != ASPA_SUCCESS) {
@@ -1257,7 +1255,6 @@ static int rtr_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_tabl
 		RTR_DBG("%s", txt);
 		rtr_send_error_pdu_from_host(rtr_socket, NULL, 0, INTERNAL_ERROR, txt, sizeof(txt));
 		rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-		lrtr_free(operations);
 		return RTR_ERROR;
 	}
 

@@ -13,18 +13,6 @@
  * @brief The aspa_table is an abstract data structure to organize the validated Autonomous System Provider Authorization  data
  * received from an RPKI-RTR cache server.
  *
- * The ASPA table stores records containg a customer ASN (CAS) and a number of provider ASNs. These records are grouped by
- * the socket they originated from so they can be purged easily right after any given socket dies, so filtering is not needed. The ASPA
- * records themselves are stored in an @c aspa_array dynamically ordering the records inside in order to make searching faster. The table
- * stores each of these @c aspa_array references alongside a reference to the beforementioned @c rtr_socket inside a linked
- * list. The linked list is needed for validation and in cases where the table is copied, like in @c rtr_sync_receive_and_store_pdus .
- * Adding or removing records, or purging all records for any given socket would involve performing a lookup on the linked list. This
- * issue is addressed by storing a reference to the corresponding @c aspa_array in each @c rtr_socket . All possible operations
- * on the ASPA table therefore check if the given @c aspa_table matches the one in the @c rtr_socket and use the
- * @c aspa_array from the socket directly instead of performing a lookup in the linked list. Most of the time, this "fast lookup"
- * mechanism is used since there's only a single "global" @c aspa_table anyway, namely the one stored in every @c rtr_socket .
- *
- *
  * @{
  */
 
