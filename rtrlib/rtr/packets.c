@@ -1092,6 +1092,7 @@ static int rtr_store_aspa_pdu(struct pdu_aspa *pdu, struct aspa_pdu_list_node **
 	memcpy(pdu_copy, pdu, pdu_size);
 
 	node->pdu = pdu_copy;
+	node->next = NULL;
 
 	if (*head == NULL) {
 		// linked list is empty
