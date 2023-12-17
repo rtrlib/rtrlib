@@ -33,7 +33,7 @@ struct aspa_array {
  * @result Valid pointer to an aspa_array struct
  * @result Null On error.
  */
-enum aspa_status aspa_array_create(struct aspa_array **vector_pointer);
+enum aspa_status aspa_array_create(struct aspa_array **array_ptr);
 
 /**
  * @brief Deletes the given ASPA array
@@ -50,7 +50,7 @@ enum aspa_status aspa_array_free(struct aspa_array *array, bool free_provider_se
  * @result 0 On success.
  * @result -1 On error.
  */
-enum aspa_status aspa_array_reallocate(struct aspa_array *vector);
+enum aspa_status aspa_array_reallocate(struct aspa_array *array);
 
 enum aspa_status aspa_array_set_record(struct aspa_array *array, size_t index, struct aspa_record *record);
 
@@ -73,7 +73,7 @@ struct aspa_record *aspa_array_get_record(struct aspa_array *array, size_t index
  * @result 0 On success.
  * @result -1 On error.
  */
-enum aspa_status aspa_array_free_entry(struct aspa_array *vector, struct aspa_record *entry);
+enum aspa_status aspa_array_free_entry(struct aspa_array *array, struct aspa_record *entry);
 
 /**
  * @brief returns the index in the vector for a given customer as number (CAS)
@@ -82,6 +82,6 @@ enum aspa_status aspa_array_free_entry(struct aspa_array *vector, struct aspa_re
  * @result pointer to the record on success
  * @result NULL On error or if the element coulnd't be located
  */
-struct aspa_record *aspa_array_search(struct aspa_array *vector, uint32_t customer_asn);
+struct aspa_record *aspa_array_search(struct aspa_array *array, uint32_t customer_asn);
 
 #endif

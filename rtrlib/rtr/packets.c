@@ -1214,7 +1214,7 @@ static int rtr_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_tabl
 				 struct pdu_aspa **aspa_pdus, size_t pdus_size,
 				 struct aspa_update_operation **operations,
 				 struct aspa_update_operation **failed_operation,
-				 struct aspa_update_cleanup_args **cleanup_args)
+				 struct aspa_update_finalization_args **finalization_args)
 {
 	if (!failed_operation)
 		return RTR_ERROR;
@@ -1240,7 +1240,7 @@ static int rtr_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_tabl
 	}
 
 	enum aspa_status res = aspa_table_update(aspa_table, rtr_socket, *operations, pdus_size, false,
-						 failed_operation, cleanup_args);
+						 failed_operation, finalization_args);
 
 	if (*failed_operation) {
 		struct pdu_aspa *pdu = aspa_pdus[(*failed_operation)->index];
@@ -1278,7 +1278,7 @@ static int rtr_sync_update_tables(struct rtr_socket *rtr_socket, struct pfx_tabl
 {
 	bool update_succeeded = true;
 	bool undo_succeeded = true;
-	struct aspa_update_cleanup_args *aspa_cleanup_args = NULL;
+	struct aspa_update_finalization_args *aspa_finalization_args = NULL;
 
 	// add all IPv4 prefix pdu to the pfx_table
 	for (size_t i = 0; i < ipv4_pdu_count; i++) {
@@ -1341,7 +1341,7 @@ static int rtr_sync_update_tables(struct rtr_socket *rtr_socket, struct pfx_tabl
 		struct aspa_update_operation *failed_op = NULL;
 
 		if (rtr_update_aspa_table(rtr_socket, aspa_table, aspa_pdus, aspa_pdu_count, &operations, &failed_op,
-					  &aspa_cleanup_args) == RTR_ERROR) {
+					  &aspa_finalization_args) == RTR_ERROR) {
 			RTR_DBG1("error while updating aspa data");
 			update_succeeded = false;
 
@@ -1358,8 +1358,12 @@ static int rtr_sync_update_tables(struct rtr_socket *rtr_socket, struct pfx_tabl
 				undo_succeeded = false;
 		}
 
-		if (aspa_cleanup_args)
-			aspa_update_cleanup(aspa_cleanup_args);
+		if (aspa_finalization_args)
+#ifdef ASPA_UPDATE_IN_PLACE
+			aspa_update_finalize(aspa_finalization_args);
+#else
+			aspa_update_finalize(aspa_finalization_args, update_succeeded);
+#endif
 
 		if (operations)
 			lrtr_free(operations);

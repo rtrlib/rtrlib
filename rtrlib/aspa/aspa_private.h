@@ -25,6 +25,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define ASPA_UPDATE_IN_PLACE 1
+
 // MARK: - Storage
 
 /**
@@ -73,13 +75,17 @@ struct aspa_update_operation {
 };
 
 /**
- * @brief ASPA update clean ups arguments
+ * @brief ASPA update finalization arguments
  * @param unused_provider_arrays Array of pointers to now unused provider sets.
  * @param unused_provider_array_len Number of unused provider sets.
  */
-struct aspa_update_cleanup_args {
+struct aspa_update_finalization_args {
 	uint32_t **unused_provider_arrays;
 	size_t unused_provider_array_len;
+#ifndef ASPA_UPDATE_IN_PLACE
+	struct aspa_array **old_array;
+	struct aspa_array *new_array;
+#endif
 };
 
 /**
@@ -102,13 +108,17 @@ struct aspa_update_cleanup_args {
 enum aspa_status aspa_table_update(struct aspa_table *aspa_table, struct rtr_socket *rtr_socket,
 				   struct aspa_update_operation *operations, size_t len, bool revert,
 				   struct aspa_update_operation **failed_operation,
-				   struct aspa_update_cleanup_args **cleanup_args);
+				   struct aspa_update_finalization_args **finalization_args);
 
 /**
- * @brief Releases memory of provider set arrays.
- * @param cleanup_args Cleanup arguments from aspa_table_update
+ * @brief Finalizes update
+ * @param finalization_args Finalization arguments from aspa_table_update
  */
-void aspa_update_cleanup(struct aspa_update_cleanup_args *cleanup_args);
+#ifdef ASPA_UPDATE_IN_PLACE
+void aspa_update_finalize(struct aspa_update_finalization_args *finalization_args);
+#else
+void aspa_update_finalize(struct aspa_update_finalization_args *finalization_args, bool apply_update);
+#endif
 
 // MARK: - Verification
 
