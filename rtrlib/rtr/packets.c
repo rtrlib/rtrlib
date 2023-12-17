@@ -675,6 +675,18 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
 		if (((struct pdu_ipv4 *)pdu)->zero != 0)
 			RTR_DBG1("Warning: Zero field of received Prefix PDU doesn't contain 0");
 	}
+	if (header.type == ASPA) {
+		if (((struct pdu_aspa *)pdu)->ver != 2) {
+			error = UNSUPPORTED_PROTOCOL_VER;
+			goto error;
+		}
+
+		if (((struct pdu_aspa *)pdu)->zero != 0)
+			RTR_DBG1("Warning: Zero field of received ASPA PDU doesn't contain 0");
+
+		if (((struct pdu_aspa *)pdu)->afi_flags != 0b11)
+			RTR_DBG1("Warning: AFI flags of received ASPA PDU not set to 0x03");
+	}
 	if (header.type == ROUTER_KEY && ((struct pdu_router_key *)pdu)->zero != 0)
 		RTR_DBG1("Warning: ROUTER_KEY_PDU zero field is != 0");
 
