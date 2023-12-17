@@ -502,7 +502,7 @@ RTRLIB_EXPORT inline int rtr_mgr_validate(struct rtr_mgr_config *config, const u
 }
 
 /* cppcheck-suppress unusedFunction */
-RTRLIB_EXPORT inline enum aspa_status rtr_mgr_validate_as_path(struct rtr_mgr_config *config, uint32_t as_path[],
+RTRLIB_EXPORT inline enum aspa_status rtr_mgr_verify_as_path(struct rtr_mgr_config *config, uint32_t as_path[],
 							       size_t len, enum aspa_direction direction,
 							       enum aspa_verification_result *result)
 {
