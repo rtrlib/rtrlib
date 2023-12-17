@@ -195,6 +195,17 @@ static enum aspa_status append_to_set_array(uint32_t ***sets, size_t *size, size
 	return ASPA_SUCCESS;
 }
 
+inline static enum aspa_operation_type invert(enum aspa_operation_type type)
+{
+	switch (type) {
+	case ASPA_ADD:
+		return ASPA_REMOVE;
+	case ASPA_REMOVE:
+		return ASPA_ADD;
+	}
+	return type;
+}
+
 static enum aspa_status aspa_table_update_internal(struct aspa_table *aspa_table, struct rtr_socket *rtr_socket,
 						   struct aspa_array *array, struct aspa_update_operation *operations,
 						   size_t len, bool revert,
@@ -216,10 +227,6 @@ static enum aspa_status aspa_table_update_internal(struct aspa_table *aspa_table
 	for (size_t i = 0; i < len; i++) {
 		struct aspa_update_operation *current = &operations[i];
 
-		if (current->record.provider_count > 0 && current->record.provider_asns)
-			qsort(current->record.provider_asns, current->record.provider_count, sizeof(uint32_t),
-			      compare_asns);
-
 		if (revert && current->index == (*failed_operation)->index)
 			break;
 
@@ -232,107 +239,76 @@ static enum aspa_status aspa_table_update_internal(struct aspa_table *aspa_table
 		}
 
 		struct aspa_record *existing_record = aspa_array_get_record(array, existing_i);
+		enum aspa_operation_type real_op_type = revert ? invert(current->type) : current->type;
+
+		// Sort providers
+		if (current->record.provider_count > 0 && current->record.provider_asns)
+			qsort(current->record.provider_asns, current->record.provider_count, sizeof(uint32_t),
+			      compare_asns);
+
+		// $CAS is not stored
+		// Error: Duplicate Remove.
+		if (real_op_type == ASPA_ADD && existing_record &&
+		    current->record.customer_asn == existing_record->customer_asn) {
+			*failed_operation = current;
+			return ASPA_DUPLICATE_RECORD;
+		}
+
+		// $CAS has already been added
+		// Error: Duplicate Add.
+		if (real_op_type == ASPA_REMOVE &&
+		    (!existing_record || current->record.customer_asn != existing_record->customer_asn)) {
+			*failed_operation = current;
+			return ASPA_RECORD_NOT_FOUND;
+		}
+
+		// Operations contains (ADD $CAS [..], REMOVE $CAS) and $CAS is not stored
+		// No-op, skip next.
+		if (next && current->type == ASPA_ADD && next->type == ASPA_REMOVE &&
+		    next->record.customer_asn == current->record.customer_asn &&
+		    (!existing_record || current->record.customer_asn != existing_record->customer_asn)) {
+			// Remember this provider set is now unused
+			if (!revert && append_to_set_array(unused_provider_sets, unused_size, &unused_capacity,
+							   current->record.provider_asns) != ASPA_SUCCESS) {
+				*failed_operation = current;
+				return ASPA_ERROR;
+			}
+			i += 1;
+			continue;
+		}
 
 		// MARK: Adding a record
-		if (current->type == ASPA_ADD) {
-			// $CAS has already been added
-			// Error: Duplicate Add.
-			if (!revert && existing_record &&
-			    current->record.customer_asn == existing_record->customer_asn) {
+		if (real_op_type == ASPA_ADD) {
+			if (aspa_array_insert(array, existing_i, &current->record) != ASPA_SUCCESS) {
 				*failed_operation = current;
-				return ASPA_DUPLICATE_RECORD;
+				return ASPA_ERROR;
 			}
-
-			if (revert &&
-			    (!existing_record || current->record.customer_asn != existing_record->customer_asn)) {
-				*failed_operation = current;
-				return ASPA_RECORD_NOT_FOUND;
-			}
-
-			if (next && next->record.customer_asn == current->record.customer_asn) {
-				// Operations contains ADD $CAS [..], REMOVE $CAS and $CAS is not stored
-				// No-op, skip next.
-				if (current->type == ASPA_ADD && next->type == ASPA_REMOVE &&
-				    (!existing_record ||
-				     current->record.customer_asn != existing_record->customer_asn)) {
-					// Remember this provider set is now unused
-					if (!revert &&
-					    append_to_set_array(unused_provider_sets, unused_size, &unused_capacity,
-								current->record.provider_asns) != ASPA_SUCCESS) {
-						*failed_operation = current;
-						return ASPA_ERROR;
-					}
-					i += 1;
-					continue;
-				}
-			}
-
-			// ADD $CAS [..] and $CAS not stored yet
-			// Store $CAS [..] or Remove $CAS if revert == true
-			if (revert) {
-				// Notify clients
-				aspa_table_notify_clients(aspa_table, existing_record, rtr_socket, false);
-
-				if (aspa_array_remove(array, existing_i, NULL) != ASPA_SUCCESS) {
-					*failed_operation = current;
-					return ASPA_ERROR;
-				}
-				existing_i -= 1;
-			} else {
-				if (aspa_array_insert(array, existing_i, &current->record) != ASPA_SUCCESS) {
-					*failed_operation = current;
-					return ASPA_ERROR;
-				}
-				aspa_table_notify_clients(aspa_table, aspa_array_get_record(array, existing_i),
-							  rtr_socket, true);
-				existing_i += 1;
-			}
+			aspa_table_notify_clients(aspa_table, &current->record, rtr_socket, true);
+			existing_i += 1;
 		}
 		// MARK: Removing a record
-		else if (current->type == ASPA_REMOVE) {
-			// $CAS is not stored
-			// Error: Duplicate Remove.
-			if (!revert &&
-			    (!existing_record || current->record.customer_asn != existing_record->customer_asn)) {
-				*failed_operation = current;
-				return ASPA_RECORD_NOT_FOUND;
+		else if (real_op_type == ASPA_REMOVE) {
+			if (!revert) {
+				// Remember this provider set is now unused
+				if (append_to_set_array(unused_provider_sets, unused_size, &unused_capacity,
+							existing_record->provider_asns) != ASPA_SUCCESS) {
+					*failed_operation = current;
+					return ASPA_ERROR;
+				}
 			}
 
-			if (revert && existing_record &&
-			    current->record.customer_asn == existing_record->customer_asn) {
+			aspa_table_notify_clients(aspa_table, existing_record, rtr_socket, false);
+
+			if (aspa_array_remove(array, existing_i) != ASPA_SUCCESS) {
 				*failed_operation = current;
-				return ASPA_DUPLICATE_RECORD;
-				;
+				return ASPA_ERROR;
 			}
 
-			// REMOVE $CAS and $CAS is already stored
-			// Remove $CAS or Store $CAS if revert == true
-			if (revert) {
-				if (aspa_array_insert(array, existing_i, &current->record) != ASPA_SUCCESS) {
-					*failed_operation = current;
-					return ASPA_ERROR;
-				}
-				aspa_table_notify_clients(aspa_table, &current->record, rtr_socket, true);
-				existing_i += 1;
-			} else {
-				uint32_t *old_set = NULL;
-				if (append_to_set_array(unused_provider_sets, unused_size, &unused_capacity, old_set) !=
-				    ASPA_SUCCESS) {
-					*failed_operation = current;
-					return ASPA_ERROR;
-				}
-
-				aspa_table_notify_clients(aspa_table, existing_record, rtr_socket, false);
-
-				if (aspa_array_remove(array, existing_i, &old_set) != ASPA_SUCCESS) {
-					*failed_operation = current;
-					return ASPA_ERROR;
-				}
-
+			if (!revert) {
 				// Replace record in operation so it could be undone later.
 				current->record = *existing_record;
-				existing_i -= 1;
 			}
+			existing_i -= 1;
 		}
 	}
 

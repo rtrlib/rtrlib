@@ -52,8 +52,7 @@ enum aspa_status aspa_array_free(struct aspa_array *array, bool free_provider_se
  */
 enum aspa_status aspa_array_reallocate(struct aspa_array *vector);
 
-enum aspa_status aspa_array_replace(struct aspa_array *array, size_t index, struct aspa_record *record,
-				    uint32_t **old_providers);
+enum aspa_status aspa_array_set_record(struct aspa_array *array, size_t index, struct aspa_record *record);
 
 /**
  * @brief Will insert the element at the correct place in the list so the ascending order is preserved
@@ -62,7 +61,7 @@ enum aspa_status aspa_array_replace(struct aspa_array *array, size_t index, stru
  */
 enum aspa_status aspa_array_insert(struct aspa_array *array, size_t index, struct aspa_record *record);
 
-enum aspa_status aspa_array_remove(struct aspa_array *array, size_t index, uint32_t **old_providers);
+enum aspa_status aspa_array_remove(struct aspa_array *array, size_t index);
 
 enum aspa_status aspa_array_append(struct aspa_array *vector, struct aspa_record *record);
 

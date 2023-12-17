@@ -1581,10 +1581,20 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 					goto cleanup;
 				}
 
+				struct aspa_table *aspa_shadow_table = lrtr_malloc(sizeof(struct aspa_table));
+				if (!aspa_shadow_table) {
+					RTR_DBG1("Memory allocation for aspa shadow table failed");
+					retval = RTR_ERROR;
+					goto cleanup;
+				}
+				aspa_table_init(aspa_shadow_table, NULL);
+				// Don't need to copy data into the ASPA shadow table because
+				// an aspa_table stores records associated with any socket separately.
+
 				RTR_DBG1("Shadow tables created");
 
 				retval = rtr_sync_update_tables(rtr_socket, pfx_shadow_table, spki_shadow_table,
-								rtr_socket->aspa_table, ipv4_pdus, ipv4_pdus_nindex,
+								aspa_shadow_table, ipv4_pdus, ipv4_pdus_nindex,
 								ipv6_pdus, ipv6_pdus_nindex, router_key_pdus,
 								router_key_pdus_nindex, aspa_pdus, aspa_pdus_nindex,
 								eod_pdu);
@@ -1593,6 +1603,9 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 					RTR_DBG1("Reset finished. Swapping new table in.");
 					pfx_table_swap(rtr_socket->pfx_table, pfx_shadow_table);
 					spki_table_swap(rtr_socket->spki_table, spki_shadow_table);
+					// notify rtr_socket->aspa_table but not aspa_shadow_table
+					aspa_table_src_replace(rtr_socket->aspa_table, aspa_shadow_table, rtr_socket,
+							       true, false);
 
 					if (rtr_socket->pfx_table->update_fp) {
 						RTR_DBG1("Calculating and notifying pfx diff");

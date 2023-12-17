@@ -97,14 +97,9 @@ enum aspa_status aspa_array_reallocate(struct aspa_array *vector)
 	return ASPA_SUCCESS;
 }
 
-enum aspa_status aspa_array_replace(struct aspa_array *array, size_t index, struct aspa_record *record,
-				    uint32_t **old_providers)
+enum aspa_status aspa_array_set_record(struct aspa_array *array, size_t index, struct aspa_record *record)
 {
-	uint32_t *set = array->data[index].provider_asns;
 	array->data[index] = *record;
-	if (old_providers)
-		*old_providers = set;
-
 	return ASPA_SUCCESS;
 }
 
@@ -137,16 +132,13 @@ enum aspa_status aspa_array_insert(struct aspa_array *array, size_t index, struc
 
 	array->size += 1;
 	array->data[index] = *record;
-
 	return ASPA_SUCCESS;
 }
 
-enum aspa_status aspa_array_remove(struct aspa_array *array, size_t index, uint32_t **old_providers)
+enum aspa_status aspa_array_remove(struct aspa_array *array, size_t index)
 {
 	if (index >= array->size || array->size == 0)
 		return ASPA_ERROR;
-
-	uint32_t *set = array->data[index].provider_asns;
 
 	// No need to move if last element
 	if (index < array->size - 1) {
@@ -163,9 +155,6 @@ enum aspa_status aspa_array_remove(struct aspa_array *array, size_t index, uint3
 	}
 
 	array->size -= 1;
-	if (old_providers)
-		*old_providers = set;
-
 	return ASPA_SUCCESS;
 }
 

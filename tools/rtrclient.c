@@ -564,10 +564,13 @@ static void update_aspa(struct aspa_table *s __attribute__((unused)), const stru
 	size_t count = record.provider_count;
 
 	printf("Provider ASNs:  ");
+	if (count == 0)
+		printf("<none>");
+		
 	for (i = 0; i < count; i++) {
-		printf("%02x", record.provider_asns[i]);
+		printf("%u", record.provider_asns[i]);
 		if (i < count - 1)
-			printf(":");
+			printf(", ");
 	}
 	
 	printf("\n");
