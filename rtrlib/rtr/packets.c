@@ -628,10 +628,12 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
 
 	// Handle live downgrading
 	if (!rtr_socket->has_received_pdus) {
-		// TODO: v2
-		if (rtr_socket->version == RTR_PROTOCOL_VERSION_1 && header.ver == RTR_PROTOCOL_VERSION_0 &&
-		    header.type != ERROR) {
-			RTR_DBG("First received PDU is a version 0 PDU, downgrading to %u", RTR_PROTOCOL_VERSION_0);
+		if (header.type != ERROR &&
+		    ((rtr_socket->version == RTR_PROTOCOL_VERSION_2 &&
+		      (header.ver == RTR_PROTOCOL_VERSION_0 || header.ver == RTR_PROTOCOL_VERSION_1)) ||
+		     (rtr_socket->version == RTR_PROTOCOL_VERSION_1 && header.ver == RTR_PROTOCOL_VERSION_0))) {
+			RTR_DBG("First received PDU is a version %u PDU, downgrading from version %u to %u", header.ver,
+				rtr_socket->version, header.ver);
 			rtr_socket->version = RTR_PROTOCOL_VERSION_0;
 		}
 		rtr_socket->has_received_pdus = true;
