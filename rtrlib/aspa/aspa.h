@@ -86,7 +86,7 @@ struct aspa_table {
 /**
  * @brief Possible return values for aspa_ functions.
  */
-enum aspa_rtvals {
+enum aspa_status {
 	/** Operation was successful. */
 	ASPA_SUCCESS = 0,
 
@@ -142,7 +142,7 @@ void aspa_table_free(struct aspa_table *aspa_table, bool notify);
  * @return @c ASPA_SUCCESS On success.
  * @return @c ASPA_ERROR On error.
  */
-enum aspa_rtvals aspa_table_src_remove(struct aspa_table *aspa_table, struct rtr_socket *rtr_socket, bool notify);
+enum aspa_status aspa_table_src_remove(struct aspa_table *aspa_table, struct rtr_socket *rtr_socket, bool notify);
 
 enum aspa_direction { ASPA_UPSTREAM, ASPA_DOWNSTREAM };
 
@@ -166,8 +166,8 @@ enum aspa_verification_result {
  * @return @c ASPA_AS_PATH_INVALID if @c AS_PATH is invalid
  * @return @c ASPA_AS_PATH_VALID if @c AS_PATH is valid
  */
-enum aspa_verification_result aspa_verify_as_path(struct aspa_table *aspa_table, enum aspa_direction direction,
-						  uint32_t as_path[], size_t len);
+enum aspa_verification_result aspa_verify_as_path(struct aspa_table *aspa_table, uint32_t as_path[], size_t len,
+						  enum aspa_direction direction);
 
 /**
  * @brief Verifies an upstream @c AS_PATH .
@@ -182,7 +182,8 @@ enum aspa_verification_result aspa_verify_as_path(struct aspa_table *aspa_table,
  * @return @c ASPA_AS_PATH_INVALID if @c AS_PATH is invalid
  * @return @c ASPA_AS_PATH_VALID if @c AS_PATH is valid
  */
-enum aspa_verification_result aspa_verify_as_path_upstream(struct aspa_table *aspa_table, uint32_t as_path[], size_t len);
+enum aspa_verification_result aspa_verify_as_path_upstream(struct aspa_table *aspa_table, uint32_t as_path[],
+							   size_t len);
 
 /**
  * @brief Verifies a downstream @c AS_PATH .
@@ -197,7 +198,8 @@ enum aspa_verification_result aspa_verify_as_path_upstream(struct aspa_table *as
  * @return @c ASPA_AS_PATH_INVALID if @c AS_PATH is invalid
  * @return @c ASPA_AS_PATH_VALID if @c AS_PATH is valid
  */
-enum aspa_verification_result aspa_verify_as_path_downstream(struct aspa_table *aspa_table, uint32_t as_path[], size_t len);
+enum aspa_verification_result aspa_verify_as_path_downstream(struct aspa_table *aspa_table, uint32_t as_path[],
+							     size_t len);
 
 /**
  * @brief Collapses an @c AS_PATH in-place, replacing in-series repetitions with single occurences

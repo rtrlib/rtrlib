@@ -25,6 +25,30 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+// MARK: - Storage
+
+/**
+ * @brief A linked list storing the bond between a socket and an @c aspa_array .
+ */
+struct aspa_store_node {
+	struct aspa_array *aspa_array;
+	struct rtr_socket *rtr_socket;
+	struct aspa_store_node *next;
+};
+
+/**
+ * @brief Moves all ASPA records associated with the given socket from the source table into the destination table.
+ * @param[in,out] dst The destination table. Existing records associated with the socket are replaced.
+ * @param[in,out] src The source table.
+ * @param[in,out] rtr_socket The socket the records are associated with.
+ * @param notify_dst A boolean value determining whether to notify the destination tables' clients.
+ * @param notify_src A boolean value determining whether to notify the source tables' clients.
+ */
+enum aspa_status aspa_table_src_replace(struct aspa_table *dst, struct aspa_table *src, struct rtr_socket *rtr_socket,
+					bool notify_dst, bool notify_src);
+
+// MARK: - Updating
+
 /**
  * @brief An enum describing the type of operation the ASPA table should perform using any given ASPA record.
  */
@@ -35,8 +59,6 @@ enum aspa_operation_type {
 	/** The new record, identified by its customer ASN, shall be added to the ASPA table. */
 	ASPA_ADD = 1
 };
-
-enum aspa_hop_result { ASPA_NO_ATTESTATION, ASPA_NOT_PROVIDER_PLUS, ASPA_PROVIDER_PLUS };
 
 /**
  * @brief A struct describing a specific type of operation that should be performed using the attached ASPA record.
@@ -51,45 +73,46 @@ struct aspa_update_operation {
 };
 
 /**
- * @brief A type describing an update to an ASPA table than can be later be applied.
+ * @brief ASPA update clean ups arguments
+ * @param unused_provider_arrays Array of pointers to now unused provider sets.
+ * @param unused_provider_array_len Number of unused provider sets.
  */
-struct aspa_update {
-	struct aspa_table *aspa_table;
-	struct rtr_socket *rtr_socket;
-	struct aspa_array *aspa_array;
-	size_t stale_provider_arrays_count;
-	uint32_t **stale_provider_arrays;
+struct aspa_update_cleanup_args {
+	uint32_t **unused_provider_arrays;
+	size_t unused_provider_array_len;
 };
 
 /**
- * @brief Computes an update to an ASPA table that can be applied or discard later.
+ * @brief Updates the given ASPA table by adding and removing records.
  *
  * @param[in] aspa_table ASPA table to store new ASPA data in.
- * @param[in] operations  Add or remove operations to perform.
- * @param[in] count  Number of operations
  * @param[in] rtr_socket The socket the updates originate from.
- * @param[out] update The computed update.
- * @param[out] failed_operation The operation responsible for causing the table update failure. @c NULL , if the update succeeds.
+ * @param[in] operations  Add and remove operations to perform.
+ * @param[in] len  Number of operations
+ * @param[in] revert A boolean value indicating whether to apply the inverse the effect of the given operations (add <-> remove).
+ * @param[in,out] failed_operation The operation responsible for causing the table update failure. @c NULL , if the update succeeded. If this function is called with @c revert set to @c false , treat this as an output parameter. If @c revert is @c true , this argument must not be @ NULL.
+ * @param[out] cleanup_args Arguments for cleanup.
  * @return @c ASPA_SUCCESS On success.
  * @return @c ASPA_RECORD_NOT_FOUND If a records is supposed to be removed but cannot be found.
  * @return @c ASPA_DUPLICATE_RECORD If a records is supposed to be added but its corresponding customer ASN already exists.
  * @return @c ASPA_ERROR On on failure.
+ *
+ * @note You should only release the unused provider sets if you're sure you are not going to reverse this update (by calling with argument @c reverse set to @c true ).
  */
-enum aspa_rtvals aspa_table_compute_update(struct aspa_table *aspa_table, struct aspa_update_operation *operations,
-					   size_t count, struct rtr_socket *rtr_socket, struct aspa_update *update,
-					   struct aspa_update_operation **failed_operation);
+enum aspa_status aspa_table_update(struct aspa_table *aspa_table, struct rtr_socket *rtr_socket,
+				   struct aspa_update_operation *operations, size_t len, bool revert,
+				   struct aspa_update_operation **failed_operation,
+				   struct aspa_update_cleanup_args **cleanup_args);
 
 /**
- * @brief Applies a previously computed ASPA update.
- * @param[in] update  ASPA update that should be applied.
+ * @brief Releases memory of provider set arrays.
+ * @param cleanup_args Cleanup arguments from aspa_table_update
  */
-enum aspa_rtvals aspa_table_apply_update(struct aspa_update *update);
+void aspa_update_cleanup(struct aspa_update_cleanup_args *cleanup_args);
 
-/**
- * @brief Discards a previously computed ASPA update.
- * @param[in] update  ASPA update
- */
-void aspa_table_free_update(struct aspa_update *update);
+// MARK: - Verification
+
+enum aspa_hop_result { ASPA_NO_ATTESTATION, ASPA_NOT_PROVIDER_PLUS, ASPA_PROVIDER_PLUS };
 
 /**
  * @brief Checks a hop in the given @c AS_PATH .

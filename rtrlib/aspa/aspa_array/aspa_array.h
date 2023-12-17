@@ -33,15 +33,16 @@ struct aspa_array {
  * @result Valid pointer to an aspa_array struct
  * @result Null On error.
  */
-enum aspa_rtvals aspa_array_create(struct aspa_array **vector_pointer);
+enum aspa_status aspa_array_create(struct aspa_array **vector_pointer);
 
 /**
- * @brief Deletes the given vector
- * @param[vector] aspa_vector which will be deleted
- * @result 0 On success.
- * @result -1 On error.
+ * @brief Deletes the given ASPA array
+ * @param array ASPA array which will be deleted
+ * @param free_provider_sets A boolean value determining whether each record's provider set should be released.
+ * @result @c ASPA_SUCCESS On success.
+ * @result @c ASPA_ERROR On error.
  */
-enum aspa_rtvals aspa_array_free(struct aspa_array *vector);
+enum aspa_status aspa_array_free(struct aspa_array *array, bool free_provider_sets);
 
 /**
  * @brief Reallocates the vector to increase its size
@@ -49,28 +50,23 @@ enum aspa_rtvals aspa_array_free(struct aspa_array *vector);
  * @result 0 On success.
  * @result -1 On error.
  */
-enum aspa_rtvals aspa_array_reallocate(struct aspa_array *vector);
+enum aspa_status aspa_array_reallocate(struct aspa_array *vector);
+
+enum aspa_status aspa_array_replace(struct aspa_array *array, size_t index, struct aspa_record *record,
+				    uint32_t **old_providers);
 
 /**
  * @brief Will insert the element at the correct place in the list so the ascending order is preserved
  * This function assumes that the data field is large enough to fit one more element
  * This method is intended for internal use please use aspa_array_insert instead.
- *
- * @param[vector] list of ASPA entries
- * @param[size] size of the ASPA entries list
  */
-void aspa_array_private_insert(struct aspa_array *vector, struct aspa_record *record);
+enum aspa_status aspa_array_insert(struct aspa_array *array, size_t index, struct aspa_record *record);
 
-/**
- * @brief adds a new aspa record to the list
- * @param[vector] aspa_vector into which the value will be inserted
- * @param[value] uin32_t value which will be inserted
- * @result 0 On success.
- * @result -1 On error.
- */
-enum aspa_rtvals aspa_array_insert(struct aspa_array *vector, struct aspa_record *record);
+enum aspa_status aspa_array_remove(struct aspa_array *array, size_t index, uint32_t **old_providers);
 
-enum aspa_rtvals aspa_array_append(struct aspa_array *vector, struct aspa_record *record);
+enum aspa_status aspa_array_append(struct aspa_array *vector, struct aspa_record *record);
+
+struct aspa_record *aspa_array_get_record(struct aspa_array *array, size_t index);
 /**
  * @brief deletes the element from the vector
  * @param[vector] aspa_vector from which the element is to be removed
@@ -78,7 +74,7 @@ enum aspa_rtvals aspa_array_append(struct aspa_array *vector, struct aspa_record
  * @result 0 On success.
  * @result -1 On error.
  */
-enum aspa_rtvals aspa_array_free_entry(struct aspa_array *vector, struct aspa_record *entry);
+enum aspa_status aspa_array_free_entry(struct aspa_array *vector, struct aspa_record *entry);
 
 /**
  * @brief returns the index in the vector for a given customer as number (CAS)

@@ -560,7 +560,7 @@ static void update_aspa(struct aspa_table *s __attribute__((unused)), const stru
 	printf("HOST:  %s:%s\n", config->host, config->port);
 	printf("Customer ASN:  %u\n  ", record.customer_asn);
 
-	int i;
+	size_t i;
 	size_t count = record.provider_count;
 
 	printf("Provider ASNs:  ");
