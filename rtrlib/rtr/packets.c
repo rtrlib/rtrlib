@@ -176,7 +176,7 @@ struct pdu_end_of_data_v0 {
 	uint32_t sn;
 };
 
-struct pdu_end_of_data_v1 {
+struct pdu_end_of_data_v1_v2 {
 	uint8_t ver;
 	uint8_t type;
 	uint16_t session_id;
@@ -353,18 +353,18 @@ static void rtr_pdu_convert_footer_byte_order(void *pdu, const enum target_byte_
 		break;
 
 	case EOD:
-		if (header->ver == RTR_PROTOCOL_VERSION_1) {
-			((struct pdu_end_of_data_v1 *)pdu)->expire_interval = lrtr_convert_long(
-				target_byte_order, ((struct pdu_end_of_data_v1 *)pdu)->expire_interval);
+		if (header->ver == RTR_PROTOCOL_VERSION_1 || header->ver == RTR_PROTOCOL_VERSION_2) {
+			((struct pdu_end_of_data_v1_v2 *)pdu)->expire_interval = lrtr_convert_long(
+				target_byte_order, ((struct pdu_end_of_data_v1_v2 *)pdu)->expire_interval);
 
-			((struct pdu_end_of_data_v1 *)pdu)->refresh_interval = lrtr_convert_long(
-				target_byte_order, ((struct pdu_end_of_data_v1 *)pdu)->refresh_interval);
+			((struct pdu_end_of_data_v1_v2 *)pdu)->refresh_interval = lrtr_convert_long(
+				target_byte_order, ((struct pdu_end_of_data_v1_v2 *)pdu)->refresh_interval);
 
-			((struct pdu_end_of_data_v1 *)pdu)->retry_interval = lrtr_convert_long(
-				target_byte_order, ((struct pdu_end_of_data_v1 *)pdu)->retry_interval);
+			((struct pdu_end_of_data_v1_v2 *)pdu)->retry_interval = lrtr_convert_long(
+				target_byte_order, ((struct pdu_end_of_data_v1_v2 *)pdu)->retry_interval);
 
-			((struct pdu_end_of_data_v1 *)pdu)->sn =
-				lrtr_convert_long(target_byte_order, ((struct pdu_end_of_data_v1 *)pdu)->sn);
+			((struct pdu_end_of_data_v1_v2 *)pdu)->sn =
+				lrtr_convert_long(target_byte_order, ((struct pdu_end_of_data_v1_v2 *)pdu)->sn);
 		} else {
 			((struct pdu_end_of_data_v0 *)pdu)->sn =
 				lrtr_convert_long(target_byte_order, ((struct pdu_end_of_data_v0 *)pdu)->sn);
@@ -476,7 +476,8 @@ static bool rtr_pdu_check_size(const struct pdu_header *pdu)
 		break;
 	case EOD:
 		if ((pdu->ver == RTR_PROTOCOL_VERSION_0 && (sizeof(struct pdu_end_of_data_v0) == pdu->len)) ||
-		    (pdu->ver == RTR_PROTOCOL_VERSION_1 && (sizeof(struct pdu_end_of_data_v1) == pdu->len))) {
+		    ((pdu->ver == RTR_PROTOCOL_VERSION_1 || pdu->ver == RTR_PROTOCOL_VERSION_2) &&
+		     (sizeof(struct pdu_end_of_data_v1_v2) == pdu->len))) {
 			retval = true;
 		}
 		break;
@@ -627,6 +628,7 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
 
 	// Handle live downgrading
 	if (!rtr_socket->has_received_pdus) {
+		// TODO: v2
 		if (rtr_socket->version == RTR_PROTOCOL_VERSION_1 && header.ver == RTR_PROTOCOL_VERSION_0 &&
 		    header.type != ERROR) {
 			RTR_DBG("First received PDU is a version 0 PDU, downgrading to %u", RTR_PROTOCOL_VERSION_0);
@@ -1397,39 +1399,40 @@ static inline int rtr_handle_eod_pdu(struct rtr_socket *rtr_socket, struct pdu_e
 		return RTR_ERROR;
 	}
 
-	if (eod_pdu->ver == RTR_PROTOCOL_VERSION_1 && rtr_socket->iv_mode != RTR_INTERVAL_MODE_IGNORE_ANY) {
+	if ((eod_pdu->ver == RTR_PROTOCOL_VERSION_1 || eod_pdu->ver == RTR_PROTOCOL_VERSION_2) &&
+	    rtr_socket->iv_mode != RTR_INTERVAL_MODE_IGNORE_ANY) {
 		int interv_retval;
 
 		interv_retval = rtr_check_interval_option(rtr_socket, rtr_socket->iv_mode,
-							  ((struct pdu_end_of_data_v1 *)pdu_data)->expire_interval,
+							  ((struct pdu_end_of_data_v1_v2 *)pdu_data)->expire_interval,
 							  RTR_INTERVAL_TYPE_EXPIRATION);
 
 		if (interv_retval == RTR_ERROR) {
 			interval_send_error_pdu(rtr_socket, pdu_data,
-						((struct pdu_end_of_data_v1 *)pdu_data)->expire_interval,
+						((struct pdu_end_of_data_v1_v2 *)pdu_data)->expire_interval,
 						RTR_EXPIRATION_MIN, RTR_EXPIRATION_MAX);
 			return RTR_ERROR;
 		}
 
 		interv_retval = rtr_check_interval_option(rtr_socket, rtr_socket->iv_mode,
-							  ((struct pdu_end_of_data_v1 *)pdu_data)->refresh_interval,
+							  ((struct pdu_end_of_data_v1_v2 *)pdu_data)->refresh_interval,
 							  RTR_INTERVAL_TYPE_REFRESH);
 
 		if (interv_retval == RTR_ERROR) {
 			interval_send_error_pdu(rtr_socket, pdu_data,
-						((struct pdu_end_of_data_v1 *)pdu_data)->refresh_interval,
+						((struct pdu_end_of_data_v1_v2 *)pdu_data)->refresh_interval,
 						RTR_REFRESH_MIN, RTR_REFRESH_MAX);
 			return RTR_ERROR;
 		}
 
 		interv_retval = rtr_check_interval_option(rtr_socket, rtr_socket->iv_mode,
-							  ((struct pdu_end_of_data_v1 *)pdu_data)->retry_interval,
+							  ((struct pdu_end_of_data_v1_v2 *)pdu_data)->retry_interval,
 							  RTR_INTERVAL_TYPE_RETRY);
 
 		if (interv_retval == RTR_ERROR) {
 			interval_send_error_pdu(rtr_socket, pdu_data,
-						((struct pdu_end_of_data_v1 *)pdu_data)->retry_interval, RTR_RETRY_MIN,
-						RTR_RETRY_MAX);
+						((struct pdu_end_of_data_v1_v2 *)pdu_data)->retry_interval,
+						RTR_RETRY_MIN, RTR_RETRY_MAX);
 			return RTR_ERROR;
 		}
 
