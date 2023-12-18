@@ -355,7 +355,10 @@ static enum aspa_status aspa_table_update_internal(struct aspa_table *aspa_table
 }
 
 enum aspa_status aspa_table_update(struct aspa_table *aspa_table, struct rtr_socket *rtr_socket,
-				   struct aspa_update_operation *operations, size_t len, bool revert,
+				   struct aspa_update_operation *operations, size_t len,
+#ifdef ASPA_UPDATE_IN_PLACE
+				   bool revert,
+#endif
 				   struct aspa_update_operation **failed_operation,
 				   struct aspa_update_finalization_args **finalization_args)
 {
@@ -531,4 +534,11 @@ void aspa_update_finalize(struct aspa_update_finalization_args *finalization_arg
 		if (finalization_args->unused_provider_arrays[i])
 			lrtr_free(finalization_args->unused_provider_arrays[i]);
 	}
+
+	if (finalization_args->unused_provider_arrays) {
+		lrtr_free(finalization_args->unused_provider_arrays);
+		finalization_args->unused_provider_arrays = NULL;
+	}
+
+	lrtr_free(finalization_args);
 }

@@ -828,6 +828,7 @@ static int rtr_undo_update_spki_table_batch(struct rtr_socket *rtr_socket, struc
 	return RTR_SUCCESS;
 }
 
+#ifdef ASPA_UPDATE_IN_PLACE
 /**
  * @brief Undoes changes made to the @p aspa_table given an array of ASPA update operations.
  */
@@ -846,6 +847,7 @@ static int rtr_undo_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa
 
 	return res;
 }
+#endif
 
 /**
  * @brief Appends the Prefix PDU pdu to ary.
@@ -1091,9 +1093,13 @@ static int rtr_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_tabl
 		(*operations)[i].index = i;
 		rtr_aspa_pdu_2_aspa_record(aspa_pdus[i], &(*operations)[i].record);
 	}
-
+#ifdef ASPA_UPDATE_IN_PLACE
 	enum aspa_status res = aspa_table_update(aspa_table, rtr_socket, *operations, pdus_size, false,
 						 failed_operation, finalization_args);
+#else
+	enum aspa_status res = aspa_table_update(aspa_table, rtr_socket, *operations, pdus_size,
+						 failed_operation, finalization_args);
+#endif
 
 	if (*failed_operation) {
 		struct pdu_aspa *pdu = aspa_pdus[(*failed_operation)->index];
@@ -1198,9 +1204,11 @@ static int rtr_sync_update_tables(struct rtr_socket *rtr_socket, struct pfx_tabl
 			RTR_DBG1("error while updating aspa data");
 			update_succeeded = false;
 
+#ifdef ASPA_UPDATE_IN_PLACE
 			if (rtr_undo_update_aspa_table(rtr_socket, aspa_table, operations, aspa_pdu_count,
 						       &failed_op) == RTR_ERROR)
 				undo_succeeded = false;
+#endif
 
 			if (rtr_undo_update_spki_table_batch(rtr_socket, spki_table, router_key_pdus,
 							     router_key_pdu_count) == RTR_ERROR)
@@ -1499,6 +1507,10 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 				if (spki_shadow_table) {
 					spki_table_free_without_notify(spki_shadow_table);
 					lrtr_free(spki_shadow_table);
+				}
+				
+				if (aspa_shadow_table) {
+					aspa_table_free(aspa_shadow_table, false);
 				}
 
 				rtr_socket->is_resetting = false;

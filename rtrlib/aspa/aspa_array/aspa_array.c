@@ -58,8 +58,10 @@ enum aspa_status aspa_array_free(struct aspa_array *array, bool free_provider_se
 
 		if (free_provider_sets) {
 			for (size_t i = 0; i < array->size; i++) {
-				if (array->data[i].provider_asns)
+				if (array->data[i].provider_asns) {
 					lrtr_free(array->data[i].provider_asns);
+					array->data[i].provider_asns = NULL;
+				}
 			}
 		}
 	}
