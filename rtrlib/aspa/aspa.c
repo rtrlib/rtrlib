@@ -378,6 +378,9 @@ enum aspa_status aspa_table_update(struct aspa_table *aspa_table, struct rtr_soc
 		if (unused_sets && unused_size > 0) {
 			(*cleanup_args)->unused_provider_arrays = unused_sets;
 			(*cleanup_args)->unused_provider_array_len = unused_size;
+		} else {
+			(*cleanup_args)->unused_provider_arrays = NULL;
+			(*cleanup_args)->unused_provider_array_len = 0;
 		}
 	}
 
