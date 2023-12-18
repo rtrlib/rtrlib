@@ -62,10 +62,10 @@ static int rtr_send_error_pdu_from_host(const struct rtr_socket *rtr_socket, con
 static int interval_send_error_pdu(struct rtr_socket *rtr_socket, void *pdu, uint32_t interval, uint16_t minimum,
 				   uint32_t maximum);
 
-bool rtr_version_supported(uint8_t query_version)
+static bool rtr_version_supported(uint8_t version)
 {
-	return RTR_PROTOCOL_MIN_SUPPORTED_VERSION <= query_version &&
-		RTR_PROTOCOL_MAX_SUPPORTED_VERSION >= query_version;
+	return RTR_PROTOCOL_MIN_SUPPORTED_VERSION <= version &&
+		RTR_PROTOCOL_MAX_SUPPORTED_VERSION >= version;
 }
 
 static inline enum pdu_type rtr_get_pdu_type(const void *pdu)
