@@ -58,9 +58,8 @@ enum aspa_hop_result aspa_check_hop(struct aspa_table *aspa_table, uint32_t cust
 		uint32_t *provider =
 			binary_search_asns(provider_asn, aspa_record->provider_asns, aspa_record->provider_count);
 
-		if (!provider) {
+		if (provider)
 			return ASPA_PROVIDER_PLUS;
-		}
 	}
 
 	return customer_found ? ASPA_NOT_PROVIDER_PLUS : ASPA_NO_ATTESTATION;
