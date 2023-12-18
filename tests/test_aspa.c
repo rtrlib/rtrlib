@@ -311,7 +311,7 @@ void test_socket_aspa_pdu_parse() {
 
 	data = lrtr_malloc(
 			sizeof(struct pdu_cache_response) +
-			sizeof(struct pdu_end_of_data_v1) +
+			sizeof(struct pdu_end_of_data_v1_v2) +
 			sizeof(struct pdu_aspa));
 
 	struct aspa_table *aspa_table = lrtr_malloc(sizeof(*aspa_table));
@@ -336,7 +336,7 @@ void test_socket_aspa_pdu_parse() {
 	aspa->customer_asn = c32(100);
 	aspa->provider_asns[0] = c32(200);
 
-	struct pdu_end_of_data_v1 *eod = (struct pdu_end_of_data_v1*)((char*)(aspa) + c32(aspa->len));
+	struct pdu_end_of_data_v1_v2 *eod = (struct pdu_end_of_data_v1_v2*)((char*)(aspa) + c32(aspa->len));
 	eod->ver = 2;
 	eod->type = 7;
 	eod->session_id = 0;
