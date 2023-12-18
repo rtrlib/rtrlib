@@ -50,10 +50,7 @@ static enum aspa_status aspa_store_insert_node(struct aspa_store_node **store, s
 
 static int compare_records(const void *a, const void *b)
 {
-	const struct aspa_record **op1 = a;
-	const struct aspa_record **op2 = b;
-
-	return (*op1)->customer_asn - (*op2)->customer_asn;
+	return (*(struct aspa_record **)a)->customer_asn - (*(struct aspa_record **)b)->customer_asn;
 }
 
 static void insert_new_socket_records(struct aspa_table *aspa_table,
@@ -73,7 +70,7 @@ static void insert_new_socket_records(struct aspa_table *aspa_table,
 
 	for (size_t i = 0; i < record_count; i++) {
 		aspa_array_insert(array, i, records[i]);
-		printf("%d: %d\n", i, records[i]->customer_asn);
+		printf("%zu: %u\n", i, records[i]->customer_asn);
 	}
 }
 
@@ -85,7 +82,7 @@ static struct aspa_table *test_create_aspa_table()
 
 
 	size_t i = 0;
-	struct aspa_record **records[17];
+	struct aspa_record *records[17];
 
 	// { 302, 402, 502, 500, 400, 300 }, 6, ASPA_DOWNSTREAM) == ASPA_AS_PATH_VALID);
 	// { 301, 401, 501, 502, 502, 402, 302 }, 7, ASPA_DOWNSTREAM) == ASPA_AS_PATH_INVALID);
@@ -115,7 +112,7 @@ static struct aspa_table *test_create_aspa_table()
 	insert_new_socket_records(aspa_table, records, 17);
 
 
-	struct aspa_record **records_2[1] = {
+	struct aspa_record *records_2[1] = {
 		create_aspa_record(100, (uint32_t []){ 200, 202 }, 2)
 	};
 	insert_new_socket_records(aspa_table, records_2, 1);

@@ -273,7 +273,7 @@ size_t data_index;
 #define c16(X) lrtr_convert_short(TO_HOST_HOST_BYTE_ORDER, X)
 #define c32(X) lrtr_convert_long(TO_HOST_HOST_BYTE_ORDER, X)
 
-int custom_send(const struct tr_socket *socket, const void *pdu,
+static int custom_send(const struct tr_socket *socket, const void *pdu,
 		const size_t len, const time_t timeout) {
 	printf("sent %lu bytes\n", len);
 
@@ -287,7 +287,7 @@ int custom_send(const struct tr_socket *socket, const void *pdu,
 	return len;
 }
 
-int custom_recv(const struct tr_socket *socket, const void *buf,
+static int custom_recv(const struct tr_socket *socket, const void *buf,
 		const size_t len, const time_t timeout) {
 	size_t rlen = len;
 	if (data_index + rlen > data_size)
@@ -299,7 +299,7 @@ int custom_recv(const struct tr_socket *socket, const void *buf,
 	return rlen;
 }
 
-void test_socket_aspa_pdu_parse() {
+static void test_socket_aspa_pdu_parse() {
 	struct tr_socket *tr_socket = lrtr_malloc(sizeof(struct tr_socket));
 	tr_socket->recv_fp = (tr_recv_fp)&custom_recv;
 	tr_socket->send_fp = (tr_send_fp)&custom_send;
