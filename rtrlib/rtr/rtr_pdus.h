@@ -144,7 +144,7 @@ struct pdu_end_of_data_v0 {
 	uint32_t sn;
 };
 
-struct pdu_end_of_data_v1 {
+struct pdu_end_of_data_v1_v2 {
 	uint8_t ver;
 	uint8_t type;
 	uint16_t session_id;

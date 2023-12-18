@@ -208,17 +208,17 @@ static void rtr_pdu_convert_footer_byte_order(void *pdu, const enum target_byte_
 
 	case EOD:
 		if (header->ver == RTR_PROTOCOL_VERSION_1 || header->ver == RTR_PROTOCOL_VERSION_2) {
-			((struct pdu_end_of_data_v1 *)pdu)->expire_interval = lrtr_convert_long(
-				target_byte_order, ((struct pdu_end_of_data_v1 *)pdu)->expire_interval);
+			((struct pdu_end_of_data_v1_v2 *)pdu)->expire_interval = lrtr_convert_long(
+				target_byte_order, ((struct pdu_end_of_data_v1_v2 *)pdu)->expire_interval);
 
-			((struct pdu_end_of_data_v1 *)pdu)->refresh_interval = lrtr_convert_long(
-				target_byte_order, ((struct pdu_end_of_data_v1 *)pdu)->refresh_interval);
+			((struct pdu_end_of_data_v1_v2 *)pdu)->refresh_interval = lrtr_convert_long(
+				target_byte_order, ((struct pdu_end_of_data_v1_v2 *)pdu)->refresh_interval);
 
-			((struct pdu_end_of_data_v1 *)pdu)->retry_interval = lrtr_convert_long(
-				target_byte_order, ((struct pdu_end_of_data_v1 *)pdu)->retry_interval);
+			((struct pdu_end_of_data_v1_v2 *)pdu)->retry_interval = lrtr_convert_long(
+				target_byte_order, ((struct pdu_end_of_data_v1_v2 *)pdu)->retry_interval);
 
-			((struct pdu_end_of_data_v1 *)pdu)->sn =
-				lrtr_convert_long(target_byte_order, ((struct pdu_end_of_data_v1 *)pdu)->sn);
+			((struct pdu_end_of_data_v1_v2 *)pdu)->sn =
+				lrtr_convert_long(target_byte_order, ((struct pdu_end_of_data_v1_v2 *)pdu)->sn);
 		} else {
 			((struct pdu_end_of_data_v0 *)pdu)->sn =
 				lrtr_convert_long(target_byte_order, ((struct pdu_end_of_data_v0 *)pdu)->sn);
@@ -330,8 +330,8 @@ static bool rtr_pdu_check_size(const struct pdu_header *pdu)
 		break;
 	case EOD:
 		if ((pdu->ver == RTR_PROTOCOL_VERSION_0 && (sizeof(struct pdu_end_of_data_v0) == pdu->len)) ||
-		    (pdu->ver == RTR_PROTOCOL_VERSION_1 && (sizeof(struct pdu_end_of_data_v1) == pdu->len)) ||
-		    (pdu->ver == RTR_PROTOCOL_VERSION_2 && (sizeof(struct pdu_end_of_data_v1) == pdu->len))) {
+		    ((pdu->ver == RTR_PROTOCOL_VERSION_1 || pdu->ver == RTR_PROTOCOL_VERSION_2) &&
+		     (sizeof(struct pdu_end_of_data_v1_v2) == pdu->len))) {
 			retval = true;
 		}
 		break;
@@ -482,8 +482,9 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
 
 	// Handle live downgrading
 	if (!rtr_socket->has_received_pdus) {
-		if (rtr_version_supported(header.ver) && rtr_socket->version > header.ver && header.type != ERROR) {
-			RTR_DBG("First received PDU is a version %u PDU, downgrading to %u", header.ver, header.ver);
+		if (header.type != ERROR && rtr_socket->version > header.ver && rtr_version_supported(header.ver)) {
+			RTR_DBG("First received PDU is a version %u PDU, downgrading from version %u to %u",
+					header.ver, rtr_socket->version, header.ver);
 			rtr_socket->version = header.ver;
 		}
 		rtr_socket->has_received_pdus = true;
@@ -1066,7 +1067,7 @@ static int rtr_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_tabl
 				 struct pdu_aspa **aspa_pdus, size_t pdus_size,
 				 struct aspa_update_operation **operations,
 				 struct aspa_update_operation **failed_operation,
-				 struct aspa_update_cleanup_args **cleanup_args)
+				 struct aspa_update_finalization_args **finalization_args)
 {
 	if (!failed_operation)
 		return RTR_ERROR;
@@ -1092,7 +1093,7 @@ static int rtr_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_tabl
 	}
 
 	enum aspa_status res = aspa_table_update(aspa_table, rtr_socket, *operations, pdus_size, false,
-						 failed_operation, cleanup_args);
+						 failed_operation, finalization_args);
 
 	if (*failed_operation) {
 		struct pdu_aspa *pdu = aspa_pdus[(*failed_operation)->index];
@@ -1130,7 +1131,7 @@ static int rtr_sync_update_tables(struct rtr_socket *rtr_socket, struct pfx_tabl
 {
 	bool update_succeeded = true;
 	bool undo_succeeded = true;
-	struct aspa_update_cleanup_args *aspa_cleanup_args = NULL;
+	struct aspa_update_finalization_args *aspa_finalization_args = NULL;
 
 	// add all IPv4 prefix pdu to the pfx_table
 	for (size_t i = 0; i < ipv4_pdu_count; i++) {
@@ -1193,7 +1194,7 @@ static int rtr_sync_update_tables(struct rtr_socket *rtr_socket, struct pfx_tabl
 		struct aspa_update_operation *failed_op = NULL;
 
 		if (rtr_update_aspa_table(rtr_socket, aspa_table, aspa_pdus, aspa_pdu_count, &operations, &failed_op,
-					  &aspa_cleanup_args) == RTR_ERROR) {
+					  &aspa_finalization_args) == RTR_ERROR) {
 			RTR_DBG1("error while updating aspa data");
 			update_succeeded = false;
 
@@ -1210,8 +1211,12 @@ static int rtr_sync_update_tables(struct rtr_socket *rtr_socket, struct pfx_tabl
 				undo_succeeded = false;
 		}
 
-		if (aspa_cleanup_args)
-			aspa_update_cleanup(aspa_cleanup_args);
+		if (aspa_finalization_args)
+#ifdef ASPA_UPDATE_IN_PLACE
+			aspa_update_finalize(aspa_finalization_args);
+#else
+			aspa_update_finalize(aspa_finalization_args, update_succeeded);
+#endif
 
 		if (operations)
 			lrtr_free(operations);
@@ -1256,35 +1261,35 @@ static inline int rtr_handle_eod_pdu(struct rtr_socket *rtr_socket, struct pdu_e
 		int interv_retval;
 
 		interv_retval = rtr_check_interval_option(rtr_socket, rtr_socket->iv_mode,
-							  ((struct pdu_end_of_data_v1 *)pdu_data)->expire_interval,
+							  ((struct pdu_end_of_data_v1_v2 *)pdu_data)->expire_interval,
 							  RTR_INTERVAL_TYPE_EXPIRATION);
 
 		if (interv_retval == RTR_ERROR) {
 			interval_send_error_pdu(rtr_socket, pdu_data,
-						((struct pdu_end_of_data_v1 *)pdu_data)->expire_interval,
+						((struct pdu_end_of_data_v1_v2 *)pdu_data)->expire_interval,
 						RTR_EXPIRATION_MIN, RTR_EXPIRATION_MAX);
 			return RTR_ERROR;
 		}
 
 		interv_retval = rtr_check_interval_option(rtr_socket, rtr_socket->iv_mode,
-							  ((struct pdu_end_of_data_v1 *)pdu_data)->refresh_interval,
+							  ((struct pdu_end_of_data_v1_v2 *)pdu_data)->refresh_interval,
 							  RTR_INTERVAL_TYPE_REFRESH);
 
 		if (interv_retval == RTR_ERROR) {
 			interval_send_error_pdu(rtr_socket, pdu_data,
-						((struct pdu_end_of_data_v1 *)pdu_data)->refresh_interval,
+						((struct pdu_end_of_data_v1_v2 *)pdu_data)->refresh_interval,
 						RTR_REFRESH_MIN, RTR_REFRESH_MAX);
 			return RTR_ERROR;
 		}
 
 		interv_retval = rtr_check_interval_option(rtr_socket, rtr_socket->iv_mode,
-							  ((struct pdu_end_of_data_v1 *)pdu_data)->retry_interval,
+							  ((struct pdu_end_of_data_v1_v2 *)pdu_data)->retry_interval,
 							  RTR_INTERVAL_TYPE_RETRY);
 
 		if (interv_retval == RTR_ERROR) {
 			interval_send_error_pdu(rtr_socket, pdu_data,
-						((struct pdu_end_of_data_v1 *)pdu_data)->retry_interval, RTR_RETRY_MIN,
-						RTR_RETRY_MAX);
+						((struct pdu_end_of_data_v1_v2 *)pdu_data)->retry_interval,
+						RTR_RETRY_MIN, RTR_RETRY_MAX);
 			return RTR_ERROR;
 		}
 
