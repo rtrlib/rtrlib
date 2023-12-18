@@ -214,6 +214,12 @@ static int rtr_send_error_pdu_from_host(const struct rtr_socket *rtr_socket, con
 static int interval_send_error_pdu(struct rtr_socket *rtr_socket, void *pdu, uint32_t interval, uint16_t minimum,
 				   uint32_t maximum);
 
+bool rtr_version_supported(uint8_t query_version)
+{
+	return RTR_PROTOCOL_MIN_SUPPORTED_VERSION <= query_version &&
+		RTR_PROTOCOL_MAX_SUPPORTED_VERSION >= query_version;
+}
+
 static inline enum pdu_type rtr_get_pdu_type(const void *pdu)
 {
 	return *((char *)pdu + 1);
@@ -353,7 +359,7 @@ static void rtr_pdu_convert_footer_byte_order(void *pdu, const enum target_byte_
 		break;
 
 	case EOD:
-		if (header->ver == RTR_PROTOCOL_VERSION_1) {
+		if (header->ver == RTR_PROTOCOL_VERSION_1 || header->ver == RTR_PROTOCOL_VERSION_2) {
 			((struct pdu_end_of_data_v1 *)pdu)->expire_interval = lrtr_convert_long(
 				target_byte_order, ((struct pdu_end_of_data_v1 *)pdu)->expire_interval);
 
@@ -476,7 +482,8 @@ static bool rtr_pdu_check_size(const struct pdu_header *pdu)
 		break;
 	case EOD:
 		if ((pdu->ver == RTR_PROTOCOL_VERSION_0 && (sizeof(struct pdu_end_of_data_v0) == pdu->len)) ||
-		    (pdu->ver == RTR_PROTOCOL_VERSION_1 && (sizeof(struct pdu_end_of_data_v1) == pdu->len))) {
+		    (pdu->ver == RTR_PROTOCOL_VERSION_1 && (sizeof(struct pdu_end_of_data_v1) == pdu->len)) ||
+		    (pdu->ver == RTR_PROTOCOL_VERSION_2 && (sizeof(struct pdu_end_of_data_v1) == pdu->len))) {
 			retval = true;
 		}
 		break;
@@ -627,10 +634,9 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
 
 	// Handle live downgrading
 	if (!rtr_socket->has_received_pdus) {
-		if (rtr_socket->version == RTR_PROTOCOL_VERSION_1 && header.ver == RTR_PROTOCOL_VERSION_0 &&
-		    header.type != ERROR) {
-			RTR_DBG("First received PDU is a version 0 PDU, downgrading to %u", RTR_PROTOCOL_VERSION_0);
-			rtr_socket->version = RTR_PROTOCOL_VERSION_0;
+		if (rtr_version_supported(header.ver) && rtr_socket->version > header.ver && header.type != ERROR) {
+			RTR_DBG("First received PDU is a version %u PDU, downgrading to %u", header.ver, header.ver);
+			rtr_socket->version = header.ver;
 		}
 		rtr_socket->has_received_pdus = true;
 	}
@@ -676,7 +682,7 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
 			RTR_DBG1("Warning: Zero field of received Prefix PDU doesn't contain 0");
 	}
 	if (header.type == ASPA) {
-		if (((struct pdu_aspa *)pdu)->ver != 2) {
+		if (((struct pdu_aspa *)pdu)->ver != RTR_PROTOCOL_VERSION_2) {
 			error = UNSUPPORTED_PROTOCOL_VER;
 			goto error;
 		}
@@ -710,9 +716,9 @@ error:
 		rtr_send_error_pdu_from_network(rtr_socket, pdu, sizeof(header), CORRUPT_DATA, txt, sizeof(txt));
 	} else if (error == PDU_TOO_BIG) {
 		RTR_DBG1("PDU too big");
-		char txt[42];
+		char txt[43];
 
-		snprintf(txt, sizeof(txt), "PDU too big, max. PDU size is: %u bytes", RTR_MAX_PDU_LEN);
+		snprintf(txt, sizeof(txt), "PDU too big, max. PDU size is: %lu bytes", RTR_MAX_PDU_LEN);
 		RTR_DBG("%s", txt);
 		rtr_send_error_pdu_from_network(rtr_socket, pdu, sizeof(header), CORRUPT_DATA, txt, sizeof(txt));
 	} else if (error == UNSUPPORTED_PDU_TYPE) {
@@ -1376,7 +1382,7 @@ static int rtr_sync_update_tables(struct rtr_socket *rtr_socket, struct pfx_tabl
 	}
 
 	rtr_socket->serial_number = eod_pdu->sn;
-	RTR_DBG("Sync successful, received %u Prefix PDUs, %u Router Key PDUs, %u ASPA PDUs, session_id: %u, SN: %u",
+	RTR_DBG("Sync successful, received %u Prefix PDUs, %u Router Key PDUs, %lu ASPA PDUs, session_id: %u, SN: %u",
 		(ipv4_pdu_count + ipv6_pdu_count), router_key_pdu_count, aspa_pdu_count, rtr_socket->session_id,
 		rtr_socket->serial_number);
 
@@ -1397,7 +1403,8 @@ static inline int rtr_handle_eod_pdu(struct rtr_socket *rtr_socket, struct pdu_e
 		return RTR_ERROR;
 	}
 
-	if (eod_pdu->ver == RTR_PROTOCOL_VERSION_1 && rtr_socket->iv_mode != RTR_INTERVAL_MODE_IGNORE_ANY) {
+	if ((eod_pdu->ver == RTR_PROTOCOL_VERSION_1 || eod_pdu->ver == RTR_PROTOCOL_VERSION_2)
+			&& rtr_socket->iv_mode != RTR_INTERVAL_MODE_IGNORE_ANY) {
 		int interv_retval;
 
 		interv_retval = rtr_check_interval_option(rtr_socket, rtr_socket->iv_mode,

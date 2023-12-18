@@ -30,10 +30,11 @@ static const uint32_t RTR_RETRY_MIN = 1; // one second
 static const uint32_t RTR_RETRY_MAX = 7200; // two hours
 static const uint32_t RTR_RETRY_DEFAULT = 600; // ten minutes
 
-static const uint8_t RTR_PROTOCOL_VERSION_0; // = 0
+static const uint8_t RTR_PROTOCOL_VERSION_0 = 0;
 static const uint8_t RTR_PROTOCOL_VERSION_1 = 1;
+static const uint8_t RTR_PROTOCOL_VERSION_2 = 2;
 
-static const uint8_t RTR_PROTOCOL_MIN_SUPPORTED_VERSION; // = 0
+static const uint8_t RTR_PROTOCOL_MIN_SUPPORTED_VERSION = 0;
 static const uint8_t RTR_PROTOCOL_MAX_SUPPORTED_VERSION = 2;
 
 enum rtr_interval_range { RTR_BELOW_INTERVAL_RANGE = -1, RTR_INSIDE_INTERVAL_RANGE = 0, RTR_ABOVE_INTERVAL_RANGE = 1 };
