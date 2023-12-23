@@ -101,6 +101,9 @@ enum aspa_status aspa_array_reallocate(struct aspa_array *array)
 
 enum aspa_status aspa_array_set_record(struct aspa_array *array, size_t index, struct aspa_record *record)
 {
+    if (!array || index >= array->size || array->size == 0 || !array->data)
+        return ASPA_ERROR;
+
 	array->data[index] = *record;
 	return ASPA_SUCCESS;
 }
@@ -167,40 +170,6 @@ inline struct aspa_record *aspa_array_get_record(struct aspa_array *array, size_
 
 	return &array->data[index];
 }
-
-//void aspa_array_private_insert(struct aspa_array *vector, struct aspa_record *record)
-//{
-//	// TODO: Handle replacements
-//	// iterator running from the back of the array to the front
-//	size_t j = vector->size;
-//
-//	// we are moving from the back of the array to the front while looking
-//	// for the place where to insert our new record
-//	while (j > 0 && vector->data[j - 1].customer_asn > record->customer_asn) {
-//		// moving data to the right
-//		vector->data[j] = vector->data[j - 1];
-//		j -= 1;
-//	}
-//
-//	vector->data[j] = *record;
-//}
-
-//enum aspa_retval aspa_array_insert(struct aspa_array *vector, struct aspa_record *record)
-//{
-//	// check if this element will fit into the vector
-//	if (vector->size >= vector->capacity) {
-//		// increasing the vectors size so the new element fits
-//		if (aspa_array_reallocate(vector) != ASPA_SUCCESS) {
-//			return ASPA_ERROR;
-//		}
-//	}
-//
-//	// insert the element at the correct place
-//	aspa_array_private_insert(vector, record);
-//	vector->size += 1;
-//
-//	return ASPA_SUCCESS;
-//}
 
 enum aspa_status aspa_array_append(struct aspa_array *array, struct aspa_record *record)
 {

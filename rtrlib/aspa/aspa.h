@@ -122,13 +122,12 @@ void aspa_table_init(struct aspa_table *aspa_table, aspa_update_fp update_fp);
 void aspa_table_free(struct aspa_table *aspa_table, bool notify);
 
 /**
- * @brief Registers a new socket as source.
+ * @brief Removes all entries in the spki_table that match the passed socket_id.
  *
- * @param[in] aspa_table aspa_table to use.
- * @param[in] rtr_socket origin socket of the record
- * @param notify A boolean value determining whether clients about removed records.
- * @return @c ASPA_SUCCESS On success.
- * @return @c ASPA_ERROR On error.
+ * @param[in] aspa_table ASPA table to use.
+ * @param[in] socket origin socket of the record
+ * @return @c SPKI_SUCCESS On success.
+ * @return @c SPKI_ERROR On error.
  */
 enum aspa_status aspa_table_src_remove(struct aspa_table *aspa_table, struct rtr_socket *rtr_socket, bool notify);
 
@@ -141,7 +140,7 @@ enum aspa_verification_result {
 };
 
 /**
- * @brief Verifies an @c AS_PATH .
+ * @brief Verifies an AS_PATH .
  *
  * Implements an optimized version of the ASPA verification algorithm described in section 6.1 of
  * https://datatracker.ietf.org/doc/draft-ietf-sidrops-aspa-verification/16/ .

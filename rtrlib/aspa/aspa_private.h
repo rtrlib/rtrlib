@@ -27,8 +27,6 @@
 
 #define ASPA_UPDATE_IN_PLACE 1
 
-// MARK: - Storage
-
 /**
  * @brief A linked list storing the bond between a socket and an @c aspa_array .
  */
@@ -39,7 +37,7 @@ struct aspa_store_node {
 };
 
 /**
- * @brief Moves all ASPA records associated with the given socket from the source table into the destination table.
+ * @brief Replaces all ASPA records associated with the given socket with the records in the src table.
  * @param[in,out] dst The destination table. Existing records associated with the socket are replaced.
  * @param[in,out] src The source table.
  * @param[in,out] rtr_socket The socket the records are associated with.
