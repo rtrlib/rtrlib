@@ -52,8 +52,6 @@ enum aspa_status aspa_array_free(struct aspa_array *array, bool free_provider_se
  */
 enum aspa_status aspa_array_reallocate(struct aspa_array *array);
 
-enum aspa_status aspa_array_set_record(struct aspa_array *array, size_t index, struct aspa_record *record);
-
 /**
  * @brief Will insert the element at the correct place in the list so the ascending order is preserved
  * This function assumes that the data field is large enough to fit one more element

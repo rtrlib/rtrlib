@@ -99,15 +99,6 @@ enum aspa_status aspa_array_reallocate(struct aspa_array *array)
 	return ASPA_SUCCESS;
 }
 
-enum aspa_status aspa_array_set_record(struct aspa_array *array, size_t index, struct aspa_record *record)
-{
-    if (!array || index >= array->size || array->size == 0 || !array->data)
-        return ASPA_ERROR;
-
-	array->data[index] = *record;
-	return ASPA_SUCCESS;
-}
-
 enum aspa_status aspa_array_insert(struct aspa_array *array, size_t index, struct aspa_record *record)
 {
 	if (index > array->size)
