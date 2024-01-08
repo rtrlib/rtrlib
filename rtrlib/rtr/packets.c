@@ -16,8 +16,8 @@
 #include "rtrlib/lib/log_private.h"
 #include "rtrlib/lib/utils_private.h"
 #include "rtrlib/pfx/pfx_private.h"
-#include "rtrlib/rtr/rtr_private.h"
 #include "rtrlib/rtr/rtr_pdus.h"
+#include "rtrlib/rtr/rtr_private.h"
 #include "rtrlib/spki/hashtable/ht-spkitable_private.h"
 #include "rtrlib/spki/spkitable.h"
 #include "rtrlib/transport/transport_private.h"
@@ -64,8 +64,7 @@ static int interval_send_error_pdu(struct rtr_socket *rtr_socket, void *pdu, uin
 
 static bool rtr_version_supported(uint8_t version)
 {
-	return RTR_PROTOCOL_MIN_SUPPORTED_VERSION <= version &&
-		RTR_PROTOCOL_MAX_SUPPORTED_VERSION >= version;
+	return RTR_PROTOCOL_MIN_SUPPORTED_VERSION <= version && RTR_PROTOCOL_MAX_SUPPORTED_VERSION >= version;
 }
 
 static inline enum pdu_type rtr_get_pdu_type(const void *pdu)
@@ -483,8 +482,8 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
 	// Handle live downgrading
 	if (!rtr_socket->has_received_pdus) {
 		if (header.type != ERROR && rtr_socket->version > header.ver && rtr_version_supported(header.ver)) {
-			RTR_DBG("First received PDU is a version %u PDU, downgrading from version %u to %u",
-					header.ver, rtr_socket->version, header.ver);
+			RTR_DBG("First received PDU is a version %u PDU, downgrading from version %u to %u", header.ver,
+				rtr_socket->version, header.ver);
 			rtr_socket->version = header.ver;
 		}
 		rtr_socket->has_received_pdus = true;
@@ -1097,8 +1096,8 @@ static int rtr_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_tabl
 	enum aspa_status res = aspa_table_update(aspa_table, rtr_socket, *operations, pdus_size, false,
 						 failed_operation, finalization_args);
 #else
-	enum aspa_status res = aspa_table_update(aspa_table, rtr_socket, *operations, pdus_size,
-						 failed_operation, finalization_args);
+	enum aspa_status res =
+		aspa_table_update(aspa_table, rtr_socket, *operations, pdus_size, failed_operation, finalization_args);
 #endif
 
 	if (*failed_operation) {
@@ -1264,8 +1263,8 @@ static inline int rtr_handle_eod_pdu(struct rtr_socket *rtr_socket, struct pdu_e
 		return RTR_ERROR;
 	}
 
-	if ((eod_pdu->ver == RTR_PROTOCOL_VERSION_1 || eod_pdu->ver == RTR_PROTOCOL_VERSION_2)
-			&& rtr_socket->iv_mode != RTR_INTERVAL_MODE_IGNORE_ANY) {
+	if ((eod_pdu->ver == RTR_PROTOCOL_VERSION_1 || eod_pdu->ver == RTR_PROTOCOL_VERSION_2) &&
+	    rtr_socket->iv_mode != RTR_INTERVAL_MODE_IGNORE_ANY) {
 		int interv_retval;
 
 		interv_retval = rtr_check_interval_option(rtr_socket, rtr_socket->iv_mode,
@@ -1508,7 +1507,7 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 					spki_table_free_without_notify(spki_shadow_table);
 					lrtr_free(spki_shadow_table);
 				}
-				
+
 				if (aspa_shadow_table) {
 					aspa_table_free(aspa_shadow_table, false);
 				}

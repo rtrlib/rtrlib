@@ -1,5 +1,6 @@
-#include <stdint.h>
 #include "rtrlib/spki/spkitable.h"
+
+#include <stdint.h>
 
 enum pdu_error_type {
 	CORRUPT_DATA = 0,
@@ -154,4 +155,3 @@ struct pdu_end_of_data_v1_v2 {
 	uint32_t retry_interval;
 	uint32_t expire_interval;
 };
-

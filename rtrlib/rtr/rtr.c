@@ -81,7 +81,7 @@ int rtr_start(struct rtr_socket *rtr_socket)
 	if (rtr_socket->thread_id)
 		return RTR_ERROR;
 
-	int rtval = pthread_create(&(rtr_socket->thread_id), NULL, (void *(*)(void *)) &rtr_fsm_start, rtr_socket);
+	int rtval = pthread_create(&(rtr_socket->thread_id), NULL, (void *(*)(void *)) & rtr_fsm_start, rtr_socket);
 
 	if (rtval == 0)
 		return RTR_SUCCESS;
