@@ -161,7 +161,7 @@ static void test_pdu_to_network_byte_order(void **state)
 static void test_pdu_to_host_byte_order(void **state)
 {
 	struct pdu_serial_notify pdu_serial;
-	struct pdu_end_of_data_v1 pdu_eod;
+	struct pdu_end_of_data_v1_v2 pdu_eod;
 	struct pdu_aspa *aspa = malloc(24);
 
 	memset(aspa, 0, 24);
@@ -380,7 +380,7 @@ static void test_rtr_pdu_check_interval(void **state)
 	UNUSED(state);
 
 	struct rtr_socket rtr_socket;
-	struct pdu_end_of_data_v1 pdu_eod;
+	struct pdu_end_of_data_v1_v2 pdu_eod;
 
 	int retval;
 
