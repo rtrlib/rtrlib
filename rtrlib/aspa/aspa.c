@@ -346,7 +346,6 @@ static enum aspa_status aspa_table_update_internal(struct aspa_table *aspa_table
 				// Replace record in operation so it could be undone later.
 				current->record = *existing_record;
 			}
-			existing_i -= 1;
 #endif
 		}
 	}
