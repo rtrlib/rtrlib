@@ -57,12 +57,17 @@ int main(void)
 	/* These variables are not in the global scope
 	 * because it would cause warnings about discarding constness
 	 */
+
 	char RPKI_CACHE_HOST[] = "rpki-validator.realmv6.org";
-	char RPKI_CACHE_POST[] = "8283";
+	char RPKI_CACHE_PORT[] = "8283";
+
+	//char RPKI_CACHE_HOST[] = "rtrlab.tanneberger.me";
+	//char RPKI_CACHE_PORT[] = "3325"; // prod rtr
+	//char RPKI_CACHE_PORT[] = "3324"; // aspa rtr
 
 	/* create a TCP transport socket */
 	struct tr_socket tr_tcp;
-	struct tr_tcp_config tcp_config = {RPKI_CACHE_HOST, RPKI_CACHE_POST, NULL, NULL, NULL, 0};
+	struct tr_tcp_config tcp_config = {RPKI_CACHE_HOST, RPKI_CACHE_PORT, NULL, NULL, NULL, 0};
 	struct rtr_socket rtr_tcp;
 	struct rtr_mgr_group groups[1];
 
@@ -95,8 +100,9 @@ int main(void)
 	}
 
 	int i = 0;
-	struct test_validity_query q = queries[i];
+
 	/* test validity of entries in queries[] */
+	/*struct test_validity_query q = queries[i];
 	while (q.pfx) {
 		struct lrtr_ip_addr pref;
 		enum pfxv_state result;
@@ -112,7 +118,7 @@ int main(void)
 		}
 		printf("%s/%d	\tOK\n", q.pfx, q.len);
 		q = queries[++i];
-	}
+	} */
 
 	rtr_mgr_stop(conf);
 	rtr_mgr_free(conf);
