@@ -35,6 +35,7 @@
 
 #include "config.h"
 
+#include "rtrlib/aspa/aspa.h"
 #include "rtrlib/pfx/pfx.h"
 #include "rtrlib/spki/spkitable.h"
 #ifdef RTRLIB_BGPSEC_ENABLED
@@ -88,6 +89,7 @@ struct rtr_mgr_config {
 	void *status_fp_data;
 	struct pfx_table *pfx_table;
 	struct spki_table *spki_table;
+	struct aspa_table *aspa_table;
 };
 
 /**
@@ -118,6 +120,8 @@ struct rtr_mgr_config {
 			every added and removed pfx_record.
  * @param[in] spki_update_fp Pointer to spki_update_fp callback, that is
 			     executed for every added and removed spki_record.
+ * @param[in] aspa_update_fp Pointer to aspa_update_fp callback, that is
+				 executed for every added and removed aspa_record..
  * @param[in] status_fp Pointer to a function that is called if the connection
  *			status from one of the socket groups is changed.
  * @param[in] status_fp_data Pointer to a memory area that is passed to the
@@ -131,7 +135,7 @@ struct rtr_mgr_config {
 int rtr_mgr_init(struct rtr_mgr_config **config_out, struct rtr_mgr_group groups[], const unsigned int groups_len,
 		 const unsigned int refresh_interval, const unsigned int expire_interval,
 		 const unsigned int retry_interval, const pfx_update_fp update_fp, const spki_update_fp spki_update_fp,
-		 const rtr_mgr_status_fp status_fp, void *status_fp_data);
+		 const aspa_update_fp aspa_update_fp, const rtr_mgr_status_fp status_fp, void *status_fp_data);
 
 /**
  * @brief Adds a new rtr_mgr_group to the linked list of a initialized config.

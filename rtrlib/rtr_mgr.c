@@ -9,6 +9,7 @@
 
 #include "rtr_mgr_private.h"
 
+#include "rtrlib/aspa/aspa_private.h"
 #include "rtrlib/config.h"
 #include "rtrlib/lib/alloc_utils_private.h"
 #include "rtrlib/lib/log_private.h"
@@ -71,8 +72,8 @@ static int rtr_mgr_init_sockets(struct rtr_mgr_group *group, struct rtr_mgr_conf
 {
 	for (unsigned int i = 0; i < group->sockets_len; i++) {
 		enum rtr_rtvals err_code = rtr_init(group->sockets[i], NULL, config->pfx_table, config->spki_table,
-						    refresh_interval, expire_interval, retry_interval, iv_mode,
-						    rtr_mgr_cb, config, group);
+						    config->aspa_table, refresh_interval, expire_interval,
+						    retry_interval, iv_mode, rtr_mgr_cb, config, group);
 		if (err_code)
 			return err_code;
 	}
@@ -292,16 +293,19 @@ int rtr_mgr_config_cmp_tommy(const void *a, const void *b)
 	return rtr_mgr_config_cmp(ar->group, br->group);
 }
 
+// TODO: Additional arguments trailing?
 RTRLIB_EXPORT int rtr_mgr_init(struct rtr_mgr_config **config_out, struct rtr_mgr_group groups[],
 			       const unsigned int groups_len, const unsigned int refresh_interval,
 			       const unsigned int expire_interval, const unsigned int retry_interval,
 			       const pfx_update_fp update_fp, const spki_update_fp spki_update_fp,
-			       const rtr_mgr_status_fp status_fp, void *status_fp_data)
+			       const aspa_update_fp aspa_update_fp, const rtr_mgr_status_fp status_fp,
+			       void *status_fp_data)
 {
 	enum rtr_rtvals err_code = RTR_ERROR;
 	enum rtr_interval_mode iv_mode = RTR_INTERVAL_MODE_DEFAULT_MIN_MAX;
 	struct pfx_table *pfxt = NULL;
 	struct spki_table *spki_table = NULL;
+	struct aspa_table *aspa_table = NULL;
 	struct rtr_mgr_config *config = NULL;
 	struct rtr_mgr_group *cg = NULL;
 	struct rtr_mgr_group_node *group_node;
@@ -352,8 +356,14 @@ RTRLIB_EXPORT int rtr_mgr_init(struct rtr_mgr_config **config_out, struct rtr_mg
 		goto err;
 	spki_table_init(spki_table, spki_update_fp);
 
+	aspa_table = lrtr_malloc(sizeof(*aspa_table));
+	if (!aspa_table)
+		goto err;
+	aspa_table_init(aspa_table, aspa_update_fp);
+
 	config->pfx_table = pfxt;
 	config->spki_table = spki_table;
+	config->aspa_table = aspa_table;
 
 	/* Copy the groups from the array into linked list config->groups */
 	config->len = groups_len;
@@ -395,8 +405,11 @@ err:
 		spki_table_free(spki_table);
 	if (pfxt)
 		pfx_table_free(pfxt);
+	if (aspa_table)
+		aspa_table_free(aspa_table, false);
 	lrtr_free(pfxt);
 	lrtr_free(spki_table);
+	lrtr_free(aspa_table);
 
 	lrtr_free(cg);
 
@@ -454,6 +467,7 @@ RTRLIB_EXPORT void rtr_mgr_free(struct rtr_mgr_config *config)
 
 	pfx_table_free(config->pfx_table);
 	spki_table_free(config->spki_table);
+	aspa_table_free(config->aspa_table, true);
 	lrtr_free(config->spki_table);
 	lrtr_free(config->pfx_table);
 
@@ -485,6 +499,15 @@ RTRLIB_EXPORT inline int rtr_mgr_validate(struct rtr_mgr_config *config, const u
 					  enum pfxv_state *result)
 {
 	return pfx_table_validate(config->pfx_table, asn, prefix, mask_len, result);
+}
+
+/* cppcheck-suppress unusedFunction */
+RTRLIB_EXPORT inline enum aspa_status rtr_mgr_verify_as_path(struct rtr_mgr_config *config, uint32_t as_path[],
+							     size_t len, enum aspa_direction direction,
+							     enum aspa_verification_result *result)
+{
+	*result = aspa_verify_as_path(config->aspa_table, as_path, len, direction);
+	return ASPA_SUCCESS;
 }
 
 /* cppcheck-suppress unusedFunction */
@@ -534,7 +557,7 @@ RTRLIB_EXPORT int rtr_mgr_add_group(struct rtr_mgr_config *config, const struct 
 			goto err;
 		}
 
-		// TODO This is not pretty. It wants to get the same intervals
+		// TODO: This is not pretty. It wants to get the same intervals
 		// that are being used by other groups. Maybe intervals should
 		// be store globally/per-group/per-socket?
 		if (gnode->group->sockets[0]->refresh_interval)
