@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-const int connection_timeout = 20;
+const int connection_timeout = 100;
 enum rtr_mgr_status connection_status = -1;
 
 static void connection_status_callback(const struct rtr_mgr_group *group __attribute__((unused)),
