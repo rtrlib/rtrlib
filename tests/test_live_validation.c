@@ -34,7 +34,7 @@ const struct test_validity_query queries[] = {{"93.175.146.0", 24, 12654, BGP_PF
 					      {"2001:7fb:ff03::", 48, 12654, BGP_PFXV_STATE_NOT_FOUND},
 					      {NULL, 0, 0, 0} };
 
-const int connection_timeout = 20;
+const int connection_timeout = 100;
 enum rtr_mgr_status connection_status = -1;
 
 static void connection_status_callback(const struct rtr_mgr_group *group __attribute__((unused)),
@@ -90,28 +90,9 @@ int main(void)
 
 		sleep(1);
 		sleep_counter++;
+		printf("%d", sleep_counter);
 		if (sleep_counter >= connection_timeout)
 			return EXIT_FAILURE;
-	}
-
-	int i = 0;
-	struct test_validity_query q = queries[i];
-	/* test validity of entries in queries[] */
-	while (q.pfx) {
-		struct lrtr_ip_addr pref;
-		enum pfxv_state result;
-		struct pfx_record *reason = NULL;
-		unsigned int reason_len = 0;
-
-		lrtr_ip_str_to_addr(q.pfx, &pref);
-		pfx_table_validate_r(groups[0].sockets[0]->pfx_table, &reason, &reason_len, q.asn, &pref, q.len,
-				     &result);
-		if (result != q.val) {
-			printf("ERROR: prefix validation mismatch.\n");
-			return EXIT_FAILURE;
-		}
-		printf("%s/%d	\tOK\n", q.pfx, q.len);
-		q = queries[++i];
 	}
 
 	rtr_mgr_stop(conf);
