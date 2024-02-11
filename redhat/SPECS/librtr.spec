@@ -25,8 +25,6 @@ allows validating and signing BGPsec AS paths. It supports different
 types of transport sessions (e.g., SSH, unprotected TCP) and is easily
 extendable.
 
-%changelog
-
 %package devel
 Summary:        Small extensible RPKI-RTR-Client C library. Development files
 Group:          Development/Libraries
@@ -41,8 +39,6 @@ types of transport sessions (e.g., SSH, unprotected TCP) and is easily
 extendable.
 .
 This package contains development files.
-
-%changelog
 
 %package doc
 Summary:        Small extensible RPKI-RTR-Client C library. Documentation
@@ -60,8 +56,6 @@ extendable.
 .
 This package contains documentation files.
 
-%changelog
-
 %package -n rtr-tools
 Summary:        RPKI-RTR command line tools
 Group:          Development/Libraries
@@ -73,8 +67,6 @@ Rtrclient is command line that connects to an RPKI-RTR server and prints
 protocol information and information about the fetched ROAs to the console.
 rpki-rov is a command line tool that connects to an RPKI-RTR server and
 allows to validate given IP prefixes and origin ASes.
-
-%changelog
 
 %prep
 if [ ! -f %{SOURCE0} ]; then
