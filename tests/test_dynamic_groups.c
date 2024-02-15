@@ -66,7 +66,6 @@ int main(void)
 	//start the connection manager
 	rtr_mgr_start(conf);
 	
-	/*
 	int sleep_counter = 0;
 	// wait 20 sec till at least one group is fully synchronized with the server
 	// otherwise EXIT_FAILURE.
@@ -77,6 +76,7 @@ int main(void)
 
 		sleep(1);
 	}
+	/*
 
 	assert(conf->len == 1);
 
