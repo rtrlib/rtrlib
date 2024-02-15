@@ -164,10 +164,10 @@ void *rtr_fsm_start(struct rtr_socket *rtr_socket)
 
 			// Allow thread cancellation for recv code path only.
 			// This should be enough since we spend most of the time blocking on recv
-			pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
+			//pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
 			int ret = rtr_wait_for_sync(
 				rtr_socket); // blocks till expire_interval is expired or PDU was received
-			pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
+			//pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
 
 			if (ret == RTR_SUCCESS) { // send serial query
 				if (rtr_send_serial_query(rtr_socket) == RTR_SUCCESS)
@@ -204,9 +204,9 @@ void *rtr_fsm_start(struct rtr_socket *rtr_socket)
 			tr_close(rtr_socket->tr_socket);
 			rtr_change_socket_state(rtr_socket, RTR_CONNECTING);
 			RTR_DBG("Waiting %u", rtr_socket->retry_interval);
-			pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
+			//pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
 			sleep(rtr_socket->retry_interval);
-			pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
+			//pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
 		}
 
 		else if (rtr_socket->state == RTR_ERROR_FATAL) {
@@ -214,9 +214,9 @@ void *rtr_fsm_start(struct rtr_socket *rtr_socket)
 			tr_close(rtr_socket->tr_socket);
 			rtr_change_socket_state(rtr_socket, RTR_CONNECTING);
 			RTR_DBG("Waiting %u", rtr_socket->retry_interval);
-			pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
+			//pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
 			sleep(rtr_socket->retry_interval);
-			pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
+			//pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
 		}
 		*/
 
