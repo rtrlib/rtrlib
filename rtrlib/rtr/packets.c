@@ -1326,10 +1326,10 @@ int rtr_sync(struct rtr_socket *rtr_socket)
 	int oldcancelstate;
 
 	do {
-		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
+		//pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
 		int rtval = rtr_receive_pdu(rtr_socket, pdu, RTR_MAX_PDU_LEN, RTR_RECV_TIMEOUT);
 
-		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
+		//pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
 		// If the cache has closed the connection and we don't have a
 		// session_id (no packages where exchanged) we should downgrade.
 		if (rtval == TR_CLOSED && rtr_socket->request_session_id) {
