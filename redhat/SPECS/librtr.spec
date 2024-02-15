@@ -136,7 +136,7 @@ cp %{_topdir}/BUILD/LICENSE %{buildroot}/%{_docdir}/rtrlib/
 %doc LICENSE
 
 %changelog
-* Mon Jan 17 2022 Martin Winter <mwinter@opensourcerouting.org> - %{version}-%{release}
+* Mon Jan 17 2024 Martin Winter <mwinter@opensourcerouting.org> - %{version}-%{release}
 - Use cmake macros for builds on Fedora 33 and up and RedHat 9 and up
 - Fix missing SOURCES directory during rpmbuild on newer systems
 

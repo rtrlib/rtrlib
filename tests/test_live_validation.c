@@ -65,9 +65,7 @@ int main(void)
 	struct tr_tcp_config tcp_config = {RPKI_CACHE_HOST, RPKI_CACHE_PORT, NULL, NULL, NULL, 0};
 	struct rtr_socket rtr_tcp;
 	struct rtr_mgr_group groups[1];
-	int a;
 
-	char* hello = "Hello from client";
 	/* init a TCP transport and create rtr socket */
 	tr_tcp_init(&tcp_config, &tr_tcp);
 
