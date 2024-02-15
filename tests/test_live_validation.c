@@ -65,38 +65,11 @@ int main(void)
 	struct tr_tcp_config tcp_config = {RPKI_CACHE_HOST, RPKI_CACHE_PORT, NULL, NULL, NULL, 0};
 	struct rtr_socket rtr_tcp;
 	struct rtr_mgr_group groups[1];
+	int a;
 
+	char* hello = "Hello from client";
 	/* init a TCP transport and create rtr socket */
 	tr_tcp_init(&tcp_config, &tr_tcp);
-	rtr_tcp.tr_socket = &tr_tcp;
-
-	/* create a rtr_mgr_group array with 1 element */
-	groups[0].sockets = malloc(1 * sizeof(struct rtr_socket *));
-	groups[0].sockets_len = 1;
-	groups[0].sockets[0] = &rtr_tcp;
-	groups[0].preference = 1;
-
-	struct rtr_mgr_config *conf;
-
-	if (rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL, &connection_status_callback, NULL) < 0)
-		return EXIT_FAILURE;
-
-	rtr_mgr_start(conf);
-	int sleep_counter = 0;
-	/* wait for connection, or timeout and exit eventually */
-	while (!rtr_mgr_conf_in_sync(conf)) {
-		if (connection_status == RTR_MGR_ERROR)
-			return EXIT_FAILURE;
-
-		sleep(1);
-		sleep_counter++;
-		printf("%d", sleep_counter);
-		if (sleep_counter >= connection_timeout)
-			return EXIT_FAILURE;
-	}
-
-	rtr_mgr_stop(conf);
-	rtr_mgr_free(conf);
 
 	return EXIT_SUCCESS;
 }
