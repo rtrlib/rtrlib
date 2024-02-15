@@ -182,10 +182,10 @@ int tr_tcp_open(void *tr_socket)
 		 * It must be the only blocking call in this function.
 		 * Since local resources have all been freed this should be safe.
 		 */
-		//pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
+		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
 		int ret = select(tcp_socket->socket + 1, NULL, &wfds, NULL, &timeout);
 
-		//pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
+		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
 
 		if (ret < 0) {
 			TCP_DBG("Could not select tcp socket, %s", tcp_socket, strerror(errno));
