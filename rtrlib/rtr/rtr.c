@@ -140,6 +140,7 @@ void *rtr_fsm_start(struct rtr_socket *rtr_socket)
 				else
 					rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
 			}
+			rtr_change_socket_state(rtr_socket, RTR_SHUTDOWN);
 		}
 
 		else if (rtr_socket->state == RTR_RESET) {
@@ -222,6 +223,7 @@ void *rtr_fsm_start(struct rtr_socket *rtr_socket)
 
 		else if (rtr_socket->state == RTR_SHUTDOWN) {
 			RTR_DBG1("State: RTR_SHUTDOWN");
+			pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
 			pthread_exit(NULL);
 		}
 		
