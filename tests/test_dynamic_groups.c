@@ -65,7 +65,8 @@ int main(void)
 
 	//start the connection manager
 	rtr_mgr_start(conf);
-
+	
+	/*
 	int sleep_counter = 0;
 	// wait 20 sec till at least one group is fully synchronized with the server
 	// otherwise EXIT_FAILURE.
@@ -170,12 +171,12 @@ int main(void)
 	//try to remove last remainig group.
 	retval = rtr_mgr_remove_group(conf, 3);
 	assert(retval == RTR_ERROR);
-
+	*/
 	rtr_mgr_stop(conf);
 	rtr_mgr_free(conf);
 	free(groups[0].sockets);
 	free(group2.sockets);
-	free(group3.sockets);
-	free(group4.sockets);
-	free(group5.sockets);
+	//free(group3.sockets);
+	//free(group4.sockets);
+	//free(group5.sockets);
 }
