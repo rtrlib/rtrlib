@@ -730,7 +730,6 @@ static int rtr_handle_cache_response_pdu(struct rtr_socket *rtr_socket, char *pd
 		rtr_socket->session_id = cr_pdu->session_id;
 	} else {
 		if (rtr_socket->session_id != cr_pdu->session_id) {
-			RTR_DBG1("FOOO");
 			const char txt[] =
 				"Wrong session_id in Cache Response PDU"; //TODO: Appendrtr_socket->session_id to string
 			rtr_send_error_pdu_from_host(rtr_socket, NULL, 0, CORRUPT_DATA, txt, sizeof(txt));

@@ -34,7 +34,7 @@ const struct test_validity_query queries[] = {{"93.175.146.0", 24, 12654, BGP_PF
 					      {"2001:7fb:ff03::", 48, 12654, BGP_PFXV_STATE_NOT_FOUND},
 					      {NULL, 0, 0, 0} };
 
-const int connection_timeout = 100;
+const int connection_timeout = 60;
 enum rtr_mgr_status connection_status = -1;
 
 static void connection_status_callback(const struct rtr_mgr_group *group __attribute__((unused)),
@@ -58,16 +58,64 @@ int main(void)
 	 * because it would cause warnings about discarding constness
 	 */
 	char RPKI_CACHE_HOST[] = "rpki-cache.netd.cs.tu-dresden.de";
-	char RPKI_CACHE_PORT[] = "3323";
+	char RPKI_CACHE_POST[] = "3323";
 
 	/* create a TCP transport socket */
 	struct tr_socket tr_tcp;
-	struct tr_tcp_config tcp_config = {RPKI_CACHE_HOST, RPKI_CACHE_PORT, NULL, NULL, NULL, 0};
+	struct tr_tcp_config tcp_config = {RPKI_CACHE_HOST, RPKI_CACHE_POST, NULL, NULL, NULL, 0};
 	struct rtr_socket rtr_tcp;
 	struct rtr_mgr_group groups[1];
 
 	/* init a TCP transport and create rtr socket */
 	tr_tcp_init(&tcp_config, &tr_tcp);
+	rtr_tcp.tr_socket = &tr_tcp;
+
+	/* create a rtr_mgr_group array with 1 element */
+	groups[0].sockets = malloc(1 * sizeof(struct rtr_socket *));
+	groups[0].sockets_len = 1;
+	groups[0].sockets[0] = &rtr_tcp;
+	groups[0].preference = 1;
+
+	struct rtr_mgr_config *conf;
+
+	if (rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL, &connection_status_callback, NULL) < 0)
+		return EXIT_FAILURE;
+
+	rtr_mgr_start(conf);
+	int sleep_counter = 0;
+	/* wait for connection, or timeout and exit eventually */
+	while (!rtr_mgr_conf_in_sync(conf)) {
+		if (connection_status == RTR_MGR_ERROR)
+			return EXIT_FAILURE;
+
+		sleep(1);
+		sleep_counter++;
+		if (sleep_counter >= connection_timeout)
+			return EXIT_FAILURE;
+	}
+
+	int i = 0;
+	struct test_validity_query q = queries[i];
+	/* test validity of entries in queries[] */
+	while (q.pfx) {
+		struct lrtr_ip_addr pref;
+		enum pfxv_state result;
+		struct pfx_record *reason = NULL;
+		unsigned int reason_len = 0;
+
+		lrtr_ip_str_to_addr(q.pfx, &pref);
+		pfx_table_validate_r(groups[0].sockets[0]->pfx_table, &reason, &reason_len, q.asn, &pref, q.len,
+				     &result);
+		if (result != q.val) {
+			printf("ERROR: prefix validation mismatch.\n");
+			return EXIT_FAILURE;
+		}
+		printf("%s/%d	\tOK\n", q.pfx, q.len);
+		q = queries[++i];
+	}
+
+	rtr_mgr_stop(conf);
+	rtr_mgr_free(conf);
 
 	return EXIT_SUCCESS;
 }

@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-const int connection_timeout = 40;
+const int connection_timeout = 60;
 enum rtr_mgr_status connection_status = -1;
 
 static void connection_status_callback(const struct rtr_mgr_group *group __attribute__((unused)),
@@ -65,7 +65,7 @@ int main(void)
 
 	//start the connection manager
 	rtr_mgr_start(conf);
-	
+
 	int sleep_counter = 0;
 	// wait 20 sec till at least one group is fully synchronized with the server
 	// otherwise EXIT_FAILURE.
@@ -76,7 +76,6 @@ int main(void)
 
 		sleep(1);
 	}
-	/*
 
 	assert(conf->len == 1);
 
@@ -171,12 +170,11 @@ int main(void)
 	//try to remove last remainig group.
 	retval = rtr_mgr_remove_group(conf, 3);
 	assert(retval == RTR_ERROR);
-	*/
 	rtr_mgr_stop(conf);
 	rtr_mgr_free(conf);
 	free(groups[0].sockets);
 	free(group2.sockets);
-	//free(group3.sockets);
-	//free(group4.sockets);
-	//free(group5.sockets);
+	free(group3.sockets);
+	free(group4.sockets);
+	free(group5.sockets);
 }

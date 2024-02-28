@@ -175,7 +175,6 @@ void *rtr_fsm_start(struct rtr_socket *rtr_socket)
 			}
 		}
 
-		/*
 		else if (rtr_socket->state == RTR_FAST_RECONNECT) {
 			RTR_DBG1("State: RTR_FAST_RECONNECT");
 			tr_close(rtr_socket->tr_socket);
@@ -218,18 +217,11 @@ void *rtr_fsm_start(struct rtr_socket *rtr_socket)
 			sleep(rtr_socket->retry_interval);
 			pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
 		}
-		*/
 
 		else if (rtr_socket->state == RTR_SHUTDOWN) {
 			RTR_DBG1("State: RTR_SHUTDOWN");
 			pthread_exit(NULL);
 		}
-		/*
-		else {
-			tr_close(rtr_socket->tr_socket);
-			rtr_change_socket_state(rtr_socket, RTR_SHUTDOWN);
-		}
-		*/
 	}
 }
 
