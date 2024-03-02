@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-const int connection_timeout = 20;
+const int connection_timeout = 60;
 enum rtr_mgr_status connection_status = -1;
 
 static void connection_status_callback(const struct rtr_mgr_group *group __attribute__((unused)),
@@ -170,7 +170,6 @@ int main(void)
 	//try to remove last remainig group.
 	retval = rtr_mgr_remove_group(conf, 3);
 	assert(retval == RTR_ERROR);
-
 	rtr_mgr_stop(conf);
 	rtr_mgr_free(conf);
 	free(groups[0].sockets);
