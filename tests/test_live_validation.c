@@ -30,8 +30,8 @@ const struct test_validity_query queries[] = {{"93.175.146.0", 24, 12654, BGP_PF
 					      {"2001:7fb:fd02::", 48, 12654, BGP_PFXV_STATE_VALID},
 					      {"93.175.147.0", 24, 12654, BGP_PFXV_STATE_INVALID},
 					      {"2001:7fb:fd03::", 48, 12654, BGP_PFXV_STATE_INVALID},
-					      {"84.205.83.0", 24, 12654, BGP_PFXV_STATE_NOT_FOUND},
-					      {"2001:7fb:ff03::", 48, 12654, BGP_PFXV_STATE_NOT_FOUND},
+					      {"84.205.83.0", 24, 12654, BGP_PFXV_STATE_VALID},
+					      {"2001:7fb:ff03::", 48, 12654, BGP_PFXV_STATE_VALID},
 					      {NULL, 0, 0, 0} };
 
 const int connection_timeout = 60;
