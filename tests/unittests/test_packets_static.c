@@ -112,29 +112,59 @@ static void test_rtr_get_pdu_type(void **state)
 
 static void test_pdu_to_network_byte_order(void **state)
 {
-	struct pdu_serial_query pdu;
+	struct pdu_serial_query pdu_serial;
+	struct pdu_aspa *aspa = malloc(24);
+
+	memset(aspa, 0, 24);
 
 	UNUSED(state);
 
-	pdu.ver = 0;
-	pdu.type = SERIAL_QUERY;
-	pdu.session_id = 0x32A5;
-	pdu.len = 0xC;
-	pdu.sn = 0xCC56E9BB;
+	pdu_serial.ver = 0;
+	pdu_serial.type = SERIAL_QUERY;
+	pdu_serial.session_id = 0x32A5;
+	pdu_serial.len = 0xC;
+	pdu_serial.sn = 0xCC56E9BB;
 
-	rtr_pdu_to_network_byte_order(&pdu);
+	rtr_pdu_to_network_byte_order(&pdu_serial);
 
-	assert_int_equal(pdu.ver, 0);
-	assert_int_equal(pdu.type, SERIAL_QUERY);
-	assert_int_equal(pdu.session_id, 0xA532);
-	assert_int_equal(pdu.len, 0x0C000000);
-	assert_int_equal(pdu.sn, 0xBBE956CC);
+	assert_int_equal(pdu_serial.ver, 0);
+	assert_int_equal(pdu_serial.type, SERIAL_QUERY);
+	assert_int_equal(pdu_serial.session_id, 0xA532);
+	assert_int_equal(pdu_serial.len, 0x0C000000);
+	assert_int_equal(pdu_serial.sn, 0xBBE956CC);
+
+	aspa->ver = 2;
+	aspa->type = ASPA;
+	aspa->zero = 0;
+	aspa->flags = 0xC6;
+	aspa->afi_flags = 0xC6;
+	aspa->provider_count = 2;
+	aspa->len = 0x18;
+	aspa->customer_asn = 0xCC56E9BB;
+	aspa->provider_asns[0] = 0xBADCFE00;
+	aspa->provider_asns[1] = 0x1122;
+
+	rtr_pdu_to_network_byte_order(aspa);
+
+	assert_int_equal(aspa->ver, 2);
+	assert_int_equal(aspa->type, ASPA);
+	assert_int_equal(aspa->zero, 0);
+	assert_int_equal(aspa->flags, 0xC6);
+	assert_int_equal(aspa->afi_flags, 0xC6);
+	assert_int_equal(aspa->len, 0x18000000);
+	assert_int_equal(aspa->customer_asn, 0xBBE956CC);
+	assert_int_equal(aspa->provider_count, 0x0200);
+	assert_int_equal(aspa->provider_asns[0], 0xFEDCBA);
+	assert_int_equal(aspa->provider_asns[1], 0x22110000);
 }
 
 static void test_pdu_to_host_byte_order(void **state)
 {
 	struct pdu_serial_notify pdu_serial;
-	struct pdu_end_of_data_v1 pdu_eod;
+	struct pdu_end_of_data_v1_v2 pdu_eod;
+	struct pdu_aspa *aspa = malloc(24);
+
+	memset(aspa, 0, 24);
 
 	UNUSED(state);
 
@@ -172,16 +202,40 @@ static void test_pdu_to_host_byte_order(void **state)
 	assert_int_equal(pdu_eod.refresh_interval, 0xAF000000);
 	assert_int_equal(pdu_eod.retry_interval, 0xDC000000);
 	assert_int_equal(pdu_eod.expire_interval, 0xCF0C0000);
+
+	aspa->ver = 2;
+	aspa->type = ASPA;
+	aspa->zero = 0;
+	aspa->flags = 0xC6;
+	aspa->afi_flags = 0xC6;
+	aspa->provider_count = 0x0200;
+	aspa->len = 0x18000000;
+	aspa->customer_asn = 0xBBE956CC;
+	aspa->provider_asns[0] = 0xFEDCBA;
+	aspa->provider_asns[1] = 0x22110000;
+
+	rtr_pdu_header_to_host_byte_order(aspa);
+	rtr_pdu_footer_to_host_byte_order(aspa);
+
+	assert_int_equal(aspa->ver, 2);
+	assert_int_equal(aspa->type, ASPA);
+	assert_int_equal(aspa->zero, 0);
+	assert_int_equal(aspa->flags, 0xC6);
+	assert_int_equal(aspa->afi_flags, 0xC6);
+	assert_int_equal(aspa->len, 0x18);
+	assert_int_equal(aspa->customer_asn, 0xCC56E9BB);
+	assert_int_equal(aspa->provider_count, 2);
+	assert_int_equal(aspa->provider_asns[0], 0xBADCFE00);
+	assert_int_equal(aspa->provider_asns[1], 0x1122);
 }
 
 static void test_rtr_pdu_check_size(void **state)
 {
 	struct pdu_header pdu;
-	struct pdu_error *error = malloc(30);
+	struct pdu_error *error = lrtr_calloc(1, 30);
+	struct pdu_aspa *aspa = lrtr_calloc(1, sizeof(struct pdu_aspa) + 2 * sizeof(uint32_t));
 
 	UNUSED(state);
-
-	memset(error, 0, 30);
 
 	pdu.type = SERIAL_NOTIFY;
 	pdu.len = 20;
@@ -258,6 +312,16 @@ static void test_rtr_pdu_check_size(void **state)
 	error->len = 24;
 	error->rest[11] = 0xA;
 	assert_false(rtr_pdu_check_size((struct pdu_header *)error));
+
+	/* Test ASPA pdu size checks */
+	aspa->type = ASPA;
+	aspa->len = 25;
+	aspa->provider_count = 0x0200;
+	assert_false(rtr_pdu_check_size((struct pdu_header *)aspa));
+	aspa->len = 23;
+	assert_false(rtr_pdu_check_size((struct pdu_header *)aspa));
+	aspa->len = 24;
+	assert_true(rtr_pdu_check_size((struct pdu_header *)aspa));
 }
 
 static void test_rtr_send_error_pdu(void **state)
@@ -313,7 +377,7 @@ static void test_rtr_pdu_check_interval(void **state)
 	UNUSED(state);
 
 	struct rtr_socket rtr_socket;
-	struct pdu_end_of_data_v1 pdu_eod;
+	struct pdu_end_of_data_v1_v2 pdu_eod;
 
 	int retval;
 

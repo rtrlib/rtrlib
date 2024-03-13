@@ -112,6 +112,7 @@ typedef void (*rtr_connection_state_fp)(const struct rtr_socket *rtr_socket, con
  * @param version Protocol version used by this socket
  * @param has_received_pdus True, if this socket has already received PDUs
  * @param spki_table spki_table that stores the router keys obtained from the connected rtr server
+ * @param aspa_table spki_table that stores the ASPA records obtained from the connected rtr server
  */
 struct rtr_socket {
 	struct tr_socket *tr_socket;
@@ -132,6 +133,7 @@ struct rtr_socket {
 	unsigned int version;
 	bool has_received_pdus;
 	struct spki_table *spki_table;
+	struct aspa_table *aspa_table;
 	bool is_resetting;
 };
 
