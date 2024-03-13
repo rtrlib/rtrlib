@@ -22,14 +22,11 @@ enum aspa_status aspa_array_create(struct aspa_array **array_ptr)
 	// allocation the chunk of memory of the provider as numbers
 	struct aspa_record *data_field = lrtr_malloc(sizeof(struct aspa_record) * default_initial_size);
 
-	// malloc failed so returning an error
 	if (!data_field)
 		return ASPA_ERROR;
 
-	// allocating the aspa_record itself
 	struct aspa_array *array = lrtr_malloc(sizeof(struct aspa_array));
 
-	// malloc for aspa_record failed hence we return an error
 	if (!array) {
 		lrtr_free(data_field);
 		return ASPA_ERROR;
@@ -48,7 +45,6 @@ enum aspa_status aspa_array_create(struct aspa_array **array_ptr)
 
 void aspa_array_free(struct aspa_array *array, bool free_provider_arrays)
 {
-	// if the array is null just return
 	if (!array)
 		return;
 
@@ -62,11 +58,9 @@ void aspa_array_free(struct aspa_array *array, bool free_provider_arrays)
 			}
 		}
 
-		// freeing the data
 		lrtr_free(array->data);
 	}
 
-	// freeing the array itself
 	lrtr_free(array);
 }
 
@@ -227,4 +221,36 @@ struct aspa_record *aspa_array_search(struct aspa_array *array, uint32_t custome
 
 	// element not found
 	return NULL;
+}
+
+
+enum aspa_status aspa_array_reserve(struct aspa_array *array, size_t size) {
+	// the given array is null
+	if (array == NULL) {
+		return ASPA_ERROR;
+	}
+
+	// we already have enough space allocated
+	if (array->capacity >= size) {
+		return ASPA_SUCCESS;
+	}
+
+	struct aspa_record* data = malloc(sizeof(struct aspa_record) * size);
+
+	// malloc failed
+	if (data == NULL) {
+		return ASPA_ERROR;
+	}
+
+	// coping the data from the old array into the new one
+	if (memcpy(data, array->data, array->size * sizeof(struct aspa_record)) == NULL) {
+		return ASPA_ERROR;
+	}
+
+	// updating the array
+	free(array->data);
+	array->capacity = size;
+	array->data = data;
+
+	return ASPA_SUCCESS;
 }

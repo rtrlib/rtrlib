@@ -402,7 +402,7 @@ static bool rtr_pdu_check_size(const struct pdu_header *pdu)
 		// ASN is 4 bytes each
 		expected_size += asn_count * sizeof(aspa_pdu->provider_asns[0]);
 		if (aspa_pdu->len != expected_size) {
-			RTR_DBG1("PDU is too small to contain valid ASPA PDU!");
+			RTR_DBG1("The PDU is malformed, because the specified size doesn't match the real PDU size.");
 			break;
 		}
 
@@ -1116,13 +1116,12 @@ static int rtr_undo_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa
 
 	if (res == ASPA_SUCCESS) {
 		return RTR_SUCCESS;
-	} else {
-		// Undo failed, cannot recover, remove all records associated with the socket instead
-		RTR_DBG1(
-			"Couldn't undo all update operations from failed data synchronisation: Purging all ASPA records");
-		aspa_table_src_remove(aspa_table, rtr_socket, true);
-		return RTR_ERROR;
 	}
+	// Undo failed, cannot recover, remove all records associated with the socket instead
+	RTR_DBG1(
+		"Couldn't undo all update operations from failed data synchronisation: Purging all ASPA records");
+	aspa_table_src_remove(aspa_table, rtr_socket, true);
+	return RTR_ERROR;
 }
 
 static int rtr_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_table *aspa_table,

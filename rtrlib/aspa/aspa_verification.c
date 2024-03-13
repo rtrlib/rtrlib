@@ -46,7 +46,7 @@ enum aspa_hop_result aspa_check_hop(struct aspa_table *aspa_table, uint32_t cust
 {
 	bool customer_found = false;
 
-	for (struct aspa_store_node *node = aspa_table->store; !!node; node = node->next) {
+	for (struct aspa_store_node *node = aspa_table->store; node != NULL; node = node->next) {
 		struct aspa_record *aspa_record = aspa_array_search(node->aspa_array, customer_asn);
 
 		if (!aspa_record)
@@ -132,13 +132,13 @@ static enum aspa_verification_result aspa_verify_as_path_upstream(struct aspa_ta
 		}
 	}
 
+	pthread_rwlock_unlock(&aspa_table->lock);
+
 	// If nP+ occurs upstream customer-provider chain, return INVALID.
 	if (found_nP_from_right) {
-		pthread_rwlock_unlock(&aspa_table->lock);
 		return ASPA_AS_PATH_INVALID;
 	}
 
-	pthread_rwlock_unlock(&aspa_table->lock);
 	return ASPA_AS_PATH_UNKNOWN;
 }
 

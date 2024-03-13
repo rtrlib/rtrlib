@@ -7,8 +7,8 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#ifndef RTR_ASPA_DYN_ARRAY_H
-#define RTR_ASPA_DYN_ARRAY_H
+#ifndef RTR_ASPA_ARRAY_H
+#define RTR_ASPA_ARRAY_H
 
 #include "../aspa.h"
 
@@ -103,4 +103,14 @@ struct aspa_record *aspa_array_get_record(struct aspa_array *array, size_t index
  */
 struct aspa_record *aspa_array_search(struct aspa_array *array, uint32_t customer_asn);
 
-#endif
+/**
+ * @brief Reserves some space in the array
+ *
+ * @param array The array to remove the record from.
+ * @param size the number of object that should definetly fit into the array
+ * @return @c ASPA_SUCCESS if the operation succeeds @c ASPA_ERROR otherwise.
+ */
+enum aspa_status aspa_array_reserve(struct aspa_array *array, size_t size);
+
+
+#endif // RTR_ASPA_ARRAY_H

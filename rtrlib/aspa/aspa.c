@@ -288,6 +288,9 @@ static enum aspa_status aspa_table_update_compute_internal(struct rtr_socket *rt
 
 	size_t existing_i = 0;
 
+	// preemptively allocate space for the arrays
+	aspa_array_reserve(new_array, array->size + count);
+
 	for (size_t i = 0; i < count; i++) {
 		struct aspa_update_operation *current = &operations[i];
 		struct aspa_update_operation *next = (i < count - 1) ? &(operations[i + 1]) : NULL;
@@ -649,6 +652,9 @@ enum aspa_status aspa_table_update_in_place(struct aspa_table *aspa_table, struc
 
 	struct aspa_array *array = (*node)->aspa_array;
 	size_t existing_i = 0;
+
+	// preemptively allocating enough space
+	aspa_array_reserve(array, count + array->size);
 
 	for (size_t i = 0; i < count; i++) {
 		struct aspa_update_operation *current = &operations[i];
