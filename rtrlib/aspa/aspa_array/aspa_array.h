@@ -7,8 +7,8 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#ifndef RTR_ASPA_DYN_ARRAY_H
-#define RTR_ASPA_DYN_ARRAY_H
+#ifndef RTR_ASPA_ARRAY_H
+#define RTR_ASPA_ARRAY_H
 
 #include "../aspa.h"
 
@@ -103,4 +103,4 @@ struct aspa_record *aspa_array_get_record(struct aspa_array *array, size_t index
  */
 struct aspa_record *aspa_array_search(struct aspa_array *array, uint32_t customer_asn);
 
-#endif
+#endif // RTR_ASPA_ARRAY_H

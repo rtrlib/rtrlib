@@ -22,14 +22,11 @@ enum aspa_status aspa_array_create(struct aspa_array **array_ptr)
 	// allocation the chunk of memory of the provider as numbers
 	struct aspa_record *data_field = lrtr_malloc(sizeof(struct aspa_record) * default_initial_size);
 
-	// malloc failed so returning an error
 	if (!data_field)
 		return ASPA_ERROR;
 
-	// allocating the aspa_record itself
 	struct aspa_array *array = lrtr_malloc(sizeof(struct aspa_array));
 
-	// malloc for aspa_record failed hence we return an error
 	if (!array) {
 		lrtr_free(data_field);
 		return ASPA_ERROR;
@@ -48,7 +45,6 @@ enum aspa_status aspa_array_create(struct aspa_array **array_ptr)
 
 void aspa_array_free(struct aspa_array *array, bool free_provider_arrays)
 {
-	// if the array is null just return
 	if (!array)
 		return;
 
@@ -62,11 +58,9 @@ void aspa_array_free(struct aspa_array *array, bool free_provider_arrays)
 			}
 		}
 
-		// freeing the data
 		lrtr_free(array->data);
 	}
 
-	// freeing the array itself
 	lrtr_free(array);
 }
 
