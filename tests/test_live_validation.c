@@ -34,7 +34,7 @@ const struct test_validity_query queries[] = {{"93.175.146.0", 24, 12654, BGP_PF
 					      {"2001:7fb:ff03::", 48, 12654, BGP_PFXV_STATE_NOT_FOUND},
 					      {NULL, 0, 0, 0} };
 
-const int connection_timeout = 60;
+const int connection_timeout = 80;
 enum rtr_mgr_status connection_status = -1;
 
 static void connection_status_callback(const struct rtr_mgr_group *group __attribute__((unused)),

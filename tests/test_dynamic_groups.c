@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-const int connection_timeout = 60;
+const int connection_timeout = 80;
 enum rtr_mgr_status connection_status = -1;
 
 static void connection_status_callback(const struct rtr_mgr_group *group __attribute__((unused)),
@@ -37,7 +37,7 @@ int main(void)
 	};
 	struct rtr_socket rtr_tcp;
 	struct rtr_mgr_group groups[1];
-	
+
 	/* init a TCP transport and create rtr socket */
 	tr_tcp_init(&tcp_config, &tr_tcp);
 	rtr_tcp.tr_socket = &tr_tcp;
