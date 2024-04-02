@@ -67,7 +67,7 @@ struct lrtr_ipv6_addr lrtr_ipv6_get_bits(const struct lrtr_ipv6_addr *val, const
 	}
 
 	if ((first_bit <= 127) && ((first_bit + quantity) > 96)) {
-		const uint8_t fr = first_bit < 96 ? 0 : first_bit - 127;
+		const uint8_t fr = first_bit < 96 ? 0 : first_bit - 96;
 		const uint8_t q = bits_left > 32 ? 32 : bits_left;
 
 		assert(bits_left >= q);
