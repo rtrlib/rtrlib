@@ -173,6 +173,13 @@ enum aspa_status aspa_array_remove(struct aspa_array *array, size_t index, bool 
 	}
 
 	array->size -= 1;
+
+	// decreasing capacity if possible
+	if (array->size * 2 < array->capacity) {
+		array->data = lrtr_realloc(array->data, array->size * 2);
+		array->capacity = array->size * 2;
+	}
+
 	return ASPA_SUCCESS;
 }
 
@@ -235,20 +242,14 @@ enum aspa_status aspa_array_reserve(struct aspa_array *array, size_t size)
 		return ASPA_SUCCESS;
 	}
 
-	struct aspa_record *data = malloc(sizeof(struct aspa_record) * size);
+	struct aspa_record *data = lrtr_realloc(array->data, sizeof(struct aspa_record) * size);
 
-	// malloc failed
+	// realloc failed
 	if (data == NULL) {
 		return ASPA_ERROR;
 	}
 
-	// coping the data from the old array into the new one
-	if (memcpy(data, array->data, array->size * sizeof(struct aspa_record)) == NULL) {
-		return ASPA_ERROR;
-	}
-
 	// updating the array
-	free(array->data);
 	array->capacity = size;
 	array->data = data;
 
