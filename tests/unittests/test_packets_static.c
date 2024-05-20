@@ -501,8 +501,8 @@ int main(void)
 	const struct CMUnitTest tests[] = {
 		cmocka_unit_test(test_set_last_update),		  cmocka_unit_test(test_rtr_get_pdu_type),
 		cmocka_unit_test(test_pdu_to_network_byte_order), cmocka_unit_test(test_pdu_to_host_byte_order),
-		cmocka_unit_test(test_rtr_pdu_check_size),	cmocka_unit_test(test_rtr_send_error_pdu),
-		cmocka_unit_test(test_rtr_pdu_check_interval),    cmocka_unit_test(test_set_interval_option),
+		cmocka_unit_test(test_rtr_pdu_check_size),	  cmocka_unit_test(test_rtr_send_error_pdu),
+		cmocka_unit_test(test_rtr_pdu_check_interval),	  cmocka_unit_test(test_set_interval_option),
 	};
 	return cmocka_run_group_tests(tests, NULL, NULL);
 }

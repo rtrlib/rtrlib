@@ -32,7 +32,7 @@ const struct test_validity_query queries[] = {{"93.175.146.0", 24, 12654, BGP_PF
 					      {"2001:7fb:fd03::", 48, 12654, BGP_PFXV_STATE_INVALID},
 					      {"84.205.83.0", 24, 12654, BGP_PFXV_STATE_NOT_FOUND},
 					      {"2001:7fb:ff03::", 48, 12654, BGP_PFXV_STATE_NOT_FOUND},
-					      {NULL, 0, 0, 0} };
+					      {NULL, 0, 0, 0}};
 
 const int connection_timeout = 80;
 enum rtr_mgr_status connection_status = -1;
@@ -85,8 +85,26 @@ int main(void)
 
 	struct rtr_mgr_config *conf;
 
-	if (rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL, NULL, &connection_status_callback, NULL) < 0)
+	if (rtr_mgr_init(&conf, groups, 1, &connection_status_callback, NULL) < 0)
 		return EXIT_FAILURE;
+
+
+	if (rtr_mgr_add_roa_support(conf, NULL) == RTR_ERROR) {
+		fprintf(stderr, "Failed initializing ROA support\n");
+		return EXIT_FAILURE;
+	}
+
+	if (rtr_mgr_add_aspa_support(conf, NULL) == RTR_ERROR) {
+		fprintf(stderr, "Failed initializing ASPA support\n");
+		return EXIT_FAILURE;
+	}
+
+	if (rtr_mgr_add_spki_support(conf, NULL) == RTR_ERROR) {
+		fprintf(stderr, "Failed initializing BGPSEC support\n");
+		return EXIT_FAILURE;
+	}
+
+	rtr_mgr_setup_sockets(conf, groups, 1, 50, 600, 600);
 
 	rtr_mgr_start(conf);
 	int sleep_counter = 0;

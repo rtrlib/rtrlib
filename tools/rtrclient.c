@@ -168,7 +168,7 @@ static const char *get_template(const char *name)
 		fclose(template_file);
 		return template;
 
-read_error:
+	read_error:
 		fclose(template_file);
 		print_error_exit("Could not read template");
 	}
@@ -261,25 +261,25 @@ static bool is_utf8(const char *str)
 		if ((str[i] & UTF8_ONE_BYTE_MASK) == UTF8_ONE_BYTE_PREFIX) {
 			i += 1;
 
-		// check if current byte is the start of a two byte utf8 char and validate subsequent bytes
+			// check if current byte is the start of a two byte utf8 char and validate subsequent bytes
 		} else if ((str[i] & UTF8_TWO_BYTE_MASK) == UTF8_TWO_BYTE_PREFIX && i + 1 < len &&
 			   (str[i + 1] & UTF8_SUBSEQUENT_BYTE_MASK) == UTF8_SUBSEQUENT_BYTE_PREFIX) {
 			i += 2;
 
-		// check if current byte is the start of a three byte utf8 char and validate subsequent bytes
+			// check if current byte is the start of a three byte utf8 char and validate subsequent bytes
 		} else if ((str[i] & UTF8_THREE_BYTE_MASK) == UTF8_THREE_BYTE_PREFIX && i + 2 < len &&
 			   (str[i + 1] & UTF8_SUBSEQUENT_BYTE_MASK) == UTF8_SUBSEQUENT_BYTE_PREFIX &&
 			   (str[i + 2] & UTF8_SUBSEQUENT_BYTE_MASK) == UTF8_SUBSEQUENT_BYTE_PREFIX) {
 			i += 3;
 
-		// check if current byte is the start of a four byte utf8 char and validate subsequent bytes
+			// check if current byte is the start of a four byte utf8 char and validate subsequent bytes
 		} else if ((str[i] & UTF8_FOUR_BYTE_MASK) == UTF8_FOUR_BYTE_PREFIX && i + 3 < len &&
 			   (str[i + 1] & UTF8_SUBSEQUENT_BYTE_MASK) == UTF8_SUBSEQUENT_BYTE_PREFIX &&
 			   (str[i + 2] & UTF8_SUBSEQUENT_BYTE_MASK) == UTF8_SUBSEQUENT_BYTE_PREFIX &&
 			   (str[i + 3] & UTF8_SUBSEQUENT_BYTE_MASK) == UTF8_SUBSEQUENT_BYTE_PREFIX) {
 			i += 4;
 
-		// if none of the conditions matched. The string contains at least one byte that is not valid utf8
+			// if none of the conditions matched. The string contains at least one byte that is not valid utf8
 		} else {
 			return false;
 		}
@@ -958,13 +958,26 @@ int main(int argc, char **argv)
 	pfx_update_fp pfx_update_fp = activate_pfx_update_cb ? update_cb : NULL;
 	aspa_update_fp aspa_update_fp = activate_aspa_update_cb ? update_aspa : NULL;
 
-	int ret = rtr_mgr_init(&conf, groups, 1, 30, 600, 600, pfx_update_fp, spki_update_fp, aspa_update_fp, status_fp,
-			       NULL);
+	int ret = rtr_mgr_init(&conf, groups, 1, status_fp, NULL);
 
 	if (ret == RTR_ERROR)
 		fprintf(stderr, "Error in rtr_mgr_init!\n");
 	else if (ret == RTR_INVALID_PARAM)
 		fprintf(stderr, "Invalid params passed to rtr_mgr_init\n");
+
+	if (rtr_mgr_add_roa_support(conf, pfx_update_fp) == RTR_ERROR) {
+		fprintf(stderr, "Failed initializing ROA support\n");
+	}
+
+	if (rtr_mgr_add_aspa_support(conf, aspa_update_fp) == RTR_ERROR) {
+		fprintf(stderr, "Failed initializing ASPA support\n");
+	}
+
+	if (rtr_mgr_add_spki_support(conf, spki_update_fp) == RTR_ERROR) {
+		fprintf(stderr, "Failed initializing BGPSEC support\n");
+	}
+
+	rtr_mgr_setup_sockets(conf, groups, 1, 50, 600, 600);
 
 	if (!conf)
 		return EXIT_FAILURE;
