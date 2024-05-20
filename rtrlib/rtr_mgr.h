@@ -116,12 +116,6 @@ struct rtr_mgr_config {
  *			   or Reset Query.
  *			   The value must be >= 1s and <= 7200s (2h).
  *			   The recommended default is 600s (10min).
- * @param[in] update_fp Pointer to pfx_update_fp callback, that is executed for
-			every added and removed pfx_record.
- * @param[in] spki_update_fp Pointer to spki_update_fp callback, that is
-			     executed for every added and removed spki_record.
- * @param[in] aspa_update_fp Pointer to aspa_update_fp callback, that is
-				 executed for every added and removed aspa_record..
  * @param[in] status_fp Pointer to a function that is called if the connection
  *			status from one of the socket groups is changed.
  * @param[in] status_fp_data Pointer to a memory area that is passed to the
@@ -133,9 +127,26 @@ struct rtr_mgr_config {
  * @return RTR_SUCCESS On success.
  */
 int rtr_mgr_init(struct rtr_mgr_config **config_out, struct rtr_mgr_group groups[], const unsigned int groups_len,
-		 const unsigned int refresh_interval, const unsigned int expire_interval,
-		 const unsigned int retry_interval, const pfx_update_fp update_fp, const spki_update_fp spki_update_fp,
-		 const aspa_update_fp aspa_update_fp, const rtr_mgr_status_fp status_fp, void *status_fp_data);
+		 const rtr_mgr_status_fp status_fp, void *status_fp_data);
+
+
+
+int rtr_mgr_setup_sockets(struct rtr_mgr_config *config, struct rtr_mgr_group groups[], const unsigned int groups_len,
+			  const unsigned int refresh_interval,
+			  const unsigned int expire_interval, const unsigned int retry_interval
+			  );
+
+/**
+ * @brief Sets up ROA support
+ * @param[in] config Pointer to the rtr_mgr_config where ROA support should be enabled.
+ * @param[in] update_fp Pointer to pfx_update_fp callback, that is executed for
+		        every added and removed pfx_record.
+ * @return RTR_ERROR If an error occurred
+ * @return RTR_INVALID_PARAM If refresh_interval or expire_interval is invalid.
+ * @return RTR_SUCCESS On success.
+ */
+int rtr_mgr_add_roa_support(struct rtr_mgr_config *config, const pfx_update_fp pfx_update_fp);
+
 
 /**
  * @brief Adds a new rtr_mgr_group to the linked list of a initialized config.
@@ -266,6 +277,32 @@ struct rtr_mgr_group *rtr_mgr_get_first_group(struct rtr_mgr_config *config);
 
 int rtr_mgr_for_each_group(struct rtr_mgr_config *config, void (*fp)(const struct rtr_mgr_group *group, void *data),
 			   void *data);
+
+
+
+/**
+ * @brief Sets up ASPA support
+ * @param[in] config Pointer to the rtr_mgr_config where ROA support should be enabled.
+ * @param[in] aspa_update_fp Pointer to aspa_update_fp callback, that is
+				executed for every added and removed aspa_record.
+ * @return RTR_ERROR If an error occurred
+ * @return RTR_INVALID_PARAM If refresh_interval or expire_interval is invalid.
+ * @return RTR_SUCCESS On success.
+ */
+int rtr_mgr_add_aspa_support(struct rtr_mgr_config *config, const aspa_update_fp aspa_update_fp);
+
+
+/**
+ * @brief Sets up BGPSEC support
+ * @param[in] config Pointer to the rtr_mgr_config where ROA support should be enabled.
+ * @param[in] spki_update_fp Pointer to spki_update_fp callback, that is
+			   executed for every added and removed spki_record.
+ * @return RTR_ERROR If an error occurred
+ * @return RTR_INVALID_PARAM If refresh_interval or expire_interval is invalid.
+ * @return RTR_SUCCESS On success.
+ */
+int rtr_mgr_add_spki_support(struct rtr_mgr_config *config, const spki_update_fp spki_update_fp);
+
 /* @} */
 
 /**
@@ -275,6 +312,7 @@ int rtr_mgr_for_each_group(struct rtr_mgr_config *config, void (*fp)(const struc
  * @{
  */
 #ifdef RTRLIB_BGPSEC_ENABLED
+
 /**
  * @brief Validation function for AS path validation.
  * @param[in] data Data required for AS path validation. See @ref rtr_bgpsec.
@@ -420,6 +458,7 @@ void rtr_mgr_bgpsec_nlri_free(struct rtr_bgpsec_nlri *nlri);
 
 void rtr_mgr_bgpsec_add_spki_record(struct rtr_mgr_config *config, struct spki_record *record);
 #endif
+
 
 #endif
 /** @} */
