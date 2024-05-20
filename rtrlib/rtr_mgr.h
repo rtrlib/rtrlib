@@ -129,12 +129,9 @@ struct rtr_mgr_config {
 int rtr_mgr_init(struct rtr_mgr_config **config_out, struct rtr_mgr_group groups[], const unsigned int groups_len,
 		 const rtr_mgr_status_fp status_fp, void *status_fp_data);
 
-
-
 int rtr_mgr_setup_sockets(struct rtr_mgr_config *config, struct rtr_mgr_group groups[], const unsigned int groups_len,
-			  const unsigned int refresh_interval,
-			  const unsigned int expire_interval, const unsigned int retry_interval
-			  );
+			  const unsigned int refresh_interval, const unsigned int expire_interval,
+			  const unsigned int retry_interval);
 
 /**
  * @brief Sets up ROA support
@@ -146,7 +143,6 @@ int rtr_mgr_setup_sockets(struct rtr_mgr_config *config, struct rtr_mgr_group gr
  * @return RTR_SUCCESS On success.
  */
 int rtr_mgr_add_roa_support(struct rtr_mgr_config *config, const pfx_update_fp pfx_update_fp);
-
 
 /**
  * @brief Adds a new rtr_mgr_group to the linked list of a initialized config.
@@ -278,8 +274,6 @@ struct rtr_mgr_group *rtr_mgr_get_first_group(struct rtr_mgr_config *config);
 int rtr_mgr_for_each_group(struct rtr_mgr_config *config, void (*fp)(const struct rtr_mgr_group *group, void *data),
 			   void *data);
 
-
-
 /**
  * @brief Sets up ASPA support
  * @param[in] config Pointer to the rtr_mgr_config where ROA support should be enabled.
@@ -290,7 +284,6 @@ int rtr_mgr_for_each_group(struct rtr_mgr_config *config, void (*fp)(const struc
  * @return RTR_SUCCESS On success.
  */
 int rtr_mgr_add_aspa_support(struct rtr_mgr_config *config, const aspa_update_fp aspa_update_fp);
-
 
 /**
  * @brief Sets up BGPSEC support
@@ -458,7 +451,6 @@ void rtr_mgr_bgpsec_nlri_free(struct rtr_bgpsec_nlri *nlri);
 
 void rtr_mgr_bgpsec_add_spki_record(struct rtr_mgr_config *config, struct spki_record *record);
 #endif
-
 
 #endif
 /** @} */

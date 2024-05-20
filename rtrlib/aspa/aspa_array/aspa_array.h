@@ -112,5 +112,4 @@ struct aspa_record *aspa_array_search(struct aspa_array *array, uint32_t custome
  */
 enum aspa_status aspa_array_reserve(struct aspa_array *array, size_t size);
 
-
 #endif // RTR_ASPA_ARRAY_H
