@@ -70,6 +70,11 @@ enum aspa_hop_result aspa_check_hop(struct aspa_table *aspa_table, uint32_t cust
 static enum aspa_verification_result aspa_verify_as_path_upstream(struct aspa_table *aspa_table, uint32_t as_path[],
 								  size_t len)
 {
+	if (aspa_table == NULL) {
+		ASPA_DBG1("TRYING TO VALIDATE A AS_PATH BUT NO ASPA TABLE INITIALIZED");
+		return ASPA_AS_PATH_INVALID;
+	}
+
 	// Optimized AS_PATH verification algorithm using zero based array
 	// where the origin AS has index N - 1 and the latest AS in the AS_PATH
 	// has index 0.
@@ -145,6 +150,11 @@ static enum aspa_verification_result aspa_verify_as_path_upstream(struct aspa_ta
 static enum aspa_verification_result aspa_verify_as_path_downstream(struct aspa_table *aspa_table, uint32_t as_path[],
 								    size_t len)
 {
+	if (aspa_table == NULL) {
+		ASPA_DBG1("TRYING TO VALIDATE A AS_PATH BUT NO ASPA TABLE INITIALIZED");
+		return ASPA_AS_PATH_INVALID;
+	}
+
 	// Optimized AS_PATH verification algorithm using zero based array
 	// where the origin AS has index N - 1 and the latest AS in the AS_PATH
 	// has index 0.

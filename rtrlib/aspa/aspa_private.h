@@ -99,6 +99,8 @@
 
 #define ASPA_NOTIFY_NO_OPS 0
 
+#define ASPA_DBG1(a) lrtr_dbg("ASPA: " a)
+
 // MARK: - Verification
 
 enum aspa_hop_result { ASPA_NO_ATTESTATION, ASPA_NOT_PROVIDER_PLUS, ASPA_PROVIDER_PLUS };

@@ -941,6 +941,13 @@ static int rtr_store_aspa_pdu(struct rtr_socket *rtr_socket, const struct pdu_as
 
 static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, struct pfx_table *pfx_table, const void *pdu)
 {
+	// the prefix table was not initialized, hence we ignore incoming ROA Objects
+	if (pfx_table == NULL) {
+		const char txt[] = "IGNORING INCOMING ROA OBJECTS";
+		RTR_DBG("%s", txt);
+		return RTR_SUCCESS;
+	}
+
 	const enum pdu_type type = rtr_get_pdu_type(pdu);
 
 	assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
@@ -992,6 +999,16 @@ static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, struct pfx_table 
 
 static int rtr_update_spki_table(struct rtr_socket *rtr_socket, struct spki_table *spki_table, const void *pdu)
 {
+	assert(rtr_socket);
+	assert(pdu);
+
+	// No spki table configured hence we ignore incoming BGPSec Keys
+	if (spki_table == NULL) {
+		const char txt[] = "IGNORING INCOMING SPKI OBJECTS";
+		RTR_DBG("%s", txt);
+		return RTR_SUCCESS;
+	}
+
 	const enum pdu_type type = rtr_get_pdu_type(pdu);
 
 	assert(type == ROUTER_KEY);
@@ -1129,9 +1146,15 @@ static int rtr_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_tabl
 {
 	// Fail hard in debug builds.
 	assert(rtr_socket);
-	assert(aspa_table);
 	assert(failed_operation);
 	assert(ops);
+
+	// no aspa table was configured hence we ignore incoming aspa objects
+	if (aspa_table == NULL) {
+		const char txt[] = "IGNORING INCOMING ASPA OBJECTS";
+		RTR_DBG("%s", txt);
+		retrun RTR_SUCESS;
+	}
 
 	if (!ops || !failed_operation || (pdu_count > 0 && !aspa_pdus))
 		return RTR_ERROR;

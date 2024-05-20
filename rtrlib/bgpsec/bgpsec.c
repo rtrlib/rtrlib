@@ -67,6 +67,11 @@ static const uint8_t algorithm_suites[] = {RTR_BGPSEC_ALGORITHM_SUITE_1};
 
 int rtr_bgpsec_validate_as_path(const struct rtr_bgpsec *data, struct spki_table *table)
 {
+	if (table == NULL) {
+		BGPSEC_DBG1("TRYING TO VALIDATE A, BUT NO SPKI TABLE INITIALIZED");
+		return RTR_BGPSEC_ERROR;
+	}
+
 	/* The AS path validation result. */
 	enum rtr_bgpsec_rtvals retval = 0;
 
