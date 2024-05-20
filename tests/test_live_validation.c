@@ -88,7 +88,6 @@ int main(void)
 	if (rtr_mgr_init(&conf, groups, 1, &connection_status_callback, NULL) < 0)
 		return EXIT_FAILURE;
 
-
 	if (rtr_mgr_add_roa_support(conf, NULL) == RTR_ERROR) {
 		fprintf(stderr, "Failed initializing ROA support\n");
 		return EXIT_FAILURE;

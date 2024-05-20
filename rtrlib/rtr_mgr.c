@@ -298,9 +298,7 @@ RTRLIB_EXPORT int rtr_mgr_init(struct rtr_mgr_config **config_out, struct rtr_mg
 			       const unsigned int groups_len, const rtr_mgr_status_fp status_fp, void *status_fp_data)
 {
 	enum rtr_rtvals err_code = RTR_ERROR;
-	enum rtr_interval_mode iv_mode = RTR_INTERVAL_MODE_DEFAULT_MIN_MAX;
 	struct rtr_mgr_config *config = NULL;
-	struct rtr_mgr_group_node *group_node;
 	uint8_t last_preference = UINT8_MAX;
 
 	*config_out = NULL;
@@ -350,10 +348,10 @@ err:
 	return err_code;
 }
 
-RTRLIB_EXPORT int rtr_mgr_setup_sockets(struct rtr_mgr_config *config, struct rtr_mgr_group groups[], const unsigned int groups_len,
-					const unsigned int refresh_interval,
-					const unsigned int expire_interval, const unsigned int retry_interval
-					) {
+RTRLIB_EXPORT int rtr_mgr_setup_sockets(struct rtr_mgr_config *config, struct rtr_mgr_group groups[],
+					const unsigned int groups_len, const unsigned int refresh_interval,
+					const unsigned int expire_interval, const unsigned int retry_interval)
+{
 	enum rtr_interval_mode iv_mode = RTR_INTERVAL_MODE_DEFAULT_MIN_MAX;
 	struct rtr_mgr_group_node *group_node = NULL;
 	struct rtr_mgr_group *cg = NULL;
@@ -367,7 +365,6 @@ RTRLIB_EXPORT int rtr_mgr_setup_sockets(struct rtr_mgr_config *config, struct rt
 	config->groups->list = NULL;
 
 	for (unsigned int i = 0; i < groups_len; i++) {
-
 		cg = lrtr_malloc(sizeof(struct rtr_mgr_group));
 		if (!cg) {
 			return RTR_ERROR;

@@ -223,8 +223,8 @@ struct aspa_record *aspa_array_search(struct aspa_array *array, uint32_t custome
 	return NULL;
 }
 
-
-enum aspa_status aspa_array_reserve(struct aspa_array *array, size_t size) {
+enum aspa_status aspa_array_reserve(struct aspa_array *array, size_t size)
+{
 	// the given array is null
 	if (array == NULL) {
 		return ASPA_ERROR;
@@ -235,7 +235,7 @@ enum aspa_status aspa_array_reserve(struct aspa_array *array, size_t size) {
 		return ASPA_SUCCESS;
 	}
 
-	struct aspa_record* data = malloc(sizeof(struct aspa_record) * size);
+	struct aspa_record *data = malloc(sizeof(struct aspa_record) * size);
 
 	// malloc failed
 	if (data == NULL) {

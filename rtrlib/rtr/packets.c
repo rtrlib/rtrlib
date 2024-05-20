@@ -1118,8 +1118,7 @@ static int rtr_undo_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa
 		return RTR_SUCCESS;
 	}
 	// Undo failed, cannot recover, remove all records associated with the socket instead
-	RTR_DBG1(
-		"Couldn't undo all update operations from failed data synchronisation: Purging all ASPA records");
+	RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all ASPA records");
 	aspa_table_src_remove(aspa_table, rtr_socket, true);
 	return RTR_ERROR;
 }
@@ -1267,7 +1266,7 @@ static int rtr_sync_update_tables(struct rtr_socket *rtr_socket, struct pfx_tabl
 		RTR_DBG1("spki data added");
 
 		if (rtr_compute_update_aspa_table(rtr_socket, aspa_table, aspa_pdus, aspa_pdu_count, &aspa_update) ==
-			    RTR_ERROR) {
+		    RTR_ERROR) {
 			RTR_DBG1("error while computing ASPA update");
 			proceed = false;
 
