@@ -11,23 +11,23 @@
 rtrclient \- rtr rpki client
 .SH SYNOPSIS
 .B rtrclient
-[\fB\-kph\fR]
+[\fB\-kpah\fR]
 .I SOCKETS\fR...
 .SH SOCKETS
 .B tcp
-[\fB\-kpb \fIbindaddr\fR]
+[\fB\-kpab \fIbindaddr\fR]
 .IR HOST
 .IR PORT
 .br
 .B ssh
-[\fB\-kpb \fIbindaddr\fR]
+[\fB\-kpab \fIbindaddr\fR]
 .IR HOST
 .IR PORT
 .IR USERNAME
 (\fIPRIVATE_KEY\fR|\fIPASSWORD\fR)
 [\fIHOST_KEY\fR]
 .SH DESCRIPTION
-\fBrtrclient\fR connects to an RPKI/RTR cache server and prints prefix, origin AS, and router key updates.
+\fBrtrclient\fR connects to an RPKI/RTR cache server and prints prefix, origin AS, router key and ASPA updates.
 \fBrtrclient\fR can use plain tcp or ssh transport to connect to an RPKI/RTR cache server.
 The amount is not limited and different transport types can be mixed arbitrarily.
 .LP
@@ -54,6 +54,10 @@ Print information about router key updates
 \fB-p\fR
 .RS 4
 Print information about prefix and origin AS updates
+.RE
+\fB-a\fR
+.RS 4
+Print information about ASPA updates
 .RE
 \fB-s\fR
 .RS 4
@@ -96,11 +100,11 @@ rtrclient tcp -k rpki.example.com 323
 .RE
 .fi
 .PP
-Print prefix and router key updates from a ssh based server
+Print prefix, router key and ASPA updates from a ssh based server
 .PP
 .nf
 .RS
-rtrclient ssh -k -p rpki.example.com 22 rtr-ssh ~/.ssh/id_rsa ~/.ssh/known_hosts
+rtrclient ssh -k -p -a rpki.example.com 22 rtr-ssh ~/.ssh/id_rsa ~/.ssh/known_hosts
 .RE
 .fi
 .PP

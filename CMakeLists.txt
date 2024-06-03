@@ -1,9 +1,7 @@
+cmake_minimum_required(VERSION 2.6)
 project(rtrlib C)
 
 set(PROJECT_DESCRIPTION "Lightweight C library that implements the RPKI/RTR protocol and prefix origin validation.")
-
-cmake_minimum_required(VERSION 2.6)
-
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=gnu99 -fstack-protector-all")
 if(CMAKE_BUILD_TYPE STREQUAL Debug)
@@ -47,7 +45,8 @@ set(RTRLIB_SRC rtrlib/rtr_mgr.c rtrlib/lib/utils.c rtrlib/lib/alloc_utils.c rtrl
     rtrlib/lib/ip.c rtrlib/lib/ipv4.c rtrlib/lib/ipv6.c rtrlib/lib/log.c
     rtrlib/pfx/trie/trie.c rtrlib/pfx/trie/trie-pfx.c rtrlib/transport/transport.c
     rtrlib/transport/tcp/tcp_transport.c rtrlib/rtr/rtr.c rtrlib/rtr/packets.c
-    rtrlib/spki/hashtable/ht-spkitable.c ${tommyds})
+    rtrlib/spki/hashtable/ht-spkitable.c  rtrlib/aspa/aspa_array/aspa_array.c
+	rtrlib/aspa/aspa.c rtrlib/aspa/aspa_verification.c ${tommyds})
 set(RTRLIB_LINK ${RT_LIB} ${CMAKE_THREAD_LIBS_INIT})
 
 include(FindPkgConfig)
@@ -139,6 +138,8 @@ ADD_TEST(test_getbits tests/test_getbits)
 
 ADD_TEST(test_dynamic_groups tests/test_dynamic_groups)
 list(APPEND CMAKE_CTEST_ARGUMENTS "--output-on-failure")
+
+ADD_TEST(test_as_path_verification tests/test_as_path_verification)
 
 if(RTRLIB_BGPSEC_ENABLED)
     ADD_TEST(test_bgpsec tests/test_bgpsec)

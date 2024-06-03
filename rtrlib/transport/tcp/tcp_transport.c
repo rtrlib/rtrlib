@@ -110,8 +110,7 @@ int tr_tcp_open(void *tr_socket)
 	if (config->new_socket) {
 		tcp_socket->socket = (*config->new_socket)(config->data);
 		if (tcp_socket->socket <= 0) {
-			TCP_DBG("Couldn't establish TCP connection, %s",
-				tcp_socket, strerror(errno));
+			TCP_DBG("Couldn't establish TCP connection, %s", tcp_socket, strerror(errno));
 			goto end;
 		}
 	}
@@ -119,11 +118,9 @@ int tr_tcp_open(void *tr_socket)
 		tcp_rtval = getaddrinfo(config->host, config->port, &hints, &res);
 		if (tcp_rtval != 0) {
 			if (tcp_rtval == EAI_SYSTEM) {
-				TCP_DBG("getaddrinfo error, %s", tcp_socket,
-					strerror(errno));
+				TCP_DBG("getaddrinfo error, %s", tcp_socket, strerror(errno));
 			} else {
-				TCP_DBG("getaddrinfo error, %s", tcp_socket,
-					gai_strerror(tcp_rtval));
+				TCP_DBG("getaddrinfo error, %s", tcp_socket, gai_strerror(tcp_rtval));
 			}
 			return TR_ERROR;
 		}
@@ -138,11 +135,9 @@ int tr_tcp_open(void *tr_socket)
 			tcp_rtval = getaddrinfo(tcp_socket->config.bindaddr, 0, &hints, &bind_addrinfo);
 			if (tcp_rtval != 0) {
 				if (tcp_rtval == EAI_SYSTEM) {
-					TCP_DBG("getaddrinfo error, %s", tcp_socket,
-						strerror(errno));
+					TCP_DBG("getaddrinfo error, %s", tcp_socket, strerror(errno));
 				} else {
-					TCP_DBG("getaddrinfo error, %s", tcp_socket,
-						gai_strerror(tcp_rtval));
+					TCP_DBG("getaddrinfo error, %s", tcp_socket, gai_strerror(tcp_rtval));
 				}
 				goto end;
 			}
@@ -161,8 +156,7 @@ int tr_tcp_open(void *tr_socket)
 		}
 
 		if (connect(tcp_socket->socket, res->ai_addr, res->ai_addrlen) == -1 && errno != EINPROGRESS) {
-			TCP_DBG("Couldn't establish TCP connection, %s",
-				tcp_socket, strerror(errno));
+			TCP_DBG("Couldn't establish TCP connection, %s", tcp_socket, strerror(errno));
 			goto end;
 		}
 

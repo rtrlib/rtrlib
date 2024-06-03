@@ -61,7 +61,11 @@ int main(void)
 
 	struct rtr_mgr_config *conf;
 
-	rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL, &connection_status_callback, NULL);
+	rtr_mgr_init(&conf, groups, 1, &connection_status_callback, NULL);
+	rtr_mgr_add_roa_support(conf, NULL);
+	rtr_mgr_add_aspa_support(conf, NULL);
+	rtr_mgr_add_spki_support(conf, NULL);
+	rtr_mgr_setup_sockets(conf, groups, 1, 50, 600, 600);
 
 	//start the connection manager
 	rtr_mgr_start(conf);

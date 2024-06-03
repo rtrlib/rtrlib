@@ -361,6 +361,11 @@ RTRLIB_EXPORT int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_r
 	// assert(reason_len == NULL || *reason_len  == 0);
 	// assert(reason == NULL || *reason == NULL);
 
+	if (pfx_table == NULL) {
+		PFX_DBG1("TRYING TO VALIDATE A PREFIX BUT NO TABLE INITIALIZED");
+		return PFX_ERROR;
+	}
+
 	pthread_rwlock_rdlock(&(pfx_table->lock));
 	struct trie_node *root = pfx_table_get_root(pfx_table, prefix->ver);
 

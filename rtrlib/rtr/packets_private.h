@@ -14,8 +14,8 @@
 
 #include <arpa/inet.h>
 
-// error pdu: header(8) + len(4) + ipv6_pdu(32) + len(4) + 400*8 (400 char text)
-static const unsigned int RTR_MAX_PDU_LEN = 3248;
+// 16380 aspa providers (current max is ca. 8k)
+static const size_t RTR_MAX_PDU_LEN = 65535;
 static const unsigned int RTR_RECV_TIMEOUT = 60;
 static const unsigned int RTR_SEND_TIMEOUT = 60;
 
