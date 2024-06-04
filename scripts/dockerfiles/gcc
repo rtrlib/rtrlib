@@ -1,0 +1,4 @@
+FROM gcc:latest
+RUN apt update
+RUN apt upgrade -y
+RUN apt install -y cmake cppcheck libcmocka-dev libssh-dev universal-ctags

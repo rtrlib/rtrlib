@@ -4,20 +4,26 @@
 # check if exported symbols match up with header content and the shared object symbol table
 # Must be run from rtrlibs root dir.
 # ---HELP---
+if [ "$#" -ge 1 ]; then
+    SOURCEDIR="$1/rtrlib"
+else
+    SOURCEDIR="rtrlib"
+fi
 
 SO_SYMBOL_WHITELIST=(__bss_start _edata _end _fini _init __gcov_master __gcov_sort_n_vals __gcov_var)
+SO_SYMBOL_WHITELIST=()
 
 ERROR=0
 
 # Functions annoted with RTRLIB_EXPORT
 EXPORTS=$(
-    ctags -x --c-kinds=fp $(find rtrlib -iname '*.c' ! -name '*tommy*') |
+    ctags -x --c-kinds=fp $(find $SOURCEDIR -iname '*.c' ! -name '*tommy*') |
     grep  'RTRLIB_EXPORT' | awk '{ print $1 }' |
     sort)
 
 # Functions found in public headers
 HEADER_SYMBOLS=$(
-    ctags -x --c-kinds=fp  $(find rtrlib -iname '*.h' -type f ! -name '*_private.h' ! -name '*tommy*') |
+    ctags -x --c-kinds=fp  $(find $SOURCEDIR -iname '*.h' -type f ! -name '*_private.h' ! -name '*tommy*') |
     awk '{ print $1 }' |
     sort)
 
