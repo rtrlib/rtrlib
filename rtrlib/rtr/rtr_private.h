@@ -85,4 +85,10 @@ int rtr_start(struct rtr_socket *rtr_socket);
  */
 void rtr_stop(struct rtr_socket *rtr_socket);
 
+/**
+ * @brief Frees resources held by this rtr socket
+ * @paran[in] rtr_socket rtr_socket that will be freed
+ */
+void rtr_free(struct rtr_socket *rtr_socket);
+
 #endif

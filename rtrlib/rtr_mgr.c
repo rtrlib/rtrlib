@@ -466,7 +466,7 @@ RTRLIB_EXPORT void rtr_mgr_free(struct rtr_mgr_config *config)
 
 		head = head->next;
 		for (unsigned int j = 0; j < group_node->group->sockets_len; j++)
-			tr_free(group_node->group->sockets[j]->tr_socket);
+			rtr_free(group_node->group->sockets[j]);
 
 		lrtr_free(group_node->group);
 		lrtr_free(group_node);
