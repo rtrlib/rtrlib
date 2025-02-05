@@ -81,8 +81,7 @@ static void test_insert(void)
 
 	assert(aspa_array_insert(array, 3, &record_3, true) == ASPA_SUCCESS);
 
-	// New pointer because reallocated
-	assert(old_pointer != array->data);
+	assert(old_pointer == array->data);
 	assert(array->capacity >= 4);
 	assert(array->size == 4);
 
@@ -118,8 +117,7 @@ static void test_append(void)
 
 	assert(aspa_array_append(array, &record_3, true) == ASPA_SUCCESS);
 
-	// new pointer because reallocated
-	assert(old_pointer != array->data);
+	assert(old_pointer == array->data);
 	assert(array->capacity >= 4);
 	assert(array->size == 4);
 

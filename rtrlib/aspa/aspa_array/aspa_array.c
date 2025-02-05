@@ -68,19 +68,19 @@ void aspa_array_free(struct aspa_array *array, bool free_provider_arrays)
 
 static enum aspa_status aspa_array_reallocate(struct aspa_array *array)
 {
-	// the factor by how much the capacity will increase: new_capacity = old_capacity * SIZE_INCREASE_EXPONENTIAL
-	const size_t SIZE_INCREASE_EXPONENTIAL = 2;
+	// the factor by how much the capacity will increase: new_capacity = old_capacity + SIZE_INCREASE_OFFSET
+	const size_t SIZE_INCREASE_OFFSET = 1000;
 
 	// allocation the new chunk of memory
 	struct aspa_record *tmp =
-		lrtr_realloc(array->data, sizeof(struct aspa_record) * array->capacity * SIZE_INCREASE_EXPONENTIAL);
+		lrtr_realloc(array->data, sizeof(struct aspa_record) * array->capacity + SIZE_INCREASE_OFFSET);
 
 	// malloc failed so returning an error
 	if (!tmp)
 		return ASPA_ERROR;
 
 	array->data = tmp;
-	array->capacity *= SIZE_INCREASE_EXPONENTIAL;
+	array->capacity += SIZE_INCREASE_OFFSET;
 	return ASPA_SUCCESS;
 }
 
@@ -175,9 +175,10 @@ enum aspa_status aspa_array_remove(struct aspa_array *array, size_t index, bool 
 	array->size -= 1;
 
 	// decreasing capacity if possible
-	if (array->size * 2 < array->capacity) {
-		array->data = lrtr_realloc(array->data, array->size * 2);
-		array->capacity = array->size * 2;
+	const size_t SIZE_DECREASE_OFFSET = 1000;
+	if (array->size + SIZE_DECREASE_OFFSET < array->capacity) {
+		array->data = lrtr_realloc(array->data, array->size + SIZE_DECREASE_OFFSET);
+		array->capacity = array->size + SIZE_DECREASE_OFFSET;
 	}
 
 	return ASPA_SUCCESS;
