@@ -125,21 +125,17 @@ ADD_SUBDIRECTORY(tests)
 ENABLE_TESTING()
 ADD_TEST(test_pfx tests/test_pfx)
 ADD_TEST(test_trie tests/test_trie)
-#ADD_TEST(test_pfx_locks tests/test_pfx_locks)
-
 ADD_TEST(test_ht_spkitable tests/test_ht_spkitable)
 ADD_TEST(test_ht_spkitable_locks tests/test_ht_spkitable_locks)
-
 ADD_TEST(test_live_validation tests/test_live_validation)
-
 ADD_TEST(test_ipaddr tests/test_ipaddr)
-
 ADD_TEST(test_getbits tests/test_getbits)
-
 ADD_TEST(test_dynamic_groups tests/test_dynamic_groups)
-list(APPEND CMAKE_CTEST_ARGUMENTS "--output-on-failure")
-
+ADD_TEST(test_aspa tests/test_aspa)
+ADD_TEST(test_aspa_array tests/test_aspa_array)
 ADD_TEST(test_as_path_verification tests/test_as_path_verification)
+
+list(APPEND CMAKE_CTEST_ARGUMENTS "--output-on-failure")
 
 if(RTRLIB_BGPSEC_ENABLED)
     ADD_TEST(test_bgpsec tests/test_bgpsec)
