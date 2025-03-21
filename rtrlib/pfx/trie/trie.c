@@ -193,7 +193,7 @@ static int append_node_to_array(struct trie_node ***ary, unsigned int *len, stru
 {
 	struct trie_node **new;
 
-	new = lrtr_realloc(*ary, *len * sizeof(n));
+	new = lrtr_realloc(*ary, *len * sizeof(*n));
 	if (!new)
 		return -1;
 

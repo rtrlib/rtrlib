@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-const int connection_timeout = 20;
+const int connection_timeout = 80;
 enum rtr_mgr_status connection_status = -1;
 
 static void connection_status_callback(const struct rtr_mgr_group *group __attribute__((unused)),
@@ -21,12 +21,12 @@ static void connection_status_callback(const struct rtr_mgr_group *group __attri
 
 int main(void)
 {
-	//create a TCP transport socket
 	int retval = 0;
-	struct tr_socket tr_tcp;
-	char tcp_host[] = "rpki-validator.realmv6.org";
-	char tcp_port[] = "8283";
+	char tcp_host[] = "rpki-cache.netd.cs.tu-dresden.de";
+	char tcp_port[] = "3323";
 
+	/* create a TCP transport socket */
+	struct tr_socket tr_tcp;
 	struct tr_tcp_config tcp_config = {
 		tcp_host, //IP
 		tcp_port, //Port
@@ -35,14 +35,14 @@ int main(void)
 		NULL, //new_socket()
 		0, // connect timeout
 	};
-	tr_tcp_init(&tcp_config, &tr_tcp);
-
 	struct rtr_socket rtr_tcp;
-
-	rtr_tcp.tr_socket = &tr_tcp;
-
 	struct rtr_mgr_group groups[1];
 
+	/* init a TCP transport and create rtr socket */
+	tr_tcp_init(&tcp_config, &tr_tcp);
+	rtr_tcp.tr_socket = &tr_tcp;
+
+	/* create a rtr_mr_group array with 1 element */
 	groups[0].sockets = malloc(sizeof(struct rtr_socket *));
 	groups[0].sockets_len = 1;
 	groups[0].sockets[0] = &rtr_tcp;
@@ -61,7 +61,11 @@ int main(void)
 
 	struct rtr_mgr_config *conf;
 
-	rtr_mgr_init(&conf, groups, 1, 30, 600, 600, NULL, NULL, &connection_status_callback, NULL);
+	rtr_mgr_init(&conf, groups, 1, &connection_status_callback, NULL);
+	rtr_mgr_add_roa_support(conf, NULL);
+	rtr_mgr_add_aspa_support(conf, NULL);
+	rtr_mgr_add_spki_support(conf, NULL);
+	rtr_mgr_setup_sockets(conf, groups, 1, 50, 600, 600);
 
 	//start the connection manager
 	rtr_mgr_start(conf);
@@ -170,7 +174,6 @@ int main(void)
 	//try to remove last remainig group.
 	retval = rtr_mgr_remove_group(conf, 3);
 	assert(retval == RTR_ERROR);
-
 	rtr_mgr_stop(conf);
 	rtr_mgr_free(conf);
 	free(groups[0].sockets);

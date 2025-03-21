@@ -1,9 +1,7 @@
+cmake_minimum_required(VERSION 2.6)
 project(rtrlib C)
 
 set(PROJECT_DESCRIPTION "Lightweight C library that implements the RPKI/RTR protocol and prefix origin validation.")
-
-cmake_minimum_required(VERSION 2.6)
-
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=gnu99 -fstack-protector-all")
 if(CMAKE_BUILD_TYPE STREQUAL Debug)
@@ -47,7 +45,8 @@ set(RTRLIB_SRC rtrlib/rtr_mgr.c rtrlib/lib/utils.c rtrlib/lib/alloc_utils.c rtrl
     rtrlib/lib/ip.c rtrlib/lib/ipv4.c rtrlib/lib/ipv6.c rtrlib/lib/log.c
     rtrlib/pfx/trie/trie.c rtrlib/pfx/trie/trie-pfx.c rtrlib/transport/transport.c
     rtrlib/transport/tcp/tcp_transport.c rtrlib/rtr/rtr.c rtrlib/rtr/packets.c
-    rtrlib/spki/hashtable/ht-spkitable.c ${tommyds})
+    rtrlib/spki/hashtable/ht-spkitable.c  rtrlib/aspa/aspa_array/aspa_array.c
+	rtrlib/aspa/aspa.c rtrlib/aspa/aspa_verification.c ${tommyds})
 set(RTRLIB_LINK ${RT_LIB} ${CMAKE_THREAD_LIBS_INIT})
 
 include(FindPkgConfig)
@@ -78,6 +77,25 @@ if (NOT DEFINED RTRLIB_TRANSPORT_SSH OR RTRLIB_TRANSPORT_SSH)
     endif(LIBSSH_FOUND)
 endif(NOT DEFINED RTRLIB_TRANSPORT_SSH OR RTRLIB_TRANSPORT_SSH)
 
+# bgpsec
+if(DEFINED WITH_BGPSEC AND NOT WITH_BGPSEC)
+    message(STATUS "building librtr without BGPsec support")
+else()
+    find_package(OpenSSL 1.0 QUIET)
+
+    if(OPENSSL_FOUND AND OPENSSL_CRYPTO_LIBRARY)
+        set(RTRLIB_BGPSEC_ENABLED 1)
+        include_directories(${OPENSSL_INCLUDE_DIRS})
+        set(RTRLIB_SRC ${RTRLIB_SRC} rtrlib/bgpsec/bgpsec.c rtrlib/bgpsec/bgpsec_utils.c)
+        set(RTRLIB_LINK ${RTRLIB_LINK} ${OPENSSL_LIBRARIES})
+        message(STATUS "libcrypto (OpenSSL ${OPENSSL_VERSION}) found, building librtr with BGPsec support")
+    elseif(WITH_BGPSEC)
+        message(FATAL_ERROR "libcrypto (OpenSSL) not found, aborting build.")
+    else()
+        message(STATUS "libcrypto (OpenSSL) not found, building librtr without BGPsec support.")
+    endif(OPENSSL_FOUND AND OPENSSL_CRYPTO_LIBRARY)
+endif(DEFINED WITH_BGPSEC AND NOT WITH_BGPSEC)
+
 #doxygen target
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
@@ -107,24 +125,28 @@ ADD_SUBDIRECTORY(tests)
 ENABLE_TESTING()
 ADD_TEST(test_pfx tests/test_pfx)
 ADD_TEST(test_trie tests/test_trie)
-#ADD_TEST(test_pfx_locks tests/test_pfx_locks)
-
 ADD_TEST(test_ht_spkitable tests/test_ht_spkitable)
 ADD_TEST(test_ht_spkitable_locks tests/test_ht_spkitable_locks)
-
 ADD_TEST(test_live_validation tests/test_live_validation)
-
 ADD_TEST(test_ipaddr tests/test_ipaddr)
-
 ADD_TEST(test_getbits tests/test_getbits)
-
 ADD_TEST(test_dynamic_groups tests/test_dynamic_groups)
+ADD_TEST(test_aspa tests/test_aspa)
+ADD_TEST(test_aspa_array tests/test_aspa_array)
+ADD_TEST(test_as_path_verification tests/test_as_path_verification)
+
+list(APPEND CMAKE_CTEST_ARGUMENTS "--output-on-failure")
+
+if(RTRLIB_BGPSEC_ENABLED)
+    ADD_TEST(test_bgpsec tests/test_bgpsec)
+endif(RTRLIB_BGPSEC_ENABLED)
 
 #install lib
 set (RTRLIB_VERSION_MAJOR 0)
 set (RTRLIB_VERSION_MINOR 8)
 set (RTRLIB_VERSION_PATCH 0)
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/rtrlib/rtrlib.h.cmake ${CMAKE_SOURCE_DIR}/rtrlib/rtrlib.h)
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/rtrlib/config.h.cmake ${CMAKE_SOURCE_DIR}/rtrlib/config.h)
 set(LIBRARY_VERSION ${RTRLIB_VERSION_MAJOR}.${RTRLIB_VERSION_MINOR}.${RTRLIB_VERSION_PATCH})
 set(LIBRARY_SOVERSION ${RTRLIB_VERSION_MAJOR})
 set_target_properties(rtrlib PROPERTIES SOVERSION ${LIBRARY_SOVERSION} VERSION ${LIBRARY_VERSION} OUTPUT_NAME rtr)
@@ -151,6 +173,12 @@ endforeach()
 if(RTRLIB_TRANSPORT_SSH)
     set (PKG_CONFIG_REQUIRES "libssh >= 0.5.0")
 endif(RTRLIB_TRANSPORT_SSH)
+
+if(OPENSSL_CRYPTO_LIBRARY)
+    set (PKG_CONFIG_REQUIRES ${PKG_CONFIG_REQUIRES} "libcrypto >= 1.0")
+endif(OPENSSL_CRYPTO_LIBRARY)
+
+string(REPLACE ";" ", " PKG_CONFIG_REQUIRES "${PKG_CONFIG_REQUIRES}")
 
 # '#include <rtrlib/rtrlib.h>' includes the "rtrlib/"
 set (PKG_CONFIG_LIBDIR "\${prefix}/${CMAKE_INSTALL_LIBDIR}")

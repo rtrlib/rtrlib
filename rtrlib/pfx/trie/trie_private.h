@@ -14,6 +14,8 @@
 
 #include <inttypes.h>
 
+#define PFX_DBG1(a) lrtr_dbg("PFX: " a)
+
 /**
  * @brief trie_node
  * @param prefix
