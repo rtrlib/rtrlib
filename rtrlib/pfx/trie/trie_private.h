@@ -11,6 +11,7 @@
 #define RTR_TRIE_PRIVATE
 
 #include "rtrlib/lib/ip_private.h"
+#include "rtrlib/lib/log_private.h"
 
 #include <inttypes.h>
 

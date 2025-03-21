@@ -91,8 +91,8 @@
 #define RTR_ASPA_PRIVATE_H
 
 #include "aspa.h"
-
 #include "rtrlib/rtr/rtr.h"
+#include "rtrlib/lib/log_private.h"
 
 #include <stdbool.h>
 #include <stdint.h>
