@@ -32,6 +32,11 @@ static enum aspa_status aspa_table_notify_clients(struct aspa_table *aspa_table,
 			size_t size = sizeof(uint32_t) * record->provider_count;
 
 			rec.provider_asns = lrtr_malloc(size);
+
+			if (rec.provider_asns == NULL) {
+				return ASPA_ERROR;
+			}
+
 			memcpy(rec.provider_asns, record->provider_asns, size);
 		} else {
 			rec.provider_asns = NULL;

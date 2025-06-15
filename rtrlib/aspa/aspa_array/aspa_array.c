@@ -177,7 +177,18 @@ enum aspa_status aspa_array_remove(struct aspa_array *array, size_t index, bool 
 	// decreasing capacity if possible
 	const size_t SIZE_DECREASE_OFFSET = 1000;
 	if (array->size + SIZE_DECREASE_OFFSET < array->capacity) {
-		array->data = lrtr_realloc(array->data, array->size + SIZE_DECREASE_OFFSET);
+		struct aspa_record *tmp_data = lrtr_realloc(array->data, array->size + SIZE_DECREASE_OFFSET);
+
+		if (tmp_data == NULL) {
+			/*
+			 * Although reducing the array's capacity failed at this point,
+			 * the element at the given index has been removed and thus the
+			 * function's outcome can be considered successful.
+			 */
+			return ASPA_SUCCESS;
+		}
+
+		array->data = tmp_data;
 		array->capacity = array->size + SIZE_DECREASE_OFFSET;
 	}
 
