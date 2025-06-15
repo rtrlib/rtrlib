@@ -27,7 +27,17 @@ struct stream *init_stream(uint16_t size)
 {
 	struct stream *s = lrtr_calloc(sizeof(struct stream), 1);
 
+	if (!s) {
+		return NULL;
+	}
+
 	s->stream = lrtr_calloc(size, 1);
+
+	if (!s->stream) {
+		lrtr_free(s);
+		return NULL;
+	}
+
 	s->start = s->stream;
 	s->size = size;
 	s->w_head = 0;

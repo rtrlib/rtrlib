@@ -195,6 +195,11 @@ int rtr_bgpsec_validate_as_path(const struct rtr_bgpsec *data, struct spki_table
 
 		uint8_t *curr = lrtr_malloc(len);
 
+		if (!curr) {
+			retval = RTR_BGPSEC_ERROR;
+			goto err;
+		}
+
 		read_stream_at(curr, s, offset, len);
 
 		retval = hash_byte_sequence(curr, len, data->alg, &hash_result);
@@ -502,6 +507,10 @@ struct rtr_secure_path_seg *rtr_bgpsec_new_secure_path_seg(uint8_t pcount, uint8
 {
 	struct rtr_secure_path_seg *seg = lrtr_malloc(sizeof(struct rtr_secure_path_seg));
 
+	if (!seg) {
+		return NULL;
+	}
+
 	seg->pcount = pcount;
 	seg->flags = flags;
 	seg->asn = asn;
@@ -569,7 +578,17 @@ struct rtr_bgpsec_nlri *rtr_bgpsec_nlri_new(int nlri_len)
 {
 	struct rtr_bgpsec_nlri *nlri = lrtr_malloc(sizeof(struct rtr_bgpsec_nlri));
 
+	if (!nlri) {
+		return NULL;
+	}
+
 	nlri->nlri = lrtr_malloc(nlri_len);
+
+	if (!nlri->nlri) {
+		lrtr_free(nlri);
+		return NULL;
+	}
+
 	return nlri;
 }
 
