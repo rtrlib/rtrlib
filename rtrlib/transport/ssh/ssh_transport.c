@@ -341,7 +341,7 @@ RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_sock
 	if (config->server_hostkey_path) {
 		ssh_socket->config.server_hostkey_path = lrtr_strdup(config->server_hostkey_path);
 
-		if (!ssh_socket->config.client_privkey_path)
+		if (!ssh_socket->config.server_hostkey_path)
 			goto error;
 
 	} else {
