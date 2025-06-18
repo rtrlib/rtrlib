@@ -126,7 +126,7 @@ struct rtr_bgpsec *rtr_bgpsec_new(uint8_t alg, uint8_t safi, uint16_t afi, uint3
 /**
  * @brief Allocate memory for a rtr_bgpsec_nlri struct.
  * @return A pointer to an allocated rtr_bgpsec_nlri struct
- *         or NULL if the allocation failed.
+ *         or NULL if the memory allocation failed.
  */
 struct rtr_bgpsec_nlri *rtr_bgpsec_nlri_new(int nlri_len);
 

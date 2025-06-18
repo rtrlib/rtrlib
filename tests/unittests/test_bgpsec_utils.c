@@ -28,6 +28,7 @@ struct rtr_bgpsec *setup_bgpsec(void)
 	long pfx_int = 0;
 
 	pfx = rtr_bgpsec_nlri_new(3);
+	assert(pfx != NULL);
 	pfx->nlri_len = 24;
 	pfx->afi = BGPSEC_IPV4;
 	pfx_int = 3221225984; /* 192.0.2.0 */
@@ -97,6 +98,7 @@ static void test_bgpsec_streams(void **state)
 
 	struct stream *s_cpy = copy_stream(s);
 
+	assert(s_cpy != NULL);
 	assert_int_equal(s->size, s_cpy->size);
 	assert_int_equal(s->r_head, s_cpy->r_head);
 	assert_int_equal(s->w_head, s_cpy->w_head);
@@ -169,6 +171,7 @@ static void test_bgpsec_constructors(void **state)
 	long pfx_int = 0;
 
 	pfx = rtr_bgpsec_nlri_new(3);
+	assert(pfx != NULL);
 	pfx->nlri_len = 24;
 	pfx->afi = BGPSEC_IPV4;
 	pfx_int = 3221225984; /* 192.0.2.0 */

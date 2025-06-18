@@ -115,6 +115,7 @@ static void validate_bgpsec_path_test(void)
 	uint32_t my_as = 65537;
 
 	pfx = rtr_mgr_bgpsec_nlri_new(3);
+	assert(pfx != NULL);
 	pfx->nlri_len = 24;
 	pfx->afi = 1; /* LRTR_IPV4 */
 	pfx_int = htonl(3221225984); /* 192.0.2.0 */
@@ -240,6 +241,7 @@ static void generate_signature_test(void)
 	uint32_t target_as = 65538;
 
 	pfx = rtr_mgr_bgpsec_nlri_new(3);
+	assert(pfx != NULL);
 	pfx->nlri_len = 24;
 	pfx->afi = 1; /* LRTR_IPV4 */
 	pfx_int = htonl(3221225984); /* 192.0.2.0 */
@@ -335,6 +337,7 @@ static void originate_and_validate_test(void)
 	uint32_t target_as = 65536;
 
 	pfx = rtr_mgr_bgpsec_nlri_new(3);
+	assert(pfx != NULL);
 	pfx->nlri_len = 24;
 	pfx->afi = 1; /* LRTR_IPV4 */
 	pfx_int = htonl(3221225984); /* 192.0.2.0 */

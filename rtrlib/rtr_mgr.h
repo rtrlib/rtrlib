@@ -363,7 +363,8 @@ void rtr_mgr_bgpsec_free_signatures(struct rtr_signature_seg *seg);
  * @param[in] pcount The pcount field.
  * @param[in] flags The flags field.
  * @param[in] asn The ASN of the segment.
- * @return A pointer to an initialized rtr_secure_path_seg struct
+ * @return A pointer to an initialized rtr_secure_path_seg struct or
+ *         NULL if an error occurred, e.g. the memory allocation failed.
  */
 struct rtr_secure_path_seg *rtr_mgr_bgpsec_new_secure_path_seg(uint8_t pcount, uint8_t flags, uint32_t asn);
 

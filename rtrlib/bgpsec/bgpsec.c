@@ -82,7 +82,7 @@ int rtr_bgpsec_validate_as_path(const struct rtr_bgpsec *data, struct spki_table
 	struct spki_record *tmp_key = NULL;
 
 	/* A stream that holds the data that is hashed */
-	struct stream *s = NULL;
+	struct stream *stream = NULL;
 
 	/* Total size of required space for the stream */
 	unsigned int stream_size = 0;
@@ -123,10 +123,15 @@ int rtr_bgpsec_validate_as_path(const struct rtr_bgpsec *data, struct spki_table
 
 	/* Calculate the required stream size and initialize the stream */
 	stream_size = req_stream_size(data, VALIDATION);
-	s = init_stream(stream_size);
+	stream = init_stream(stream_size);
+
+	if (stream == NULL) {
+		retval = RTR_BGPSEC_ERROR;
+		goto err;
+	}
 
 	/* Align the byte sequence and store it in the stream */
-	retval = align_byte_sequence(data, s, VALIDATION);
+	retval = align_byte_sequence(data, stream, VALIDATION);
 
 	if (retval != RTR_BGPSEC_SUCCESS)
 		goto err;
@@ -175,7 +180,7 @@ int rtr_bgpsec_validate_as_path(const struct rtr_bgpsec *data, struct spki_table
 	retval = RTR_BGPSEC_VALID;
 	tmp_sig = data->sigs;
 
-	for (unsigned int offset = 0, next_offset = 0; offset <= get_stream_size(s) && retval == RTR_BGPSEC_VALID;
+	for (unsigned int offset = 0, next_offset = 0; offset <= get_stream_size(stream) && retval == RTR_BGPSEC_VALID;
 	     offset += next_offset) {
 		if (tmp_sig->next)
 			tmp_sig_len = tmp_sig->next->sig_len;
@@ -191,7 +196,7 @@ int rtr_bgpsec_validate_as_path(const struct rtr_bgpsec *data, struct spki_table
 		 * The curr pointer points to the resulting "sub-stream".
 		 * Hacky, could be improved.
 		 */
-		size_t len = get_stream_size(s) - offset;
+		size_t len = get_stream_size(stream) - offset;
 
 		uint8_t *curr = lrtr_malloc(len);
 
@@ -200,7 +205,7 @@ int rtr_bgpsec_validate_as_path(const struct rtr_bgpsec *data, struct spki_table
 			goto err;
 		}
 
-		read_stream_at(curr, s, offset, len);
+		read_stream_at(curr, stream, offset, len);
 
 		retval = hash_byte_sequence(curr, len, data->alg, &hash_result);
 
@@ -248,8 +253,8 @@ err:
 		lrtr_free(hash_result);
 	if (tmp_key)
 		lrtr_free(tmp_key);
-	if (s)
-		free_stream(s);
+	if (stream)
+		free_stream(stream);
 
 	if (retval == RTR_BGPSEC_VALID)
 		BGPSEC_DBG1("Validation result for the whole BGPsec_PATH: valid");
@@ -272,7 +277,7 @@ int rtr_bgpsec_generate_signature(const struct rtr_bgpsec *data, uint8_t *privat
 	int req_sig_size = 0;
 
 	/* A stream that holds the data that is hashed */
-	struct stream *s = NULL;
+	struct stream *stream = NULL;
 
 	/* Total size of required space for the stream */
 	unsigned int stream_size = 0;
@@ -334,18 +339,23 @@ int rtr_bgpsec_generate_signature(const struct rtr_bgpsec *data, uint8_t *privat
 
 	/* Calculate the required stream size and initialize the stream */
 	stream_size = req_stream_size(data, SIGNING);
-	s = init_stream(stream_size);
+	stream = init_stream(stream_size);
+
+	if (stream == NULL) {
+		retval = RTR_BGPSEC_ERROR;
+		goto err;
+	}
 
 	/* Align the bytes to prepare them for hashing. */
-	retval = align_byte_sequence(data, s, SIGNING);
+	retval = align_byte_sequence(data, stream, SIGNING);
 
 	if (retval != RTR_BGPSEC_SUCCESS)
 		goto err;
 
 	/* Hash the aligned bytes. */
-	uint8_t *curr = get_stream_start(s);
+	uint8_t *curr = get_stream_start(stream);
 
-	retval = hash_byte_sequence(curr, get_stream_size(s), data->alg, &hash_result);
+	retval = hash_byte_sequence(curr, get_stream_size(stream), data->alg, &hash_result);
 
 	if (retval != RTR_BGPSEC_SUCCESS)
 		goto err;
@@ -358,8 +368,8 @@ err:
 		lrtr_free(hash_result);
 	if (*new_signature && (retval == RTR_BGPSEC_SIGNING_ERROR))
 		rtr_bgpsec_free_signatures(*new_signature);
-	if (s)
-		free_stream(s);
+	if (stream)
+		free_stream(stream);
 	if (priv_key) {
 		EC_KEY_free(priv_key);
 		priv_key = NULL;
