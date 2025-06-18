@@ -305,6 +305,10 @@ RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_sock
 	socket->socket = lrtr_calloc(1, sizeof(struct tr_ssh_socket));
 	struct tr_ssh_socket *ssh_socket = socket->socket;
 
+	if (ssh_socket == NULL) {
+		return TR_ERROR;
+	}
+
 	ssh_socket->channel = NULL;
 	ssh_socket->session = NULL;
 	ssh_socket->config.host = lrtr_strdup(config->host);
@@ -317,7 +321,7 @@ RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_sock
 		goto error;
 
 	if ((config->password && config->client_privkey_path) || (!config->password && !config->client_privkey_path))
-		return TR_ERROR;
+		goto error;
 
 	if (config->bindaddr) {
 		ssh_socket->config.bindaddr = lrtr_strdup(config->bindaddr);

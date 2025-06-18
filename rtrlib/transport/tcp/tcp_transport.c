@@ -339,6 +339,11 @@ RTRLIB_EXPORT int tr_tcp_init(const struct tr_tcp_config *config, struct tr_sock
 	socket->ident_fp = &tr_tcp_ident;
 
 	socket->socket = lrtr_malloc(sizeof(struct tr_tcp_socket));
+
+	if (socket->socket == NULL) {
+		return TR_ERROR;
+	}
+
 	struct tr_tcp_socket *tcp_socket = socket->socket;
 
 	tcp_socket->socket = -1;
