@@ -43,7 +43,7 @@ enum rtr_bgpsec_rtvals {
 	RTR_BGPSEC_VALID = 1,
 	/** An operation was successful. */
 	RTR_BGPSEC_SUCCESS = 0,
-	/** An operation was not sucessful. */
+	/** An operation was not successful. */
 	RTR_BGPSEC_ERROR = -1,
 	/** The public key could not be loaded. */
 	RTR_BGPSEC_LOAD_PUB_KEY_ERROR = -2,

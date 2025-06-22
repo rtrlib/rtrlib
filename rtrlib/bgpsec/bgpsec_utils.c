@@ -25,20 +25,34 @@ struct stream {
 
 struct stream *init_stream(uint16_t size)
 {
-	struct stream *s = lrtr_calloc(sizeof(struct stream), 1);
+	struct stream *stream = lrtr_calloc(sizeof(struct stream), 1);
 
-	s->stream = lrtr_calloc(size, 1);
-	s->start = s->stream;
-	s->size = size;
-	s->w_head = 0;
-	s->r_head = 0;
-	return s;
+	if (stream == NULL) {
+		return NULL;
+	}
+
+	stream->stream = lrtr_calloc(size, 1);
+
+	if (stream->stream == NULL) {
+		lrtr_free(stream);
+		return NULL;
+	}
+
+	stream->start = stream->stream;
+	stream->size = size;
+	stream->w_head = 0;
+	stream->r_head = 0;
+	return stream;
 }
 
 /* cppcheck-suppress unusedFunction */
 struct stream *copy_stream(struct stream *s)
 {
 	struct stream *cpy = init_stream(s->size);
+
+	if (cpy == NULL) {
+		return NULL;
+	}
 
 	memcpy(cpy->stream, s->stream, s->size);
 	cpy->w_head = s->w_head;

@@ -27,6 +27,7 @@ struct rtr_bgpsec *setup_bgpsec(void)
 	int pfx_int = 0;
 
 	pfx = rtr_bgpsec_nlri_new(3);
+	assert(pfx != NULL);
 	pfx->nlri_len = 24;
 	pfx->afi = 1; /* LRTR_IPV4 */
 	pfx_int = htonl(3221225984); /* 192.0.2.0 */

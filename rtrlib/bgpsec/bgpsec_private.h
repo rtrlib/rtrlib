@@ -76,6 +76,8 @@ void rtr_bgpsec_free_signatures(struct rtr_signature_seg *seg);
  * @param[in] flags The flags field.
  * @param[in] asn The ASN of the segment.
  * @return A pointer to an initialized rtr_secure_path_seg struct
+ *         or NULL if an error occurred, e.g. the memory allocation
+ *         failed.
  */
 struct rtr_secure_path_seg *rtr_bgpsec_new_secure_path_seg(uint8_t pcount, uint8_t flags, uint32_t asn);
 
@@ -123,7 +125,8 @@ struct rtr_bgpsec *rtr_bgpsec_new(uint8_t alg, uint8_t safi, uint16_t afi, uint3
 
 /**
  * @brief Allocate memory for a rtr_bgpsec_nlri struct.
- * @return A pointer to an allocated rtr_bgpsec_nlri struct.
+ * @return A pointer to an allocated rtr_bgpsec_nlri struct
+ *         or NULL if the memory allocation failed.
  */
 struct rtr_bgpsec_nlri *rtr_bgpsec_nlri_new(int nlri_len);
 

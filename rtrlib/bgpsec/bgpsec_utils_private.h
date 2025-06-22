@@ -43,10 +43,10 @@ enum align_type {
 /* Forward declaration of stream to make it opaque. */
 struct stream;
 
-/* Initialize a stream of size bytes */
+/* Initialize and return a stream of size bytes or NULL if the memory allocation failed */
 struct stream *init_stream(uint16_t size);
 
-/* Copy a stream s and return the copy */
+/* Copy a stream s and return the copy or NULL if the memory allocation failed */
 struct stream *copy_stream(struct stream *s);
 
 /* Free stream s */
