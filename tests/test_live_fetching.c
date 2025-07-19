@@ -57,6 +57,9 @@ int main(void)
 	// REPLACE THIS BY YOUR RTR SERVER
 	char RPKI_CACHE_HOST[] = "rtrlab.tanneberger.me";
 	char RPKI_CACHE_PORT[] = "3325"; // rir rtr
+	// 3324: Stable Routinator
+	// 3325: Routinator with ASPA
+	// 3326: Rust
 	//char RPKI_CACHE_PORT[] = "3324"; // aspa rtr
 
 	/* create a TCP transport socket */
