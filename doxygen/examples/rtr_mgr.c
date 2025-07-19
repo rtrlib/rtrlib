@@ -5,6 +5,16 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+static void connection_status_callback(const struct rtr_mgr_group *group __attribute__((unused)),
+				       enum rtr_mgr_status status,
+				       const struct rtr_socket *socket __attribute__((unused)),
+				       void *data __attribute__((unused)))
+{
+	if (status == RTR_MGR_ERROR) {
+		printf("connection status callback received error\n");
+	}
+}
+
 int main()
 {
 	//create a SSH transport socket
@@ -66,7 +76,7 @@ int main()
 
 	//initialize all rtr_sockets in the server pool with the same settings
 	struct rtr_mgr_config *conf;
-	rtr_mgr_init(&conf, groups, 2, 30, 600, 600, NULL, NULL, NULL, NULL);
+	rtr_mgr_init(&conf, groups, 1, &connection_status_callback, NULL);
 
 	//start the connection manager
 	rtr_mgr_start(conf);
