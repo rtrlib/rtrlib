@@ -404,6 +404,13 @@ static bool rtr_pdu_check_size(const struct pdu_header *pdu)
 			break;
 		}
 
+		// TODO: Add test
+		if (aspa_pdu->flags == 0 && aspa_pdu->len != sizeof(struct pdu_aspa)) {
+			RTR_DBG1("ASPA withdrawal PDUs (flag == 0) must not contain any "
+				 "Provider Autonomous System Numbers!");
+			break;
+		}
+
 		retval = true;
 		break;
 	case RESERVED:
