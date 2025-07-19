@@ -353,7 +353,7 @@ static void test_withdraw(struct rtr_socket *socket)
 	test_regular_announcement(socket);
 
 	begin_cache_response(RTR_PROTOCOL_VERSION_2, 0);
-	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_WITHDRAW, 1100, ASNS(42));
+	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_WITHDRAW, 1100, ASNS());
 	end_cache_response(RTR_PROTOCOL_VERSION_2, 0, 444);
 
 	EXPECT_UPDATE_CALLBACKS(
@@ -572,11 +572,9 @@ static void test_regular(struct rtr_socket *socket)
 	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_WITHDRAW, 1100, ASNS());
 	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_WITHDRAW, 2200, ASNS());
 	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_ANNOUNCE, 1100, ASNS(1201, 1202, 1203, 1204));
-	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_ANNOUNCE, 0, ASNS());
 	end_cache_response(RTR_PROTOCOL_VERSION_2, 0, 444);
 
 	EXPECT_UPDATE_CALLBACKS(
-		ADDED(RECORD(0, ASNS())),
 		REMOVED(RECORD(1100, ASNS(1101, 1102, 1103, 1104))),
 		ADDED(RECORD(1100, ASNS(1201, 1202, 1203, 1204))),
 		REMOVED(RECORD(2200, ASNS(2201, 2202, 2203, 2204))),
@@ -586,7 +584,6 @@ static void test_regular(struct rtr_socket *socket)
 	assert(callback_index == callback_count);
 
 	ASSERT_TABLE(socket,
-		RECORD(0, ASNS()),
 		RECORD(1100, ASNS(1201, 1202, 1203, 1204)),
 		RECORD(1101, ASNS(1100, 1102, 1103, 1104)),
 		RECORD(3300, ASNS(3301, 3302, 3303, 3304)),
@@ -599,13 +596,13 @@ static void test_regular(struct rtr_socket *socket)
 	end_cache_response(RTR_PROTOCOL_VERSION_2, 0, 444);
 
 #if ASPA_NOTIFY_NO_OPS
-	printf("Notifying No-Ops!");
+	printf("Notifying No-Ops!\n");
 	EXPECT_UPDATE_CALLBACKS(
 		ADDED(RECORD(1901, ASNS(1201, 1202, 1203, 1204))),
 		REMOVED(RECORD(1901, ASNS(1201, 1202, 1203, 1204))),
 	);
 #else
-	printf("Ignoring No-Ops!");
+	printf("Ignoring No-Ops!\n");
 	EXPECT_NO_UPDATE_CALLBACKS();
 #endif
 
@@ -613,7 +610,6 @@ static void test_regular(struct rtr_socket *socket)
 	assert(callback_index == callback_count);
 
 	ASSERT_TABLE(socket,
-		RECORD(0, ASNS()),
 		RECORD(1100, ASNS(1201, 1202, 1203, 1204)),
 		RECORD(1101, ASNS(1100, 1102, 1103, 1104)),
 		RECORD(3300, ASNS(3301, 3302, 3303, 3304)),
@@ -625,7 +621,6 @@ static void test_regular_swap(struct rtr_socket *socket)
 	test_regular(socket);
 
 	ASSERT_TABLE(socket,
-		RECORD(0, ASNS()),
 		RECORD(1100, ASNS(1201, 1202, 1203, 1204)),
 		RECORD(1101, ASNS(1100, 1102, 1103, 1104)),
 		RECORD(3300, ASNS(3301, 3302, 3303, 3304)),
@@ -664,7 +659,6 @@ static void test_regular_swap(struct rtr_socket *socket)
 
 	EXPECT_UPDATE_CALLBACKS(
 		// records in existing table will be removed...
-		REMOVED_FROM(src_table, RECORD(0, ASNS())),
 		REMOVED_FROM(src_table, RECORD(1100, ASNS(1201, 1202, 1203, 1204))),
 		REMOVED_FROM(src_table, RECORD(1101, ASNS(1100, 1102, 1103, 1104))),
 		REMOVED_FROM(src_table, RECORD(3300, ASNS(3301, 3302, 3303, 3304))),
@@ -674,7 +668,6 @@ static void test_regular_swap(struct rtr_socket *socket)
 		REMOVED_FROM(dst_table, RECORD(4400, ASNS(4401))),
 
 		// record previously removed from the existing table are added to new table
-		ADDED_TO(dst_table, RECORD(0, ASNS())),
 		ADDED_TO(dst_table, RECORD(1100, ASNS(1201, 1202, 1203, 1204))),
 		ADDED_TO(dst_table, RECORD(1101, ASNS(1100, 1102, 1103, 1104))),
 		ADDED_TO(dst_table, RECORD(3300, ASNS(3301, 3302, 3303, 3304))),
@@ -919,7 +912,7 @@ static void test_many_pdus(struct rtr_socket *socket)
 	assert_table(socket, records, N);
 }
 
-static void test_corrupt(struct rtr_socket *socket)
+static void test_corrupt_pdu_length_field(struct rtr_socket *socket)
 {
 	// Test: send corrupt pdu after having received valid data
 	// Expect: Error
@@ -942,10 +935,54 @@ static void test_corrupt(struct rtr_socket *socket)
 	assert(callback_index == callback_count);
 
 	ASSERT_TABLE(socket,
-		RECORD(0, ASNS()),
 		RECORD(1100, ASNS(1201, 1202, 1203, 1204)),
 		RECORD(1101, ASNS(1100, 1102, 1103, 1104)),
 		RECORD(3300, ASNS(3301, 3302, 3303, 3304))
+	);
+}
+
+static void test_corrupt_pdu_provider_autonomous_system_number_list_in_announcement(struct rtr_socket *socket)
+{
+	// Test: Send an ASPA announcement without any provider autonomous system numbers
+	// Expect: Error, and an ASPA Provider List Error (9) is sent as response
+	// DB: DB stays the same
+
+	test_regular(socket);
+
+	begin_cache_response(RTR_PROTOCOL_VERSION_2, 0);
+	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_ANNOUNCE, 4400, ASNS());
+	end_cache_response(RTR_PROTOCOL_VERSION_2, 0, 444);
+
+	// No updates expected, fails at first PDU
+	EXPECT_NO_UPDATE_CALLBACKS();
+	assert(rtr_sync(socket) == RTR_ERROR);
+	assert(callback_index == callback_count);
+
+	ASSERT_TABLE(socket,
+		RECORD(1100, ASNS(1201, 1202, 1203, 1204)),
+		RECORD(1101, ASNS(1100, 1102, 1103, 1104)),
+		RECORD(3300, ASNS(3301, 3302, 3303, 3304))
+	);
+}
+
+static void test_corrupt_pdu_provider_autonomous_system_number_list_in_withdraw(struct rtr_socket *socket)
+{
+	// Test: Send an ASPA withdrawal that contains provider autonomous system numbers
+	// Expect: Error, and an Corrupt Data (0) is sent as response
+	// DB: DB stays the same
+
+	// Announces 1100 => 1101, 1102, 1103, 1104
+	test_regular_announcement(socket);
+
+	begin_cache_response(RTR_PROTOCOL_VERSION_2, 0);
+	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_WITHDRAW, 1100, ASNS(42));
+	end_cache_response(RTR_PROTOCOL_VERSION_2, 0, 444);
+
+	assert(rtr_sync(socket) == RTR_ERROR);
+	assert(callback_index == callback_count);
+
+	ASSERT_TABLE(socket,
+		RECORD(1100, ASNS(1101, 1102, 1103, 1104))
 	);
 }
 
@@ -1077,7 +1114,8 @@ static void run_tests(bool is_resetting)
 	cleanup(&socket);
 
 	printf("\nTEST: announce_withdraw\n");
-	socket = create_socket(is_resetting);
+	socket = create_socket(is_resetting); // TODO: Reinsert
+
 	test_announce_withdraw(socket);
 
 	cleanup(&socket);
@@ -1106,9 +1144,21 @@ static void run_tests(bool is_resetting)
 
 	cleanup(&socket);
 
-	printf("\nTEST: corrupt\n");
+	printf("\nTEST: corrupt PDU length field\n");
 	socket = create_socket(is_resetting);
-	test_corrupt(socket);
+	test_corrupt_pdu_length_field(socket);
+
+	cleanup(&socket);
+
+	printf("\nTEST: corrupt Provider Autonomous System Numbers in announcement\n");
+	socket = create_socket(is_resetting);
+	test_corrupt_pdu_provider_autonomous_system_number_list_in_announcement(socket);
+
+	cleanup(&socket);
+
+	printf("\nTEST: corrupt Provider Autonomous System Numbers in withdrawal\n");
+	socket = create_socket(is_resetting);
+	test_corrupt_pdu_provider_autonomous_system_number_list_in_withdraw(socket);
 
 	cleanup(&socket);
 
