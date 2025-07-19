@@ -185,7 +185,6 @@ static size_t rtr_size_of_aspa_pdu(const struct pdu_aspa *pdu)
  */
 static size_t rtr_aspa_provider_count(const struct pdu_aspa *pdu)
 {
-	// TODO: Assert that pdu->len modulo sizeof(*pdu->provider_asns) is 0?
 	size_t length_of_provider_asns = pdu->len - sizeof(*pdu);
 	return length_of_provider_asns / sizeof(*pdu->provider_asns);
 }
@@ -404,8 +403,8 @@ static bool rtr_pdu_check_size(const struct pdu_header *pdu)
 			break;
 		}
 
-		// TODO: Add test
-		if (aspa_pdu->flags == 0 && aspa_pdu->len != sizeof(struct pdu_aspa)) {
+		bool is_withdrawal = !(aspa_pdu->flags & 1);
+		if (is_withdrawal && aspa_pdu->len != sizeof(struct pdu_aspa)) {
 			RTR_DBG1("ASPA withdrawal PDUs (flag == 0) must not contain any "
 				 "Provider Autonomous System Numbers!");
 			break;
@@ -719,7 +718,7 @@ static void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, con
 	}
 }
 
-__attribute__((always_inline)) inline void rtr_aspa_pdu_2_aspa_operation(struct pdu_aspa *pdu,
+__attribute__((always_inline)) static inline void rtr_aspa_pdu_2_aspa_operation(struct pdu_aspa *pdu,
 									 struct aspa_update_operation *op)
 {
 	op->type = (pdu->flags & 1) == 1 ? ASPA_ADD : ASPA_REMOVE;
@@ -1093,7 +1092,6 @@ static int rtr_compute_update_aspa_table(struct rtr_socket *rtr_socket, struct a
 		struct pdu_aspa *pdu = aspa_pdus[i];
 		bool is_announcement = pdu->flags & 1;
 
-		// TODO: Add test
 		if (is_announcement && rtr_aspa_provider_count(pdu) == 0) {
 			RTR_DBG1("ASPA announcement doesn't contain any provider autonomous system numbers");
 			rtr_send_error_pdu_from_host(rtr_socket, pdu, pdu->len, INCORRECT_ASPA_PROVIDER_LIST, NULL, 0);
