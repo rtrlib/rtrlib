@@ -171,12 +171,31 @@ void rtr_change_socket_state(struct rtr_socket *rtr_socket, const enum rtr_socke
 						rtr_socket->connection_state_fp_param_group);
 }
 
+// TODO: Maybe remove
+static size_t rtr_size_of_aspa_pdu(const struct pdu_aspa *pdu)
+{
+	return pdu->len;
+}
+
+/**
+ * Return the number of providers in the given ASPA PDU.
+ *
+ * @param pdu The ASPA PDU
+ * @return The number of elements in the `Provider Autonomous System Numbers` list
+ */
+static size_t rtr_aspa_provider_count(const struct pdu_aspa *pdu)
+{
+	// TODO: Assert that pdu->len modulo sizeof(*pdu->provider_asns) is 0?
+	size_t length_of_provider_asns = pdu->len - sizeof(*pdu);
+	return length_of_provider_asns / sizeof(*pdu->provider_asns);
+}
+
 static void rtr_pdu_convert_header_byte_order(void *pdu, const enum target_byte_order target_byte_order)
 {
 	struct pdu_header *header = pdu;
 
-	// The ROUTER_KEY PDU has two 1 Byte fields instead of the 2 Byte reserved field.
-	if (header->type != ROUTER_KEY)
+	// The ROUTER_KEY and ASPA PDUs have two 1 Byte fields instead of the 2 Byte reserved field.
+	if (header->type != ROUTER_KEY && header->type != ASPA)
 		header->reserved = lrtr_convert_short(target_byte_order, header->reserved);
 
 	header->len = lrtr_convert_long(target_byte_order, header->len);
@@ -250,16 +269,10 @@ static void rtr_pdu_convert_footer_byte_order(void *pdu, const enum target_byte_
 		break;
 
 	case ASPA:
-		((struct pdu_aspa *)pdu)->provider_count =
-			lrtr_convert_short(target_byte_order, ((struct pdu_aspa *)pdu)->provider_count);
 		((struct pdu_aspa *)pdu)->customer_asn =
 			lrtr_convert_long(target_byte_order, ((struct pdu_aspa *)pdu)->customer_asn);
 
-		uint16_t asn_count = ((struct pdu_aspa *)pdu)->provider_count;
-
-		// prevent converting twice
-		if (target_byte_order != TO_HOST_HOST_BYTE_ORDER)
-			asn_count = lrtr_convert_short(TO_HOST_HOST_BYTE_ORDER, asn_count);
+		uint16_t asn_count = rtr_aspa_provider_count(pdu);
 
 		for (size_t i = 0; i < asn_count; i++) {
 			((struct pdu_aspa *)pdu)->provider_asns[i] =
@@ -296,11 +309,6 @@ static void rtr_pdu_footer_to_host_byte_order(void *pdu)
 static void rtr_pdu_header_to_host_byte_order(void *pdu)
 {
 	rtr_pdu_convert_header_byte_order(pdu, TO_HOST_HOST_BYTE_ORDER);
-}
-
-static size_t rtr_size_of_aspa_pdu(const struct pdu_aspa *pdu)
-{
-	return sizeof(struct pdu_aspa) + sizeof(*pdu->provider_asns) * pdu->provider_count;
 }
 
 /*
@@ -393,16 +401,6 @@ static bool rtr_pdu_check_size(const struct pdu_header *pdu)
 		expected_size = sizeof(struct pdu_aspa);
 		if (aspa_pdu->len < expected_size) {
 			RTR_DBG1("PDU is too small to contain ASPA PDU!");
-			break;
-		}
-
-		// Check if the PDU really contains the ASPA PDU
-		uint16_t asn_count = ntohs(aspa_pdu->provider_count);
-
-		// ASN is 4 bytes each
-		expected_size += asn_count * sizeof(aspa_pdu->provider_asns[0]);
-		if (aspa_pdu->len != expected_size) {
-			RTR_DBG1("The PDU is malformed, because the specified size doesn't match the real PDU size.");
 			break;
 		}
 
@@ -544,9 +542,9 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
 
 		if (((struct pdu_aspa *)pdu)->zero != 0)
 			RTR_DBG1("Warning: Zero field of received ASPA PDU doesn't contain 0");
-
-		if (((struct pdu_aspa *)pdu)->afi_flags != 0b11)
-			RTR_DBG1("Warning: AFI flags of received ASPA PDU not set to 0x03");
+		// TODO: Possibly remove
+		//		if (((struct pdu_aspa *)pdu)->afi_flags != 0b11)
+		//			RTR_DBG1("Warning: AFI flags of received ASPA PDU not set to 0x03");
 	}
 	if (header.type == ROUTER_KEY && ((struct pdu_router_key *)pdu)->zero != 0)
 		RTR_DBG1("Warning: ROUTER_KEY_PDU zero field is != 0");
@@ -720,7 +718,7 @@ __attribute__((always_inline)) inline void rtr_aspa_pdu_2_aspa_operation(struct 
 	op->type = (pdu->flags & 1) == 1 ? ASPA_ADD : ASPA_REMOVE;
 	op->is_no_op = false;
 	op->record.customer_asn = pdu->customer_asn;
-	op->record.provider_count = (op->type == ASPA_ADD) ? pdu->provider_count : 0;
+	op->record.provider_count = (op->type == ASPA_ADD) ? rtr_aspa_provider_count(pdu) : 0;
 	op->record.provider_asns = (op->type == ASPA_ADD) ? pdu->provider_asns : NULL;
 }
 

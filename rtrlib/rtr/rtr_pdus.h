@@ -128,11 +128,9 @@ struct pdu_reset_query {
 struct pdu_aspa {
 	uint8_t ver;
 	uint8_t type;
-	uint16_t zero;
-	uint32_t len;
 	uint8_t flags;
-	uint8_t afi_flags;
-	uint16_t provider_count;
+	uint8_t zero;
+	uint32_t len;
 	uint32_t customer_asn;
 	uint32_t provider_asns[];
 };

@@ -146,8 +146,6 @@ static struct pdu_aspa *append_aspa(uint8_t version, uint8_t flags, uint32_t cus
 	aspa->zero = 0;
 	aspa->len = BYTES32(pdu_size);
 	aspa->flags = flags;
-	aspa->afi_flags = 0x3;
-	aspa->provider_count = BYTES16((uint16_t)provider_count);
 	aspa->customer_asn = BYTES32(customer_asn);
 
 	for (size_t i = 0; i < provider_count; i++)
