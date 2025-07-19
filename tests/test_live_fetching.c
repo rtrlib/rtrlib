@@ -55,7 +55,7 @@ int main(void)
 	//char RPKI_CACHE_PORT[] = "8283";
 
 	// REPLACE THIS BY YOUR RTR SERVER
-	char RPKI_CACHE_HOST[] = "rtrlab.tanneberger.me";
+	char RPKI_CACHE_HOST[] = "127.0.0.1";//"rtrlab.tanneberger.me";
 	char RPKI_CACHE_PORT[] = "3325"; // rir rtr
 	//char RPKI_CACHE_PORT[] = "3324"; // aspa rtr
 

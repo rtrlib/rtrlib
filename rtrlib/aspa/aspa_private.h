@@ -91,8 +91,8 @@
 #define RTR_ASPA_PRIVATE_H
 
 #include "aspa.h"
-#include "rtrlib/rtr/rtr.h"
 #include "rtrlib/lib/log_private.h"
+#include "rtrlib/rtr/rtr.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -203,7 +203,7 @@ enum aspa_status aspa_table_update_swap_in_compute(struct aspa_table *aspa_table
 						   struct aspa_update **update);
 
 /**
- * @brief Applys the given update, as previously computed by `aspa_table_update_swap_in_compute`,
+ * @brief Applies the given update, as previously computed by `aspa_table_update_swap_in_compute`,
  * releases memory allocated while computing the update and unlocks update lock. The update is consumed.
  *
  * @param update The update that will be applied.
