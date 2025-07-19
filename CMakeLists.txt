@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.30)
 project(rtrlib C)
 
 set(PROJECT_DESCRIPTION "Lightweight C library that implements the RPKI/RTR protocol and prefix origin validation.")
