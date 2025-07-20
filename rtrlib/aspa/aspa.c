@@ -139,7 +139,7 @@ RTRLIB_EXPORT enum aspa_status aspa_table_src_remove(struct aspa_table *aspa_tab
 						     bool notify)
 {
 	if (aspa_table == NULL) {
-		ASPA_DBG1("ASPA table is not initialized. Nothing to remove...");
+		ASPA_DBG1("ASPA table is not initialized. Nothing to remove.");
 		return ASPA_SUCCESS;
 	}
 
@@ -164,7 +164,7 @@ RTRLIB_EXPORT enum aspa_status aspa_table_src_remove(struct aspa_table *aspa_tab
 RTRLIB_EXPORT void aspa_table_free(struct aspa_table *aspa_table, bool notify)
 {
 	if (aspa_table == NULL) {
-		ASPA_DBG1("ASPA table is not initialized. Nothing to free...");
+		ASPA_DBG1("ASPA table is not initialized. Nothing to free.");
 		return;
 	}
 

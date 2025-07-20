@@ -90,7 +90,7 @@ void spki_table_init(struct spki_table *spki_table, spki_update_fp update_fp)
 void spki_table_free(struct spki_table *spki_table)
 {
 	if (spki_table == NULL) {
-		SPKI_DBG1("SPKI table is not initialized. Nothing to free...");
+		SPKI_DBG1("SPKI table is not initialized. Nothing to free.");
 		return;
 	}
 
@@ -254,7 +254,7 @@ int spki_table_remove_entry(struct spki_table *spki_table, struct spki_record *s
 int spki_table_src_remove(struct spki_table *spki_table, const struct rtr_socket *socket)
 {
 	if (spki_table == NULL) {
-		SPKI_DBG1("SPKI table is not initialized. Nothing to remove...");
+		SPKI_DBG1("SPKI table is not initialized. Nothing to remove.");
 		return SPKI_SUCCESS;
 	}
 
