@@ -81,7 +81,7 @@ void pfx_table_free_without_notify(struct pfx_table *pfx_table)
 RTRLIB_EXPORT void pfx_table_free(struct pfx_table *pfx_table)
 {
 	if (pfx_table == NULL) {
-		PFX_DBG1("PFX table is not initialized. Nothing to free...");
+		PFX_DBG1("PFX table is not initialized. Nothing to free.");
 		return;
 	}
 
@@ -459,7 +459,7 @@ RTRLIB_EXPORT int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t
 RTRLIB_EXPORT int pfx_table_src_remove(struct pfx_table *pfx_table, const struct rtr_socket *socket)
 {
 	if (pfx_table == NULL) {
-		PFX_DBG1("PFX table is not initialized. Nothing to remove...");
+		PFX_DBG1("PFX table is not initialized. Nothing to remove.");
 		return PFX_SUCCESS;
 	}
 
