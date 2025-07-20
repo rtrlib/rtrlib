@@ -16,6 +16,7 @@
 
 // 16380 aspa providers (current max is ca. 8k)
 static const size_t RTR_MAX_PDU_LEN = 65535;
+static const size_t RTE_ERRONEOUS_PDU_MIN_LEN = 4;
 static const unsigned int RTR_RECV_TIMEOUT = 60;
 static const unsigned int RTR_SEND_TIMEOUT = 60;
 
