@@ -102,6 +102,9 @@ enum aspa_status {
 
 	/** aspa_record wasn't found in the aspa_table. */
 	ASPA_RECORD_NOT_FOUND = -3,
+
+	/** The ASPA feature was not initialized/enabled. */
+	ASPA_NOT_INITIALIZED = -4,
 };
 
 /**

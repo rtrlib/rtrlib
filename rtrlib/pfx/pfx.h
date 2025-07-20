@@ -37,7 +37,10 @@ enum pfx_rtvals {
 	PFX_DUPLICATE_RECORD = -2,
 
 	/** pfx_record wasn't found in the pfx_table. */
-	PFX_RECORD_NOT_FOUND = -3
+	PFX_RECORD_NOT_FOUND = -3,
+
+	/** The PFX feature was not initialized/enabled. */
+	PFX_NOT_INITIALIZED = -4,
 };
 
 /**

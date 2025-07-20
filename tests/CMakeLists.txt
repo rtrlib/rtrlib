@@ -28,6 +28,10 @@ add_executable(test_live_fetching test_live_fetching.c)
 target_link_libraries(test_live_fetching rtrlib_static)
 add_coverage(test_live_fetching)
 
+add_executable(test_live_disabled_features test_live_disabled_features.c)
+target_link_libraries(test_live_disabled_features rtrlib_static)
+add_coverage(test_live_disabled_features)
+
 add_executable(test_ipaddr test_ipaddr.c)
 target_link_libraries(test_ipaddr rtrlib_static)
 add_coverage(test_ipaddr)

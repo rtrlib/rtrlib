@@ -9,10 +9,13 @@
 #ifndef RTR_HT_SPKITABLE_PRIVATE_H
 #define RTR_HT_SPKITABLE_PRIVATE_H
 
+#include "rtrlib/lib/log_private.h"
 #include "rtrlib/spki/spkitable_private.h"
 
 #include "third-party/tommyds/tommyhashlin.h"
 #include "third-party/tommyds/tommylist.h"
+
+#define SPKI_DBG1(a) lrtr_dbg("SPKI: " a)
 
 typedef int (*hash_cmp_fp)(const void *arg, const void *obj);
 

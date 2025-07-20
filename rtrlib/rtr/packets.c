@@ -1068,8 +1068,12 @@ static int rtr_compute_update_aspa_table(struct rtr_socket *rtr_socket, struct a
 {
 	// Fail hard in debug builds.
 	assert(rtr_socket);
-	assert(aspa_table);
 	assert(update);
+
+	if (aspa_table == NULL) {
+		RTR_DBG1("Ignoring incoming ASPA objects; it seems ASPA support is not enabled");
+		return RTR_SUCCESS;
+	}
 
 	if (!update || (pdu_count > 0 && !aspa_pdus))
 		return RTR_ERROR;
