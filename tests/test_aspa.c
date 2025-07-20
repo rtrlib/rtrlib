@@ -986,6 +986,34 @@ static void test_corrupt_pdu_provider_autonomous_system_number_list_in_withdraw(
 	);
 }
 
+static void test_error_pdu_to_be_truncated(struct rtr_socket *socket)
+{
+	// Test: Send an ASPA announcement with maximum size that contains duplicates
+	// Expect: Error, and a DUPLICATE_ANNOUNCEMENT (7) with a truncated erroneous
+        //         PDU is sent as response
+	// DB: DB stays the same
+
+	// Announces 1100 => 1101, 1102, 1103, 1104
+	test_regular_announcement(socket);
+
+	uint32_t pasn_list_length = (RTR_MAX_PDU_LEN - sizeof(struct pdu_aspa)) / sizeof (uint32_t);
+	uint32_t asns[pasn_list_length];
+	for (uint32_t i = 0; i < pasn_list_length; i++) {
+		asns[i] = 1101;
+	}
+
+	begin_cache_response(RTR_PROTOCOL_VERSION_2, 0);
+	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_ANNOUNCE, 1100, asns);
+	end_cache_response(RTR_PROTOCOL_VERSION_2, 0, 444);
+
+	assert(rtr_sync(socket) == RTR_ERROR);
+	assert(callback_index == callback_count);
+
+	ASSERT_TABLE(socket,
+		RECORD(1100, ASNS(1101, 1102, 1103, 1104))
+	);
+}
+
 // clang-format on
 
 static void cleanup(struct rtr_socket **socket)
@@ -1114,8 +1142,7 @@ static void run_tests(bool is_resetting)
 	cleanup(&socket);
 
 	printf("\nTEST: announce_withdraw\n");
-	socket = create_socket(is_resetting); // TODO: Reinsert
-
+	socket = create_socket(is_resetting);
 	test_announce_withdraw(socket);
 
 	cleanup(&socket);
@@ -1159,6 +1186,12 @@ static void run_tests(bool is_resetting)
 	printf("\nTEST: corrupt Provider Autonomous System Numbers in withdrawal\n");
 	socket = create_socket(is_resetting);
 	test_corrupt_pdu_provider_autonomous_system_number_list_in_withdraw(socket);
+
+	cleanup(&socket);
+
+	printf("\nTEST: Error PDU To Be Truncated\n");
+	socket = create_socket(is_resetting);
+	test_error_pdu_to_be_truncated(socket);
 
 	cleanup(&socket);
 
