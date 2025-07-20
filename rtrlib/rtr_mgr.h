@@ -218,10 +218,25 @@ bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config);
  * @param[in] mask_len Length of the network mask of the announced prefix
  * @param[out] result Outcome of the validation
  * @return PFX_SUCCESS On success.
- * @return PFX_ERROR If an error occurred.
+ * @return Any other `pfx_rtvals` code depending on the error.
  */
-int rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn, const struct lrtr_ip_addr *prefix,
-		     const uint8_t mask_len, enum pfxv_state *result);
+enum pfx_rtvals rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn, const struct lrtr_ip_addr *prefix,
+				 const uint8_t mask_len, enum pfxv_state *result);
+
+/**
+ * @brief Validates the given AS path using the ASPA algorithm.
+ * @param[in] config The config to use
+ * @param[in] as_path The AS path to validate
+ * @param len The length of the AS path
+ * @param direction The direction to check; upstream or downstream
+ * @param[out] result The result of the AS path validation, i.e., whether the AS path is
+ *                    considered valid, invalid, or whether the validation status is unknown
+ * @return ASPA_SUCCESS on success
+ * @return Any other `aspa_status` code depending on the error.
+ */
+enum aspa_status rtr_mgr_verify_as_path(struct rtr_mgr_config *config, uint32_t as_path[],
+							     size_t len, enum aspa_direction direction,
+							     enum aspa_verification_result *result);
 
 /**
  * @brief Returns all SPKI records which match the given ASN and SKI.
@@ -312,10 +327,9 @@ int rtr_mgr_add_spki_support(struct rtr_mgr_config *config, const spki_update_fp
  * @param[in] config The rtr_mgr_config containing a SPKI table.
  * @return RTR_BGPSEC_VALID If the AS path was valid.
  * @return RTR_BGPSEC_NOT_VALID If the AS path was not valid.
- * @return RTR_BGPSEC_ERROR If an error occurred. Refer to error codes for
- *			more details.
+ * @return Any other `rtr_bgpsec_rtvals` code depending on the error.
  */
-int rtr_mgr_bgpsec_validate_as_path(const struct rtr_bgpsec *data, struct rtr_mgr_config *config);
+enum rtr_bgpsec_rtvals rtr_mgr_bgpsec_validate_as_path(const struct rtr_bgpsec *data, struct rtr_mgr_config *config);
 
 /**
  * @brief Signing function for a BGPsec_PATH.

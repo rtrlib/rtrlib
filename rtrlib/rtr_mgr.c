@@ -522,9 +522,9 @@ RTRLIB_EXPORT void rtr_mgr_free(struct rtr_mgr_config *config)
 }
 
 /* cppcheck-suppress unusedFunction */
-RTRLIB_EXPORT inline int rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn,
-					  const struct lrtr_ip_addr *prefix, const uint8_t mask_len,
-					  enum pfxv_state *result)
+RTRLIB_EXPORT inline enum pfx_rtvals rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn,
+						      const struct lrtr_ip_addr *prefix, const uint8_t mask_len,
+						      enum pfxv_state *result)
 {
 	if (config->pfx_table == NULL) {
 		MGR_DBG1("PFX table is not initialized");
@@ -741,10 +741,11 @@ RTRLIB_EXPORT inline void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *co
 
 #ifdef RTRLIB_BGPSEC_ENABLED
 /* cppcheck-suppress unusedFunction */
-RTRLIB_EXPORT int rtr_mgr_bgpsec_validate_as_path(const struct rtr_bgpsec *data, struct rtr_mgr_config *config)
+RTRLIB_EXPORT enum rtr_bgpsec_rtvals rtr_mgr_bgpsec_validate_as_path(const struct rtr_bgpsec *data,
+								     struct rtr_mgr_config *config)
 {
 	if (config->spki_table == NULL) {
-		MGR_DBG1("SPKI table is not initialized.");
+		MGR_DBG1("SPKI table is not initialized");
 		return RTR_BGPSEC_NOT_INITIALIZED;
 	}
 
