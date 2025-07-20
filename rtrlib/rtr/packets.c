@@ -60,11 +60,11 @@ struct recv_loop_cleanup_args {
 static void recv_loop_cleanup(void *p);
 
 static int rtr_send_error_pdu_from_network(const struct rtr_socket *rtr_socket, const void *erroneous_pdu,
-					   const uint32_t erroneous_pdu_len, const enum pdu_error_type error,
+					   uint32_t erroneous_pdu_len, const enum pdu_error_type error,
 					   const char *err_text, const uint32_t err_text_len);
 
 static int rtr_send_error_pdu_from_host(const struct rtr_socket *rtr_socket, const void *erroneous_pdu,
-					const uint32_t erroneous_pdu_len, const enum pdu_error_type error,
+					uint32_t erroneous_pdu_len, const enum pdu_error_type error,
 					const char *err_text, const uint32_t err_text_len);
 
 static int interval_send_error_pdu(struct rtr_socket *rtr_socket, void *pdu, uint32_t interval, uint16_t minimum,
@@ -719,7 +719,7 @@ static void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, con
 }
 
 __attribute__((always_inline)) static inline void rtr_aspa_pdu_2_aspa_operation(struct pdu_aspa *pdu,
-									 struct aspa_update_operation *op)
+										struct aspa_update_operation *op)
 {
 	op->type = (pdu->flags & 1) == 1 ? ASPA_ADD : ASPA_REMOVE;
 	op->is_no_op = false;
@@ -1794,12 +1794,45 @@ int rtr_wait_for_sync(struct rtr_socket *rtr_socket)
 	return RTR_ERROR;
 }
 
+/**
+ * Send an error PDU with an arbitrary error message.
+ *
+ * If the given erroneous PDU doesn't fit the error PDU, i.e., the resulting error PDU
+ * exceeds the maximum size of `RTR_MAX_PDU_LEN`, the erroneous PDU is truncated to the
+ * maximum amount of octets that still fit into the error PDU.
+ *
+ * @param[in] rtr_socket The socket to send the error PDU with
+ * @param[in] erroneous_pdu The erroneous PDU which caused the error
+ * @param erroneous_pdu_len The length of the erroneous PDU
+ * @param error The type of error to be sent
+ * @param[in] err_text An arbitrary error message
+ * @param err_text_len The length of the arbitrary error message. Beware that the
+ *                     text length must be short enough so that the resulting error
+ *                     PDU, including the maximum truncated erroneous PDU, does not
+ *                     exceed `RTR_MAX_PDU_LEN`
+ * @return RTR_SUCCESS on success
+ * @return RTR_ERROR on any error
+ */
 static int rtr_send_error_pdu(const struct rtr_socket *rtr_socket, const void *erroneous_pdu,
-			      const uint32_t erroneous_pdu_len, const enum pdu_error_type error, const char *err_text,
+			      uint32_t erroneous_pdu_len, const enum pdu_error_type error, const char *err_text,
 			      const uint32_t err_text_len)
 {
+	// Assert that the length of the arbitrary error text is small enough so that at least
+	// `RTE_ERRONEOUS_PDU_MIN_LEN` octets of the erroneous PDU can be added to the error PDU.
+	assert(err_text_len <= RTR_MAX_PDU_LEN - (sizeof(struct pdu_error) + 4 + RTE_ERRONEOUS_PDU_MIN_LEN));
+
 	struct pdu_error *err_pdu;
 	unsigned int msg_size = sizeof(struct pdu_error) + 4 + erroneous_pdu_len + err_text_len;
+
+	// Truncate the erroneous PDU if it doesn't fit in the error PDU, i.e.,
+	// the resulting error PDU exceeds a length of `RTR_MAX_PDU_LEN` octets.
+	if (msg_size > RTR_MAX_PDU_LEN) {
+		uint32_t overflow_bytes = msg_size - RTR_MAX_PDU_LEN;
+
+		erroneous_pdu_len -= overflow_bytes;
+		msg_size -= overflow_bytes;
+	}
+
 	uint8_t msg[msg_size];
 
 	// don't send errors for erroneous error PDUs
@@ -1817,8 +1850,9 @@ static int rtr_send_error_pdu(const struct rtr_socket *rtr_socket, const void *e
 	err_pdu->len = msg_size;
 
 	err_pdu->len_enc_pdu = erroneous_pdu_len;
-	if (erroneous_pdu_len > 0)
+	if (erroneous_pdu_len > 0) {
 		memcpy(err_pdu->rest, erroneous_pdu, erroneous_pdu_len);
+	}
 
 	*((uint32_t *)(err_pdu->rest + erroneous_pdu_len)) = err_text_len;
 	if (err_text_len > 0)
@@ -1838,14 +1872,14 @@ static int interval_send_error_pdu(struct rtr_socket *rtr_socket, void *pdu, uin
 }
 
 static int rtr_send_error_pdu_from_network(const struct rtr_socket *rtr_socket, const void *erroneous_pdu,
-					   const uint32_t erroneous_pdu_len, const enum pdu_error_type error,
+					   uint32_t erroneous_pdu_len, const enum pdu_error_type error,
 					   const char *err_text, const uint32_t err_text_len)
 {
 	return rtr_send_error_pdu(rtr_socket, erroneous_pdu, erroneous_pdu_len, error, err_text, err_text_len);
 }
 
 static int rtr_send_error_pdu_from_host(const struct rtr_socket *rtr_socket, const void *erroneous_pdu,
-					const uint32_t erroneous_pdu_len, const enum pdu_error_type error,
+					uint32_t erroneous_pdu_len, const enum pdu_error_type error,
 					const char *err_text, const uint32_t err_text_len)
 {
 	char pdu[erroneous_pdu_len];
