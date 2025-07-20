@@ -437,6 +437,18 @@ static void test_pfx_merge(void)
 	pfx_table_free(&pfxt2);
 }
 
+static void test_pfx_table_add_null_arguments(void)
+{
+	struct pfx_table pfxt1;
+	struct pfx_record records[1] = {0};
+
+	pfx_table_init(&pfxt1, NULL);
+
+	assert(pfx_table_add(NULL, &records[0]) == PFX_NOT_INITIALIZED);
+	assert(pfx_table_add(NULL, NULL) == PFX_NOT_INITIALIZED);
+	assert(pfx_table_add(&pfxt1, NULL) == PFX_ERROR);
+}
+
 int main(void)
 {
 	pfx_table_test();
@@ -445,6 +457,7 @@ int main(void)
 	test_issue99();
 	test_issue152();
 	test_pfx_merge();
+	test_pfx_table_add_null_arguments();
 
 	return EXIT_SUCCESS;
 }

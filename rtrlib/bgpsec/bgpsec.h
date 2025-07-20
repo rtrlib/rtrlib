@@ -61,6 +61,9 @@ enum rtr_bgpsec_rtvals {
 	RTR_BGPSEC_WRONG_SEGMENT_COUNT = -8,
 	/** There is data missing for validation or signing. */
 	RTR_BGPSEC_INVALID_ARGUMENTS = -9,
+	/** The BGPsec feature was not initialized/enabled. */
+	RTR_BGPSEC_NOT_INITIALIZED = -10,
+
 };
 
 /**

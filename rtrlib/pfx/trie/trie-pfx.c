@@ -80,6 +80,11 @@ void pfx_table_free_without_notify(struct pfx_table *pfx_table)
 
 RTRLIB_EXPORT void pfx_table_free(struct pfx_table *pfx_table)
 {
+	if (pfx_table == NULL) {
+		PFX_DBG1("PFX table is not initialized. Nothing to free...");
+		return;
+	}
+
 	for (int i = 0; i < 2; i++) {
 		struct trie_node *root = (i == 0 ? pfx_table->ipv4 : pfx_table->ipv6);
 
@@ -215,6 +220,14 @@ int pfx_table_del_elem(struct node_data *data, const unsigned int index)
 
 RTRLIB_EXPORT int pfx_table_add(struct pfx_table *pfx_table, const struct pfx_record *record)
 {
+	if (pfx_table == NULL) {
+		return PFX_NOT_INITIALIZED;
+	}
+
+	if (record == NULL) {
+		return PFX_ERROR;
+	}
+
 	pthread_rwlock_wrlock(&(pfx_table->lock));
 
 	struct trie_node *root = pfx_table_get_root(pfx_table, record->prefix.ver);
@@ -361,10 +374,7 @@ RTRLIB_EXPORT int pfx_table_validate_r(struct pfx_table *pfx_table, struct pfx_r
 	// assert(reason_len == NULL || *reason_len  == 0);
 	// assert(reason == NULL || *reason == NULL);
 
-	if (pfx_table == NULL) {
-		PFX_DBG1("TRYING TO VALIDATE A PREFIX BUT NO TABLE INITIALIZED");
-		return PFX_ERROR;
-	}
+	assert(pfx_table != NULL);
 
 	pthread_rwlock_rdlock(&(pfx_table->lock));
 	struct trie_node *root = pfx_table_get_root(pfx_table, prefix->ver);
@@ -448,6 +458,11 @@ RTRLIB_EXPORT int pfx_table_validate(struct pfx_table *pfx_table, const uint32_t
 
 RTRLIB_EXPORT int pfx_table_src_remove(struct pfx_table *pfx_table, const struct rtr_socket *socket)
 {
+	if (pfx_table == NULL) {
+		PFX_DBG1("PFX table is not initialized. Nothing to remove...");
+		return PFX_SUCCESS;
+	}
+
 	for (unsigned int i = 0; i < 2; i++) {
 		struct trie_node **root = (i == 0 ? &(pfx_table->ipv4) : &(pfx_table->ipv6));
 

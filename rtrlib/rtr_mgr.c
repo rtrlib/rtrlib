@@ -526,6 +526,11 @@ RTRLIB_EXPORT inline int rtr_mgr_validate(struct rtr_mgr_config *config, const u
 					  const struct lrtr_ip_addr *prefix, const uint8_t mask_len,
 					  enum pfxv_state *result)
 {
+	if (config->pfx_table == NULL) {
+		MGR_DBG1("PFX table is not initialized");
+		return PFX_NOT_INITIALIZED;
+	}
+
 	return pfx_table_validate(config->pfx_table, asn, prefix, mask_len, result);
 }
 
@@ -534,6 +539,11 @@ RTRLIB_EXPORT inline enum aspa_status rtr_mgr_verify_as_path(struct rtr_mgr_conf
 							     size_t len, enum aspa_direction direction,
 							     enum aspa_verification_result *result)
 {
+	if (config->aspa_table == NULL) {
+		MGR_DBG1("ASPA table is not initialized");
+		return ASPA_NOT_INITIALIZED;
+	}
+
 	*result = aspa_verify_as_path(config->aspa_table, as_path, len, direction);
 	return ASPA_SUCCESS;
 }
@@ -733,6 +743,11 @@ RTRLIB_EXPORT inline void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *co
 /* cppcheck-suppress unusedFunction */
 RTRLIB_EXPORT int rtr_mgr_bgpsec_validate_as_path(const struct rtr_bgpsec *data, struct rtr_mgr_config *config)
 {
+	if (config->spki_table == NULL) {
+		MGR_DBG1("SPKI table is not initialized.");
+		return RTR_BGPSEC_NOT_INITIALIZED;
+	}
+
 	int retval = rtr_bgpsec_validate_as_path(data, config->spki_table);
 
 	return retval;

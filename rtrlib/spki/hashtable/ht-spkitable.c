@@ -89,6 +89,11 @@ void spki_table_init(struct spki_table *spki_table, spki_update_fp update_fp)
 
 void spki_table_free(struct spki_table *spki_table)
 {
+	if (spki_table == NULL) {
+		SPKI_DBG1("SPKI table is not initialized. Nothing to free...");
+		return;
+	}
+
 	pthread_rwlock_wrlock(&spki_table->lock);
 
 	tommy_list_foreach(&spki_table->list, free);
@@ -248,6 +253,11 @@ int spki_table_remove_entry(struct spki_table *spki_table, struct spki_record *s
 
 int spki_table_src_remove(struct spki_table *spki_table, const struct rtr_socket *socket)
 {
+	if (spki_table == NULL) {
+		SPKI_DBG1("SPKI table is not initialized. Nothing to remove...");
+		return SPKI_SUCCESS;
+	}
+
 	struct key_entry *entry;
 	tommy_node *current_node;
 

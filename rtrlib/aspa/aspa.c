@@ -138,6 +138,11 @@ static enum aspa_status aspa_table_remove_node(struct aspa_table *aspa_table, st
 RTRLIB_EXPORT enum aspa_status aspa_table_src_remove(struct aspa_table *aspa_table, struct rtr_socket *rtr_socket,
 						     bool notify)
 {
+	if (aspa_table == NULL) {
+		ASPA_DBG1("ASPA table is not initialized. Nothing to remove...");
+		return ASPA_SUCCESS;
+	}
+
 	pthread_rwlock_wrlock(&aspa_table->update_lock);
 	pthread_rwlock_wrlock(&aspa_table->lock);
 
@@ -158,6 +163,11 @@ RTRLIB_EXPORT enum aspa_status aspa_table_src_remove(struct aspa_table *aspa_tab
 
 RTRLIB_EXPORT void aspa_table_free(struct aspa_table *aspa_table, bool notify)
 {
+	if (aspa_table == NULL) {
+		ASPA_DBG1("ASPA table is not initialized. Nothing to free...");
+		return;
+	}
+
 	pthread_rwlock_wrlock(&aspa_table->update_lock);
 	pthread_rwlock_wrlock(&aspa_table->lock);
 
