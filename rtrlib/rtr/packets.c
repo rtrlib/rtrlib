@@ -171,12 +171,6 @@ void rtr_change_socket_state(struct rtr_socket *rtr_socket, const enum rtr_socke
 						rtr_socket->connection_state_fp_param_group);
 }
 
-// TODO: Maybe remove
-static size_t rtr_size_of_aspa_pdu(const struct pdu_aspa *pdu)
-{
-	return pdu->len;
-}
-
 /**
  * Return the number of providers in the given ASPA PDU.
  *
@@ -925,7 +919,7 @@ static int rtr_store_aspa_pdu(struct rtr_socket *rtr_socket, const struct pdu_as
 		}
 		*array = tmp;
 	}
-	size_t pdu_size = rtr_size_of_aspa_pdu(pdu);
+	size_t pdu_size = pdu->len;
 	struct pdu_aspa *copy = lrtr_malloc(pdu_size);
 
 	if (!copy) {
@@ -1112,7 +1106,7 @@ static int rtr_compute_update_aspa_table(struct rtr_socket *rtr_socket, struct a
 
 	if (*update && (*update)->failed_operation) {
 		struct pdu_aspa *pdu = aspa_pdus[(*update)->failed_operation->index];
-		size_t pdu_size = rtr_size_of_aspa_pdu(pdu);
+		size_t pdu_size = pdu->len;
 
 		if (res == ASPA_DUPLICATE_RECORD) {
 			RTR_DBG("Duplicate Announcement for ASPA customer ASN: %u received", pdu->customer_asn);
@@ -1204,7 +1198,7 @@ static int rtr_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_tabl
 
 	if (*failed_operation) {
 		struct pdu_aspa *pdu = aspa_pdus[(*failed_operation)->index];
-		size_t pdu_size = rtr_size_of_aspa_pdu(pdu);
+		size_t pdu_size = pdu->len;
 
 		if (res == ASPA_DUPLICATE_RECORD) {
 			RTR_DBG("Duplicate Announcement for ASPA customer ASN: %u received", pdu->customer_asn);
