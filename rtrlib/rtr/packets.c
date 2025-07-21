@@ -540,6 +540,15 @@ static int rtr_receive_pdu(struct rtr_socket *rtr_socket, void *pdu, const size_
 			goto error;
 		}
 
+		// ASPA PDUs must have a length that is divisible by 4 Since the minimum length
+		// is 12 (no Provider Autonomous System Numbers) and each Provider Autonomous
+		// System Number that is added will increase the length by 4 octets. Thus,
+		// if the length is not divisible by 0 the received data is corrupt.
+		if (((struct pdu_aspa *)pdu)->len % 4 != 0) {
+			error = CORRUPT_DATA;
+			goto error;
+		}
+
 		if (((struct pdu_aspa *)pdu)->zero != 0)
 			RTR_DBG1("Warning: Zero field of received ASPA PDU doesn't contain 0");
 	}
