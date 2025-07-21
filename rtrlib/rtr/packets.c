@@ -60,7 +60,7 @@ struct recv_loop_cleanup_args {
 static void recv_loop_cleanup(void *p);
 
 static int rtr_send_error_pdu_from_network(const struct rtr_socket *rtr_socket, const void *erroneous_pdu,
-					   uint32_t erroneous_pdu_len, const enum pdu_error_type error,
+					   const uint32_t erroneous_pdu_len, const enum pdu_error_type error,
 					   const char *err_text, const uint32_t err_text_len);
 
 static int rtr_send_error_pdu_from_host(const struct rtr_socket *rtr_socket, const void *erroneous_pdu,
@@ -1876,7 +1876,7 @@ static int interval_send_error_pdu(struct rtr_socket *rtr_socket, void *pdu, uin
 }
 
 static int rtr_send_error_pdu_from_network(const struct rtr_socket *rtr_socket, const void *erroneous_pdu,
-					   uint32_t erroneous_pdu_len, const enum pdu_error_type error,
+					   const uint32_t erroneous_pdu_len, const enum pdu_error_type error,
 					   const char *err_text, const uint32_t err_text_len)
 {
 	return rtr_send_error_pdu(rtr_socket, erroneous_pdu, erroneous_pdu_len, error, err_text, err_text_len);
