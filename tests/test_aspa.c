@@ -31,10 +31,25 @@ struct update_callback *expected_callbacks;
 size_t callback_index;
 size_t callback_count;
 
+/*
+ * Expected error PDUs sent by the RTRlib in the tests.
+ *
+ * Other PDUs are not expected since the tests pass the test data
+ * directly to the receiver function circumventing the need of an
+ * initially sent SerialQuery or ResetQuery.
+ */
+struct sent_pdu *expected_error_pdus;
+size_t expected_error_pdus_index;
+size_t expected_error_pdus_count;
+
 struct update_callback {
 	struct aspa_table *source;
 	struct aspa_record record;
 	enum aspa_operation_type type;
+};
+
+struct sent_pdu {
+	uint16_t error_code;
 };
 
 #define BYTES16(X) lrtr_convert_short(TO_HOST_HOST_BYTE_ORDER, X)
@@ -78,6 +93,16 @@ struct update_callback {
 
 #define EXPECT_NO_UPDATE_CALLBACKS() \
 	expect_update_callbacks(NULL, 0)
+
+#define ERROR_PDU(err_code) ((struct sent_pdu) {.error_code = err_code})
+
+#define EXPECT_ERROR_PDUS_SENT(...) \
+	struct sent_pdu _LINEVAR(_sent_pdus)[] = {__VA_ARGS__}; \
+	expect_sent_pdus(_LINEVAR(_sent_pdus), \
+				(size_t)(sizeof(_LINEVAR(_sent_pdus)) / sizeof(struct sent_pdu)))
+
+#define EXPECT_NO_ERROR_PDUS_SENT() \
+	expect_sent_pdus(NULL, 0)
 // clang-format on
 
 #define ASPA_ANNOUNCE 1
@@ -87,6 +112,11 @@ static int custom_send(const struct tr_socket *socket __attribute__((unused)), c
 		       const time_t timeout __attribute__((unused)))
 {
 	const struct pdu_error *err = pdu;
+
+	assert(expected_error_pdus != NULL);
+	assert(expected_error_pdus_index < expected_error_pdus_count);
+	uint16_t error_code = BYTES16(err->error_code);
+	assert(expected_error_pdus[expected_error_pdus_index].error_code == error_code);
 
 	if (err->type == 10) {
 		uint32_t *errlen = (uint32_t *)((char *)err->rest + err->len_enc_pdu);
@@ -196,6 +226,20 @@ static void expect_update_callbacks(struct update_callback callbacks[], size_t c
 	} else {
 		clear_expected_callbacks();
 	}
+}
+
+static void expect_sent_pdus(struct sent_pdu sent_pdus[], size_t count)
+{
+	expected_error_pdus = sent_pdus;
+	expected_error_pdus_index = 0;
+	expected_error_pdus_count = count;
+}
+
+static void clear_expected_sent_pdus(void)
+{
+	expected_error_pdus = NULL;
+	expected_error_pdus_index = 0;
+	expected_error_pdus_count = 0;
 }
 
 static void aspa_update_callback(struct aspa_table *s, const struct aspa_record record,
@@ -316,6 +360,7 @@ static void test_no_aspa(struct rtr_socket *socket)
 	end_cache_response(RTR_PROTOCOL_VERSION_2, 0, 437);
 
 	EXPECT_NO_UPDATE_CALLBACKS();
+	EXPECT_NO_ERROR_PDUS_SENT();
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
@@ -336,6 +381,7 @@ static void test_regular_announcement(struct rtr_socket *socket)
 	EXPECT_UPDATE_CALLBACKS(
 		ADDED(RECORD(1100, ASNS(1101, 1102, 1103, 1104))),
 	);
+	EXPECT_NO_ERROR_PDUS_SENT();
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
@@ -359,6 +405,7 @@ static void test_withdraw(struct rtr_socket *socket)
 	EXPECT_UPDATE_CALLBACKS(
 		REMOVED(RECORD(1100, ASNS(1101, 1102, 1103, 1104))),
 	);
+	EXPECT_NO_ERROR_PDUS_SENT();
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
@@ -380,6 +427,7 @@ static void test_regular_announcements(struct rtr_socket *socket)
 		ADDED(RECORD(1100, ASNS(1101, 1102, 1103, 1104))),
 		ADDED(RECORD(4400, ASNS(4401))),
 	);
+	EXPECT_NO_ERROR_PDUS_SENT();
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
@@ -405,6 +453,7 @@ static void test_announce_existing(struct rtr_socket *socket)
 
 	// No updates expected, fails at first PDU
 	EXPECT_NO_UPDATE_CALLBACKS();
+	EXPECT_ERROR_PDUS_SENT(ERROR_PDU(DUPLICATE_ANNOUNCEMENT));
 
 	assert(rtr_sync(socket) == RTR_ERROR);
 	assert(callback_index == callback_count);
@@ -427,6 +476,7 @@ static void test_announce_twice(struct rtr_socket *socket)
 
 	// No updates expected, fails at first PDU
 	EXPECT_NO_UPDATE_CALLBACKS();
+	EXPECT_ERROR_PDUS_SENT(ERROR_PDU(DUPLICATE_ANNOUNCEMENT));
 
 	assert(rtr_sync(socket) == RTR_ERROR);
 	assert(callback_index == callback_count);
@@ -449,6 +499,7 @@ static void test_withdraw_nonexisting(struct rtr_socket *socket)
 
 	// No updates expected, fails at first PDU
 	EXPECT_NO_UPDATE_CALLBACKS();
+	EXPECT_ERROR_PDUS_SENT(ERROR_PDU(WITHDRAWAL_OF_UNKNOWN_RECORD));
 
 	assert(rtr_sync(socket) == RTR_ERROR);
 	assert(callback_index == callback_count);
@@ -478,6 +529,8 @@ static void test_announce_withdraw(struct rtr_socket *socket)
 #else
 	EXPECT_NO_UPDATE_CALLBACKS();
 #endif
+	EXPECT_NO_ERROR_PDUS_SENT();
+
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
@@ -516,6 +569,7 @@ static void test_withdraw_announce(struct rtr_socket *socket)
 		ADDED(RECORD(1100, ASNS(2201, 2202, 2203, 2204))),
 	);
 #endif
+	EXPECT_NO_ERROR_PDUS_SENT();
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
@@ -540,6 +594,7 @@ static void test_regular(struct rtr_socket *socket)
 		ADDED(RECORD(1101, ASNS(1100, 1102, 1103, 1104))),
 		ADDED(RECORD(2200, ASNS(2201, 2202, 2203, 2204))),
 	);
+	EXPECT_NO_ERROR_PDUS_SENT();
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
@@ -557,6 +612,7 @@ static void test_regular(struct rtr_socket *socket)
 	EXPECT_UPDATE_CALLBACKS(
 		ADDED(RECORD(3300, ASNS(3301, 3302, 3303, 3304))),
 	);
+	EXPECT_NO_ERROR_PDUS_SENT();
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
@@ -579,6 +635,7 @@ static void test_regular(struct rtr_socket *socket)
 		ADDED(RECORD(1100, ASNS(1201, 1202, 1203, 1204))),
 		REMOVED(RECORD(2200, ASNS(2201, 2202, 2203, 2204))),
 	);
+	EXPECT_NO_ERROR_PDUS_SENT();
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
@@ -605,6 +662,7 @@ static void test_regular(struct rtr_socket *socket)
 	printf("Ignoring No-Ops!\n");
 	EXPECT_NO_UPDATE_CALLBACKS();
 #endif
+	EXPECT_NO_ERROR_PDUS_SENT();
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
@@ -644,6 +702,7 @@ static void test_regular_swap(struct rtr_socket *socket)
 		ADDED_TO(dst_table, RECORD(1100, ASNS(1101, 1102, 1103, 1104))),
 		ADDED_TO(dst_table, RECORD(4400, ASNS(4401)))
 	);
+	EXPECT_NO_ERROR_PDUS_SENT();
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
@@ -672,6 +731,7 @@ static void test_regular_swap(struct rtr_socket *socket)
 		ADDED_TO(dst_table, RECORD(1101, ASNS(1100, 1102, 1103, 1104))),
 		ADDED_TO(dst_table, RECORD(3300, ASNS(3301, 3302, 3303, 3304))),
 	);
+	EXPECT_NO_ERROR_PDUS_SENT();
 
 	assert(aspa_table_src_replace(dst_table, src_table, socket, true, true) == ASPA_SUCCESS);
 	assert(callback_index == callback_count);
@@ -697,6 +757,7 @@ static void test_withdraw_twice(struct rtr_socket *socket)
 		ADDED(RECORD(1901, ASNS(1900, 1902, 1903, 1904))),
 		ADDED(RECORD(2200, ASNS(2201, 2202, 2203, 2204))),
 	);
+	EXPECT_NO_ERROR_PDUS_SENT();
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
@@ -714,6 +775,7 @@ static void test_withdraw_twice(struct rtr_socket *socket)
 	EXPECT_UPDATE_CALLBACKS(
 		ADDED(RECORD(3300, ASNS(3301, 3302, 3303, 3304))),
 	);
+	EXPECT_NO_ERROR_PDUS_SENT();
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
@@ -730,8 +792,9 @@ static void test_withdraw_twice(struct rtr_socket *socket)
 	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_WITHDRAW, 2200, ASNS());
 	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_WITHDRAW, 1900, ASNS());
 	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_ANNOUNCE, 1900, ASNS(1201, 1202, 1203, 1204));
-	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_ANNOUNCE, 0, ASNS());
 	end_cache_response(RTR_PROTOCOL_VERSION_2, 0, 444);
+
+	EXPECT_ERROR_PDUS_SENT(ERROR_PDU(WITHDRAWAL_OF_UNKNOWN_RECORD));
 
 	// Callback behavior deviates for different update mechanisms
 	// Swap-In: No callback because update computation fails
@@ -761,6 +824,7 @@ static void test_announce_withdraw_announce_twice(struct rtr_socket *socket)
 	EXPECT_UPDATE_CALLBACKS(
 		ADDED(RECORD(1400, ASNS(1401, 1402, 1403, 1404))),
 	);
+	EXPECT_NO_ERROR_PDUS_SENT();
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 
@@ -773,6 +837,8 @@ static void test_announce_withdraw_announce_twice(struct rtr_socket *socket)
 	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_ANNOUNCE, 1400, ASNS(1201, 1202, 1203, 1204));
 	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_ANNOUNCE, 1400, ASNS(1201, 1202, 1203));
 	end_cache_response(RTR_PROTOCOL_VERSION_2, 0, 444);
+
+	EXPECT_ERROR_PDUS_SENT(ERROR_PDU(DUPLICATE_ANNOUNCEMENT));
 
 	// Callback behavior deviates for different update mechanisms
 	// Swap-In: No callback because update computation fails
@@ -802,6 +868,7 @@ static void test_multiple_syncs(struct rtr_socket *socket)
 		ADDED(RECORD(1, ASNS(2, 3, 4, 5))),
 		ADDED(RECORD(2, ASNS(3, 4, 5, 6))),
 	);
+	EXPECT_NO_ERROR_PDUS_SENT();
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
@@ -839,6 +906,7 @@ static void test_multiple_syncs(struct rtr_socket *socket)
 			ADDED(RECORD(c_an, ASNS(c_an + 1, c_an + 2, c_an + 3, c_an + 4))),
 			ADDED(RECORD(c_an + 1, ASNS(c_an + 2, c_an + 3, c_an + 4, c_an + 5))),
 		);
+		EXPECT_NO_ERROR_PDUS_SENT();
 		assert(rtr_sync(socket) == RTR_SUCCESS);
 		assert(callback_index == callback_count);
 
@@ -904,6 +972,7 @@ static void test_many_pdus(struct rtr_socket *socket)
 	}
 
 	expect_update_callbacks(callbacks, N);
+	EXPECT_NO_ERROR_PDUS_SENT();
 
 	// sync
 	assert(rtr_sync(socket) == RTR_SUCCESS);
@@ -931,6 +1000,7 @@ static void test_corrupt_pdu_length_field(struct rtr_socket *socket)
 
 	// No updates expected, fails at first PDU
 	EXPECT_NO_UPDATE_CALLBACKS();
+	EXPECT_ERROR_PDUS_SENT(ERROR_PDU(CORRUPT_DATA));
 	assert(rtr_sync(socket) == RTR_ERROR);
 	assert(callback_index == callback_count);
 
@@ -955,6 +1025,8 @@ static void test_corrupt_pdu_provider_autonomous_system_number_list_in_announcem
 
 	// No updates expected, fails at first PDU
 	EXPECT_NO_UPDATE_CALLBACKS();
+	EXPECT_ERROR_PDUS_SENT(ERROR_PDU(INCORRECT_ASPA_PROVIDER_LIST));
+
 	assert(rtr_sync(socket) == RTR_ERROR);
 	assert(callback_index == callback_count);
 
@@ -977,6 +1049,9 @@ static void test_corrupt_pdu_provider_autonomous_system_number_list_in_withdraw(
 	begin_cache_response(RTR_PROTOCOL_VERSION_2, 0);
 	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_WITHDRAW, 1100, ASNS(42));
 	end_cache_response(RTR_PROTOCOL_VERSION_2, 0, 444);
+
+	EXPECT_NO_UPDATE_CALLBACKS();
+	EXPECT_ERROR_PDUS_SENT(ERROR_PDU(CORRUPT_DATA));
 
 	assert(rtr_sync(socket) == RTR_ERROR);
 	assert(callback_index == callback_count);
@@ -1005,6 +1080,9 @@ static void test_error_pdu_to_be_truncated(struct rtr_socket *socket)
 	begin_cache_response(RTR_PROTOCOL_VERSION_2, 0);
 	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_ANNOUNCE, 1100, asns);
 	end_cache_response(RTR_PROTOCOL_VERSION_2, 0, 444);
+
+	EXPECT_NO_UPDATE_CALLBACKS();
+	EXPECT_ERROR_PDUS_SENT(ERROR_PDU(DUPLICATE_ANNOUNCEMENT));
 
 	assert(rtr_sync(socket) == RTR_ERROR);
 	assert(callback_index == callback_count);
@@ -1051,6 +1129,7 @@ static void cleanup(struct rtr_socket **socket)
 	}
 
 	clear_expected_callbacks();
+	clear_expected_sent_pdus();
 }
 
 static struct rtr_socket *create_socket(bool is_resetting)
