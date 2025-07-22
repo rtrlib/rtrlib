@@ -53,7 +53,11 @@ enum __attribute__((__packed__)) aspa_operation_type {
 	/** The existing record, identified by its customer ASN, shall be withdrawn from the ASPA table. */
 	ASPA_REMOVE = 0,
 
-	/** The new record, identified by its customer ASN, shall be added to the ASPA table. */
+	/**
+	 * The new record, identified by its customer ASN, shall be added to the ASPA table.
+	 * If a record with the same customer ASN already exists, this operation is supposed
+	 * to replace the existing one with the new record.
+	 */
 	ASPA_ADD = 1
 };
 

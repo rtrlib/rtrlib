@@ -253,19 +253,24 @@ static void aspa_update_callback(struct aspa_table *s, const struct aspa_record 
 		assert(callback_index < callback_count);
 		assert(expected_callbacks);
 
-		if (expected_callbacks[callback_index].source) {
-			if (expected_callbacks[callback_index].source != s)
+		struct update_callback expected_callback = expected_callbacks[callback_index];
+
+		if (expected_callback.source) {
+			if (expected_callback.source != s)
 				printf("Assertion failed: Callback originates from unexpected table.\n");
 
-			assert(expected_callbacks[callback_index].source == s);
+			assert(expected_callback.source == s);
 		}
 
-		assert(expected_callbacks[callback_index].record.customer_asn == record.customer_asn);
-		assert(expected_callbacks[callback_index].type == operation_type);
-		assert(expected_callbacks[callback_index].record.provider_count == record.provider_count);
+		assert(expected_callback.record.customer_asn == record.customer_asn);
+		assert(expected_callback.type == operation_type);
+		assert(expected_callback.record.provider_count == record.provider_count);
 
-		for (size_t k = 0; k < record.provider_count; k++)
-			assert(expected_callbacks[callback_index].record.provider_asns[k] == record.provider_asns[k]);
+		for (size_t k = 0; k < record.provider_count; k++) {
+			uint32_t expected_provider_asn = expected_callback.record.provider_asns[k];
+			uint32_t record_provider_asns = record.provider_asns[k];
+			assert(expected_provider_asn == record_provider_asns);
+		}
 
 		callback_index += 1;
 	}
@@ -444,11 +449,12 @@ static void test_regular_announcements(struct rtr_socket *socket)
 	);
 }
 
-static void test_announce_existing(struct rtr_socket *socket)
+static void test_announce_existing_in_separate_serial_query_responses(struct rtr_socket *socket)
 {
-	// Test: Announce for existing customer_asn
-	// Expect: ERROR
-	// DB: no change
+	// Test: Multiple different announcements for the same customer_asn in
+        //       separate SerialQuery/ResetQuery responses
+	// Expect: Success, the old record is replaced by the new one
+	// DB: The new record is in the DB
 
 	// Announces 1100 => 1101, 1102, 1103, 1104
 	test_regular_announcement(socket);
@@ -457,18 +463,45 @@ static void test_announce_existing(struct rtr_socket *socket)
 	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_ANNOUNCE, 1100, ASNS(2201, 2202, 2203, 2204));
 	end_cache_response(RTR_PROTOCOL_VERSION_2, 0, 444);
 
-	// No updates expected, fails at first PDU
-	EXPECT_NO_UPDATE_CALLBACKS();
-	EXPECT_ERROR_PDUS_SENT(ERROR_PDU(DUPLICATE_ANNOUNCEMENT));
+	// The existing
+	EXPECT_UPDATE_CALLBACKS(
+		ADDED(RECORD(1100, ASNS(2201, 2202, 2203, 2204))),
+	);
+	EXPECT_NO_ERROR_PDUS_SENT();
 
-	assert(rtr_sync(socket) == RTR_ERROR);
+	assert(rtr_sync(socket) == RTR_SUCCESS);
+	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
+	ASSERT_TABLE(socket, RECORD(1100, ASNS(2201, 2202, 2203, 2204)));
+}
+
+static void test_announce_same_existing_in_separate_serial_query_responses(struct rtr_socket *socket)
+{
+	// Test: Multiple equal announcements for the same customer_asn in separate SerialQuery/ResetQuery responses
+	// Expect: Success, the old record is replaced by the new one, i.e., which semantically means it stays the same
+	// DB: no change
+
+	// Announces 1100 => 1101, 1102, 1103, 1104
+	test_regular_announcement(socket);
+
+	begin_cache_response(RTR_PROTOCOL_VERSION_2, 0);
+	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_ANNOUNCE, 1100, ASNS(1101, 1102, 1103, 1104));
+	end_cache_response(RTR_PROTOCOL_VERSION_2, 0, 444);
+
+	// The existing
+	EXPECT_UPDATE_CALLBACKS(
+		ADDED(RECORD(1100, ASNS(1101, 1102, 1103, 1104))),
+	);
+	EXPECT_NO_ERROR_PDUS_SENT();
+
+	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
 	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_TABLE(socket, RECORD(1100, ASNS(1101, 1102, 1103, 1104)));
 }
 
-static void test_announce_twice(struct rtr_socket *socket)
+static void test_announce_duplicate_in_same_serial_query_response(struct rtr_socket *socket)
 {
 	// Test: Announce new record again (duplicate)
 	// Expect: ERROR
@@ -479,9 +512,10 @@ static void test_announce_twice(struct rtr_socket *socket)
 
 	begin_cache_response(RTR_PROTOCOL_VERSION_2, 0);
 	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_ANNOUNCE, 1100, ASNS(1101, 1102, 1103, 1104));
+	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_ANNOUNCE, 1100, ASNS(1101, 1102, 1103, 1104));
 	end_cache_response(RTR_PROTOCOL_VERSION_2, 0, 444);
 
-	// No updates expected, fails at first PDU
+	// No updates expected, fails at second PDU
 	EXPECT_NO_UPDATE_CALLBACKS();
 	EXPECT_ERROR_PDUS_SENT(ERROR_PDU(DUPLICATE_ANNOUNCEMENT));
 
@@ -820,6 +854,7 @@ static void test_withdraw_twice(struct rtr_socket *socket)
 	// In-Place: Callbacks until failed operation, then callbacks from undo
 	assert_callbacks = false;
 	assert(rtr_sync(socket) == RTR_ERROR);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 	assert_callbacks = true;
 
 	ASSERT_TABLE(socket,
@@ -1006,6 +1041,61 @@ static void test_many_pdus(struct rtr_socket *socket)
 	assert_table(socket, records, N);
 }
 
+static void test_noop_for_non_existing_record(struct rtr_socket *socket) {
+	// Test: A new record for a non-existing customer AS number is added and immediately
+        //       removed in the same SerialQuery/ResetQuery response.
+	// Expect: Success
+	// DB: The database stays unchanged since no operation has been executed
+
+	test_regular(socket);
+
+	begin_cache_response(RTR_PROTOCOL_VERSION_2, 0);
+	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_ANNOUNCE, 4400, ASNS(4401, 4402, 4403, 4404));
+	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_WITHDRAW, 4400, ASNS());
+	end_cache_response(RTR_PROTOCOL_VERSION_2, 0, 444);
+
+	// No updates expected, if no-op notifications are not enabled
+	EXPECT_NO_UPDATE_CALLBACKS();
+	EXPECT_NO_ERROR_PDUS_SENT();
+	assert(rtr_sync(socket) == RTR_SUCCESS);
+	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
+
+	ASSERT_TABLE(socket,
+		RECORD(1100, ASNS(1201, 1202, 1203, 1204)),
+		RECORD(1101, ASNS(1100, 1102, 1103, 1104)),
+		RECORD(3300, ASNS(3301, 3302, 3303, 3304))
+	);
+}
+
+static void test_noop_for_existing_record_results_in_removal(struct rtr_socket *socket) {
+	// Test: A record for an existing customer AS number is added and
+        //       removed within the same SerialQuery/ResetQuery response.
+	// Expect: Success
+	// DB: The existing record is removed from the database since it is first replaced
+        //     and then immediately removed.
+
+	test_regular(socket);
+
+	begin_cache_response(RTR_PROTOCOL_VERSION_2, 0);
+	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_ANNOUNCE, 3300, ASNS(4401, 4402, 4403, 4404));
+	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_WITHDRAW, 3300, ASNS());
+	end_cache_response(RTR_PROTOCOL_VERSION_2, 0, 444);
+
+	// Internally, the existing record is removed and the new one is ignored.
+	EXPECT_UPDATE_CALLBACKS( REMOVED(RECORD(3300, ASNS(3301, 3302, 3303, 3304))));
+	EXPECT_NO_ERROR_PDUS_SENT();
+	assert(rtr_sync(socket) == RTR_SUCCESS);
+	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
+
+	ASSERT_TABLE(socket,
+		RECORD(1100, ASNS(1201, 1202, 1203, 1204)),
+		RECORD(1101, ASNS(1100, 1102, 1103, 1104))
+	);
+}
+
+
 static void test_corrupt_pdu_length_field(struct rtr_socket *socket)
 {
 	// Test: send corrupt pdu after having received valid data
@@ -1015,8 +1105,7 @@ static void test_corrupt_pdu_length_field(struct rtr_socket *socket)
 	test_regular(socket);
 
 	begin_cache_response(RTR_PROTOCOL_VERSION_2, 0);
-	struct pdu_aspa *aspa =
-		APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_ANNOUNCE, 4400, ASNS(4401, 4402, 4403, 4404));
+	struct pdu_aspa *aspa = APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_ANNOUNCE, 4400, ASNS(4401, 4402, 4403, 4404));
 
 	// corrupt ASPA len
 	aspa->len = BYTES32(BYTES32(aspa->len) + 1);
@@ -1106,6 +1195,7 @@ static void test_error_pdu_to_be_truncated(struct rtr_socket *socket)
 	}
 
 	begin_cache_response(RTR_PROTOCOL_VERSION_2, 0);
+	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_ANNOUNCE, 1100, asns);
 	APPEND_ASPA(RTR_PROTOCOL_VERSION_2, ASPA_ANNOUNCE, 1100, asns);
 	end_cache_response(RTR_PROTOCOL_VERSION_2, 0, 444);
 
@@ -1233,13 +1323,31 @@ static void run_tests(bool is_resetting)
 
 	printf("\nTEST: announce_existing\n");
 	socket = create_socket(is_resetting);
-	test_announce_existing(socket);
+	test_announce_existing_in_separate_serial_query_responses(socket);
+
+	cleanup(&socket);
+
+	printf("\nTEST: announce_equal_existing\n");
+	socket = create_socket(is_resetting);
+	test_announce_same_existing_in_separate_serial_query_responses(socket);
 
 	cleanup(&socket);
 
 	printf("\nTEST: announce_twice\n");
 	socket = create_socket(is_resetting);
-	test_announce_twice(socket);
+	test_announce_duplicate_in_same_serial_query_response(socket);
+
+	cleanup(&socket);
+
+	printf("\nTEST: no-op for non-existing record\n");
+	socket = create_socket(is_resetting);
+	test_noop_for_non_existing_record(socket);
+
+	cleanup(&socket);
+
+	printf("\nTEST: no-op for existing record results in removal\n");
+	socket = create_socket(is_resetting);
+	test_noop_for_existing_record_results_in_removal(socket);
 
 	cleanup(&socket);
 

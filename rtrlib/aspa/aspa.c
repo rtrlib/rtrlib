@@ -353,13 +353,6 @@ static enum aspa_status aspa_table_update_compute_internal(struct rtr_socket *rt
 
 		// MARK: Handling 'add' operations
 		if (current->type == ASPA_ADD) {
-			// Attempt to add record with $CAS, but record with $CAS already exists
-			// Error: Duplicate Add.
-			if (existing_matches_current) {
-				*failed_operation = current;
-				return ASPA_DUPLICATE_RECORD;
-			}
-
 			// Attempt to add record with $CAS twice.
 			// Error: Duplicate Add.
 			if (next_matches_current && next->type == ASPA_ADD) {
@@ -368,17 +361,37 @@ static enum aspa_status aspa_table_update_compute_internal(struct rtr_socket *rt
 				return ASPA_DUPLICATE_RECORD;
 			}
 
-			// This operation adds a record with $CAS, the next op however removes this $CAS record again.
-			// These form a no-op.
+			// This operation adds a **new** record with $CAS, the next op however removes this $CAS
+			// record again. There are two scenarios to consider:
+			//
+			// 1. If there is already a record with the same $CAS, then that record is effectively
+			//    removed, thus the current operation can be seen as a no-op and the next operation
+			//    is the remove-operation of the existing record
+			// 2. If there is not already a record with the same $CAS, then the current and next
+			//    operation are effectively a no-op.
 			if (next_matches_current && next->type == ASPA_REMOVE) {
+				// Scenario 1
+				if (existing_matches_current) {
+					// "Remove" record by simply not appending it to the new array
+					existing_i += 1;
+
+					// Since the combined outcome of the current and the next operation is the
+					// removal of the existing record, we mark the current replace/add-operation
+					// as no-op and adjust the remove operation so that it will be notified as
+					// removal of the previously existing record.
+					current->is_no_op = true;
+					next->record.provider_count = existing_record->provider_count;
+					next->record.provider_asns = existing_record->provider_asns;
+				} else { // Scenario 2
 #if ASPA_NOTIFY_NO_OPS
-				// Complete record's providers for clients
-				next->record = current->record;
+					// Complete record's providers for clients
+					next->record = current->record;
 #endif
 
-				// Mark as no-op.
-				current->is_no_op = true;
-				next->is_no_op = true;
+					// Mark as no-op.
+					next->is_no_op = true;
+					current->is_no_op = true;
+				}
 
 				// Skip next
 				i += 1;
@@ -419,6 +432,16 @@ static enum aspa_status aspa_table_update_compute_internal(struct rtr_socket *rt
 			current->record.provider_count = existing_record->provider_count;
 			current->record.provider_asns = existing_record->provider_asns;
 		}
+	}
+
+	struct aspa_record *last_record_from_new_array = aspa_array_get_record(new_array, new_array->size - 1);
+	struct aspa_record *next_record_from_old_array = aspa_array_get_record(array, existing_i);
+
+	// If the customer AS number of the next element in the old array is already in the new array, skip that
+	// element and don't copy it to the new array below.
+	if (last_record_from_new_array && next_record_from_old_array &&
+	    last_record_from_new_array->customer_asn == next_record_from_old_array->customer_asn) {
+		existing_i += 1;
 	}
 
 	// Append remaining records (reuse existing provider array)
