@@ -118,6 +118,8 @@ static int custom_send(const struct tr_socket *socket __attribute__((unused)), c
 	uint16_t error_code = BYTES16(err->error_code);
 	assert(expected_error_pdus[expected_error_pdus_index].error_code == error_code);
 
+	expected_error_pdus_index++;
+
 	if (err->type == 10) {
 		uint32_t *errlen = (uint32_t *)((char *)err->rest + err->len_enc_pdu);
 
@@ -364,6 +366,7 @@ static void test_no_aspa(struct rtr_socket *socket)
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_EMPTY_TABLE(socket);
 	assert(socket->aspa_table->store == NULL);
@@ -385,6 +388,7 @@ static void test_regular_announcement(struct rtr_socket *socket)
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_TABLE(socket, RECORD(1100, ASNS(1101, 1102, 1103, 1104)));
 }
@@ -409,6 +413,7 @@ static void test_withdraw(struct rtr_socket *socket)
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_EMPTY_TABLE(socket);
 }
@@ -431,6 +436,7 @@ static void test_regular_announcements(struct rtr_socket *socket)
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_TABLE(socket,
 		RECORD(1100, ASNS(1101, 1102, 1103, 1104)),
@@ -457,6 +463,7 @@ static void test_announce_existing(struct rtr_socket *socket)
 
 	assert(rtr_sync(socket) == RTR_ERROR);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_TABLE(socket, RECORD(1100, ASNS(1101, 1102, 1103, 1104)));
 }
@@ -480,6 +487,7 @@ static void test_announce_twice(struct rtr_socket *socket)
 
 	assert(rtr_sync(socket) == RTR_ERROR);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_TABLE(socket, RECORD(1100, ASNS(1101, 1102, 1103, 1104)));
 }
@@ -503,6 +511,7 @@ static void test_withdraw_nonexisting(struct rtr_socket *socket)
 
 	assert(rtr_sync(socket) == RTR_ERROR);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_TABLE(socket, RECORD(1100, ASNS(1101, 1102, 1103, 1104)));
 }
@@ -534,6 +543,7 @@ static void test_announce_withdraw(struct rtr_socket *socket)
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_TABLE(socket, RECORD(1100, ASNS(1101, 1102, 1103, 1104)));
 }
@@ -573,6 +583,7 @@ static void test_withdraw_announce(struct rtr_socket *socket)
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_TABLE(socket, RECORD(1100, ASNS(2201, 2202, 2203, 2204)));
 }
@@ -598,6 +609,7 @@ static void test_regular(struct rtr_socket *socket)
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_TABLE(socket,
 		RECORD(1100, ASNS(1101, 1102, 1103, 1104)),
@@ -616,6 +628,7 @@ static void test_regular(struct rtr_socket *socket)
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_TABLE(socket,
 		RECORD(1100, ASNS(1101, 1102, 1103, 1104)),
@@ -639,6 +652,7 @@ static void test_regular(struct rtr_socket *socket)
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_TABLE(socket,
 		RECORD(1100, ASNS(1201, 1202, 1203, 1204)),
@@ -666,6 +680,7 @@ static void test_regular(struct rtr_socket *socket)
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_TABLE(socket,
 		RECORD(1100, ASNS(1201, 1202, 1203, 1204)),
@@ -706,6 +721,7 @@ static void test_regular_swap(struct rtr_socket *socket)
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_TABLE(socket,
 		RECORD(1100, ASNS(1101, 1102, 1103, 1104)),
@@ -735,6 +751,7 @@ static void test_regular_swap(struct rtr_socket *socket)
 
 	assert(aspa_table_src_replace(dst_table, src_table, socket, true, true) == ASPA_SUCCESS);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	aspa_table_free(dst_table, false);
 	lrtr_free(dst_table);
@@ -761,6 +778,7 @@ static void test_withdraw_twice(struct rtr_socket *socket)
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_TABLE(socket,
 		RECORD(1900, ASNS(1901, 1902, 1903, 1904)),
@@ -779,6 +797,7 @@ static void test_withdraw_twice(struct rtr_socket *socket)
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_TABLE(socket,
 		RECORD(1900, ASNS(1901, 1902, 1903, 1904)),
@@ -827,6 +846,8 @@ static void test_announce_withdraw_announce_twice(struct rtr_socket *socket)
 	EXPECT_NO_ERROR_PDUS_SENT();
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
+	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_TABLE(socket,
 		RECORD(1400, ASNS(1401, 1402, 1403, 1404)),
@@ -845,6 +866,7 @@ static void test_announce_withdraw_announce_twice(struct rtr_socket *socket)
 	// In-Place: Callbacks until failed operation, then callbacks from undo
 	assert_callbacks = false;
 	assert(rtr_sync(socket) == RTR_ERROR);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 	assert_callbacks = true;
 
 	ASSERT_TABLE(socket,
@@ -872,6 +894,7 @@ static void test_multiple_syncs(struct rtr_socket *socket)
 
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_TABLE(socket,
 		RECORD(1, ASNS(2, 3, 4, 5)),
@@ -909,6 +932,7 @@ static void test_multiple_syncs(struct rtr_socket *socket)
 		EXPECT_NO_ERROR_PDUS_SENT();
 		assert(rtr_sync(socket) == RTR_SUCCESS);
 		assert(callback_index == callback_count);
+		assert(expected_error_pdus_index == expected_error_pdus_count);
 
 		// store announced ASPAs' providers for validation
 		for (size_t i = 0; i < PROVIDER_COUNT; i++) {
@@ -977,6 +1001,7 @@ static void test_many_pdus(struct rtr_socket *socket)
 	// sync
 	assert(rtr_sync(socket) == RTR_SUCCESS);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	assert_table(socket, records, N);
 }
@@ -1003,6 +1028,7 @@ static void test_corrupt_pdu_length_field(struct rtr_socket *socket)
 	EXPECT_ERROR_PDUS_SENT(ERROR_PDU(CORRUPT_DATA));
 	assert(rtr_sync(socket) == RTR_ERROR);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_TABLE(socket,
 		RECORD(1100, ASNS(1201, 1202, 1203, 1204)),
@@ -1029,6 +1055,7 @@ static void test_corrupt_pdu_provider_autonomous_system_number_list_in_announcem
 
 	assert(rtr_sync(socket) == RTR_ERROR);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_TABLE(socket,
 		RECORD(1100, ASNS(1201, 1202, 1203, 1204)),
@@ -1055,6 +1082,7 @@ static void test_corrupt_pdu_provider_autonomous_system_number_list_in_withdraw(
 
 	assert(rtr_sync(socket) == RTR_ERROR);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_TABLE(socket,
 		RECORD(1100, ASNS(1101, 1102, 1103, 1104))
@@ -1086,6 +1114,7 @@ static void test_error_pdu_to_be_truncated(struct rtr_socket *socket)
 
 	assert(rtr_sync(socket) == RTR_ERROR);
 	assert(callback_index == callback_count);
+	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	ASSERT_TABLE(socket,
 		RECORD(1100, ASNS(1101, 1102, 1103, 1104))
