@@ -252,7 +252,7 @@ static enum aspa_verification_result aspa_verify_as_path_downstream(struct aspa_
 		if (last_hop_left == ASPA_NOT_PROVIDER_PLUS) {
 			found_nP_from_left = true;
 		} else {
-			while (ll < rr) {
+			while (ll + 1 < rr) {
 				size_t c = ll;
 
 				ll++;
