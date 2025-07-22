@@ -75,13 +75,15 @@ int main(void)
 
 	/* wait for connection, or timeout and exit eventually */
 	while (!rtr_mgr_conf_in_sync(conf)) {
-		if (connection_status == RTR_MGR_ERROR)
+		if (connection_status == RTR_MGR_ERROR) {
 			return EXIT_FAILURE;
+		}
 
 		sleep(1);
 		sleep_counter++;
-		if (sleep_counter >= connection_timeout)
+		if (sleep_counter >= connection_timeout) {
 			return EXIT_FAILURE;
+		}
 	}
 
 	rtr_mgr_stop(conf);

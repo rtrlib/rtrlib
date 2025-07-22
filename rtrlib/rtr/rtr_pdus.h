@@ -14,11 +14,9 @@ enum pdu_error_type {
 	UNEXPECTED_PROTOCOL_VERSION = 8,
 	INCORRECT_ASPA_PROVIDER_LIST = 9,
 
-	// This error code is not specified in the RPKI to router
-	// drafts/RFCs but solely used internally to differentiate
-	// between a PDU that is too big and other `CORRUPT_DATA`
-	// scenarios so that appropriate logging and other actions
-	// can be performed.
+	// This error code is not specified in the 8210bis-21 draft but is solely used
+	// internally to differentiate between a PDU that is too big and PDUs that are
+	// corrupted, so that appropriate logging and other actions can be performed.
 	PDU_TOO_BIG = 32,
 };
 

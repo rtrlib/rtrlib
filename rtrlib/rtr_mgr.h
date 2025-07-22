@@ -225,8 +225,8 @@ enum pfx_rtvals rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t a
 
 /**
  * @brief Validates the given AS path using the ASPA algorithm.
- * @param[in] config The config to use
- * @param[in] as_path The AS path to validate
+ * @param[in] config An initialized rtr_mgr_config
+ * @param[in] as_path The AS path to validate (without the AS of the current router)
  * @param len The length of the AS path
  * @param direction The direction to check; upstream or downstream
  * @param[out] result The result of the AS path validation, i.e., whether the AS path is

@@ -439,14 +439,14 @@ static void test_pfx_merge(void)
 
 static void test_pfx_table_add_null_arguments(void)
 {
-	struct pfx_table pfxt1;
+	struct pfx_table pfxt;
 	struct pfx_record records[1] = {0};
 
-	pfx_table_init(&pfxt1, NULL);
+	pfx_table_init(&pfxt, NULL);
 
 	assert(pfx_table_add(NULL, &records[0]) == PFX_NOT_INITIALIZED);
 	assert(pfx_table_add(NULL, NULL) == PFX_NOT_INITIALIZED);
-	assert(pfx_table_add(&pfxt1, NULL) == PFX_ERROR);
+	assert(pfx_table_add(&pfxt, NULL) == PFX_ERROR);
 }
 
 int main(void)
