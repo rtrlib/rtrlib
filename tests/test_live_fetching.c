@@ -55,12 +55,8 @@ int main(void)
 	//char RPKI_CACHE_PORT[] = "8283";
 
 	// REPLACE THIS BY YOUR RTR SERVER
-	char RPKI_CACHE_HOST[] = "rtrlab.tanneberger.me";
-	char RPKI_CACHE_PORT[] = "3325"; // rir rtr
-	// 3324: Stable Routinator
-	// 3325: Routinator with ASPA
-	// 3326: Rust
-	//char RPKI_CACHE_PORT[] = "3324"; // aspa rtr
+	char RPKI_CACHE_HOST[] = "rpki-cache.netd.cs.tu-dresden.de";
+	char RPKI_CACHE_PORT[] = "3323"; // rir rtr
 
 	/* create a TCP transport socket */
 	struct tr_socket tr_tcp;
@@ -113,6 +109,11 @@ int main(void)
 	struct aspa_array *array = ((*groups[0].sockets)->aspa_table->store)->aspa_array;
 
 	printf("ASPA:\n");
+
+	if (array == NULL || array->size == 0) {
+		return EXIT_FAILURE;
+	}
+
 	for (uint32_t i = 0; i < array->size; i++) {
 		printf("CAS %u => [ ", array->data[i].customer_asn);
 		for (uint32_t j = 0; j < array->data[i].provider_count; j++) {

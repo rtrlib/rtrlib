@@ -45,11 +45,8 @@ int main(void)
 	 */
 
 	// REPLACE THIS BY YOUR RTR SERVER
-	char RPKI_CACHE_HOST[] = "rtrlab.tanneberger.me";
-	// 3324: Stable Routinator
-	// 3325: Routinator with ASPA
-	// 3326: Rust
-	char RPKI_CACHE_PORT[] = "3325"; // rir rtr
+	char RPKI_CACHE_HOST[] = "rpki-cache.netd.cs.tu-dresden.de";
+	char RPKI_CACHE_PORT[] = "3323"; // rir rtr
 
 	/* create a TCP transport socket */
 	struct tr_socket tr_tcp;
