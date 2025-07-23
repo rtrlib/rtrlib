@@ -1822,8 +1822,8 @@ static int rtr_send_error_pdu(const struct rtr_socket *rtr_socket, const void *e
 			      const uint32_t err_text_len)
 {
 	// Assert that the length of the arbitrary error text is small enough so that at least
-	// `RTE_ERRONEOUS_PDU_MIN_LEN` octets of the erroneous PDU can be added to the error PDU.
-	assert(err_text_len <= RTR_MAX_PDU_LEN - (sizeof(struct pdu_error) + 4 + RTE_ERRONEOUS_PDU_MIN_LEN));
+	// `RTR_ERRONEOUS_PDU_MIN_LEN` octets of the erroneous PDU can be added to the error PDU.
+	assert(err_text_len <= RTR_MAX_PDU_LEN - (sizeof(struct pdu_error) + 4 + RTR_ERRONEOUS_PDU_MIN_LEN));
 
 	struct pdu_error *err_pdu;
 	unsigned int msg_size = sizeof(struct pdu_error) + 4 + erroneous_pdu_len + err_text_len;
