@@ -79,6 +79,16 @@ enum rtr_socket_state {
 	RTR_CLOSED,
 };
 
+/**
+ * @brief An event for notifying state changes of an RTR socket's processing thread.
+ */
+enum rtr_mgr_processing_thread_event {
+	/**
+	 * @brief Triggered as soon as the RTR socket's processing thread has been started.
+	 */
+	RTR_PROCESSING_THREAD_EVENT_START = 1,
+};
+
 struct rtr_socket;
 
 /**
@@ -86,6 +96,15 @@ struct rtr_socket;
  */
 typedef void (*rtr_connection_state_fp)(const struct rtr_socket *rtr_socket, const enum rtr_socket_state state,
 					void *connection_state_fp_param_config, void *connection_state_fp_param_group);
+
+/**
+ * @brief A callback that is triggered when the state of an RTR socket's processing loop changes.
+ *
+ * @see rtr_mgr_processing_thread_event for supported events
+ * @warning This function must be thread-safe since it is possibly called by multiple
+ *          state-machine threads simultaneously.
+ */
+typedef enum rtr_rtvals (*rtr_mgr_on_processing_thread_event)(enum rtr_mgr_processing_thread_event event_type, void *);
 
 /**
  * @brief A RTR socket.

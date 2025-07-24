@@ -958,7 +958,7 @@ int main(int argc, char **argv)
 	pfx_update_fp pfx_update_fp = activate_pfx_update_cb ? update_cb : NULL;
 	aspa_update_fp aspa_update_fp = activate_aspa_update_cb ? update_aspa : NULL;
 
-	int ret = rtr_mgr_init(&conf, groups, 1, status_fp, NULL);
+	int ret = rtr_mgr_init(&conf, groups, 1, status_fp, NULL, NULL, NULL);
 
 	if (ret == RTR_ERROR)
 		fprintf(stderr, "Error in rtr_mgr_init!\n");

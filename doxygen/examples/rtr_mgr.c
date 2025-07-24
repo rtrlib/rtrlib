@@ -15,6 +15,18 @@ static void connection_status_callback(const struct rtr_mgr_group *group __attri
 	}
 }
 
+static enum rtr_rtvals on_processing_thread_event(enum rtr_mgr_processing_thread_event event_type,
+						  void *args __attribute__((unused)))
+{
+	switch (event_type) {
+	case RTR_PROCESSING_THREAD_EVENT_START:
+		printf("started state machine for socket in new thread\n");
+		break;
+	}
+
+	return RTR_SUCCESS;
+}
+
 int main()
 {
 	//create a SSH transport socket
@@ -76,7 +88,7 @@ int main()
 
 	//initialize all rtr_sockets in the server pool with the same settings
 	struct rtr_mgr_config *conf;
-	rtr_mgr_init(&conf, groups, 1, &connection_status_callback, NULL);
+	rtr_mgr_init(&conf, groups, 2, &connection_status_callback, NULL, &on_processing_thread_event, NULL);
 
 	//start the connection manager
 	rtr_mgr_start(conf);

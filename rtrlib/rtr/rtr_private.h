@@ -10,6 +10,7 @@
 #ifndef RTR_PRIVATE_H
 #define RTR_PRIVATE_H
 #include "rtrlib/rtr/rtr.h"
+#include "rtrlib/rtr_mgr.h"
 
 #include <pthread.h>
 #include <stdbool.h>
@@ -76,10 +77,15 @@ int rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr_socket, struct 
  * @brief Starts the RTR protocol state machine in a pthread. Connection to the rtr_server will be established and the
  * pfx_records will be synced.
  * @param[in] rtr_socket rtr_socket that will be used.
+ * @param[in] processing_thread_event_callback A callback that is triggered when the state of
+ *                                     the given RTR socket's state machine changes.
+ * @param[in] processing_thread_event_callback_data A pointer to arbitrary data which is passed
+ *                                                  to processing_thread_event_callback.
  * @return RTR_ERROR On error.
  * @return RTR_SUCCESS On success.
  */
-int rtr_start(struct rtr_socket *rtr_socket);
+int rtr_start(struct rtr_socket *rtr_socket, const rtr_mgr_on_processing_thread_event processing_thread_event_callback,
+	      void *processing_thread_event_callback_data);
 
 /**
  * @brief Stops the RTR connection and terminate the transport connection.

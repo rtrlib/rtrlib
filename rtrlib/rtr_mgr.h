@@ -87,6 +87,21 @@ struct rtr_mgr_config {
 	pthread_rwlock_t mutex;
 	rtr_mgr_status_fp status_fp;
 	void *status_fp_data;
+	/**
+	 * @brief A callback that is triggered when the state of an RTR socket's processing thread changed.
+	 *
+	 * @see rtr_mgr_processing_thread_event for supported events
+	 * @warning This function must be thread-safe since it is possibly called by multiple
+	 *          state-machine threads simultaneously.
+	 */
+	rtr_mgr_on_processing_thread_event processing_thread_event_callback;
+	/**
+	 * @brief A pointer to arbitrary data which is passed to the processing thread event callback.
+	 *
+	 * @warning This data is possibly accessed by multiple threads simultaneously and thus
+	 *          access to it should be properly synchronized.
+	 */
+	void *processing_thread_event_callback_data;
 	struct pfx_table *pfx_table;
 	struct spki_table *spki_table;
 	struct aspa_table *aspa_table;
@@ -122,12 +137,18 @@ struct rtr_mgr_config {
  *			     status_fp function. Memory area can be freely used
  *			     to pass user-defined data to the status_fp
  *			     callback.
+ * @param[in] processing_thread_event_callback Pointer to a callback which is triggered whenever an RTR socket's
+ *                                     state machine state changes. If you're not interested in knowing
+ *                                     about state changes, you can pass NULL.
+ * @param[in] processing_thread_event_callback_data Arbitrary data that will be passed to the
+ *                                                  processing_thread_event_callback
  * @return RTR_ERROR If an error occurred
  * @return RTR_INVALID_PARAM If refresh_interval or expire_interval is invalid.
  * @return RTR_SUCCESS On success.
  */
 int rtr_mgr_init(struct rtr_mgr_config **config_out, struct rtr_mgr_group groups[], const unsigned int groups_len,
-		 const rtr_mgr_status_fp status_fp, void *status_fp_data);
+		 const rtr_mgr_status_fp status_fp, void *status_fp_data,
+		 const rtr_mgr_on_processing_thread_event processing_thread_event_callback, void *processing_thread_event_callback_data);
 
 int rtr_mgr_setup_sockets(struct rtr_mgr_config *config, struct rtr_mgr_group groups[], const unsigned int groups_len,
 			  const unsigned int refresh_interval, const unsigned int expire_interval,
