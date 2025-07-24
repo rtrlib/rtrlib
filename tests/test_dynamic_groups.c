@@ -11,12 +11,26 @@
 const int connection_timeout = 80;
 enum rtr_mgr_status connection_status = -1;
 
+static char processing_thread_event_data[] =
+	"This is some arbitrary test data passed to the processing thread event callback.";
+
 static void connection_status_callback(const struct rtr_mgr_group *group __attribute__((unused)),
 				       enum rtr_mgr_status status,
 				       const struct rtr_socket *socket __attribute__((unused)),
 				       void *data __attribute__((unused)))
 {
 	connection_status = status;
+}
+
+static enum rtr_rtvals on_processing_thread_event(enum rtr_mgr_processing_thread_event event_type, void *args)
+{
+	switch (event_type) {
+	case RTR_PROCESSING_THREAD_EVENT_START:
+		fprintf(stderr, "Started state machine for socket in new thread: %s\n", (char *)args);
+		break;
+	}
+
+	return RTR_SUCCESS;
 }
 
 int main(void)
@@ -61,7 +75,8 @@ int main(void)
 
 	struct rtr_mgr_config *conf;
 
-	rtr_mgr_init(&conf, groups, 1, &connection_status_callback, NULL);
+	rtr_mgr_init(&conf, groups, 2, &connection_status_callback, NULL, &on_processing_thread_event,
+		     processing_thread_event_data);
 	rtr_mgr_add_roa_support(conf, NULL);
 	rtr_mgr_add_aspa_support(conf, NULL);
 	rtr_mgr_add_spki_support(conf, NULL);

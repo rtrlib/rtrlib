@@ -24,8 +24,26 @@
 #include <time.h>
 #include <unistd.h>
 
+/**
+ * @brief A simple wrapper for passing data to rtr_fsm_start, which is run in a new thread.
+ */
+struct rtr_fsm_start_args {
+	/**
+	 * @brief An optional callback for notifying changes in an RTR socket's state machine.
+	 */
+	rtr_mgr_on_processing_thread_event processing_thread_event_callback;
+	/**
+	 * @brief Optional arbitrary data that is passed to processing_thread_event_callback.
+	 */
+	void *processing_thread_event_callback_data;
+	/**
+	 * @brief The RTR socket pertinent to the state machine.
+	 */
+	struct rtr_socket *rtr_socket;
+};
+
 static void rtr_purge_outdated_records(struct rtr_socket *rtr_socket);
-static void *rtr_fsm_start(struct rtr_socket *rtr_socket);
+static void *rtr_fsm_start(struct rtr_fsm_start_args *args);
 
 static const char *socket_str_states[] = {[RTR_CONNECTING] = "RTR_CONNECTING",
 					  [RTR_ESTABLISHED] = "RTR_ESTABLISHED",
@@ -76,12 +94,23 @@ int rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_tab
 	return RTR_SUCCESS;
 }
 
-int rtr_start(struct rtr_socket *rtr_socket)
+int rtr_start(struct rtr_socket *rtr_socket, const rtr_mgr_on_processing_thread_event processing_thread_event_callback,
+	      void *processing_thread_event_callback_data)
 {
 	if (rtr_socket->thread_id)
 		return RTR_ERROR;
 
-	int rtval = pthread_create(&(rtr_socket->thread_id), NULL, (void *(*)(void *)) & rtr_fsm_start, rtr_socket);
+	struct rtr_fsm_start_args *args = lrtr_malloc(sizeof(*args));
+	if (args == NULL) {
+		RTR_DBG1("Not enough memory available to allocate FSM start arguments");
+		return RTR_ERROR;
+	}
+
+	args->rtr_socket = rtr_socket;
+	args->processing_thread_event_callback = processing_thread_event_callback;
+	args->processing_thread_event_callback_data = processing_thread_event_callback_data;
+
+	int rtval = pthread_create(&(rtr_socket->thread_id), NULL, (void *(*)(void *)) & rtr_fsm_start, args);
 
 	if (rtval == 0)
 		return RTR_SUCCESS;
@@ -111,16 +140,50 @@ void rtr_purge_outdated_records(struct rtr_socket *rtr_socket)
 	}
 }
 
-/* WARNING: This Function has cancelable sections*/
-void *rtr_fsm_start(struct rtr_socket *rtr_socket)
+/**
+ * @brief Free rtr_fsm_start_args.
+ *
+ * @note This function does not free the underlying data since it is used in other threads.
+ *
+ * @param[in] args The rtr_fsm_start_args to be freed
+ */
+inline static void rtr_free_fsm_start_args(struct rtr_fsm_start_args **args)
 {
-	if (rtr_socket->state == RTR_SHUTDOWN)
+	assert(args != NULL);
+	lrtr_free(*args);
+	*args = NULL;
+}
+
+static void rtr_fsm_start_cleanup(void *args)
+{
+	rtr_free_fsm_start_args((struct rtr_fsm_start_args **)args);
+}
+
+/* WARNING: This Function has cancelable sections*/
+void *rtr_fsm_start(struct rtr_fsm_start_args *args)
+{
+	struct rtr_socket *rtr_socket = args->rtr_socket;
+
+	if (rtr_socket->state == RTR_SHUTDOWN) {
+		rtr_fsm_start_cleanup(&args);
 		return NULL;
+	}
 
 	// We don't care about the old state, but POSIX demands a non null value for setcancelstate
 	int oldcancelstate;
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
+
+	if (args->processing_thread_event_callback != NULL) {
+		enum rtr_rtvals res = args->processing_thread_event_callback(
+			RTR_PROCESSING_THREAD_EVENT_START, args->processing_thread_event_callback_data);
+		if (res != RTR_SUCCESS) {
+			RTR_DBG("Processing thread callback for start event in thread ID %lu failed",
+				rtr_socket->thread_id);
+			rtr_fsm_start_cleanup(&args);
+			return NULL;
+		}
+	}
 
 	rtr_socket->state = RTR_CONNECTING;
 	while (1) {
@@ -166,13 +229,15 @@ void *rtr_fsm_start(struct rtr_socket *rtr_socket)
 
 		else if (rtr_socket->state == RTR_ESTABLISHED) {
 			RTR_DBG1("State: RTR_ESTABLISHED");
-
+			int ret = 0;
 			// Allow thread cancellation for recv code path only.
 			// This should be enough since we spend most of the time blocking on recv
+			pthread_cleanup_push(&rtr_fsm_start_cleanup, &args);
 			pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
-			int ret = rtr_wait_for_sync(
+			ret = rtr_wait_for_sync(
 				rtr_socket); // blocks till expire_interval is expired or PDU was received
 			pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
+			pthread_cleanup_pop(0);
 
 			if (ret == RTR_SUCCESS) { // send serial query
 				if (rtr_send_serial_query(rtr_socket) == RTR_SUCCESS)
@@ -208,9 +273,12 @@ void *rtr_fsm_start(struct rtr_socket *rtr_socket)
 			tr_close(rtr_socket->tr_socket);
 			rtr_change_socket_state(rtr_socket, RTR_CONNECTING);
 			RTR_DBG("Waiting %u", rtr_socket->retry_interval);
+
+			pthread_cleanup_push(&rtr_fsm_start_cleanup, &args);
 			pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
 			sleep(rtr_socket->retry_interval);
 			pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
+			pthread_cleanup_pop(0);
 		}
 
 		else if (rtr_socket->state == RTR_ERROR_FATAL) {
@@ -218,13 +286,17 @@ void *rtr_fsm_start(struct rtr_socket *rtr_socket)
 			tr_close(rtr_socket->tr_socket);
 			rtr_change_socket_state(rtr_socket, RTR_CONNECTING);
 			RTR_DBG("Waiting %u", rtr_socket->retry_interval);
+
+			pthread_cleanup_push(&rtr_fsm_start_cleanup, &args);
 			pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
 			sleep(rtr_socket->retry_interval);
 			pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
+			pthread_cleanup_pop(0);
 		}
 
 		else if (rtr_socket->state == RTR_SHUTDOWN) {
 			RTR_DBG1("State: RTR_SHUTDOWN");
+			rtr_fsm_start_cleanup(&args);
 			pthread_exit(NULL);
 		}
 	}

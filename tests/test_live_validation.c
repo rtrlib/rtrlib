@@ -85,7 +85,7 @@ int main(void)
 
 	struct rtr_mgr_config *conf;
 
-	if (rtr_mgr_init(&conf, groups, 1, &connection_status_callback, NULL) < 0)
+	if (rtr_mgr_init(&conf, groups, 1, &connection_status_callback, NULL, NULL, NULL) < 0)
 		return EXIT_FAILURE;
 
 	if (rtr_mgr_add_roa_support(conf, NULL) == RTR_ERROR) {

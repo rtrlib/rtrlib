@@ -54,10 +54,11 @@ static void set_status(const struct rtr_mgr_config *conf, struct rtr_mgr_group *
 		conf->status_fp(group, mgr_status, rtr_sock, conf->status_fp_data);
 }
 
-static int rtr_mgr_start_sockets(struct rtr_mgr_group *group)
+static int rtr_mgr_start_sockets(struct rtr_mgr_group *group, struct rtr_mgr_config *config)
 {
 	for (unsigned int i = 0; i < group->sockets_len; i++) {
-		if (rtr_start(group->sockets[i]) != 0) {
+		if (rtr_start(group->sockets[i], config->processing_thread_event_callback,
+			      config->processing_thread_event_callback_data) != 0) {
 			MGR_DBG1("rtr_mgr: Error starting rtr_socket pthread");
 			return RTR_ERROR;
 		}
@@ -233,7 +234,7 @@ static inline void _rtr_mgr_cb_state_error(const struct rtr_socket *sock, struct
 		struct rtr_mgr_group *next_group = get_best_inactive_rtr_mgr_group(config, group);
 
 		if (next_group)
-			rtr_mgr_start_sockets(next_group);
+			rtr_mgr_start_sockets(next_group, config);
 		else
 			MGR_DBG1("No other inactive groups found");
 	}
@@ -295,7 +296,9 @@ int rtr_mgr_config_cmp_tommy(const void *a, const void *b)
 
 // TODO: Additional arguments trailing?
 RTRLIB_EXPORT int rtr_mgr_init(struct rtr_mgr_config **config_out, struct rtr_mgr_group groups[],
-			       const unsigned int groups_len, const rtr_mgr_status_fp status_fp, void *status_fp_data)
+			       const unsigned int groups_len, const rtr_mgr_status_fp status_fp, void *status_fp_data,
+			       const rtr_mgr_on_processing_thread_event processing_thread_event_callback,
+			       void *processing_thread_event_callback_data)
 {
 	enum rtr_rtvals err_code = RTR_ERROR;
 	struct rtr_mgr_config *config = NULL;
@@ -337,6 +340,8 @@ RTRLIB_EXPORT int rtr_mgr_init(struct rtr_mgr_config **config_out, struct rtr_mg
 
 	config->status_fp_data = status_fp_data;
 	config->status_fp = status_fp;
+	config->processing_thread_event_callback = processing_thread_event_callback;
+	config->processing_thread_event_callback_data = processing_thread_event_callback_data;
 	return RTR_SUCCESS;
 
 err:
@@ -462,7 +467,7 @@ RTRLIB_EXPORT int rtr_mgr_start(struct rtr_mgr_config *config)
 	MGR_DBG("%s()", __func__);
 	struct rtr_mgr_group *best_group = rtr_mgr_get_first_group(config);
 
-	return rtr_mgr_start_sockets(best_group);
+	return rtr_mgr_start_sockets(best_group, config);
 }
 
 RTRLIB_EXPORT bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config)
@@ -633,7 +638,7 @@ RTRLIB_EXPORT int rtr_mgr_add_group(struct rtr_mgr_config *config, const struct 
 	struct rtr_mgr_group *best_group = rtr_mgr_get_first_group(config);
 
 	if (best_group->status == RTR_MGR_CLOSED)
-		rtr_mgr_start_sockets(best_group);
+		rtr_mgr_start_sockets(best_group, config);
 
 	pthread_rwlock_unlock(&config->mutex);
 	return RTR_SUCCESS;
@@ -696,7 +701,7 @@ RTRLIB_EXPORT int rtr_mgr_remove_group(struct rtr_mgr_config *config, unsigned i
 	struct rtr_mgr_group *best_group = rtr_mgr_get_first_group(config);
 
 	if (best_group->status == RTR_MGR_CLOSED)
-		rtr_mgr_start_sockets(best_group);
+		rtr_mgr_start_sockets(best_group, config);
 
 	lrtr_free(group_node->group);
 	lrtr_free(group_node);

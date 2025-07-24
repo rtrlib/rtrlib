@@ -66,7 +66,7 @@ int main(void)
 
 	struct rtr_mgr_config *conf;
 
-	if (rtr_mgr_init(&conf, groups, 1, &connection_status_callback, NULL) < 0)
+	if (rtr_mgr_init(&conf, groups, 1, &connection_status_callback, NULL, NULL, NULL) < 0)
 		return EXIT_FAILURE;
 
 	rtr_mgr_setup_sockets(conf, groups, 1, 50, 600, 600);
