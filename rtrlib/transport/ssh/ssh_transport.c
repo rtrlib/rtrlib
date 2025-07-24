@@ -131,6 +131,10 @@ int tr_ssh_open(void *socket)
 
 	ssh_set_blocking(ssh_socket->session, 1);
 
+	// Attempting 'none' auth will make sure SSH_MSG_EXT_INFO is received
+	// from the server before proceeding with public key authentication
+	ssh_userauth_none(ssh_socket->session, NULL);
+
 	// check server identity
 #if LIBSSH_VERSION_MAJOR > 0 || LIBSSH_VERSION_MINOR > 8
 	if ((config->server_hostkey_path) && (ssh_session_is_known_server(ssh_socket->session) != SSH_KNOWN_HOSTS_OK)) {
