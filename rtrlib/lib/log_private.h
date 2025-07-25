@@ -7,13 +7,13 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#ifndef LRTR_LOG_PRIVATE_H
-#define LRTR_LOG_PRIVATE_H
+#ifndef RTR_LOG_PRIVATE_H
+#define RTR_LOG_PRIVATE_H
 
 /**
  * @brief Writes a message to stdout if NDEBUG isn't defined.
  * @param[in] frmt log message in printf format style.
  */
-void lrtr_dbg(const char *frmt, ...) __attribute__((format(printf, 1, 2)));
+void rtr_dbg(const char *frmt, ...) __attribute__((format(printf, 1, 2)));
 
 #endif

@@ -15,15 +15,15 @@
 #include <assert.h>
 #include <stdio.h>
 
-struct lrtr_ipv4_addr lrtr_ipv4_get_bits(const struct lrtr_ipv4_addr *val, const uint8_t from, const uint8_t quantity)
+struct rtr_ipv4_addr rtr_ipv4_get_bits(const struct rtr_ipv4_addr *val, const uint8_t from, const uint8_t quantity)
 {
-	struct lrtr_ipv4_addr result;
+	struct rtr_ipv4_addr result;
 
-	result.addr = lrtr_get_bits(val->addr, from, quantity);
+	result.addr = rtr_get_bits(val->addr, from, quantity);
 	return result;
 }
 
-int lrtr_ipv4_addr_to_str(const struct lrtr_ipv4_addr *ip, char *str, unsigned int len)
+int rtr_ipv4_addr_to_str(const struct rtr_ipv4_addr *ip, char *str, unsigned int len)
 {
 	uint8_t buff[4];
 
@@ -38,7 +38,7 @@ int lrtr_ipv4_addr_to_str(const struct lrtr_ipv4_addr *ip, char *str, unsigned i
 	return 0;
 }
 
-int lrtr_ipv4_str_to_addr(const char *str, struct lrtr_ipv4_addr *ip)
+int rtr_ipv4_str_to_addr(const char *str, struct rtr_ipv4_addr *ip)
 {
 	uint8_t buff[4];
 
@@ -50,7 +50,7 @@ int lrtr_ipv4_str_to_addr(const char *str, struct lrtr_ipv4_addr *ip)
 	return 0;
 }
 
-bool lrtr_ipv4_addr_equal(const struct lrtr_ipv4_addr *a, const struct lrtr_ipv4_addr *b)
+bool rtr_ipv4_addr_equal(const struct rtr_ipv4_addr *a, const struct rtr_ipv4_addr *b)
 {
 	if (a->addr == b->addr)
 		return true;
@@ -58,7 +58,7 @@ bool lrtr_ipv4_addr_equal(const struct lrtr_ipv4_addr *a, const struct lrtr_ipv4
 	return false;
 }
 
-void lrtr_ipv4_addr_convert_byte_order(const uint32_t src, uint32_t *dest, const enum target_byte_order tbo)
+void rtr_ipv4_addr_convert_byte_order(const uint32_t src, uint32_t *dest, const enum target_byte_order tbo)
 {
-	*dest = lrtr_convert_long(tbo, src);
+	*dest = rtr_convert_long(tbo, src);
 }

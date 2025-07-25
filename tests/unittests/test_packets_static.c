@@ -14,7 +14,7 @@
 #include "rtrlib/rtr/packets.c"
 #include "rtrlib/rtr_mgr_private.h"
 
-int __wrap_lrtr_get_monotonic_time(time_t *seconds)
+int __wrap_rtr_get_monotonic_time(time_t *seconds)
 {
 	UNUSED(seconds);
 	return mock_type(int);
@@ -66,10 +66,10 @@ static void test_set_last_update(void **state)
 
 	socket.connection_state_fp = NULL;
 
-	will_return(__wrap_lrtr_get_monotonic_time, RTR_ERROR);
+	will_return(__wrap_rtr_get_monotonic_time, RTR_ERROR);
 	assert_int_equal(rtr_set_last_update(&socket), RTR_ERROR);
 
-	will_return(__wrap_lrtr_get_monotonic_time, RTR_SUCCESS);
+	will_return(__wrap_rtr_get_monotonic_time, RTR_SUCCESS);
 	assert_int_equal(rtr_set_last_update(&socket), RTR_SUCCESS);
 }
 
@@ -232,8 +232,8 @@ static void test_pdu_to_host_byte_order(void **state)
 static void test_rtr_pdu_check_size(void **state)
 {
 	struct pdu_header pdu;
-	struct pdu_error *error = lrtr_calloc(1, 30);
-	struct pdu_aspa *aspa = lrtr_calloc(1, sizeof(struct pdu_aspa) + 2 * sizeof(uint32_t));
+	struct pdu_error *error = rtr_calloc(1, 30);
+	struct pdu_aspa *aspa = rtr_calloc(1, sizeof(struct pdu_aspa) + 2 * sizeof(uint32_t));
 
 	UNUSED(state);
 

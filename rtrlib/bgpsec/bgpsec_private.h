@@ -28,7 +28,7 @@
  * @return RTR_BGPSEC_ERROR If an error occurred. Refer to error codes for
  *			more details.
  */
-int rtr_bgpsec_validate_as_path(const struct rtr_bgpsec *data, struct spki_table *table);
+int rtr_bgpsec_validate_as_path(const struct rtr_bgpsec *data, struct rtr_spki_table *table);
 
 /**
  * @brief Signing function for a BGPsec_PATH.
@@ -40,8 +40,8 @@ int rtr_bgpsec_validate_as_path(const struct rtr_bgpsec *data, struct spki_table
  * @return RTR_BGPSEC_ERROR If an error occurred. Refer to error codes for
  *			    more details.
  */
-int rtr_bgpsec_generate_signature(const struct rtr_bgpsec *data, uint8_t *private_key,
-				  struct rtr_signature_seg **new_signature);
+enum rtr_bgpsec_rtvals rtr_bgpsec_generate_signature(const struct rtr_bgpsec *data, uint8_t *private_key,
+						     struct rtr_signature_seg **new_signature);
 
 /**
  * @brief Returns the highest supported BGPsec version.
@@ -55,7 +55,7 @@ int rtr_bgpsec_get_version(void);
  * @return RTR_BGPSEC_SUCCESS If the algorithm suite is supported.
  * @return RTR_BGPSEC_ERROR If the algorithm suite is not supported.
  */
-int rtr_bgpsec_has_algorithm_suite(uint8_t alg_suite);
+enum rtr_bgpsec_rtvals rtr_bgpsec_has_algorithm_suite(uint8_t alg_suite);
 
 /**
  * @brief Returns a pointer to a list that holds all supported algorithm suites.
@@ -108,7 +108,7 @@ struct rtr_signature_seg *rtr_bgpsec_new_signature_seg(uint8_t *ski, uint16_t si
  * @return RTR_BGPSEC_ERROR If an error occurred during prepending, e.g. one
  *			    or more fields of new_seg was missing.
  */
-int rtr_bgpsec_prepend_sig_seg(struct rtr_bgpsec *bgpsec, struct rtr_signature_seg *new_seg);
+enum rtr_bgpsec_rtvals rtr_bgpsec_prepend_sig_seg(struct rtr_bgpsec *bgpsec, struct rtr_signature_seg *new_seg);
 
 /**
  * @brief Initializes and returns a pointer to a rtr_bgpsec struct.
@@ -177,7 +177,7 @@ struct rtr_secure_path_seg *rtr_bgpsec_pop_secure_path_seg(struct rtr_bgpsec *bg
  * @return RTR_BGPSEC_SUCCESS If the Signature Segment was successfully appended.
  * @return RTR_BGPSEC_ERROR If an error occurred in the proccess.
  */
-int rtr_bgpsec_append_sig_seg(struct rtr_bgpsec *bgpsec, struct rtr_signature_seg *new_seg);
+enum rtr_bgpsec_rtvals rtr_bgpsec_append_sig_seg(struct rtr_bgpsec *bgpsec, struct rtr_signature_seg *new_seg);
 
 /**
  * @brief Append a Secure Path Segment to the end of the @ref rtr_bgpsec.path of a
@@ -193,6 +193,6 @@ void rtr_bgpsec_append_sec_path_seg(struct rtr_bgpsec *bgpsec, struct rtr_secure
  * @param[in] table The SPKI table holding the SPKI data.
  * @param[in] record The new record that will be added to the SPKI table.
  */
-void rtr_bgpsec_add_spki_record(struct spki_table *table, struct spki_record *record);
+void rtr_bgpsec_add_spki_record(struct rtr_spki_table *table, struct rtr_spki_record *record);
 #endif
 /* @} */

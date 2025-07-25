@@ -38,7 +38,7 @@
  * @param connect_timeout Time in seconds to wait for a successful connection.
  *	  Defaults to #RTRLIB_TRANSPORT_CONNECT_TIMEOUT_DEFAULT
  */
-struct tr_tcp_config {
+struct rtr_tr_tcp_config {
 	char *host;
 	char *port;
 	char *bindaddr;
@@ -54,6 +54,6 @@ struct tr_tcp_config {
  * @returns TR_SUCCESS On success.
  * @returns TR_ERROR On error.
  */
-int tr_tcp_init(const struct tr_tcp_config *config, struct tr_socket *socket);
+enum rtr_tr_rtvals rtr_tr_tcp_init(const struct rtr_tr_tcp_config *config, struct rtr_tr_socket *socket);
 #endif
 /** @} */

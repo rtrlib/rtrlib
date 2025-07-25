@@ -134,7 +134,7 @@ typedef enum rtr_rtvals (*rtr_mgr_on_processing_thread_event)(enum rtr_mgr_proce
  * @param aspa_table spki_table that stores the ASPA records obtained from the connected rtr server
  */
 struct rtr_socket {
-	struct tr_socket *tr_socket;
+	struct rtr_tr_socket *tr_socket;
 	unsigned int refresh_interval;
 	time_t last_update;
 	unsigned int expire_interval;
@@ -144,15 +144,15 @@ struct rtr_socket {
 	uint32_t session_id;
 	bool request_session_id;
 	uint32_t serial_number;
-	struct pfx_table *pfx_table;
+	struct rtr_pfx_table *pfx_table;
 	pthread_t thread_id;
 	rtr_connection_state_fp connection_state_fp;
 	void *connection_state_fp_param_config;
 	void *connection_state_fp_param_group;
 	unsigned int version;
 	bool has_received_pdus;
-	struct spki_table *spki_table;
-	struct aspa_table *aspa_table;
+	struct rtr_spki_table *spki_table;
+	struct rtr_aspa_table *aspa_table;
 	bool is_resetting;
 };
 

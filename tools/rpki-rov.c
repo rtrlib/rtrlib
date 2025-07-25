@@ -66,14 +66,14 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	struct tr_socket tr_tcp;
-	struct tr_tcp_config tcp_config = {argv[1], argv[2], NULL, NULL, NULL, 0};
+	struct rtr_tr_socket tr_tcp;
+	struct rtr_tr_tcp_config tcp_config = {argv[1], argv[2], NULL, NULL, NULL, 0};
 	struct rtr_socket rtr_tcp;
 	struct rtr_mgr_config *conf;
 	struct rtr_mgr_group groups[1];
 
 	/* init a TCP transport and create rtr socket */
-	tr_tcp_init(&tcp_config, &tr_tcp);
+	rtr_tr_tcp_init(&tcp_config, &tr_tcp);
 	rtr_tcp.tr_socket = &tr_tcp;
 
 	/* create a rtr_mgr_group array with 1 element */
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
 		char *input_tok = NULL;
 
 		input_tok = strtok(input, delims);
-		struct lrtr_ip_addr pref;
+		struct rtr_ip_addr pref;
 		char ip[INET6_ADDRSTRLEN];
 
 		if (strlen(input_tok) > sizeof(ip) - 1) {
@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
 		memset(ip, 0, sizeof(ip));
 		strncpy(ip, input_tok, sizeof(ip) - 1);
 
-		if (lrtr_ip_str_to_addr(ip, &pref) != 0) {
+		if (rtr_ip_str_to_addr(ip, &pref) != 0) {
 			fprintf(stderr, "Error: Invalid ip addr\n");
 			continue;
 		}
@@ -197,20 +197,21 @@ int main(int argc, char *argv[])
 			continue;
 		}
 
-		enum pfxv_state result;
-		struct pfx_record *reason = NULL;
+		enum rtr_pfxv_state result;
+		struct rtr_pfx_record *reason = NULL;
 		unsigned int reason_len = 0;
 
 		/* do validation */
-		pfx_table_validate_r(groups[0].sockets[0]->pfx_table, &reason, &reason_len, asn, &pref, mask, &result);
+		rtr_pfx_table_validate_r(groups[0].sockets[0]->pfx_table, &reason, &reason_len, asn, &pref, mask,
+					 &result);
 
 		int validity_code = -1;
 		/* translate validation result */
-		if (result == BGP_PFXV_STATE_VALID)
+		if (result == RTR_BGP_PFXV_STATE_VALID)
 			validity_code = 0;
-		else if (result == BGP_PFXV_STATE_NOT_FOUND)
+		else if (result == RTR_BGP_PFXV_STATE_NOT_FOUND)
 			validity_code = 1;
-		else if (result == BGP_PFXV_STATE_INVALID)
+		else if (result == RTR_BGP_PFXV_STATE_INVALID)
 			validity_code = 2;
 
 		/* IP Mask BGP-ASN| */
@@ -223,7 +224,7 @@ int main(int argc, char *argv[])
 			for (i = 0; i < reason_len; i++) {
 				char tmp[100];
 
-				lrtr_ip_addr_to_str(&reason[i].prefix, tmp, sizeof(tmp));
+				rtr_ip_addr_to_str(&reason[i].prefix, tmp, sizeof(tmp));
 				printf("%u %s %u %u", reason[i].asn, tmp, reason[i].min_len, reason[i].max_len);
 				if ((i + 1) < reason_len)
 					printf(",");

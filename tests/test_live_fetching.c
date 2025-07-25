@@ -59,13 +59,13 @@ int main(void)
 	char RPKI_CACHE_PORT[] = "3323"; // rir rtr
 
 	/* create a TCP transport socket */
-	struct tr_socket tr_tcp;
-	struct tr_tcp_config tcp_config = {RPKI_CACHE_HOST, RPKI_CACHE_PORT, NULL, NULL, NULL, 0};
+	struct rtr_tr_socket tr_tcp;
+	struct rtr_tr_tcp_config tcp_config = {RPKI_CACHE_HOST, RPKI_CACHE_PORT, NULL, NULL, NULL, 0};
 	struct rtr_socket rtr_tcp;
 	struct rtr_mgr_group groups[1];
 
 	/* init a TCP transport and create rtr socket */
-	tr_tcp_init(&tcp_config, &tr_tcp);
+	rtr_tr_tcp_init(&tcp_config, &tr_tcp);
 	rtr_tcp.tr_socket = &tr_tcp;
 
 	/* create a rtr_mgr_group array with 1 element */

@@ -90,16 +90,16 @@ typedef tommy_uint32_t tommy_count_t;
 #include "rtrlib/lib/alloc_utils_private.h"
 #endif
 #if !defined(tommy_malloc)
-#define tommy_malloc lrtr_malloc
+#define tommy_malloc rtr_malloc
 #endif
 #if !defined(tommy_calloc)
-#define tommy_calloc lrtr_calloc
+#define tommy_calloc rtr_calloc
 #endif
 #if !defined(tommy_realloc)
-#define tommy_realloc lrtr_realloc
+#define tommy_realloc rtr_realloc
 #endif
 #if !defined(tommy_free)
-#define tommy_free lrtr_free
+#define tommy_free rtr_free
 #endif
 
 /******************************************************************************/
