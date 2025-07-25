@@ -56,8 +56,8 @@ static const char *socket_str_states[] = {[RTR_CONNECTING] = "RTR_CONNECTING",
 					  [RTR_ERROR_TRANSPORT] = "RTR_ERROR_TRANSPORT",
 					  [RTR_SHUTDOWN] = "RTR_SHUTDOWN"};
 
-int rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_table *pfx_table,
-	     struct spki_table *spki_table, struct aspa_table *aspa_table, const unsigned int refresh_interval,
+int rtr_init(struct rtr_socket *rtr_socket, struct rtr_tr_socket *tr, struct rtr_pfx_table *pfx_table,
+	     struct rtr_spki_table *spki_table, struct rtr_aspa_table *aspa_table, const unsigned int refresh_interval,
 	     const unsigned int expire_interval, const unsigned int retry_interval, enum rtr_interval_mode iv_mode,
 	     rtr_connection_state_fp fp, void *fp_param_config, void *fp_param_group)
 {
@@ -100,7 +100,7 @@ int rtr_start(struct rtr_socket *rtr_socket, const rtr_mgr_on_processing_thread_
 	if (rtr_socket->thread_id)
 		return RTR_ERROR;
 
-	struct rtr_fsm_start_args *args = lrtr_malloc(sizeof(*args));
+	struct rtr_fsm_start_args *args = rtr_malloc(sizeof(*args));
 	if (args == NULL) {
 		RTR_DBG1("Not enough memory available to allocate FSM start arguments");
 		return RTR_ERROR;
@@ -122,16 +122,16 @@ void rtr_purge_outdated_records(struct rtr_socket *rtr_socket)
 	if (rtr_socket->last_update == 0)
 		return;
 	time_t cur_time;
-	int rtval = lrtr_get_monotonic_time(&cur_time);
+	int rtval = rtr_get_monotonic_time(&cur_time);
 
 	if (rtval == -1 || (rtr_socket->last_update + rtr_socket->expire_interval) < cur_time) {
 		if (rtval == -1)
 			RTR_DBG1("get_monotic_time(..) failed");
-		pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
+		rtr_pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
 		RTR_DBG1("Removed outdated records from pfx_table");
 		spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
 		RTR_DBG1("Removed outdated router keys from spki_table");
-		aspa_table_src_remove(rtr_socket->aspa_table, rtr_socket, true);
+		rtr_aspa_table_src_remove(rtr_socket->aspa_table, rtr_socket, true);
 		RTR_DBG1("Removed outdated records from aspa_table");
 		rtr_socket->request_session_id = true;
 		rtr_socket->serial_number = 0;
@@ -150,7 +150,7 @@ void rtr_purge_outdated_records(struct rtr_socket *rtr_socket)
 inline static void rtr_free_fsm_start_args(struct rtr_fsm_start_args **args)
 {
 	assert(args != NULL);
-	lrtr_free(*args);
+	rtr_free(*args);
 	*args = NULL;
 }
 
@@ -196,7 +196,7 @@ void *rtr_fsm_start(struct rtr_fsm_start_args *args)
 			// old aspa_Record could exists in the aspa_table, check if they are too old and must be removed
 			rtr_purge_outdated_records(rtr_socket);
 
-			if (tr_open(rtr_socket->tr_socket) == TR_ERROR) {
+			if (tr_open(rtr_socket->tr_socket) == RTR_TR_ERROR) {
 				rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
 			} else if (rtr_socket->request_session_id) {
 				// change to state RESET, if socket doesn't have a session_id
@@ -316,9 +316,9 @@ void rtr_stop(struct rtr_socket *rtr_socket)
 		rtr_socket->request_session_id = true;
 		rtr_socket->serial_number = 0;
 		rtr_socket->last_update = 0;
-		pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
+		rtr_pfx_table_src_remove(rtr_socket->pfx_table, rtr_socket);
 		spki_table_src_remove(rtr_socket->spki_table, rtr_socket);
-		aspa_table_src_remove(rtr_socket->aspa_table, rtr_socket, true);
+		rtr_aspa_table_src_remove(rtr_socket->aspa_table, rtr_socket, true);
 		rtr_socket->thread_id = 0;
 		rtr_socket->state = RTR_CLOSED;
 	}

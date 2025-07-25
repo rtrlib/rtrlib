@@ -49,7 +49,7 @@ static int key_entry_cmp(const void *arg, const void *obj)
 }
 
 /* Copying the content, target struct must already be allocated */
-static void key_entry_to_spki_record(struct key_entry *key_e, struct spki_record *spki_r)
+static void key_entry_to_spki_record(struct key_entry *key_e, struct rtr_spki_record *spki_r)
 {
 	spki_r->asn = key_e->asn;
 	spki_r->socket = key_e->socket;
@@ -58,7 +58,7 @@ static void key_entry_to_spki_record(struct key_entry *key_e, struct spki_record
 }
 
 /* Copying the content, target struct must already be allocated */
-static void spki_record_to_key_entry(struct spki_record *spki_r, struct key_entry *key_e)
+static void spki_record_to_key_entry(struct rtr_spki_record *spki_r, struct key_entry *key_e)
 {
 	key_e->asn = spki_r->asn;
 	key_e->socket = spki_r->socket;
@@ -70,15 +70,16 @@ static void spki_record_to_key_entry(struct spki_record *spki_r, struct key_entr
  * @brief Calls the spki_table update function.
  * @param[in] spki_table spki_table to use.
  * @param[in] record spki_record that was added/removed.
- * @param[in] added True means record was added, False means removed
+ * @param[in] operation_type The type of operation performed on the given record
  */
-static void spki_table_notify_clients(struct spki_table *spki_table, const struct spki_record *record, const bool added)
+static void spki_table_notify_clients(struct rtr_spki_table *spki_table, const struct rtr_spki_record *record,
+				      const enum rtr_spki_operation_type operation_type)
 {
 	if (spki_table->update_fp)
-		spki_table->update_fp(spki_table, *record, added);
+		spki_table->update_fp(spki_table, *record, operation_type);
 }
 
-void spki_table_init(struct spki_table *spki_table, spki_update_fp update_fp)
+void spki_table_init(struct rtr_spki_table *spki_table, rtr_spki_update_fp update_fp)
 {
 	tommy_hashlin_init(&spki_table->hashtable);
 	tommy_list_init(&spki_table->list);
@@ -87,7 +88,7 @@ void spki_table_init(struct spki_table *spki_table, spki_update_fp update_fp)
 	spki_table->update_fp = update_fp;
 }
 
-void spki_table_free(struct spki_table *spki_table)
+void spki_table_free(struct rtr_spki_table *spki_table)
 {
 	if (spki_table == NULL) {
 		SPKI_DBG1("SPKI table is not initialized. Nothing to free.");
@@ -103,7 +104,7 @@ void spki_table_free(struct spki_table *spki_table)
 	pthread_rwlock_destroy(&spki_table->lock);
 }
 
-void spki_table_free_without_notify(struct spki_table *spki_table)
+void spki_table_free_without_notify(struct rtr_spki_table *spki_table)
 {
 	pthread_rwlock_wrlock(&spki_table->lock);
 
@@ -115,35 +116,35 @@ void spki_table_free_without_notify(struct spki_table *spki_table)
 	pthread_rwlock_destroy(&spki_table->lock);
 }
 
-int spki_table_add_entry(struct spki_table *spki_table, struct spki_record *spki_record)
+int spki_table_add_entry(struct rtr_spki_table *spki_table, struct rtr_spki_record *spki_record)
 {
 	uint32_t hash;
 	struct key_entry *entry;
 
-	entry = lrtr_malloc(sizeof(*entry));
+	entry = rtr_malloc(sizeof(*entry));
 	if (!entry)
-		return SPKI_ERROR;
+		return RTR_SPKI_ERROR;
 
 	spki_record_to_key_entry(spki_record, entry);
 	hash = tommy_inthash_u32(spki_record->asn);
 
 	pthread_rwlock_wrlock(&spki_table->lock);
 	if (tommy_hashlin_search(&spki_table->hashtable, spki_table->cmp_fp, entry, hash)) {
-		lrtr_free(entry);
+		rtr_free(entry);
 		pthread_rwlock_unlock(&spki_table->lock);
-		return SPKI_DUPLICATE_RECORD;
+		return RTR_SPKI_DUPLICATE_RECORD;
 	}
 
 	/* Insert into hashtable and list */
 	tommy_hashlin_insert(&spki_table->hashtable, &entry->hash_node, entry, hash);
 	tommy_list_insert_tail(&spki_table->list, &entry->list_node, entry);
 	pthread_rwlock_unlock(&spki_table->lock);
-	spki_table_notify_clients(spki_table, spki_record, true);
-	return SPKI_SUCCESS;
+	spki_table_notify_clients(spki_table, spki_record, RTR_SPKI_ADD);
+	return RTR_SPKI_SUCCESS;
 }
 
-int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski, struct spki_record **result,
-		       unsigned int *result_size)
+enum rtr_spki_rtvals spki_table_get_all(struct rtr_spki_table *spki_table, uint32_t asn, uint8_t *ski,
+					struct rtr_spki_record **result, unsigned int *result_size)
 {
 	uint32_t hash = tommy_inthash_u32(asn);
 	tommy_node *result_bucket;
@@ -164,7 +165,7 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski
 
 	if (!result_bucket) {
 		pthread_rwlock_unlock(&spki_table->lock);
-		return SPKI_SUCCESS;
+		return RTR_SPKI_SUCCESS;
 	}
 
 	/* Build the result array */
@@ -174,11 +175,11 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski
 		element = result_bucket->data;
 		if (element->asn == asn && memcmp(element->ski, ski, sizeof(element->ski)) == 0) {
 			(*result_size)++;
-			tmp = lrtr_realloc(*result, *result_size * sizeof(**result));
+			tmp = rtr_realloc(*result, *result_size * sizeof(**result));
 			if (!tmp) {
-				lrtr_free(*result);
+				rtr_free(*result);
 				pthread_rwlock_unlock(&spki_table->lock);
-				return SPKI_ERROR;
+				return RTR_SPKI_ERROR;
 			}
 			*result = tmp;
 			key_entry_to_spki_record(element, *result + *result_size - 1);
@@ -187,11 +188,11 @@ int spki_table_get_all(struct spki_table *spki_table, uint32_t asn, uint8_t *ski
 	}
 
 	pthread_rwlock_unlock(&spki_table->lock);
-	return SPKI_SUCCESS;
+	return RTR_SPKI_SUCCESS;
 }
 
 // cppcheck-suppress unusedFunction
-int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski, struct spki_record **result,
+int spki_table_search_by_ski(struct rtr_spki_table *spki_table, uint8_t *ski, struct rtr_spki_record **result,
 			     unsigned int *result_size)
 {
 	tommy_node *current_node;
@@ -209,11 +210,11 @@ int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski, struct
 
 		if (memcmp(current_entry->ski, ski, sizeof(current_entry->ski)) == 0) {
 			(*result_size)++;
-			tmp = lrtr_realloc(*result, sizeof(**result) * (*result_size));
+			tmp = rtr_realloc(*result, sizeof(**result) * (*result_size));
 			if (!tmp) {
-				lrtr_free(*result);
+				rtr_free(*result);
 				pthread_rwlock_unlock(&spki_table->lock);
-				return SPKI_ERROR;
+				return RTR_SPKI_ERROR;
 			}
 			*result = tmp;
 			key_entry_to_spki_record(current_entry, *result + (*result_size - 1));
@@ -221,15 +222,15 @@ int spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski, struct
 		current_node = current_node->next;
 	}
 	pthread_rwlock_unlock(&spki_table->lock);
-	return SPKI_SUCCESS;
+	return RTR_SPKI_SUCCESS;
 }
 
-int spki_table_remove_entry(struct spki_table *spki_table, struct spki_record *spki_record)
+int spki_table_remove_entry(struct rtr_spki_table *spki_table, struct rtr_spki_record *spki_record)
 {
 	uint32_t hash;
 	struct key_entry entry;
 	struct key_entry *rmv_elem;
-	int rtval = SPKI_ERROR;
+	int rtval = RTR_SPKI_ERROR;
 
 	spki_record_to_key_entry(spki_record, &entry);
 	hash = tommy_inthash_u32(spki_record->asn);
@@ -237,25 +238,25 @@ int spki_table_remove_entry(struct spki_table *spki_table, struct spki_record *s
 	pthread_rwlock_wrlock(&spki_table->lock);
 
 	if (!tommy_hashlin_search(&spki_table->hashtable, spki_table->cmp_fp, &entry, hash)) {
-		rtval = SPKI_RECORD_NOT_FOUND;
+		rtval = RTR_SPKI_RECORD_NOT_FOUND;
 	} else {
 		/* Remove from hashtable and list */
 		rmv_elem = tommy_hashlin_remove(&spki_table->hashtable, spki_table->cmp_fp, &entry, hash);
 		if (rmv_elem && tommy_list_remove_existing(&spki_table->list, &rmv_elem->list_node)) {
-			lrtr_free(rmv_elem);
+			rtr_free(rmv_elem);
 			spki_table_notify_clients(spki_table, spki_record, false);
-			rtval = SPKI_SUCCESS;
+			rtval = RTR_SPKI_SUCCESS;
 		}
 	}
 	pthread_rwlock_unlock(&spki_table->lock);
 	return rtval;
 }
 
-int spki_table_src_remove(struct spki_table *spki_table, const struct rtr_socket *socket)
+int spki_table_src_remove(struct rtr_spki_table *spki_table, const struct rtr_socket *socket)
 {
 	if (spki_table == NULL) {
 		SPKI_DBG1("SPKI table is not initialized. Nothing to remove.");
-		return SPKI_SUCCESS;
+		return RTR_SPKI_SUCCESS;
 	}
 
 	struct key_entry *entry;
@@ -270,38 +271,38 @@ int spki_table_src_remove(struct spki_table *spki_table, const struct rtr_socket
 			current_node = current_node->next;
 			if (!tommy_list_remove_existing(&spki_table->list, &entry->list_node)) {
 				pthread_rwlock_unlock(&spki_table->lock);
-				return SPKI_ERROR;
+				return RTR_SPKI_ERROR;
 			}
 			if (!tommy_hashlin_remove_existing(&spki_table->hashtable, &entry->hash_node)) {
 				pthread_rwlock_unlock(&spki_table->lock);
-				return SPKI_ERROR;
+				return RTR_SPKI_ERROR;
 			}
-			lrtr_free(entry);
+			rtr_free(entry);
 		} else {
 			current_node = current_node->next;
 		}
 	}
 	pthread_rwlock_unlock(&spki_table->lock);
-	return SPKI_SUCCESS;
+	return RTR_SPKI_SUCCESS;
 }
 
-int spki_table_copy_except_socket(struct spki_table *src, struct spki_table *dst, struct rtr_socket *socket)
+int spki_table_copy_except_socket(struct rtr_spki_table *src, struct rtr_spki_table *dst, struct rtr_socket *socket)
 {
 	tommy_node *current_node;
-	int ret = SPKI_SUCCESS;
+	int ret = RTR_SPKI_SUCCESS;
 
 	pthread_rwlock_rdlock(&src->lock);
 	current_node = tommy_list_head(&src->list);
 	while (current_node) {
 		struct key_entry *entry;
-		struct spki_record record;
+		struct rtr_spki_record record;
 
 		entry = (struct key_entry *)current_node->data;
 		key_entry_to_spki_record(entry, &record);
 
 		if (entry->socket != socket) {
-			if (spki_table_add_entry(dst, &record) != SPKI_SUCCESS) {
-				ret = SPKI_ERROR;
+			if (spki_table_add_entry(dst, &record) != RTR_SPKI_SUCCESS) {
+				ret = RTR_SPKI_ERROR;
 				break;
 			}
 		}
@@ -313,9 +314,10 @@ int spki_table_copy_except_socket(struct spki_table *src, struct spki_table *dst
 	return ret;
 }
 
-void spki_table_notify_diff(struct spki_table *new_table, struct spki_table *old_table, const struct rtr_socket *socket)
+void spki_table_notify_diff(struct rtr_spki_table *new_table, struct rtr_spki_table *old_table,
+			    const struct rtr_socket *socket)
 {
-	spki_update_fp old_table_fp;
+	rtr_spki_update_fp old_table_fp;
 
 	// Disable update callback for old_table
 	old_table_fp = old_table->update_fp;
@@ -329,12 +331,12 @@ void spki_table_notify_diff(struct spki_table *new_table, struct spki_table *old
 		struct key_entry *entry = (struct key_entry *)current_node->data;
 
 		if (entry->socket == socket) {
-			struct spki_record record;
+			struct rtr_spki_record record;
 
 			key_entry_to_spki_record(entry, &record);
 
-			if (spki_table_remove_entry(old_table, &record) == SPKI_RECORD_NOT_FOUND)
-				spki_table_notify_clients(new_table, &record, true);
+			if (spki_table_remove_entry(old_table, &record) == RTR_SPKI_RECORD_NOT_FOUND)
+				spki_table_notify_clients(new_table, &record, RTR_SPKI_ADD);
 		}
 	}
 
@@ -345,7 +347,7 @@ void spki_table_notify_diff(struct spki_table *new_table, struct spki_table *old
 		struct key_entry *entry = (struct key_entry *)current_node->data;
 
 		if (entry->socket == socket) {
-			struct spki_record record;
+			struct rtr_spki_record record;
 
 			key_entry_to_spki_record(entry, &record);
 			spki_table_notify_clients(new_table, &record, false);
@@ -356,7 +358,7 @@ void spki_table_notify_diff(struct spki_table *new_table, struct spki_table *old
 	old_table->update_fp = old_table_fp;
 }
 
-void spki_table_swap(struct spki_table *a, struct spki_table *b)
+void spki_table_swap(struct rtr_spki_table *a, struct rtr_spki_table *b)
 {
 	tommy_hashlin tmp_hashtable;
 	tommy_list tmp_list;

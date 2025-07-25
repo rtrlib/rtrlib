@@ -21,21 +21,21 @@ static void *(*REALLOC_PTR)(void *ptr, size_t size) = realloc;
 static void (*FREE_PTR)(void *ptr) = free;
 
 /* cppcheck-suppress unusedFunction */
-RTRLIB_EXPORT void lrtr_set_alloc_functions(void *(*malloc_function)(size_t size),
-					    void *(*realloc_function)(void *ptr, size_t size),
-					    void(free_function)(void *ptr))
+RTRLIB_EXPORT void rtr_set_alloc_functions(void *(*malloc_function)(size_t size),
+					   void *(*realloc_function)(void *ptr, size_t size),
+					   void(free_function)(void *ptr))
 {
 	MALLOC_PTR = malloc_function;
 	REALLOC_PTR = realloc_function;
 	FREE_PTR = free_function;
 }
 
-inline void *lrtr_malloc(size_t size)
+inline void *rtr_malloc(size_t size)
 {
 	return MALLOC_PTR(size);
 }
 
-void *lrtr_calloc(size_t nmemb, size_t size)
+void *rtr_calloc(size_t nmemb, size_t size)
 {
 	int bytes = 0;
 
@@ -51,7 +51,7 @@ void *lrtr_calloc(size_t nmemb, size_t size)
 	}
 	bytes = size * nmemb;
 #endif
-	void *p = lrtr_malloc(bytes);
+	void *p = rtr_malloc(bytes);
 
 	if (!p)
 		return p;
@@ -59,22 +59,22 @@ void *lrtr_calloc(size_t nmemb, size_t size)
 	return memset(p, 0, bytes);
 }
 
-inline void lrtr_free(void *ptr)
+inline void rtr_free(void *ptr)
 {
 	return FREE_PTR(ptr);
 }
 
-inline void *lrtr_realloc(void *ptr, size_t size)
+inline void *rtr_realloc(void *ptr, size_t size)
 {
 	return REALLOC_PTR(ptr, size);
 }
 
-char *lrtr_strdup(const char *string)
+char *rtr_strdup(const char *string)
 {
 	assert(string);
 
 	size_t length = strlen(string) + 1;
-	char *new_string = lrtr_malloc(length);
+	char *new_string = rtr_malloc(length);
 
 	return new_string ? memcpy(new_string, string, length) : NULL;
 }

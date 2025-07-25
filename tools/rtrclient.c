@@ -56,7 +56,7 @@ enum socket_type {
 
 struct socket_config {
 	struct rtr_socket socket;
-	struct tr_socket tr_socket;
+	struct rtr_tr_socket tr_socket;
 	enum socket_type type;
 	bool print_pfx_updates;
 	bool print_spki_updates;
@@ -299,9 +299,9 @@ struct pfx_export_cb_arg {
 	tommy_hashlin *hashtable;
 };
 
-static void pfx_export_cb(const struct pfx_record *pfx_record, void *data);
+static void pfx_export_cb(const struct rtr_pfx_record *pfx_record, void *data);
 
-static tommy_uint32_t hash_pfx_record(const struct pfx_record *record)
+static tommy_uint32_t hash_pfx_record(const struct rtr_pfx_record *record)
 {
 	struct pfx_record_packed {
 		uint8_t ip[16];
@@ -314,10 +314,10 @@ static tommy_uint32_t hash_pfx_record(const struct pfx_record *record)
 
 	memset(&packed_record, 0, sizeof(packed_record));
 
-	if (record->prefix.ver == LRTR_IPV4)
-		memcpy(&packed_record.ip, &record->prefix.u.addr4, sizeof(struct lrtr_ipv4_addr));
+	if (record->prefix.ver == RTR_IPV4)
+		memcpy(&packed_record.ip, &record->prefix.u.addr4, sizeof(struct rtr_ipv4_addr));
 	else
-		memcpy(&packed_record.ip, &record->prefix.u.addr6, sizeof(struct lrtr_ipv6_addr));
+		memcpy(&packed_record.ip, &record->prefix.u.addr6, sizeof(struct rtr_ipv6_addr));
 
 	packed_record.asn = record->asn;
 	packed_record.min_len = record->min_len;
@@ -328,11 +328,11 @@ static tommy_uint32_t hash_pfx_record(const struct pfx_record *record)
 
 static int pfx_record_cmp(const void *data1, const void *data2)
 {
-	const struct pfx_record *arg1 = data1;
-	const struct pfx_record *arg2 = data2;
+	const struct rtr_pfx_record *arg1 = data1;
+	const struct rtr_pfx_record *arg2 = data2;
 
 	if ((arg1->asn == arg2->asn) && (arg1->max_len == arg2->max_len) && (arg1->min_len == arg2->min_len) &&
-	    lrtr_ip_addr_equal(arg1->prefix, arg2->prefix))
+	    rtr_ip_addr_equal(arg1->prefix, arg2->prefix))
 		return 0;
 
 	return 1;
@@ -383,12 +383,12 @@ static int template_put(void *closure, const char *name, __attribute__((unused))
 	if (!state->roa_section || namelen == 0)
 		return MUSTACH_ERROR_SYSTEM;
 
-	struct pfx_record *pfx_record = tommy_array_get(state->roas, state->current_roa);
+	struct rtr_pfx_record *pfx_record = tommy_array_get(state->roas, state->current_roa);
 
 	if (strncmp("prefix", name, namelen) == 0) {
 		char prefix_str[INET6_ADDRSTRLEN];
 
-		lrtr_ip_addr_to_str(&pfx_record->prefix, prefix_str, sizeof(prefix_str));
+		rtr_ip_addr_to_str(&pfx_record->prefix, prefix_str, sizeof(prefix_str));
 		fputs(prefix_str, file);
 
 	} else if (strncmp("length", name, namelen) == 0) {
@@ -469,7 +469,8 @@ static void status_fp(const struct rtr_mgr_group *group __attribute__((unused)),
 	}
 }
 
-static void update_cb(struct pfx_table *p __attribute__((unused)), const struct pfx_record rec, const bool added)
+static void update_cb(struct rtr_pfx_table *p __attribute__((unused)), const struct rtr_pfx_record rec,
+		      const enum rtr_pfx_operation_type operation_type)
 {
 	char ip[INET6_ADDRSTRLEN];
 
@@ -479,11 +480,11 @@ static void update_cb(struct pfx_table *p __attribute__((unused)), const struct 
 		return;
 
 	pthread_mutex_lock(&stdout_mutex);
-	if (added)
+	if (operation_type == RTR_PFX_ADD)
 		printf("+ ");
 	else
 		printf("- ");
-	lrtr_ip_addr_to_str(&rec.prefix, ip, sizeof(ip));
+	rtr_ip_addr_to_str(&rec.prefix, ip, sizeof(ip));
 	if (socket_count > 1)
 		printf("%s:%s %-40s   %3u - %3u   %10u\n", config->host, config->port, ip, rec.min_len, rec.max_len,
 		       rec.asn);
@@ -493,7 +494,8 @@ static void update_cb(struct pfx_table *p __attribute__((unused)), const struct 
 	pthread_mutex_unlock(&stdout_mutex);
 }
 
-static void update_spki(struct spki_table *s __attribute__((unused)), const struct spki_record record, const bool added)
+static void update_spki(struct rtr_spki_table *s __attribute__((unused)), const struct rtr_spki_record record,
+			const enum rtr_spki_operation_type operation_type)
 {
 	const struct socket_config *config = (const struct socket_config *)record.socket;
 
@@ -502,7 +504,7 @@ static void update_spki(struct spki_table *s __attribute__((unused)), const stru
 
 	pthread_mutex_lock(&stdout_mutex);
 
-	char c = added ? '+' : '-';
+	char c = operation_type == RTR_SPKI_ADD ? '+' : '-';
 
 	printf("%c ", c);
 	printf("HOST:  %s:%s\n", config->host, config->port);
@@ -535,8 +537,8 @@ static void update_spki(struct spki_table *s __attribute__((unused)), const stru
 	pthread_mutex_unlock(&stdout_mutex);
 }
 
-static void update_aspa(struct aspa_table *s __attribute__((unused)), const struct aspa_record record,
-			const struct rtr_socket *rtr_sockt, const enum aspa_operation_type operation_type)
+static void update_aspa(struct rtr_aspa_table *s __attribute__((unused)), const struct rtr_aspa_record record,
+			const struct rtr_socket *rtr_sockt, const enum rtr_aspa_operation_type operation_type)
 {
 	const struct socket_config *config = (const struct socket_config *)rtr_sockt;
 
@@ -550,10 +552,10 @@ static void update_aspa(struct aspa_table *s __attribute__((unused)), const stru
 	char c;
 
 	switch (operation_type) {
-	case ASPA_ADD:
+	case RTR_ASPA_ADD:
 		c = '+';
 		break;
-	case ASPA_REMOVE:
+	case RTR_ASPA_REMOVE:
 		c = '-';
 		break;
 	default:
@@ -903,9 +905,9 @@ static void init_sockets(void)
 {
 	for (size_t i = 0; i < socket_count; ++i) {
 		struct socket_config *config = socket_config[i];
-		struct tr_tcp_config tcp_config = {};
+		struct rtr_tr_tcp_config tcp_config = {};
 #ifdef RTRLIB_HAVE_LIBSSH
-		struct tr_ssh_config ssh_config = {};
+		struct rtr_tr_ssh_config ssh_config = {};
 #endif
 
 		switch (config->type) {
@@ -914,7 +916,7 @@ static void init_sockets(void)
 			tcp_config.port = config->port;
 			tcp_config.bindaddr = config->bindaddr;
 
-			tr_tcp_init(&tcp_config, &config->tr_socket);
+			rtr_tr_tcp_init(&tcp_config, &config->tr_socket);
 			config->socket.tr_socket = &config->tr_socket;
 			break;
 
@@ -928,7 +930,7 @@ static void init_sockets(void)
 			ssh_config.server_hostkey_path = config->ssh_host_key;
 			ssh_config.password = config->ssh_password;
 
-			tr_ssh_init(&ssh_config, &config->tr_socket);
+			rtr_tr_ssh_init(&ssh_config, &config->tr_socket);
 			config->socket.tr_socket = &config->tr_socket;
 			break;
 #endif
@@ -954,9 +956,9 @@ int main(int argc, char **argv)
 	groups[0].sockets = (struct rtr_socket **)socket_config;
 	groups[0].preference = 1;
 
-	spki_update_fp spki_update_fp = activate_spki_update_cb ? update_spki : NULL;
-	pfx_update_fp pfx_update_fp = activate_pfx_update_cb ? update_cb : NULL;
-	aspa_update_fp aspa_update_fp = activate_aspa_update_cb ? update_aspa : NULL;
+	rtr_spki_update_fp spki_update_fp = activate_spki_update_cb ? update_spki : NULL;
+	rtr_pfx_update_fp pfx_update_fp = activate_pfx_update_cb ? update_cb : NULL;
+	rtr_aspa_update_fp aspa_update_fp = activate_aspa_update_cb ? update_aspa : NULL;
 
 	int ret = rtr_mgr_init(&conf, groups, 1, status_fp, NULL, NULL, NULL);
 
@@ -1021,8 +1023,8 @@ int main(int argc, char **argv)
 		tommy_array_init(&prefixes);
 		tommy_hashlin_init(&prefix_hash);
 
-		pfx_table_for_each_ipv4_record(conf->pfx_table, pfx_export_cb, &arg);
-		pfx_table_for_each_ipv6_record(conf->pfx_table, pfx_export_cb, &arg);
+		rtr_pfx_table_for_each_ipv4_record(conf->pfx_table, pfx_export_cb, &arg);
+		rtr_pfx_table_for_each_ipv6_record(conf->pfx_table, pfx_export_cb, &arg);
 
 		struct exporter_state state = {
 			.roa_section = false,
@@ -1055,11 +1057,11 @@ int main(int argc, char **argv)
 }
 
 struct pfx_record_entry {
-	struct pfx_record record;
+	struct rtr_pfx_record record;
 	tommy_node hash_node;
 };
 
-static void pfx_export_cb(const struct pfx_record *pfx_record, void *data)
+static void pfx_export_cb(const struct rtr_pfx_record *pfx_record, void *data)
 {
 	struct pfx_export_cb_arg *arg = data;
 	tommy_array *roa_array = arg->array;
@@ -1072,7 +1074,7 @@ static void pfx_export_cb(const struct pfx_record *pfx_record, void *data)
 
 	struct pfx_record_entry *pfx_record_entry = malloc(sizeof(struct pfx_record_entry));
 
-	memcpy(&pfx_record_entry->record, pfx_record, sizeof(struct pfx_record));
+	memcpy(&pfx_record_entry->record, pfx_record, sizeof(struct rtr_pfx_record));
 
 	tommy_hashlin_insert(roa_hashtable, &pfx_record_entry->hash_node, pfx_record_entry, record_hash);
 	tommy_array_insert(roa_array, pfx_record_entry);

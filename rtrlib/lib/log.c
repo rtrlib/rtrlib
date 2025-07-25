@@ -17,7 +17,7 @@
 #include <sys/time.h>
 #include <time.h>
 
-void lrtr_dbg(const char *frmt, ...)
+void rtr_dbg(const char *frmt, ...)
 {
 #ifndef NDEBUG
 	va_list argptr;

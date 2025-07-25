@@ -7,8 +7,8 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#ifndef LRTR_IPV6_PRIVATE_H
-#define LRTR_IPV6_PRIVATE_H
+#ifndef RTR_IPV6_PRIVATE_H
+#define RTR_IPV6_PRIVATE_H
 
 #include "ipv6.h"
 
@@ -19,15 +19,15 @@
 #include <sys/types.h>
 
 /**
- * @brief Compares two lrtr_ipv6_addr structs
+ * @brief Compares two rtr_ipv6_addr structs
  *
- * @param[in] a		lrtr_ipv6_addr
- * @param[in] b		lrtr_ipv6_addr
+ * @param[in] a		rtr_ipv6_addr
+ * @param[in] b		rtr_ipv6_addr
  *
  * @return true if a == b
  * @return false if a != b
  */
-bool lrtr_ipv6_addr_equal(const struct lrtr_ipv6_addr *a, const struct lrtr_ipv6_addr *b);
+bool rtr_ipv6_addr_equal(const struct rtr_ipv6_addr *a, const struct rtr_ipv6_addr *b);
 
 /**
  * @brief Extracts quantity bits from an IPv6 address.
@@ -41,7 +41,7 @@ bool lrtr_ipv6_addr_equal(const struct lrtr_ipv6_addr *a, const struct lrtr_ipv6
  *
  * @returns ipv6_addr, with all bits not in specified range set to 0.
  */
-struct lrtr_ipv6_addr lrtr_ipv6_get_bits(const struct lrtr_ipv6_addr *val, const uint8_t first_bit,
+struct rtr_ipv6_addr rtr_ipv6_get_bits(const struct rtr_ipv6_addr *val, const uint8_t first_bit,
 					 const uint8_t quantity);
 
 /**
@@ -54,18 +54,18 @@ struct lrtr_ipv6_addr lrtr_ipv6_get_bits(const struct lrtr_ipv6_addr *val, const
  * @result 0 on success
  * @result -1 on error
  */
-int lrtr_ipv6_addr_to_str(const struct lrtr_ipv6_addr *ip, char *str, const unsigned int len);
+int rtr_ipv6_addr_to_str(const struct rtr_ipv6_addr *ip, char *str, const unsigned int len);
 
 /**
- * @brief Converts the passed IPv6 address string in to lrtr_ipv6_addr struct.
+ * @brief Converts the passed IPv6 address string in to rtr_ipv6_addr struct.
  *
  * @param[in] str	Pointer to a string buffer
- * @param[out] ip	Pointer to lrtr_ipv6_addr
+ * @param[out] ip	Pointer to rtr_ipv6_addr
  *
  * @result 0 on success
  * @result -1 on error
  */
-int lrtr_ipv6_str_to_addr(const char *str, struct lrtr_ipv6_addr *ip);
+int rtr_ipv6_str_to_addr(const char *str, struct rtr_ipv6_addr *ip);
 
 /**
  * @ingroup util_h
@@ -76,6 +76,6 @@ int lrtr_ipv6_str_to_addr(const char *str, struct lrtr_ipv6_addr *ip);
  * @param[out] dest	IPv6 address (uint32_t array) in target byte order.
  * @param[in] tbo	Target byte order for address conversion.
  */
-void lrtr_ipv6_addr_convert_byte_order(const uint32_t *src, uint32_t *dest, const enum target_byte_order tbo);
+void rtr_ipv6_addr_convert_byte_order(const uint32_t *src, uint32_t *dest, const enum target_byte_order tbo);
 /** @} */
-#endif /* LRTR_IPV6_H */
+#endif /* RTR_IPV6_H */
