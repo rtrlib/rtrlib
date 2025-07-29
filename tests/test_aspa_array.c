@@ -20,7 +20,7 @@
 // clang-format off
 
 #define RECORD(cas, providers) \
-	((struct aspa_record){.customer_asn = cas, \
+	((struct rtr_aspa_record){.customer_asn = cas, \
 				  .provider_count = (size_t)(sizeof(providers) / sizeof(uint32_t)), \
 				  .provider_asns = sizeof(providers) == 0 ? NULL : providers})
 
@@ -30,7 +30,7 @@ static void test_create_array(void)
 {
 	struct aspa_array *array;
 
-	assert(aspa_array_create(&array) == ASPA_SUCCESS);
+	assert(aspa_array_create(&array) == RTR_ASPA_SUCCESS);
 	assert(array->data);
 	assert(array->size == 0);
 	assert(array->capacity >= 128);
@@ -42,9 +42,9 @@ static void test_add_element(void)
 {
 	struct aspa_array *array;
 
-	assert(aspa_array_create(&array) == ASPA_SUCCESS);
+	assert(aspa_array_create(&array) == RTR_ASPA_SUCCESS);
 
-	struct aspa_record record = RECORD(42, SEEDED_ASNS(300));
+	struct rtr_aspa_record record = RECORD(42, SEEDED_ASNS(300));
 
 	assert(aspa_array_insert(array, 0, &record, true) == 0);
 	assert(array->data[0].customer_asn == 42);
@@ -60,26 +60,26 @@ static void test_insert(void)
 {
 	struct aspa_array *array;
 
-	assert(aspa_array_create(&array) == ASPA_SUCCESS);
+	assert(aspa_array_create(&array) == RTR_ASPA_SUCCESS);
 	array->capacity = 2;
-	struct aspa_record *old_pointer = array->data;
+	struct rtr_aspa_record *old_pointer = array->data;
 
-	struct aspa_record record_4 = RECORD(4, SEEDED_ASNS(600));
+	struct rtr_aspa_record record_4 = RECORD(4, SEEDED_ASNS(600));
 
-	assert(aspa_array_insert(array, 0, &record_4, true) == ASPA_SUCCESS);
+	assert(aspa_array_insert(array, 0, &record_4, true) == RTR_ASPA_SUCCESS);
 
-	struct aspa_record record_1 = RECORD(1, SEEDED_ASNS(300));
+	struct rtr_aspa_record record_1 = RECORD(1, SEEDED_ASNS(300));
 
-	assert(aspa_array_insert(array, 1, &record_1, true) == ASPA_SUCCESS);
+	assert(aspa_array_insert(array, 1, &record_1, true) == RTR_ASPA_SUCCESS);
 
-	struct aspa_record record_2 = RECORD(2, SEEDED_ASNS(400));
+	struct rtr_aspa_record record_2 = RECORD(2, SEEDED_ASNS(400));
 
 	// Verify shifting works
-	assert(aspa_array_insert(array, 1, &record_2, true) == ASPA_SUCCESS);
+	assert(aspa_array_insert(array, 1, &record_2, true) == RTR_ASPA_SUCCESS);
 
-	struct aspa_record record_3 = RECORD(3, SEEDED_ASNS(500));
+	struct rtr_aspa_record record_3 = RECORD(3, SEEDED_ASNS(500));
 
-	assert(aspa_array_insert(array, 3, &record_3, true) == ASPA_SUCCESS);
+	assert(aspa_array_insert(array, 3, &record_3, true) == RTR_ASPA_SUCCESS);
 
 	assert(old_pointer == array->data);
 	assert(array->capacity >= 4);
@@ -97,25 +97,25 @@ static void test_append(void)
 {
 	struct aspa_array *array;
 
-	assert(aspa_array_create(&array) == ASPA_SUCCESS);
+	assert(aspa_array_create(&array) == RTR_ASPA_SUCCESS);
 	array->capacity = 2;
-	struct aspa_record *old_pointer = array->data;
+	struct rtr_aspa_record *old_pointer = array->data;
 
-	struct aspa_record record_4 = RECORD(4, SEEDED_ASNS(600));
+	struct rtr_aspa_record record_4 = RECORD(4, SEEDED_ASNS(600));
 
-	assert(aspa_array_append(array, &record_4, true) == ASPA_SUCCESS);
+	assert(aspa_array_append(array, &record_4, true) == RTR_ASPA_SUCCESS);
 
-	struct aspa_record record_2 = RECORD(2, SEEDED_ASNS(400));
+	struct rtr_aspa_record record_2 = RECORD(2, SEEDED_ASNS(400));
 
-	assert(aspa_array_append(array, &record_2, true) == ASPA_SUCCESS);
+	assert(aspa_array_append(array, &record_2, true) == RTR_ASPA_SUCCESS);
 
-	struct aspa_record record_1 = RECORD(1, SEEDED_ASNS(300));
+	struct rtr_aspa_record record_1 = RECORD(1, SEEDED_ASNS(300));
 
-	assert(aspa_array_append(array, &record_1, true) == ASPA_SUCCESS);
+	assert(aspa_array_append(array, &record_1, true) == RTR_ASPA_SUCCESS);
 
-	struct aspa_record record_3 = RECORD(3, SEEDED_ASNS(500));
+	struct rtr_aspa_record record_3 = RECORD(3, SEEDED_ASNS(500));
 
-	assert(aspa_array_append(array, &record_3, true) == ASPA_SUCCESS);
+	assert(aspa_array_append(array, &record_3, true) == RTR_ASPA_SUCCESS);
 
 	assert(old_pointer == array->data);
 	assert(array->capacity >= 4);
@@ -135,26 +135,26 @@ static void test_remove_element(void)
 
 	assert(aspa_array_create(&array) == 0);
 
-	struct aspa_record record_1 = RECORD(1, SEEDED_ASNS(300));
+	struct rtr_aspa_record record_1 = RECORD(1, SEEDED_ASNS(300));
 
-	assert(aspa_array_insert(array, 0, &record_1, true) == ASPA_SUCCESS);
+	assert(aspa_array_insert(array, 0, &record_1, true) == RTR_ASPA_SUCCESS);
 
-	struct aspa_record record_2 = RECORD(2, SEEDED_ASNS(400));
+	struct rtr_aspa_record record_2 = RECORD(2, SEEDED_ASNS(400));
 
-	assert(aspa_array_insert(array, 1, &record_2, true) == ASPA_SUCCESS);
+	assert(aspa_array_insert(array, 1, &record_2, true) == RTR_ASPA_SUCCESS);
 
-	struct aspa_record record_3 = RECORD(3, SEEDED_ASNS(500));
+	struct rtr_aspa_record record_3 = RECORD(3, SEEDED_ASNS(500));
 
-	assert(aspa_array_insert(array, 2, &record_3, true) == ASPA_SUCCESS);
+	assert(aspa_array_insert(array, 2, &record_3, true) == RTR_ASPA_SUCCESS);
 
-	struct aspa_record record_4 = RECORD(4, SEEDED_ASNS(600));
+	struct rtr_aspa_record record_4 = RECORD(4, SEEDED_ASNS(600));
 
-	assert(aspa_array_insert(array, 3, &record_4, true) == ASPA_SUCCESS);
+	assert(aspa_array_insert(array, 3, &record_4, true) == RTR_ASPA_SUCCESS);
 
 	assert(array->data[2].customer_asn == 3);
 
-	assert(aspa_array_remove(array, 2, true) == ASPA_SUCCESS);
-	assert(aspa_array_remove(array, 100, true) == ASPA_RECORD_NOT_FOUND);
+	assert(aspa_array_remove(array, 2, true) == RTR_ASPA_SUCCESS);
+	assert(aspa_array_remove(array, 100, true) == RTR_ASPA_RECORD_NOT_FOUND);
 
 	assert(array->size == 3);
 	assert(array->data[0].customer_asn == 1);
@@ -170,23 +170,23 @@ static void test_find_element(void)
 
 	assert(aspa_array_create(&array) == 0);
 
-	struct aspa_record record_1 = RECORD(1, SEEDED_ASNS(300));
+	struct rtr_aspa_record record_1 = RECORD(1, SEEDED_ASNS(300));
 
 	assert(aspa_array_insert(array, 0, &record_1, true) == 0);
 
-	struct aspa_record record_2 = RECORD(2, SEEDED_ASNS(400));
+	struct rtr_aspa_record record_2 = RECORD(2, SEEDED_ASNS(400));
 
 	assert(aspa_array_insert(array, 1, &record_2, true) == 0);
 
-	struct aspa_record record_3 = RECORD(3, SEEDED_ASNS(500));
+	struct rtr_aspa_record record_3 = RECORD(3, SEEDED_ASNS(500));
 
 	assert(aspa_array_insert(array, 2, &record_3, true) == 0);
 
-	struct aspa_record record_4 = RECORD(4, SEEDED_ASNS(600));
+	struct rtr_aspa_record record_4 = RECORD(4, SEEDED_ASNS(600));
 
 	assert(aspa_array_insert(array, 3, &record_4, true) == 0);
 
-	struct aspa_record record_5 = RECORD(5, SEEDED_ASNS(700));
+	struct rtr_aspa_record record_5 = RECORD(5, SEEDED_ASNS(700));
 
 	assert(aspa_array_insert(array, 4, &record_5, true) == 0);
 

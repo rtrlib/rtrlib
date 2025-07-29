@@ -46,12 +46,12 @@ static void add_child_node(struct trie_node *parent, struct trie_node *child, en
 	child->parent = parent;
 }
 
-static inline bool is_left_child(const struct lrtr_ip_addr *addr, unsigned int lvl)
+static inline bool is_left_child(const struct rtr_ip_addr *addr, unsigned int lvl)
 {
 	/* A node must be inserted as left child if bit <lvl> of the IP address
 	 * is 0 otherwise as right child
 	 */
-	return lrtr_ip_addr_is_zero(lrtr_ip_addr_get_bits(addr, lvl, 1));
+	return rtr_ip_addr_is_zero(rtr_ip_addr_get_bits(addr, lvl, 1));
 }
 
 void trie_insert(struct trie_node *root, struct trie_node *new, const unsigned int lvl)
@@ -72,12 +72,12 @@ void trie_insert(struct trie_node *root, struct trie_node *new, const unsigned i
 	trie_insert(root->rchild, new, lvl + 1);
 }
 
-struct trie_node *trie_lookup(const struct trie_node *root, const struct lrtr_ip_addr *prefix, const uint8_t mask_len,
+struct trie_node *trie_lookup(const struct trie_node *root, const struct rtr_ip_addr *prefix, const uint8_t mask_len,
 			      unsigned int *lvl)
 {
 	while (root) {
-		if (root->len <= mask_len && lrtr_ip_addr_equal(lrtr_ip_addr_get_bits(&root->prefix, 0, root->len),
-								lrtr_ip_addr_get_bits(prefix, 0, root->len)))
+		if (root->len <= mask_len && rtr_ip_addr_equal(rtr_ip_addr_get_bits(&root->prefix, 0, root->len),
+							       rtr_ip_addr_get_bits(prefix, 0, root->len)))
 			return (struct trie_node *)root;
 
 		if (is_left_child(prefix, *lvl))
@@ -90,7 +90,7 @@ struct trie_node *trie_lookup(const struct trie_node *root, const struct lrtr_ip
 	return NULL;
 }
 
-struct trie_node *trie_lookup_exact(struct trie_node *root_node, const struct lrtr_ip_addr *prefix,
+struct trie_node *trie_lookup_exact(struct trie_node *root_node, const struct rtr_ip_addr *prefix,
 				    const uint8_t mask_len, unsigned int *lvl, bool *found)
 {
 	*found = false;
@@ -101,7 +101,7 @@ struct trie_node *trie_lookup_exact(struct trie_node *root_node, const struct lr
 			return root_node->parent;
 		}
 
-		if (root_node->len == mask_len && lrtr_ip_addr_equal(root_node->prefix, *prefix)) {
+		if (root_node->len == mask_len && rtr_ip_addr_equal(root_node->prefix, *prefix)) {
 			*found = true;
 			return root_node;
 		}
@@ -134,9 +134,9 @@ static void deref_node(struct trie_node *n)
 	n->parent->rchild = NULL;
 }
 
-static inline bool prefix_is_same(const struct trie_node *n, const struct lrtr_ip_addr *p, uint8_t mask_len)
+static inline bool prefix_is_same(const struct trie_node *n, const struct rtr_ip_addr *p, uint8_t mask_len)
 {
-	return n->len == mask_len && lrtr_ip_addr_equal(n->prefix, *p);
+	return n->len == mask_len && rtr_ip_addr_equal(n->prefix, *p);
 }
 
 static void replace_node_data(struct trie_node *a, struct trie_node *b)
@@ -146,7 +146,7 @@ static void replace_node_data(struct trie_node *a, struct trie_node *b)
 	a->data = b->data;
 }
 
-struct trie_node *trie_remove(struct trie_node *root, const struct lrtr_ip_addr *prefix, const uint8_t mask_len,
+struct trie_node *trie_remove(struct trie_node *root, const struct rtr_ip_addr *prefix, const uint8_t mask_len,
 			      const unsigned int lvl)
 {
 	/* If the node has no children we can simply remove it
@@ -193,7 +193,7 @@ static int append_node_to_array(struct trie_node ***ary, unsigned int *len, stru
 {
 	struct trie_node **new;
 
-	new = lrtr_realloc(*ary, *len * sizeof(*n));
+	new = rtr_realloc(*ary, *len * sizeof(*n));
 	if (!new)
 		return -1;
 
@@ -225,7 +225,7 @@ int trie_get_children(const struct trie_node *root_node, struct trie_node ***arr
 	return 0;
 
 err:
-	lrtr_free(*array);
+	rtr_free(*array);
 	return -1;
 }
 

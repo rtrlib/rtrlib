@@ -34,8 +34,8 @@ int main()
 	char ssh_user[] = "rpki_user";
 	char ssh_hostkey[] = "/etc/rpki-rtr/hostkey";
 	char ssh_privkey[] = "/etc/rpki-rtr/client.priv";
-	struct tr_socket tr_ssh;
-	struct tr_ssh_config config = {
+	struct rtr_tr_socket tr_ssh;
+	struct rtr_tr_ssh_config config = {
 		ssh_host, //IP
 		22, //Port
 		NULL, //Source address
@@ -47,14 +47,14 @@ int main()
 		0, // connect timeout
 		NULL, // password
 	};
-	tr_ssh_init(&config, &tr_ssh);
+	rtr_tr_ssh_init(&config, &tr_ssh);
 
 	//create a TCP transport socket
-	struct tr_socket tr_tcp;
+	struct rtr_tr_socket tr_tcp;
 	char tcp_host[] = "rpki-validator.realmv6.org";
 	char tcp_port[] = "8282";
 
-	struct tr_tcp_config tcp_config = {
+	struct rtr_tr_tcp_config tcp_config = {
 		tcp_host, //IP
 		tcp_port, //Port
 		NULL, //Source address
@@ -62,7 +62,7 @@ int main()
 		NULL, //get_socket()
 		0, // connect timeout
 	};
-	tr_tcp_init(&tcp_config, &tr_tcp);
+	rtr_tr_tcp_init(&tcp_config, &tr_tcp);
 
 	//create 3 rtr_sockets and associate them with the transprort sockets
 	struct rtr_socket rtr_ssh, rtr_tcp;
@@ -99,26 +99,26 @@ int main()
 	}
 
 	//validate the BGP-Route 10.10.0.0/24, origin ASN: 12345
-	struct lrtr_ip_addr pref;
-	lrtr_ip_str_to_addr("10.10.0.0", &pref);
-	enum pfxv_state result;
+	struct rtr_ip_addr pref;
+	rtr_ip_str_to_addr("10.10.0.0", &pref);
+	enum rtr_pfxv_state result;
 	const uint8_t mask = 24;
-	rtr_mgr_validate(conf, 12345, &pref, mask, &result);
+	rtr_mgr_roa_validate(conf, 12345, &pref, mask, &result);
 
 	//output the result of the prefix validation above
 	//to showcase the returned states.
 	char buffer[INET_ADDRSTRLEN];
-	lrtr_ip_addr_to_str(&pref, buffer, sizeof(buffer));
+	rtr_ip_addr_to_str(&pref, buffer, sizeof(buffer));
 
 	printf("RESULT: The prefix %s/%i ", buffer, mask);
 	switch (result) {
-	case BGP_PFXV_STATE_VALID:
+	case RTR_BGP_PFXV_STATE_VALID:
 		printf("is valid.\n");
 		break;
-	case BGP_PFXV_STATE_INVALID:
+	case RTR_BGP_PFXV_STATE_INVALID:
 		printf("is invalid.\n");
 		break;
-	case BGP_PFXV_STATE_NOT_FOUND:
+	case RTR_BGP_PFXV_STATE_NOT_FOUND:
 		printf("was not found.\n");
 		break;
 	default:

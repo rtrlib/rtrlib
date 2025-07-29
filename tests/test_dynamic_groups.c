@@ -40,8 +40,8 @@ int main(void)
 	char tcp_port[] = "3323";
 
 	/* create a TCP transport socket */
-	struct tr_socket tr_tcp;
-	struct tr_tcp_config tcp_config = {
+	struct rtr_tr_socket tr_tcp;
+	struct rtr_tr_tcp_config tcp_config = {
 		tcp_host, //IP
 		tcp_port, //Port
 		NULL, //Source address
@@ -53,7 +53,7 @@ int main(void)
 	struct rtr_mgr_group groups[1];
 
 	/* init a TCP transport and create rtr socket */
-	tr_tcp_init(&tcp_config, &tr_tcp);
+	rtr_tr_tcp_init(&tcp_config, &tr_tcp);
 	rtr_tcp.tr_socket = &tr_tcp;
 
 	/* create a rtr_mr_group array with 1 element */
@@ -62,11 +62,11 @@ int main(void)
 	groups[0].sockets[0] = &rtr_tcp;
 	groups[0].preference = 1;
 
-	struct tr_socket tr_tcp2;
+	struct rtr_tr_socket tr_tcp2;
 	struct rtr_socket rtr_tcp2;
 	struct rtr_mgr_group group2;
 
-	tr_tcp_init(&tcp_config, &tr_tcp2);
+	rtr_tr_tcp_init(&tcp_config, &tr_tcp2);
 	rtr_tcp2.tr_socket = &tr_tcp2;
 	group2.sockets = malloc(sizeof(struct rtr_socket *));
 	group2.sockets_len = 1;
@@ -121,22 +121,22 @@ int main(void)
 	assert(group_node->group->preference == 2);
 	assert(conf->len == 1);
 
-	struct tr_socket tr_tcp3;
+	struct rtr_tr_socket tr_tcp3;
 	struct rtr_socket rtr_tcp3;
 	struct rtr_mgr_group group3;
 
-	tr_tcp_init(&tcp_config, &tr_tcp3);
+	rtr_tr_tcp_init(&tcp_config, &tr_tcp3);
 	rtr_tcp3.tr_socket = &tr_tcp3;
 	group3.sockets = malloc(sizeof(struct rtr_socket *));
 	group3.sockets_len = 1;
 	group3.sockets[0] = &rtr_tcp3;
 	group3.preference = 3;
 
-	struct tr_socket tr_tcp4;
+	struct rtr_tr_socket tr_tcp4;
 	struct rtr_socket rtr_tcp4;
 	struct rtr_mgr_group group4;
 
-	tr_tcp_init(&tcp_config, &tr_tcp4);
+	rtr_tr_tcp_init(&tcp_config, &tr_tcp4);
 	rtr_tcp4.tr_socket = &tr_tcp4;
 	group4.sockets = malloc(sizeof(struct rtr_socket *));
 	group4.sockets_len = 1;
@@ -160,11 +160,11 @@ int main(void)
 	retval = rtr_mgr_remove_group(conf, 10);
 	assert(retval == RTR_ERROR);
 
-	struct tr_socket tr_tcp5;
+	struct rtr_tr_socket tr_tcp5;
 	struct rtr_socket rtr_tcp5;
 	struct rtr_mgr_group group5;
 
-	tr_tcp_init(&tcp_config, &tr_tcp5);
+	rtr_tr_tcp_init(&tcp_config, &tr_tcp5);
 	rtr_tcp5.tr_socket = &tr_tcp5;
 	group5.sockets = malloc(sizeof(struct rtr_socket *));
 	group5.sockets_len = 1;

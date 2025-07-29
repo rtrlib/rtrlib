@@ -25,24 +25,24 @@
 #include <string.h>
 #include <sys/time.h>
 
-#define SSH_DBG(fmt, sock, ...)                                                                                     \
-	do {                                                                                                        \
-		const struct tr_ssh_socket *tmp = sock;                                                             \
-		lrtr_dbg("SSH Transport(%s@%s:%u): " fmt, tmp->config.username, tmp->config.host, tmp->config.port, \
-			 ##__VA_ARGS__);                                                                            \
+#define SSH_DBG(fmt, sock, ...)                                                                                    \
+	do {                                                                                                       \
+		const struct tr_ssh_socket *tmp = sock;                                                            \
+		rtr_dbg("SSH Transport(%s@%s:%u): " fmt, tmp->config.username, tmp->config.host, tmp->config.port, \
+			##__VA_ARGS__);                                                                            \
 	} while (0)
 #define SSH_DBG1(a, sock) SSH_DBG(a, sock)
 
 struct tr_ssh_socket {
 	ssh_session session;
 	ssh_channel channel;
-	struct tr_ssh_config config;
+	struct rtr_tr_ssh_config config;
 	char *ident;
 };
 
 static int tr_ssh_open(void *tr_ssh_sock);
 static void tr_ssh_close(void *tr_ssh_sock);
-static void tr_ssh_free(struct tr_socket *tr_sock);
+static void tr_ssh_free(struct rtr_tr_socket *tr_sock);
 static int tr_ssh_recv(const void *tr_ssh_sock, void *buf, const size_t buf_len, const time_t timeout);
 static int tr_ssh_send(const void *tr_ssh_sock, const void *pdu, const size_t len, const time_t timeout);
 static int tr_ssh_recv_async(const struct tr_ssh_socket *tr_ssh_sock, void *buf, const size_t buf_len);
@@ -52,7 +52,7 @@ static const char *tr_ssh_ident(void *tr_ssh_sock);
 int tr_ssh_open(void *socket)
 {
 	struct tr_ssh_socket *ssh_socket = socket;
-	const struct tr_ssh_config *config = &ssh_socket->config;
+	const struct rtr_tr_ssh_config *config = &ssh_socket->config;
 
 	assert(!ssh_socket->channel);
 	assert(!ssh_socket->session);
@@ -84,7 +84,7 @@ int tr_ssh_open(void *socket)
 		if (fd >= 0) {
 			ssh_options_set(ssh_socket->session, SSH_OPTIONS_FD, &fd);
 		} else {
-			SSH_DBG1("tr_ssh_init: opening SSH connection failed", ssh_socket);
+			SSH_DBG1("rtr_tr_ssh_init: opening SSH connection failed", ssh_socket);
 			goto error;
 		}
 	}
@@ -179,11 +179,11 @@ int tr_ssh_open(void *socket)
 	}
 	SSH_DBG1("Connection established", ssh_socket);
 
-	return TR_SUCCESS;
+	return RTR_TR_SUCCESS;
 
 error:
 	tr_ssh_close(ssh_socket);
-	return TR_ERROR;
+	return RTR_TR_ERROR;
 }
 
 void tr_ssh_close(void *tr_ssh_sock)
@@ -204,7 +204,7 @@ void tr_ssh_close(void *tr_ssh_sock)
 	SSH_DBG1("Socket closed", socket);
 }
 
-void tr_ssh_free(struct tr_socket *tr_sock)
+void tr_ssh_free(struct rtr_tr_socket *tr_sock)
 {
 	struct tr_ssh_socket *tr_ssh_sock = tr_sock->socket;
 
@@ -213,15 +213,15 @@ void tr_ssh_free(struct tr_socket *tr_sock)
 
 	SSH_DBG1("Freeing socket", tr_ssh_sock);
 
-	lrtr_free(tr_ssh_sock->config.host);
-	lrtr_free(tr_ssh_sock->config.bindaddr);
-	lrtr_free(tr_ssh_sock->config.username);
-	lrtr_free(tr_ssh_sock->config.client_privkey_path);
-	lrtr_free(tr_ssh_sock->config.server_hostkey_path);
+	rtr_free(tr_ssh_sock->config.host);
+	rtr_free(tr_ssh_sock->config.bindaddr);
+	rtr_free(tr_ssh_sock->config.username);
+	rtr_free(tr_ssh_sock->config.client_privkey_path);
+	rtr_free(tr_ssh_sock->config.server_hostkey_path);
 
 	if (tr_ssh_sock->ident)
-		lrtr_free(tr_ssh_sock->ident);
-	lrtr_free(tr_ssh_sock);
+		rtr_free(tr_ssh_sock->ident);
+	rtr_free(tr_ssh_sock);
 	tr_sock->socket = NULL;
 }
 
@@ -232,13 +232,13 @@ int tr_ssh_recv_async(const struct tr_ssh_socket *tr_ssh_sock, void *buf, const 
 	if (rtval == 0) {
 		if (ssh_channel_is_eof(tr_ssh_sock->channel) != 0) {
 			SSH_DBG1("remote has sent EOF", tr_ssh_sock);
-			return TR_CLOSED;
+			return RTR_TR_CLOSED;
 		} else {
-			return TR_WOULDBLOCK;
+			return RTR_TR_WOULDBLOCK;
 		}
 	} else if (rtval == SSH_ERROR) {
 		SSH_DBG1("recv(..) error", tr_ssh_sock);
-		return TR_ERROR;
+		return RTR_TR_ERROR;
 	}
 	return rtval;
 }
@@ -251,15 +251,15 @@ int tr_ssh_recv(const void *tr_ssh_sock, void *buf, const size_t buf_len, const 
 
 	ret = ssh_channel_select(rchans, NULL, NULL, &timev);
 	if (ret == SSH_EINTR)
-		return TR_INTR;
+		return RTR_TR_INTR;
 	else if (ret == SSH_ERROR)
-		return TR_ERROR;
+		return RTR_TR_ERROR;
 
 	if (ssh_channel_is_eof(((struct tr_ssh_socket *)tr_ssh_sock)->channel) != 0)
-		return TR_ERROR;
+		return RTR_TR_ERROR;
 
 	if (!rchans[0])
-		return TR_WOULDBLOCK;
+		return RTR_TR_WOULDBLOCK;
 
 	return tr_ssh_recv_async(tr_ssh_sock, buf, buf_len);
 }
@@ -270,7 +270,7 @@ int tr_ssh_send(const void *tr_ssh_sock, const void *pdu, const size_t len,
 	int ret = ssh_channel_write(((struct tr_ssh_socket *)tr_ssh_sock)->channel, pdu, len);
 
 	if (ret == SSH_ERROR)
-		return TR_ERROR;
+		return RTR_TR_ERROR;
 
 	return ret;
 }
@@ -286,14 +286,14 @@ const char *tr_ssh_ident(void *tr_ssh_sock)
 		return sock->ident;
 
 	len = strlen(sock->config.username) + 1 + strlen(sock->config.host) + 1 + 5 + 1;
-	sock->ident = lrtr_malloc(len);
+	sock->ident = rtr_malloc(len);
 	if (!sock->ident)
 		return NULL;
 	snprintf(sock->ident, len, "%s@%s:%u", sock->config.username, sock->config.host, sock->config.port);
 	return sock->ident;
 }
 
-RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_socket *socket)
+RTRLIB_EXPORT enum rtr_tr_rtvals rtr_tr_ssh_init(const struct rtr_tr_ssh_config *config, struct rtr_tr_socket *socket)
 {
 	socket->close_fp = &tr_ssh_close;
 	socket->free_fp = &tr_ssh_free;
@@ -302,21 +302,21 @@ RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_sock
 	socket->send_fp = &tr_ssh_send;
 	socket->ident_fp = &tr_ssh_ident;
 
-	socket->socket = lrtr_calloc(1, sizeof(struct tr_ssh_socket));
+	socket->socket = rtr_calloc(1, sizeof(struct tr_ssh_socket));
 	struct tr_ssh_socket *ssh_socket = socket->socket;
 
 	if (ssh_socket == NULL) {
-		return TR_ERROR;
+		return RTR_TR_ERROR;
 	}
 
 	ssh_socket->channel = NULL;
 	ssh_socket->session = NULL;
-	ssh_socket->config.host = lrtr_strdup(config->host);
+	ssh_socket->config.host = rtr_strdup(config->host);
 	if (!ssh_socket->config.host)
 		goto error;
 	ssh_socket->config.port = config->port;
 
-	ssh_socket->config.username = lrtr_strdup(config->username);
+	ssh_socket->config.username = rtr_strdup(config->username);
 	if (!ssh_socket->config.username)
 		goto error;
 
@@ -324,7 +324,7 @@ RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_sock
 		goto error;
 
 	if (config->bindaddr) {
-		ssh_socket->config.bindaddr = lrtr_strdup(config->bindaddr);
+		ssh_socket->config.bindaddr = rtr_strdup(config->bindaddr);
 
 		if (!ssh_socket->config.bindaddr)
 			goto error;
@@ -334,7 +334,7 @@ RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_sock
 	}
 
 	if (config->client_privkey_path) {
-		ssh_socket->config.client_privkey_path = lrtr_strdup(config->client_privkey_path);
+		ssh_socket->config.client_privkey_path = rtr_strdup(config->client_privkey_path);
 		if (!ssh_socket->config.client_privkey_path)
 			goto error;
 
@@ -343,7 +343,7 @@ RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_sock
 	}
 
 	if (config->server_hostkey_path) {
-		ssh_socket->config.server_hostkey_path = lrtr_strdup(config->server_hostkey_path);
+		ssh_socket->config.server_hostkey_path = rtr_strdup(config->server_hostkey_path);
 
 		if (!ssh_socket->config.server_hostkey_path)
 			goto error;
@@ -358,7 +358,7 @@ RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_sock
 		ssh_socket->config.connect_timeout = config->connect_timeout;
 
 	if (config->password) {
-		ssh_socket->config.password = lrtr_strdup(config->password);
+		ssh_socket->config.password = rtr_strdup(config->password);
 
 		if (!ssh_socket->config.password)
 			goto error;
@@ -371,7 +371,7 @@ RTRLIB_EXPORT int tr_ssh_init(const struct tr_ssh_config *config, struct tr_sock
 	ssh_socket->config.data = config->data;
 	ssh_socket->config.new_socket = config->new_socket;
 
-	return TR_SUCCESS;
+	return RTR_TR_SUCCESS;
 
 error:
 	if (ssh_socket->config.host)
@@ -392,5 +392,5 @@ error:
 	if (ssh_socket->config.password)
 		free(ssh_socket->config.password);
 
-	return TR_ERROR;
+	return RTR_TR_ERROR;
 }

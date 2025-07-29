@@ -78,9 +78,9 @@ static uint8_t wrong_private_key[] = {
 	0x95, 0xEE, 0x50, 0xBC, 0x4F, 0x75, 0xD2, 0x05, 0xA2, 0x5B, 0xD3, 0x6F, 0xF5};
 
 /* Helper function to create a spki_record */
-static struct spki_record *create_record(int ASN, uint8_t *ski, uint8_t *spki)
+static struct rtr_spki_record *create_record(int ASN, uint8_t *ski, uint8_t *spki)
 {
-	struct spki_record *record = malloc(sizeof(struct spki_record));
+	struct rtr_spki_record *record = malloc(sizeof(struct rtr_spki_record));
 
 	memset(record, 0, sizeof(*record));
 	record->asn = ASN;
@@ -99,10 +99,10 @@ static void validate_bgpsec_path_test(void)
 	struct rtr_bgpsec_nlri *pfx = NULL;
 	int pfx_int = 0;
 
-	struct spki_table table;
-	struct spki_record *record1;
-	struct spki_record *record2;
-	struct spki_record *duplicate_record;
+	struct rtr_spki_table table;
+	struct rtr_spki_record *record1;
+	struct rtr_spki_record *record2;
+	struct rtr_spki_record *duplicate_record;
 
 	enum rtr_bgpsec_rtvals result;
 
@@ -117,7 +117,7 @@ static void validate_bgpsec_path_test(void)
 	pfx = rtr_mgr_bgpsec_nlri_new(3);
 	assert(pfx != NULL);
 	pfx->nlri_len = 24;
-	pfx->afi = 1; /* LRTR_IPV4 */
+	pfx->afi = 1; /* RTR_IPV4 */
 	pfx_int = htonl(3221225984); /* 192.0.2.0 */
 
 	memcpy(pfx->nlri, &pfx_int, 3);
@@ -222,9 +222,9 @@ static void generate_signature_test(void)
 	struct rtr_bgpsec_nlri *pfx = NULL;
 	int pfx_int = 0;
 
-	struct spki_table table;
-	struct spki_record *record1;
-	struct spki_record *record2;
+	struct rtr_spki_table table;
+	struct rtr_spki_record *record1;
+	struct rtr_spki_record *record2;
 
 	struct rtr_signature_seg *new_sig = NULL;
 	struct rtr_secure_path_seg *new_sec = NULL;
@@ -243,7 +243,7 @@ static void generate_signature_test(void)
 	pfx = rtr_mgr_bgpsec_nlri_new(3);
 	assert(pfx != NULL);
 	pfx->nlri_len = 24;
-	pfx->afi = 1; /* LRTR_IPV4 */
+	pfx->afi = 1; /* RTR_IPV4 */
 	pfx_int = htonl(3221225984); /* 192.0.2.0 */
 
 	memcpy(pfx->nlri, &pfx_int, 3);
@@ -321,9 +321,9 @@ static void originate_and_validate_test(void)
 	struct rtr_bgpsec_nlri *pfx = NULL;
 	int pfx_int = 0;
 
-	struct spki_table table;
-	struct spki_record *record1;
-	struct spki_record *record2;
+	struct rtr_spki_table table;
+	struct rtr_spki_record *record1;
+	struct rtr_spki_record *record2;
 
 	struct rtr_signature_seg *new_sig = NULL;
 	struct rtr_secure_path_seg *new_sec = NULL;
@@ -339,7 +339,7 @@ static void originate_and_validate_test(void)
 	pfx = rtr_mgr_bgpsec_nlri_new(3);
 	assert(pfx != NULL);
 	pfx->nlri_len = 24;
-	pfx->afi = 1; /* LRTR_IPV4 */
+	pfx->afi = 1; /* RTR_IPV4 */
 	pfx_int = htonl(3221225984); /* 192.0.2.0 */
 
 	memcpy(pfx->nlri, &pfx_int, 3);

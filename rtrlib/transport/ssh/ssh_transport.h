@@ -48,7 +48,7 @@
  * @param connect_timeout Time in seconds to wait for a successful connection.
  *	  Defaults to #RTRLIB_TRANSPORT_CONNECT_TIMEOUT_DEFAULT
  */
-struct tr_ssh_config {
+struct rtr_tr_ssh_config {
 	char *host;
 	unsigned int port;
 	char *bindaddr;
@@ -68,7 +68,7 @@ struct tr_ssh_config {
  * @returns TR_SUCCESS On success.
  * @returns TR_ERROR On error.
  */
-int tr_ssh_init(const struct tr_ssh_config *config, struct tr_socket *socket);
+enum rtr_tr_rtvals rtr_tr_ssh_init(const struct rtr_tr_ssh_config *config, struct rtr_tr_socket *socket);
 
 #endif
 /** @} */

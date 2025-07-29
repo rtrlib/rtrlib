@@ -27,14 +27,14 @@ uint32_t max_i = 0xFFFFFFF0;
 /**
  * @brief Add records to prefix table
  */
-static void *rec_add(struct pfx_table *pfxt)
+static void *rec_add(struct rtr_pfx_table *pfxt)
 {
 	const int tid = getpid();
-	struct pfx_record rec;
+	struct rtr_pfx_record rec;
 
 	rec.min_len = 32;
 	rec.max_len = 32;
-	rec.prefix.ver = LRTR_IPV4;
+	rec.prefix.ver = RTR_IPV4;
 	rec.prefix.u.addr4.addr = 0;
 
 	printf("Inserting %u records\n", (max_i - min_i) * 3);
@@ -44,17 +44,17 @@ static void *rec_add(struct pfx_table *pfxt)
 		rec.socket = NULL;
 		rec.asn = tid % 2;
 		rec.prefix.u.addr4.addr = htonl(i);
-		rec.prefix.ver = LRTR_IPV4;
-		pfx_table_add(pfxt, &rec);
+		rec.prefix.ver = RTR_IPV4;
+		rtr_pfx_table_add(pfxt, &rec);
 		rec.asn = (tid % 2) + 1;
-		pfx_table_add(pfxt, &rec);
+		rtr_pfx_table_add(pfxt, &rec);
 
 		rec.min_len = 128;
 		rec.max_len = 128;
-		rec.prefix.ver = LRTR_IPV6;
+		rec.prefix.ver = RTR_IPV6;
 		rec.prefix.u.addr6.addr[1] = min_i + 0xFFFFFFFF;
 		rec.prefix.u.addr6.addr[0] = htonl(i) + 0xFFFFFFFF;
-		pfx_table_add(pfxt, &rec);
+		rtr_pfx_table_add(pfxt, &rec);
 		usleep(rand() / (RAND_MAX / 20));
 	}
 
@@ -64,32 +64,32 @@ static void *rec_add(struct pfx_table *pfxt)
 /**
  * @brief Validate records in prefix table
  */
-static void *rec_val(struct pfx_table *pfxt)
+static void *rec_val(struct rtr_pfx_table *pfxt)
 {
 	const int tid = getpid();
-	struct pfx_record rec;
-	enum pfxv_state res;
+	struct rtr_pfx_record rec;
+	enum rtr_pfxv_state res;
 
 	rec.min_len = 32;
 	rec.max_len = 32;
-	rec.prefix.ver = LRTR_IPV4;
+	rec.prefix.ver = RTR_IPV4;
 	rec.prefix.u.addr4.addr = 0;
 	printf("validating..\n");
 	for (uint32_t i = max_i; i >= min_i; i--) {
 		rec.min_len = 32;
 		rec.max_len = 32;
-		rec.prefix.ver = LRTR_IPV4;
+		rec.prefix.ver = RTR_IPV4;
 		rec.prefix.u.addr4.addr = htonl(i);
-		pfx_table_validate(pfxt, (tid % 2), &rec.prefix, rec.min_len, &res);
-		pfx_table_validate(pfxt, (tid % 2) + 1, &rec.prefix, rec.min_len, &res);
+		rtr_pfx_table_validate(pfxt, (tid % 2), &rec.prefix, rec.min_len, &res);
+		rtr_pfx_table_validate(pfxt, (tid % 2) + 1, &rec.prefix, rec.min_len, &res);
 
 		rec.min_len = 128;
 		rec.max_len = 128;
-		rec.prefix.ver = LRTR_IPV6;
+		rec.prefix.ver = RTR_IPV6;
 		rec.prefix.u.addr6.addr[1] = min_i + 0xFFFFFFFF;
 		rec.prefix.u.addr6.addr[0] = htonl(i) + 0xFFFFFFFF;
 
-		pfx_table_validate(pfxt, (tid % 2) + 1, &rec.prefix, rec.min_len, &res);
+		rtr_pfx_table_validate(pfxt, (tid % 2) + 1, &rec.prefix, rec.min_len, &res);
 		usleep(rand() / (RAND_MAX / 20));
 	}
 
@@ -99,14 +99,14 @@ static void *rec_val(struct pfx_table *pfxt)
 /**
  * @brief Delete records from prefix table
  */
-static void *rec_del(struct pfx_table *pfxt)
+static void *rec_del(struct rtr_pfx_table *pfxt)
 {
 	const int tid = getpid();
-	struct pfx_record rec;
+	struct rtr_pfx_record rec;
 
 	rec.min_len = 32;
 	rec.max_len = 32;
-	rec.prefix.ver = LRTR_IPV4;
+	rec.prefix.ver = RTR_IPV4;
 	rec.prefix.u.addr4.addr = 0;
 	printf("removing records\n");
 	for (uint32_t i = max_i; i >= min_i; i--) {
@@ -114,19 +114,19 @@ static void *rec_del(struct pfx_table *pfxt)
 		rec.min_len = 32;
 		rec.max_len = 32;
 		rec.asn = tid % 2;
-		rec.prefix.ver = LRTR_IPV4;
+		rec.prefix.ver = RTR_IPV4;
 		rec.prefix.u.addr4.addr = htonl(i);
-		pfx_table_remove(pfxt, &rec);
+		rtr_pfx_table_remove(pfxt, &rec);
 		rec.asn = (tid % 2) + 1;
-		pfx_table_remove(pfxt, &rec);
+		rtr_pfx_table_remove(pfxt, &rec);
 
-		rec.prefix.ver = LRTR_IPV6;
+		rec.prefix.ver = RTR_IPV6;
 		rec.min_len = 128;
 		rec.max_len = 128;
 		rec.prefix.u.addr6.addr[1] = min_i + 0xFFFFFFFF;
 		rec.prefix.u.addr6.addr[0] = htonl(i) + 0xFFFFFFFF;
 
-		pfx_table_remove(pfxt, &rec);
+		rtr_pfx_table_remove(pfxt, &rec);
 		usleep(rand() / (RAND_MAX / 20));
 	}
 	printf("Done\n");
@@ -144,10 +144,10 @@ static void *rec_del(struct pfx_table *pfxt)
 int main(void)
 {
 	unsigned int max_threads = 15;
-	struct pfx_table pfxt;
+	struct rtr_pfx_table pfxt;
 	pthread_t threads[max_threads];
 
-	pfx_table_init(&pfxt, NULL);
+	rtr_pfx_table_init(&pfxt, NULL);
 	srand(time(NULL));
 
 	for (unsigned int i = 0; i < max_threads; i++) {
