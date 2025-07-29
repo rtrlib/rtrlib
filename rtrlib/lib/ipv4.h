@@ -7,8 +7,8 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#ifndef LRTR_IPV4_H
-#define LRTR_IPV4_H
+#ifndef RTR_IPV4_H
+#define RTR_IPV4_H
 
 #include <stdint.h>
 
@@ -16,7 +16,7 @@
  * @brief Struct storing an IPv4 address in host byte order.
  * @param addr The IPv4 address.
  */
-struct lrtr_ipv4_addr {
+struct rtr_ipv4_addr {
 	uint32_t addr;
 };
 

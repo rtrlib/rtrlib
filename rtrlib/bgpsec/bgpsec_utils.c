@@ -25,16 +25,16 @@ struct stream {
 
 struct stream *init_stream(uint16_t size)
 {
-	struct stream *stream = lrtr_calloc(sizeof(struct stream), 1);
+	struct stream *stream = rtr_calloc(sizeof(struct stream), 1);
 
 	if (stream == NULL) {
 		return NULL;
 	}
 
-	stream->stream = lrtr_calloc(size, 1);
+	stream->stream = rtr_calloc(size, 1);
 
 	if (stream->stream == NULL) {
-		lrtr_free(stream);
+		rtr_free(stream);
 		return NULL;
 	}
 
@@ -62,8 +62,8 @@ struct stream *copy_stream(struct stream *s)
 
 void free_stream(struct stream *s)
 {
-	lrtr_free((uint8_t *)s->start);
-	lrtr_free(s);
+	rtr_free((uint8_t *)s->start);
+	rtr_free(s);
 }
 
 void write_stream(struct stream *s, void *data, uint16_t len)
@@ -139,16 +139,16 @@ int get_sig_seg_size(const struct rtr_signature_seg *sig_segs, enum align_type t
 	return sig_segs_size;
 }
 
-int check_router_keys(const struct rtr_signature_seg *sig_segs, struct spki_table *table)
+int check_router_keys(const struct rtr_signature_seg *sig_segs, struct rtr_spki_table *table)
 {
-	struct spki_record *tmp_key = NULL;
+	struct rtr_spki_record *tmp_key = NULL;
 	const struct rtr_signature_seg *curr = sig_segs;
 
 	while (curr) {
 		unsigned int router_keys_len = 0;
-		enum spki_rtvals spki_retval =
+		enum rtr_spki_rtvals spki_retval =
 			spki_table_search_by_ski(table, (uint8_t *)curr->ski, &tmp_key, &router_keys_len);
-		if (spki_retval == SPKI_ERROR)
+		if (spki_retval == RTR_SPKI_ERROR)
 			return RTR_BGPSEC_ERROR;
 
 		/* Return an error, if a router key was not found. */
@@ -159,7 +159,7 @@ int check_router_keys(const struct rtr_signature_seg *sig_segs, struct spki_tabl
 			BGPSEC_DBG("ERROR: Could not find router key for SKI: %s", ski_str);
 			return RTR_BGPSEC_ROUTER_KEY_NOT_FOUND;
 		}
-		lrtr_free(tmp_key);
+		rtr_free(tmp_key);
 		curr = curr->next;
 	}
 
@@ -302,7 +302,7 @@ int align_byte_sequence(const struct rtr_bgpsec *data, struct stream *s, enum al
 	return RTR_BGPSEC_SUCCESS;
 }
 
-int validate_signature(const unsigned char *hash, const struct rtr_signature_seg *sig, struct spki_record *record)
+int validate_signature(const unsigned char *hash, const struct rtr_signature_seg *sig, struct rtr_spki_record *record)
 {
 	int status = 0;
 	enum rtr_bgpsec_rtvals retval;
@@ -409,7 +409,7 @@ int hash_byte_sequence(uint8_t *bytes, size_t bytes_len, uint8_t alg_suite_id, u
 	if (alg_suite_id == RTR_BGPSEC_ALGORITHM_SUITE_1) {
 		SHA256_CTX ctx;
 
-		*hash_result = lrtr_malloc(SHA256_DIGEST_LENGTH);
+		*hash_result = rtr_malloc(SHA256_DIGEST_LENGTH);
 		if (!*hash_result)
 			return RTR_BGPSEC_ERROR;
 

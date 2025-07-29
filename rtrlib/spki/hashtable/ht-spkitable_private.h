@@ -15,7 +15,7 @@
 #include "third-party/tommyds/tommyhashlin.h"
 #include "third-party/tommyds/tommylist.h"
 
-#define SPKI_DBG1(a) lrtr_dbg("SPKI: " a)
+#define SPKI_DBG1(a) rtr_dbg("SPKI: " a)
 
 typedef int (*hash_cmp_fp)(const void *arg, const void *obj);
 
@@ -27,11 +27,11 @@ typedef int (*hash_cmp_fp)(const void *arg, const void *obj);
  * @param update_fp Update function, called when the hashtable changes
  * @param lock Read-Write lock to prevent data races
  */
-struct spki_table {
+struct rtr_spki_table {
 	tommy_hashlin hashtable;
 	tommy_list list;
 	hash_cmp_fp cmp_fp;
-	spki_update_fp update_fp;
+	rtr_spki_update_fp update_fp;
 	pthread_rwlock_t lock;
 };
 
