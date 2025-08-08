@@ -1100,6 +1100,7 @@ static int rtr_compute_update_aspa_table(struct rtr_socket *rtr_socket, struct a
 			RTR_DBG1("ASPA announcement doesn't contain any provider autonomous system numbers");
 			rtr_send_error_pdu_from_host(rtr_socket, pdu, pdu->len, INCORRECT_ASPA_PROVIDER_LIST, NULL, 0);
 			rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
+			lrtr_free(operations);
 
 			return RTR_ERROR;
 		}

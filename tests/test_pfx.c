@@ -13,6 +13,7 @@
 #include "rtrlib/pfx/pfx_private.h"
 #include "rtrlib/pfx/trie/trie_private.h"
 #include "rtrlib/rtr/rtr.h"
+#include "rtrlib/rtrlib.h"
 
 #include <arpa/inet.h>
 #include <assert.h>
@@ -75,7 +76,7 @@ static void remove_src_test(void)
 	struct trie_node **array = NULL;
 	/* verify that table has 3 distinct prefix entries */
 	assert(trie_get_children(pfxt.ipv4, &array, &len) != -1);
-	free(array);
+	lrtr_free(array);
 	array = NULL;
 	assert((len + 1) == 3);
 
@@ -83,7 +84,7 @@ static void remove_src_test(void)
 	pfx_table_src_remove(&pfxt, &tr1);
 	len = 0;
 	assert(trie_get_children(pfxt.ipv4, &array, &len) != -1);
-	free(array);
+	lrtr_free(array);
 	assert((len + 1) == 2);
 
 	/* verify validation of prefixes */
@@ -366,7 +367,7 @@ static void test_issue99(void)
 static void test_issue152(void)
 {
 	struct pfx_table pfxt;
-	struct pfx_record *records = calloc(6, sizeof(struct pfx_record));
+	struct pfx_record *records = lrtr_calloc(6, sizeof(struct pfx_record));
 
 	pfx_table_init(&pfxt, NULL);
 	create_ip4_pfx_record(&records[0], 1, "89.18.183.0", 24, 24);
@@ -382,7 +383,7 @@ static void test_issue152(void)
 	for (size_t i = 0; i < 6; i++)
 		assert(pfx_table_remove(&pfxt, &records[i]) == PFX_SUCCESS);
 
-	free(records);
+	lrtr_free(records);
 }
 
 static void update_cb1(struct pfx_table *p __attribute__((unused)), const struct pfx_record rec, const bool added)

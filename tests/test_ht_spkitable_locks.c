@@ -54,7 +54,7 @@ static bool compare_spki_records(struct spki_record *r1, struct spki_record *r2)
  */
 static struct spki_record *create_record(int ASN, int ski_offset, int spki_offset, struct rtr_socket *socket)
 {
-	struct spki_record *record = malloc(sizeof(struct spki_record));
+	struct spki_record *record = lrtr_malloc(sizeof(struct spki_record));
 	uint32_t i;
 
 	record->asn = ASN;
@@ -82,7 +82,7 @@ static void *add_records(struct add_records_args *args)
 		int ret = spki_table_add_entry(args->table, record);
 
 		assert(ret == SPKI_SUCCESS);
-		free(record);
+		lrtr_free(record);
 	}
 
 	return NULL;
@@ -100,7 +100,7 @@ static void *remove_records(struct remove_records_args *args)
 		int ret = spki_table_remove_entry(args->table, record);
 
 		assert(ret == SPKI_SUCCESS);
-		free(record);
+		lrtr_free(record);
 	}
 
 	return NULL;
@@ -143,8 +143,8 @@ static void lock_test1(void)
 		spki_table_get_all(&spkit, record->asn, record->ski, &result, &result_size);
 		assert(result_size == 1);
 		assert(compare_spki_records(record, &result[0]));
-		free(result);
-		free(record);
+		lrtr_free(result);
+		lrtr_free(record);
 	}
 
 	struct remove_records_args remove_args[max_threads];

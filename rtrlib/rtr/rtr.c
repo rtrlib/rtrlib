@@ -42,8 +42,14 @@ struct rtr_fsm_start_args {
 	struct rtr_socket *rtr_socket;
 };
 
+/** The key for registering a destructor callback that is called once a processing thread terminates. */
+static pthread_key_t processing_thread_destructor_key;
+static pthread_once_t processing_thread_destructor_key_once = PTHREAD_ONCE_INIT;
+
 static void rtr_purge_outdated_records(struct rtr_socket *rtr_socket);
 static void *rtr_fsm_start(struct rtr_fsm_start_args *args);
+inline static void rtr_free_fsm_start_args(struct rtr_fsm_start_args *args);
+static void rtr_fsm_start_cleanup(void *args);
 
 static const char *socket_str_states[] = {[RTR_CONNECTING] = "RTR_CONNECTING",
 					  [RTR_ESTABLISHED] = "RTR_ESTABLISHED",
@@ -94,11 +100,23 @@ int rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr, struct pfx_tab
 	return RTR_SUCCESS;
 }
 
+static void make_key()
+{
+	(void)pthread_key_create(&processing_thread_destructor_key, rtr_fsm_start_cleanup);
+}
+
 int rtr_start(struct rtr_socket *rtr_socket, const rtr_mgr_on_processing_thread_event processing_thread_event_callback,
 	      void *processing_thread_event_callback_data)
 {
 	if (rtr_socket->thread_id)
 		return RTR_ERROR;
+
+	// Since the processing thread destructor key is shared between all threads, it must
+	// only be created once. However, each thread can store different data for that key.
+	if (pthread_once(&processing_thread_destructor_key_once, make_key) != 0) {
+		RTR_DBG1("Could not initialize processing thread destructor key");
+		return RTR_ERROR;
+	}
 
 	struct rtr_fsm_start_args *args = lrtr_malloc(sizeof(*args));
 	if (args == NULL) {
@@ -112,8 +130,11 @@ int rtr_start(struct rtr_socket *rtr_socket, const rtr_mgr_on_processing_thread_
 
 	int rtval = pthread_create(&(rtr_socket->thread_id), NULL, (void *(*)(void *)) & rtr_fsm_start, args);
 
-	if (rtval == 0)
+	if (rtval == 0) {
 		return RTR_SUCCESS;
+	}
+
+	rtr_free_fsm_start_args(args);
 	return RTR_ERROR;
 }
 
@@ -147,16 +168,14 @@ void rtr_purge_outdated_records(struct rtr_socket *rtr_socket)
  *
  * @param[in] args The rtr_fsm_start_args to be freed
  */
-inline static void rtr_free_fsm_start_args(struct rtr_fsm_start_args **args)
+inline static void rtr_free_fsm_start_args(struct rtr_fsm_start_args *args)
 {
-	assert(args != NULL);
-	lrtr_free(*args);
-	*args = NULL;
+	lrtr_free(args);
 }
 
 static void rtr_fsm_start_cleanup(void *args)
 {
-	rtr_free_fsm_start_args((struct rtr_fsm_start_args **)args);
+	rtr_free_fsm_start_args((struct rtr_fsm_start_args *)args);
 }
 
 /* WARNING: This Function has cancelable sections*/
@@ -164,8 +183,13 @@ void *rtr_fsm_start(struct rtr_fsm_start_args *args)
 {
 	struct rtr_socket *rtr_socket = args->rtr_socket;
 
+	if (pthread_setspecific(processing_thread_destructor_key, args) != 0) {
+		RTR_DBG1("Could not set processing thread destructor data");
+		rtr_fsm_start_cleanup(args);
+		return NULL;
+	}
+
 	if (rtr_socket->state == RTR_SHUTDOWN) {
-		rtr_fsm_start_cleanup(&args);
 		return NULL;
 	}
 
@@ -180,7 +204,6 @@ void *rtr_fsm_start(struct rtr_fsm_start_args *args)
 		if (res != RTR_SUCCESS) {
 			RTR_DBG("Processing thread callback for start event in thread ID %lu failed",
 				rtr_socket->thread_id);
-			rtr_fsm_start_cleanup(&args);
 			return NULL;
 		}
 	}
@@ -232,12 +255,10 @@ void *rtr_fsm_start(struct rtr_fsm_start_args *args)
 			int ret = 0;
 			// Allow thread cancellation for recv code path only.
 			// This should be enough since we spend most of the time blocking on recv
-			pthread_cleanup_push(&rtr_fsm_start_cleanup, &args);
 			pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
 			ret = rtr_wait_for_sync(
 				rtr_socket); // blocks till expire_interval is expired or PDU was received
 			pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
-			pthread_cleanup_pop(0);
 
 			if (ret == RTR_SUCCESS) { // send serial query
 				if (rtr_send_serial_query(rtr_socket) == RTR_SUCCESS)
@@ -274,11 +295,9 @@ void *rtr_fsm_start(struct rtr_fsm_start_args *args)
 			rtr_change_socket_state(rtr_socket, RTR_CONNECTING);
 			RTR_DBG("Waiting %u", rtr_socket->retry_interval);
 
-			pthread_cleanup_push(&rtr_fsm_start_cleanup, &args);
 			pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
 			sleep(rtr_socket->retry_interval);
 			pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
-			pthread_cleanup_pop(0);
 		}
 
 		else if (rtr_socket->state == RTR_ERROR_FATAL) {
@@ -287,16 +306,13 @@ void *rtr_fsm_start(struct rtr_fsm_start_args *args)
 			rtr_change_socket_state(rtr_socket, RTR_CONNECTING);
 			RTR_DBG("Waiting %u", rtr_socket->retry_interval);
 
-			pthread_cleanup_push(&rtr_fsm_start_cleanup, &args);
 			pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
 			sleep(rtr_socket->retry_interval);
 			pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
-			pthread_cleanup_pop(0);
 		}
 
 		else if (rtr_socket->state == RTR_SHUTDOWN) {
 			RTR_DBG1("State: RTR_SHUTDOWN");
-			rtr_fsm_start_cleanup(&args);
 			pthread_exit(NULL);
 		}
 	}

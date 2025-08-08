@@ -21,7 +21,7 @@
  * (https://www.ripe.net/analyse/internet-measurements/
  *  routing-information-service-ris/current-ris-routing-beacons)
  */
-const int connection_timeout = 20;
+const int connection_timeout = 80;
 enum rtr_mgr_status connection_status = -1;
 
 static void connection_status_callback(const struct rtr_mgr_group *group __attribute__((unused)),
@@ -59,7 +59,7 @@ int main(void)
 	rtr_tcp.tr_socket = &tr_tcp;
 
 	/* create a rtr_mgr_group array with 1 element */
-	groups[0].sockets = malloc(1 * sizeof(struct rtr_socket *));
+	groups[0].sockets = lrtr_malloc(1 * sizeof(struct rtr_socket *));
 	groups[0].sockets_len = 1;
 	groups[0].sockets[0] = &rtr_tcp;
 	groups[0].preference = 1;
@@ -88,6 +88,7 @@ int main(void)
 
 	rtr_mgr_stop(conf);
 	rtr_mgr_free(conf);
+	lrtr_free(groups[0].sockets);
 
 	return EXIT_SUCCESS;
 }

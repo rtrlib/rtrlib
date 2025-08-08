@@ -58,13 +58,13 @@ int main(void)
 	 * because it would cause warnings about discarding constness
 	 */
 	char RPKI_CACHE_HOST[] = "rpki-cache.netd.cs.tu-dresden.de";
-	char RPKI_CACHE_POST[] = "3323";
+	char RPKI_CACHE_PORT[] = "3323";
 
 	/* create a TCP transport socket */
 	struct tr_socket tr_tcp;
 	struct tr_tcp_config tcp_config = {
 		RPKI_CACHE_HOST, //IP
-		RPKI_CACHE_POST, //Port
+		RPKI_CACHE_PORT, //Port
 		NULL, //source address
 		NULL, //data
 		NULL, //new_socket()
@@ -78,7 +78,7 @@ int main(void)
 	rtr_tcp.tr_socket = &tr_tcp;
 
 	/* create a rtr_mgr_group array with 1 element */
-	groups[0].sockets = malloc(1 * sizeof(struct rtr_socket *));
+	groups[0].sockets = lrtr_malloc(1 * sizeof(struct rtr_socket *));
 	groups[0].sockets_len = 1;
 	groups[0].sockets[0] = &rtr_tcp;
 	groups[0].preference = 1;
@@ -104,7 +104,6 @@ int main(void)
 	}
 
 	rtr_mgr_setup_sockets(conf, groups, 1, 50, 600, 600);
-
 	rtr_mgr_start(conf);
 	int sleep_counter = 0;
 	/* wait for connection, or timeout and exit eventually */
@@ -130,6 +129,7 @@ int main(void)
 		lrtr_ip_str_to_addr(q.pfx, &pref);
 		pfx_table_validate_r(groups[0].sockets[0]->pfx_table, &reason, &reason_len, q.asn, &pref, q.len,
 				     &result);
+		lrtr_free(reason);
 		if (result != q.val) {
 			printf("ERROR: prefix validation mismatch.\n");
 			return EXIT_FAILURE;
@@ -140,6 +140,7 @@ int main(void)
 
 	rtr_mgr_stop(conf);
 	rtr_mgr_free(conf);
+	lrtr_free(groups[0].sockets);
 
 	return EXIT_SUCCESS;
 }
