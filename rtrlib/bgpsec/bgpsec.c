@@ -67,7 +67,7 @@ static const uint8_t algorithm_suites[] = {RTR_BGPSEC_ALGORITHM_SUITE_1};
  * position of the array.
  */
 
-int rtr_bgpsec_validate_as_path(const struct rtr_bgpsec *data, struct spki_table *table)
+int rtr_bgpsec_validate_as_path(const struct rtr_bgpsec *data, struct rtr_spki_table *table)
 {
 	assert(table != NULL);
 
@@ -78,7 +78,7 @@ int rtr_bgpsec_validate_as_path(const struct rtr_bgpsec *data, struct spki_table
 	unsigned char *hash_result = NULL;
 
 	/* A temporare spki record */
-	struct spki_record *tmp_key = NULL;
+	struct rtr_spki_record *tmp_key = NULL;
 
 	/* A stream that holds the data that is hashed */
 	struct stream *stream = NULL;
@@ -197,7 +197,7 @@ int rtr_bgpsec_validate_as_path(const struct rtr_bgpsec *data, struct spki_table
 		 */
 		size_t len = get_stream_size(stream) - offset;
 
-		uint8_t *curr = lrtr_malloc(len);
+		uint8_t *curr = rtr_malloc(len);
 
 		if (!curr) {
 			retval = RTR_BGPSEC_ERROR;
@@ -208,16 +208,16 @@ int rtr_bgpsec_validate_as_path(const struct rtr_bgpsec *data, struct spki_table
 
 		retval = hash_byte_sequence(curr, len, data->alg, &hash_result);
 
-		lrtr_free(curr);
+		rtr_free(curr);
 
 		if (retval != RTR_BGPSEC_SUCCESS)
 			goto err;
 
 		/* Store all router keys for the given SKI in tmp_key. */
 		unsigned int router_keys_len = 0;
-		enum spki_rtvals spki_retval =
+		enum rtr_spki_rtvals spki_retval =
 			spki_table_search_by_ski(table, tmp_sig->ski, &tmp_key, &router_keys_len);
-		if (spki_retval == SPKI_ERROR) {
+		if (spki_retval == RTR_SPKI_ERROR) {
 			retval = RTR_BGPSEC_ERROR;
 			goto err;
 		}
@@ -240,8 +240,8 @@ int rtr_bgpsec_validate_as_path(const struct rtr_bgpsec *data, struct spki_table
 			if (retval == RTR_BGPSEC_VALID)
 				break;
 		}
-		lrtr_free(hash_result);
-		lrtr_free(tmp_key);
+		rtr_free(hash_result);
+		rtr_free(tmp_key);
 		hash_result = NULL;
 		tmp_key = NULL;
 		tmp_sig = tmp_sig->next;
@@ -249,9 +249,9 @@ int rtr_bgpsec_validate_as_path(const struct rtr_bgpsec *data, struct spki_table
 
 err:
 	if (hash_result)
-		lrtr_free(hash_result);
+		rtr_free(hash_result);
 	if (tmp_key)
-		lrtr_free(tmp_key);
+		rtr_free(tmp_key);
 	if (stream)
 		free_stream(stream);
 
@@ -263,8 +263,8 @@ err:
 	return retval;
 }
 
-int rtr_bgpsec_generate_signature(const struct rtr_bgpsec *data, uint8_t *private_key,
-				  struct rtr_signature_seg **new_signature)
+enum rtr_bgpsec_rtvals rtr_bgpsec_generate_signature(const struct rtr_bgpsec *data, uint8_t *private_key,
+						     struct rtr_signature_seg **new_signature)
 {
 	/* The signature generation result. */
 	enum rtr_bgpsec_rtvals retval = 0;
@@ -364,7 +364,7 @@ int rtr_bgpsec_generate_signature(const struct rtr_bgpsec *data, uint8_t *privat
 
 err:
 	if (hash_result)
-		lrtr_free(hash_result);
+		rtr_free(hash_result);
 	if (*new_signature && (retval == RTR_BGPSEC_SIGNING_ERROR))
 		rtr_bgpsec_free_signatures(*new_signature);
 	if (stream)
@@ -386,7 +386,7 @@ int rtr_bgpsec_get_version(void)
 	return BGPSEC_VERSION;
 }
 
-int rtr_bgpsec_has_algorithm_suite(uint8_t alg_suite)
+enum rtr_bgpsec_rtvals rtr_bgpsec_has_algorithm_suite(uint8_t alg_suite)
 {
 	int alg_suites_len = sizeof(algorithm_suites) / sizeof(uint8_t);
 
@@ -404,7 +404,7 @@ int rtr_bgpsec_get_algorithm_suites(const uint8_t **algs_arr)
 	return sizeof(algorithm_suites) / sizeof(uint8_t);
 }
 
-int rtr_bgpsec_prepend_sig_seg(struct rtr_bgpsec *bgpsec, struct rtr_signature_seg *new_seg)
+enum rtr_bgpsec_rtvals rtr_bgpsec_prepend_sig_seg(struct rtr_bgpsec *bgpsec, struct rtr_signature_seg *new_seg)
 {
 	if (!new_seg || !new_seg->signature || !new_seg->sig_len || ski_is_empty(new_seg->ski))
 		return RTR_BGPSEC_ERROR;
@@ -432,7 +432,7 @@ struct rtr_signature_seg *rtr_bgpsec_pop_signature_seg(struct rtr_bgpsec *bgpsec
 	return tmp;
 }
 
-int rtr_bgpsec_append_sig_seg(struct rtr_bgpsec *bgpsec, struct rtr_signature_seg *new_seg)
+enum rtr_bgpsec_rtvals rtr_bgpsec_append_sig_seg(struct rtr_bgpsec *bgpsec, struct rtr_signature_seg *new_seg)
 {
 	struct rtr_signature_seg *last = bgpsec->sigs;
 
@@ -454,14 +454,14 @@ int rtr_bgpsec_append_sig_seg(struct rtr_bgpsec *bgpsec, struct rtr_signature_se
 
 struct rtr_signature_seg *rtr_bgpsec_new_signature_seg(uint8_t *ski, uint16_t sig_len, uint8_t *signature)
 {
-	struct rtr_signature_seg *sig_seg = lrtr_malloc(sizeof(struct rtr_signature_seg));
+	struct rtr_signature_seg *sig_seg = rtr_malloc(sizeof(struct rtr_signature_seg));
 
 	if (!sig_seg)
 		return NULL;
 
-	sig_seg->signature = lrtr_calloc(sig_len, 1);
+	sig_seg->signature = rtr_calloc(sig_len, 1);
 	if (!sig_seg->signature) {
-		lrtr_free(sig_seg);
+		rtr_free(sig_seg);
 		return NULL;
 	}
 
@@ -484,8 +484,8 @@ void rtr_bgpsec_free_signatures(struct rtr_signature_seg *seg)
 		return;
 	if (seg->next)
 		rtr_bgpsec_free_signatures(seg->next);
-	lrtr_free(seg->signature);
-	lrtr_free(seg);
+	rtr_free(seg->signature);
+	rtr_free(seg);
 }
 
 void rtr_bgpsec_prepend_sec_path_seg(struct rtr_bgpsec *bgpsec, struct rtr_secure_path_seg *new_seg)
@@ -514,7 +514,7 @@ void rtr_bgpsec_append_sec_path_seg(struct rtr_bgpsec *bgpsec, struct rtr_secure
 
 struct rtr_secure_path_seg *rtr_bgpsec_new_secure_path_seg(uint8_t pcount, uint8_t flags, uint32_t asn)
 {
-	struct rtr_secure_path_seg *seg = lrtr_malloc(sizeof(struct rtr_secure_path_seg));
+	struct rtr_secure_path_seg *seg = rtr_malloc(sizeof(struct rtr_secure_path_seg));
 
 	if (!seg) {
 		return NULL;
@@ -544,7 +544,7 @@ struct rtr_secure_path_seg *rtr_bgpsec_pop_secure_path_seg(struct rtr_bgpsec *bg
 struct rtr_bgpsec *rtr_bgpsec_new(uint8_t alg, uint8_t safi, uint16_t afi, uint32_t my_as, uint32_t target_as,
 				  struct rtr_bgpsec_nlri *nlri)
 {
-	struct rtr_bgpsec *bgpsec = lrtr_malloc(sizeof(struct rtr_bgpsec));
+	struct rtr_bgpsec *bgpsec = rtr_malloc(sizeof(struct rtr_bgpsec));
 
 	if (!bgpsec)
 		return NULL;
@@ -571,7 +571,7 @@ void rtr_bgpsec_free(struct rtr_bgpsec *bgpsec)
 		rtr_bgpsec_free_signatures(bgpsec->sigs);
 	if (bgpsec->nlri)
 		rtr_bgpsec_nlri_free(bgpsec->nlri);
-	lrtr_free(bgpsec);
+	rtr_free(bgpsec);
 }
 
 void rtr_bgpsec_free_secure_path(struct rtr_secure_path_seg *seg)
@@ -580,21 +580,21 @@ void rtr_bgpsec_free_secure_path(struct rtr_secure_path_seg *seg)
 		return;
 	if (seg->next)
 		rtr_bgpsec_free_secure_path(seg->next);
-	lrtr_free(seg);
+	rtr_free(seg);
 }
 
 struct rtr_bgpsec_nlri *rtr_bgpsec_nlri_new(int nlri_len)
 {
-	struct rtr_bgpsec_nlri *nlri = lrtr_malloc(sizeof(struct rtr_bgpsec_nlri));
+	struct rtr_bgpsec_nlri *nlri = rtr_malloc(sizeof(struct rtr_bgpsec_nlri));
 
 	if (!nlri) {
 		return NULL;
 	}
 
-	nlri->nlri = lrtr_malloc(nlri_len);
+	nlri->nlri = rtr_malloc(nlri_len);
 
 	if (!nlri->nlri) {
-		lrtr_free(nlri);
+		rtr_free(nlri);
 		return NULL;
 	}
 
@@ -607,12 +607,12 @@ void rtr_bgpsec_nlri_free(struct rtr_bgpsec_nlri *nlri)
 		return;
 
 	if (nlri->nlri)
-		lrtr_free(nlri->nlri);
+		rtr_free(nlri->nlri);
 
-	lrtr_free(nlri);
+	rtr_free(nlri);
 }
 
-void rtr_bgpsec_add_spki_record(struct spki_table *table, struct spki_record *record)
+void rtr_bgpsec_add_spki_record(struct rtr_spki_table *table, struct rtr_spki_record *record)
 {
 	spki_table_add_entry(table, record);
 }

@@ -7,20 +7,20 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#ifndef LRTR_ALLOC_UTILS_PRIVATE_H
-#define LRTR_ALLOC_UTILS_PRIVATE_H
+#ifndef RTR_ALLOC_UTILS_PRIVATE_H
+#define RTR_ALLOC_UTILS_PRIVATE_H
 
 #include "alloc_utils.h"
 
 #include <stdlib.h>
 
-void *lrtr_malloc(size_t size);
+void *rtr_malloc(size_t size);
 
-void *lrtr_calloc(size_t nmemb, size_t size);
+void *rtr_calloc(size_t nmemb, size_t size);
 
-void lrtr_free(void *ptr);
+void rtr_free(void *ptr);
 
-void *lrtr_realloc(void *ptr, size_t size);
+void *rtr_realloc(void *ptr, size_t size);
 
 /**
  * @brief Duplicates a string
@@ -29,6 +29,6 @@ void *lrtr_realloc(void *ptr, size_t size);
  * @returns Duplicated string
  * @returns NULL on error
  */
-char *lrtr_strdup(const char *string);
+char *rtr_strdup(const char *string);
 
 #endif

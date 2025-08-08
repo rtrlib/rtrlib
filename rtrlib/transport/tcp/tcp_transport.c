@@ -27,22 +27,22 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define TCP_DBG(fmt, sock, ...)                                                                            \
-	do {                                                                                               \
-		const struct tr_tcp_socket *tmp = sock;                                                    \
-		lrtr_dbg("TCP Transport(%s:%s): " fmt, tmp->config.host, tmp->config.port, ##__VA_ARGS__); \
+#define TCP_DBG(fmt, sock, ...)                                                                           \
+	do {                                                                                              \
+		const struct tr_tcp_socket *tmp = sock;                                                   \
+		rtr_dbg("TCP Transport(%s:%s): " fmt, tmp->config.host, tmp->config.port, ##__VA_ARGS__); \
 	} while (0)
 #define TCP_DBG1(a, sock) TCP_DBG(a, sock)
 
 struct tr_tcp_socket {
 	int socket;
-	struct tr_tcp_config config;
+	struct rtr_tr_tcp_config config;
 	char *ident;
 };
 
 static int tr_tcp_open(void *tr_tcp_sock);
 static void tr_tcp_close(void *tr_tcp_sock);
-static void tr_tcp_free(struct tr_socket *tr_sock);
+static void tr_tcp_free(struct rtr_tr_socket *tr_sock);
 static int tr_tcp_recv(const void *tr_tcp_sock, void *pdu, const size_t len, const time_t timeout);
 static int tr_tcp_send(const void *tr_tcp_sock, const void *pdu, const size_t len, const time_t timeout);
 static const char *tr_tcp_ident(void *socket);
@@ -52,14 +52,14 @@ static int set_socket_blocking(int socket)
 	int flags = fcntl(socket, F_GETFL);
 
 	if (flags == -1)
-		return TR_ERROR;
+		return RTR_TR_ERROR;
 
 	flags &= ~O_NONBLOCK;
 
 	if (fcntl(socket, F_SETFL, flags) == -1)
-		return TR_ERROR;
+		return RTR_TR_ERROR;
 
-	return TR_SUCCESS;
+	return RTR_TR_SUCCESS;
 }
 
 static int set_socket_non_blocking(int socket)
@@ -67,14 +67,14 @@ static int set_socket_non_blocking(int socket)
 	int flags = fcntl(socket, F_GETFL);
 
 	if (flags == -1)
-		return TR_ERROR;
+		return RTR_TR_ERROR;
 
 	flags |= O_NONBLOCK;
 
 	if (fcntl(socket, F_SETFL, flags) == -1)
-		return TR_ERROR;
+		return RTR_TR_ERROR;
 
-	return TR_SUCCESS;
+	return RTR_TR_SUCCESS;
 }
 
 static int get_socket_error(int socket)
@@ -83,7 +83,7 @@ static int get_socket_error(int socket)
 	socklen_t result_len = sizeof(result);
 
 	if (getsockopt(socket, SOL_SOCKET, SO_ERROR, &result, &result_len) < 0)
-		return TR_ERROR;
+		return RTR_TR_ERROR;
 
 	return result;
 }
@@ -91,10 +91,10 @@ static int get_socket_error(int socket)
 /* WARNING: This function has cancelable sections! */
 int tr_tcp_open(void *tr_socket)
 {
-	int rtval = TR_ERROR;
+	int rtval = RTR_TR_ERROR;
 	int tcp_rtval = 0;
 	struct tr_tcp_socket *tcp_socket = tr_socket;
-	const struct tr_tcp_config *config = &tcp_socket->config;
+	const struct rtr_tr_tcp_config *config = &tcp_socket->config;
 
 	assert(tcp_socket->socket == -1);
 
@@ -122,7 +122,7 @@ int tr_tcp_open(void *tr_socket)
 			} else {
 				TCP_DBG("getaddrinfo error, %s", tcp_socket, gai_strerror(tcp_rtval));
 			}
-			return TR_ERROR;
+			return RTR_TR_ERROR;
 		}
 
 		tcp_socket->socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
@@ -150,7 +150,7 @@ int tr_tcp_open(void *tr_socket)
 			bind_addrinfo = NULL;
 		}
 
-		if (set_socket_non_blocking(tcp_socket->socket) == TR_ERROR) {
+		if (set_socket_non_blocking(tcp_socket->socket) == RTR_TR_ERROR) {
 			TCP_DBG("Could not set socket to non blocking, %s", tcp_socket, strerror(errno));
 			goto end;
 		}
@@ -192,7 +192,7 @@ int tr_tcp_open(void *tr_socket)
 
 		int socket_error = get_socket_error(tcp_socket->socket);
 
-		if (socket_error == TR_ERROR) {
+		if (socket_error == RTR_TR_ERROR) {
 			TCP_DBG("Could not get socket error, %s", tcp_socket, strerror(errno));
 			goto end;
 
@@ -201,14 +201,14 @@ int tr_tcp_open(void *tr_socket)
 			goto end;
 		}
 
-		if (set_socket_blocking(tcp_socket->socket) == TR_ERROR) {
+		if (set_socket_blocking(tcp_socket->socket) == RTR_TR_ERROR) {
 			TCP_DBG("Could not set socket to blocking, %s", tcp_socket, strerror(errno));
 			goto end;
 		}
 	}
 
 	TCP_DBG1("Connection established", tcp_socket);
-	rtval = TR_SUCCESS;
+	rtval = RTR_TR_SUCCESS;
 
 end:
 	if (res)
@@ -231,7 +231,7 @@ void tr_tcp_close(void *tr_tcp_sock)
 	tcp_socket->socket = -1;
 }
 
-void tr_tcp_free(struct tr_socket *tr_sock)
+void tr_tcp_free(struct rtr_tr_socket *tr_sock)
 {
 	struct tr_tcp_socket *tcp_sock = tr_sock->socket;
 
@@ -240,14 +240,14 @@ void tr_tcp_free(struct tr_socket *tr_sock)
 
 	TCP_DBG1("Freeing socket", tcp_sock);
 
-	lrtr_free(tcp_sock->config.host);
-	lrtr_free(tcp_sock->config.port);
-	lrtr_free(tcp_sock->config.bindaddr);
+	rtr_free(tcp_sock->config.host);
+	rtr_free(tcp_sock->config.port);
+	rtr_free(tcp_sock->config.bindaddr);
 
 	if (tcp_sock->ident)
-		lrtr_free(tcp_sock->ident);
+		rtr_free(tcp_sock->ident);
 	tr_sock->socket = NULL;
-	lrtr_free(tcp_sock);
+	rtr_free(tcp_sock);
 }
 
 int tr_tcp_recv(const void *tr_tcp_sock, void *pdu, const size_t len, const time_t timeout)
@@ -262,21 +262,21 @@ int tr_tcp_recv(const void *tr_tcp_sock, void *pdu, const size_t len, const time
 
 		if (setsockopt(tcp_socket->socket, SOL_SOCKET, SO_RCVTIMEO, &t, sizeof(t)) == -1) {
 			TCP_DBG("setting SO_RCVTIMEO failed, %s", tcp_socket, strerror(errno));
-			return TR_ERROR;
+			return RTR_TR_ERROR;
 		}
 		rtval = recv(tcp_socket->socket, pdu, len, 0);
 	}
 
 	if (rtval == -1) {
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
-			return TR_WOULDBLOCK;
+			return RTR_TR_WOULDBLOCK;
 		if (errno == EINTR)
-			return TR_INTR;
+			return RTR_TR_INTR;
 		TCP_DBG("recv(..) error: %s", tcp_socket, strerror(errno));
-		return TR_ERROR;
+		return RTR_TR_ERROR;
 	}
 	if (rtval == 0)
-		return TR_CLOSED;
+		return RTR_TR_CLOSED;
 	return rtval;
 }
 
@@ -292,21 +292,21 @@ int tr_tcp_send(const void *tr_tcp_sock, const void *pdu, const size_t len, cons
 
 		if (setsockopt(tcp_socket->socket, SOL_SOCKET, SO_SNDTIMEO, &t, sizeof(t)) == -1) {
 			TCP_DBG("setting SO_SNDTIMEO failed, %s", tcp_socket, strerror(errno));
-			return TR_ERROR;
+			return RTR_TR_ERROR;
 		}
 		rtval = send(tcp_socket->socket, pdu, len, 0);
 	}
 
 	if (rtval == -1) {
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
-			return TR_WOULDBLOCK;
+			return RTR_TR_WOULDBLOCK;
 		if (errno == EINTR)
-			return TR_INTR;
+			return RTR_TR_INTR;
 		TCP_DBG("send(..) error: %s", tcp_socket, strerror(errno));
-		return TR_ERROR;
+		return RTR_TR_ERROR;
 	}
 	if (rtval == 0)
-		return TR_ERROR;
+		return RTR_TR_ERROR;
 	return rtval;
 }
 
@@ -321,7 +321,7 @@ const char *tr_tcp_ident(void *socket)
 		return sock->ident;
 
 	len = strlen(sock->config.port) + strlen(sock->config.host) + 2;
-	sock->ident = lrtr_malloc(len);
+	sock->ident = rtr_malloc(len);
 	if (!sock->ident)
 		return NULL;
 	snprintf(sock->ident, len, "%s:%s", sock->config.host, sock->config.port);
@@ -329,7 +329,7 @@ const char *tr_tcp_ident(void *socket)
 	return sock->ident;
 }
 
-RTRLIB_EXPORT int tr_tcp_init(const struct tr_tcp_config *config, struct tr_socket *socket)
+RTRLIB_EXPORT enum rtr_tr_rtvals rtr_tr_tcp_init(const struct rtr_tr_tcp_config *config, struct rtr_tr_socket *socket)
 {
 	socket->close_fp = &tr_tcp_close;
 	socket->free_fp = &tr_tcp_free;
@@ -338,19 +338,19 @@ RTRLIB_EXPORT int tr_tcp_init(const struct tr_tcp_config *config, struct tr_sock
 	socket->send_fp = &tr_tcp_send;
 	socket->ident_fp = &tr_tcp_ident;
 
-	socket->socket = lrtr_malloc(sizeof(struct tr_tcp_socket));
+	socket->socket = rtr_malloc(sizeof(struct tr_tcp_socket));
 
 	if (socket->socket == NULL) {
-		return TR_ERROR;
+		return RTR_TR_ERROR;
 	}
 
 	struct tr_tcp_socket *tcp_socket = socket->socket;
 
 	tcp_socket->socket = -1;
-	tcp_socket->config.host = lrtr_strdup(config->host);
-	tcp_socket->config.port = lrtr_strdup(config->port);
+	tcp_socket->config.host = rtr_strdup(config->host);
+	tcp_socket->config.port = rtr_strdup(config->port);
 	if (config->bindaddr)
-		tcp_socket->config.bindaddr = lrtr_strdup(config->bindaddr);
+		tcp_socket->config.bindaddr = rtr_strdup(config->bindaddr);
 	else
 		tcp_socket->config.bindaddr = NULL;
 
@@ -363,5 +363,5 @@ RTRLIB_EXPORT int tr_tcp_init(const struct tr_tcp_config *config, struct tr_sock
 	tcp_socket->config.data = config->data;
 	tcp_socket->config.new_socket = config->new_socket;
 
-	return TR_SUCCESS;
+	return RTR_TR_SUCCESS;
 }

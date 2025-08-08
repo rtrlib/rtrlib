@@ -13,7 +13,7 @@
  * (e.g., SSH, TCP, TCP-AO) between an RTR server and client.
  * @details Before using the transport socket, a tr_socket must be
  * initialized based on a protocol-dependent init function (e.g.,
- * tr_tcp_init()).\n
+ * rtr_tr_tcp_init()).\n
  * The tr_* functions call the corresponding function pointers, which are
  * passed in the tr_socket struct, and forward the remaining arguments.
  *
@@ -33,24 +33,24 @@
 /**
  * @brief The return values for tr_ functions.
  */
-enum tr_rtvals {
+enum rtr_tr_rtvals {
 	/** @brief Operation was successful. */
-	TR_SUCCESS = 0,
+	RTR_TR_SUCCESS = 0,
 
 	/** Error occurred. */
-	TR_ERROR = -1,
+	RTR_TR_ERROR = -1,
 
 	/** No data is available on the socket. */
-	TR_WOULDBLOCK = -2,
+	RTR_TR_WOULDBLOCK = -2,
 
 	/** Call was interrupted from a signal */
-	TR_INTR = -3,
+	RTR_TR_INTR = -3,
 
 	/** Connection closed */
-	TR_CLOSED = -4
+	RTR_TR_CLOSED = -4
 };
 
-struct tr_socket;
+struct rtr_tr_socket;
 
 /**
  * @brief A function pointer to a technology specific close function.
@@ -69,7 +69,7 @@ typedef int (*tr_open_fp)(void *socket);
  * All memory associated with the tr_socket will be freed.
  * \sa tr_free
  */
-typedef void (*tr_free_fp)(struct tr_socket *tr_sock);
+typedef void (*tr_free_fp)(struct rtr_tr_socket *tr_sock);
 
 /**
  * @brief A function pointer to a technology specific recv function.
@@ -99,7 +99,7 @@ typedef const char *(*tr_ident_fp)(void *socket);
  * @param send_fp Pointer to a function that sends data through this socket.
  * @param recv_fp Pointer to a function that receives data from this socket.
  */
-struct tr_socket {
+struct rtr_tr_socket {
 	void *socket;
 	tr_open_fp open_fp;
 	tr_close_fp close_fp;
