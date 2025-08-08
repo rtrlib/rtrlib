@@ -18,7 +18,7 @@
 static double timeconvert = 0.0;
 #endif
 
-int lrtr_get_monotonic_time(time_t *seconds)
+int rtr_get_monotonic_time(time_t *seconds)
 {
 #if defined(__MACH__) && defined(__APPLE__)
 	if (timeconvert == 0.0) {
@@ -39,7 +39,7 @@ int lrtr_get_monotonic_time(time_t *seconds)
 	return 0;
 }
 
-uint32_t lrtr_get_bits(const uint32_t val, const uint8_t from, const uint8_t number)
+uint32_t rtr_get_bits(const uint32_t val, const uint8_t from, const uint8_t number)
 {
 	assert(number < 33);
 	assert(number > 0);

@@ -102,9 +102,9 @@ struct rtr_mgr_config {
 	 *          access to it should be properly synchronized.
 	 */
 	void *processing_thread_event_callback_data;
-	struct pfx_table *pfx_table;
-	struct spki_table *spki_table;
-	struct aspa_table *aspa_table;
+	struct rtr_pfx_table *pfx_table;
+	struct rtr_spki_table *spki_table;
+	struct rtr_aspa_table *aspa_table;
 };
 
 /**
@@ -146,13 +146,14 @@ struct rtr_mgr_config {
  * @return RTR_INVALID_PARAM If refresh_interval or expire_interval is invalid.
  * @return RTR_SUCCESS On success.
  */
-int rtr_mgr_init(struct rtr_mgr_config **config_out, struct rtr_mgr_group groups[], const unsigned int groups_len,
-		 const rtr_mgr_status_fp status_fp, void *status_fp_data,
-		 const rtr_mgr_on_processing_thread_event processing_thread_event_callback, void *processing_thread_event_callback_data);
+enum rtr_rtvals rtr_mgr_init(struct rtr_mgr_config **config_out, struct rtr_mgr_group groups[],
+			     const unsigned int groups_len, const rtr_mgr_status_fp status_fp, void *status_fp_data,
+			     const rtr_mgr_on_processing_thread_event processing_thread_event_callback,
+			     void *processing_thread_event_callback_data);
 
-int rtr_mgr_setup_sockets(struct rtr_mgr_config *config, struct rtr_mgr_group groups[], const unsigned int groups_len,
-			  const unsigned int refresh_interval, const unsigned int expire_interval,
-			  const unsigned int retry_interval);
+enum rtr_rtvals rtr_mgr_setup_sockets(struct rtr_mgr_config *config, struct rtr_mgr_group groups[],
+				      const unsigned int groups_len, const unsigned int refresh_interval,
+				      const unsigned int expire_interval, const unsigned int retry_interval);
 
 /**
  * @brief Sets up ROA support
@@ -163,7 +164,7 @@ int rtr_mgr_setup_sockets(struct rtr_mgr_config *config, struct rtr_mgr_group gr
  * @return RTR_INVALID_PARAM If refresh_interval or expire_interval is invalid.
  * @return RTR_SUCCESS On success.
  */
-int rtr_mgr_add_roa_support(struct rtr_mgr_config *config, const pfx_update_fp pfx_update_fp);
+enum rtr_rtvals rtr_mgr_add_roa_support(struct rtr_mgr_config *config, const rtr_pfx_update_fp pfx_update_fp);
 
 /**
  * @brief Adds a new rtr_mgr_group to the linked list of a initialized config.
@@ -183,7 +184,7 @@ int rtr_mgr_add_roa_support(struct rtr_mgr_config *config, const pfx_update_fp p
  * @return RTR_SUCCESS If the group was successfully added.
  *
  */
-int rtr_mgr_add_group(struct rtr_mgr_config *config, const struct rtr_mgr_group *group);
+enum rtr_rtvals rtr_mgr_add_group(struct rtr_mgr_config *config, const struct rtr_mgr_group *group);
 /**
  * @brief Removes an existing rtr_mgr_group from the linked list of config.
  * @details The group to be removed is identified by its preference value.
@@ -196,7 +197,7 @@ int rtr_mgr_add_group(struct rtr_mgr_config *config, const struct rtr_mgr_group 
  * @return RTR_SUCCESS If group was successfully removed.
  *
  */
-int rtr_mgr_remove_group(struct rtr_mgr_config *config, unsigned int preference);
+enum rtr_rtvals rtr_mgr_remove_group(struct rtr_mgr_config *config, unsigned int preference);
 /**
  * @brief Frees all resources that were allocated from the rtr_mgr.
  * @details rtr_mgr_stop must be called before, to shutdown all rtr_sockets.
@@ -213,7 +214,7 @@ void rtr_mgr_free(struct rtr_mgr_config *config);
  * @return RTR_SUCCESS On success
  * @return RTR_ERROR On error
  */
-int rtr_mgr_start(struct rtr_mgr_config *config);
+enum rtr_rtvals rtr_mgr_start(struct rtr_mgr_config *config);
 
 /**
  * @brief Terminates rtr_socket connections
@@ -241,8 +242,9 @@ bool rtr_mgr_conf_in_sync(struct rtr_mgr_config *config);
  * @return PFX_SUCCESS On success.
  * @return Any other `pfx_rtvals` code depending on the error.
  */
-enum pfx_rtvals rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t asn, const struct lrtr_ip_addr *prefix,
-				 const uint8_t mask_len, enum pfxv_state *result);
+enum rtr_pfx_rtvals rtr_mgr_roa_validate(struct rtr_mgr_config *config, const uint32_t asn,
+					 const struct rtr_ip_addr *prefix, const uint8_t mask_len,
+					 enum rtr_pfxv_state *result);
 
 /**
  * @brief Validates the given AS path using the ASPA algorithm.
@@ -252,12 +254,12 @@ enum pfx_rtvals rtr_mgr_validate(struct rtr_mgr_config *config, const uint32_t a
  * @param direction The direction to check; upstream or downstream
  * @param[out] result The result of the AS path validation, i.e., whether the AS path is
  *                    considered valid, invalid, or whether the validation status is unknown
- * @return ASPA_SUCCESS on success
+ * @return RTR_ASPA_SUCCESS on success
  * @return Any other `aspa_status` code depending on the error.
  */
-enum aspa_status rtr_mgr_verify_as_path(struct rtr_mgr_config *config, uint32_t as_path[],
-							     size_t len, enum aspa_direction direction,
-							     enum aspa_verification_result *result);
+enum rtr_aspa_status rtr_mgr_aspa_validate(struct rtr_mgr_config *config, uint32_t as_path[], size_t len,
+					   enum rtr_aspa_direction direction,
+					   enum rtr_aspa_verification_result *result);
 
 /**
  * @brief Returns all SPKI records which match the given ASN and SKI.
@@ -269,8 +271,8 @@ enum aspa_status rtr_mgr_verify_as_path(struct rtr_mgr_config *config, uint32_t 
  * @return SPKI_SUCCESS On success
  * @return SPKI_ERROR If an error occurred
  */
-int rtr_mgr_get_spki(struct rtr_mgr_config *config, const uint32_t asn, uint8_t *ski, struct spki_record **result,
-		     unsigned int *result_count);
+enum rtr_spki_rtvals rtr_mgr_bgpsec_get_spki(struct rtr_mgr_config *config, const uint32_t asn, uint8_t *ski,
+					     struct rtr_spki_record **result, unsigned int *result_count);
 
 /**
  * @brief Converts a rtr_mgr_status to a String.
@@ -287,8 +289,10 @@ const char *rtr_mgr_status_to_str(enum rtr_mgr_status status);
  * @param[in] config rtr_mgr_config
  * @param[in] fp Pointer to callback function with signature \c pfx_for_each_fp.
  * @param[in] data This parameter is forwarded to the callback function.
+ * @return PFX_SUCCESS on success.
+ * @return RTR_PFX_NOT_INITIALIZED if ROA support has not been enabled.
  */
-void rtr_mgr_for_each_ipv4_record(struct rtr_mgr_config *config, pfx_for_each_fp fp, void *data);
+enum rtr_pfx_rtvals rtr_mgr_roa_for_each_ipv4_record(struct rtr_mgr_config *config, rtr_pfx_for_each_fp fp, void *data);
 
 /**
  * @brief Iterates over all IPv6 records in the pfx_table.
@@ -297,8 +301,10 @@ void rtr_mgr_for_each_ipv4_record(struct rtr_mgr_config *config, pfx_for_each_fp
  * @param[in] config rtr_mgr_config
  * @param[in] fp Pointer to callback function with signature \c pfx_for_each_fp.
  * @param[in] data This parameter is forwarded to the callback function.
+ * @return PFX_SUCCESS on success.
+ * @return RTR_PFX_NOT_INITIALIZED if ROA support has not been enabled.
  */
-void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config, pfx_for_each_fp fp, void *data);
+enum rtr_pfx_rtvals rtr_mgr_roa_for_each_ipv6_record(struct rtr_mgr_config *config, rtr_pfx_for_each_fp fp, void *data);
 
 /**
  * @brief Returns the first, thus active group.
@@ -307,8 +313,8 @@ void rtr_mgr_for_each_ipv6_record(struct rtr_mgr_config *config, pfx_for_each_fp
  */
 struct rtr_mgr_group *rtr_mgr_get_first_group(struct rtr_mgr_config *config);
 
-int rtr_mgr_for_each_group(struct rtr_mgr_config *config, void (*fp)(const struct rtr_mgr_group *group, void *data),
-			   void *data);
+enum rtr_rtvals rtr_mgr_for_each_group(struct rtr_mgr_config *config,
+				       void (*fp)(const struct rtr_mgr_group *group, void *data), void *data);
 
 /**
  * @brief Sets up ASPA support
@@ -319,7 +325,7 @@ int rtr_mgr_for_each_group(struct rtr_mgr_config *config, void (*fp)(const struc
  * @return RTR_INVALID_PARAM If refresh_interval or expire_interval is invalid.
  * @return RTR_SUCCESS On success.
  */
-int rtr_mgr_add_aspa_support(struct rtr_mgr_config *config, const aspa_update_fp aspa_update_fp);
+enum rtr_rtvals rtr_mgr_add_aspa_support(struct rtr_mgr_config *config, const rtr_aspa_update_fp aspa_update_fp);
 
 /**
  * @brief Sets up BGPSEC support
@@ -330,7 +336,7 @@ int rtr_mgr_add_aspa_support(struct rtr_mgr_config *config, const aspa_update_fp
  * @return RTR_INVALID_PARAM If refresh_interval or expire_interval is invalid.
  * @return RTR_SUCCESS On success.
  */
-int rtr_mgr_add_spki_support(struct rtr_mgr_config *config, const spki_update_fp spki_update_fp);
+enum rtr_rtvals rtr_mgr_add_spki_support(struct rtr_mgr_config *config, const rtr_spki_update_fp spki_update_fp);
 
 /* @} */
 
@@ -362,8 +368,8 @@ enum rtr_bgpsec_rtvals rtr_mgr_bgpsec_validate_as_path(const struct rtr_bgpsec *
  * @return RTR_BGPSEC_ERROR If an error occurred. Refer to error codes for
  *			    more details.
  */
-int rtr_mgr_bgpsec_generate_signature(const struct rtr_bgpsec *data, uint8_t *private_key,
-				      struct rtr_signature_seg **new_signature);
+enum rtr_bgpsec_rtvals rtr_mgr_bgpsec_generate_signature(const struct rtr_bgpsec *data, uint8_t *private_key,
+							 struct rtr_signature_seg **new_signature);
 
 /**
  * @brief Returns the highest supported BGPsec version.
@@ -377,7 +383,7 @@ int rtr_mgr_bgpsec_get_version(void);
  * @return RTR_BGPSEC_SUCCESS If the algorithm suite is supported.
  * @return RTR_BGPSEC_ERROR If the algorithm suite is not supported.
  */
-int rtr_mgr_bgpsec_has_algorithm_suite(uint8_t alg_suite);
+enum rtr_bgpsec_rtvals rtr_mgr_bgpsec_has_algorithm_suite(uint8_t alg_suite);
 
 /**
  * @brief Returns pointer to a list that holds all supported algorithm suites.
@@ -430,7 +436,7 @@ struct rtr_signature_seg *rtr_mgr_bgpsec_new_signature_seg(uint8_t *ski, uint16_
  * @return RTR_BGPSEC_ERROR If an error occurred during prepending, e.g. one
  *			    or more fields of new_seg was missing.
  */
-int rtr_mgr_bgpsec_prepend_sig_seg(struct rtr_bgpsec *bgpsec, struct rtr_signature_seg *new_seg);
+enum rtr_bgpsec_rtvals rtr_mgr_bgpsec_prepend_sig_seg(struct rtr_bgpsec *bgpsec, struct rtr_signature_seg *new_seg);
 
 /**
  * @brief Initializes and returns a pointer to a rtr_bgpsec struct.
@@ -457,7 +463,7 @@ void rtr_mgr_bgpsec_free(struct rtr_bgpsec *bgpsec);
  *	  by @ref rtr_secure_path_seg.next.
  * @param[in] seg The Secure Path Segment that is to be freed.
  */
-void rtr_mgr_free_secure_path(struct rtr_secure_path_seg *seg);
+void rtr_mgr_bgpsec_free_secure_path(struct rtr_secure_path_seg *seg);
 
 /**
  * @brief Retrieve a pointer to the last appended Secure Path Segment
@@ -479,13 +485,13 @@ struct rtr_signature_seg *rtr_mgr_bgpsec_pop_signature_seg(struct rtr_bgpsec *bg
 
 void rtr_mgr_bgpsec_append_sec_path_seg(struct rtr_bgpsec *bgpsec, struct rtr_secure_path_seg *new_seg);
 
-int rtr_mgr_bgpsec_append_sig_seg(struct rtr_bgpsec *bgpsec, struct rtr_signature_seg *new_seg);
+enum rtr_bgpsec_rtvals rtr_mgr_bgpsec_append_sig_seg(struct rtr_bgpsec *bgpsec, struct rtr_signature_seg *new_seg);
 
 struct rtr_bgpsec_nlri *rtr_mgr_bgpsec_nlri_new(int nlri_len);
 
 void rtr_mgr_bgpsec_nlri_free(struct rtr_bgpsec_nlri *nlri);
 
-void rtr_mgr_bgpsec_add_spki_record(struct rtr_mgr_config *config, struct spki_record *record);
+void rtr_mgr_bgpsec_add_spki_record(struct rtr_mgr_config *config, struct rtr_spki_record *record);
 #endif
 
 #endif

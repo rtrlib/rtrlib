@@ -26,7 +26,7 @@
 #define SKI_SIZE 20
 #define SPKI_SIZE 91
 
-struct spki_table;
+struct rtr_spki_table;
 
 /**
  * @brief spki_record.
@@ -35,7 +35,7 @@ struct spki_table;
  * @param spki Subject public key info
  * @param socket Pointer to the rtr_socket this spki_record was received in
  */
-struct spki_record {
+struct rtr_spki_record {
 	uint8_t ski[SKI_SIZE];
 	uint32_t asn;
 	uint8_t spki[SPKI_SIZE];
@@ -43,12 +43,24 @@ struct spki_record {
 };
 
 /**
+ * @brief An enum describing the type of operation that has been performed in the SPKI table.
+ */
+enum __attribute__((__packed__)) rtr_spki_operation_type {
+	/** An existing record has been removed. */
+	RTR_SPKI_REMOVE = 0,
+
+	/** A new record has been added. */
+	RTR_SPKI_ADD = 1
+};
+
+/**
  * @brief A function pointer that is called if an record was added
  * to the spki_table or was removed from the spki_table.
  * @param spki_table which was updated.
  * @param record spki_record that was modified.
- * @param added True if the record was added, false if the record was removed.
+ * @param operation_type The type of operation performed on the given record.
  */
-typedef void (*spki_update_fp)(struct spki_table *spki_table, const struct spki_record record, const bool added);
+typedef void (*rtr_spki_update_fp)(struct rtr_spki_table *spki_table, const struct rtr_spki_record record,
+				   const enum rtr_spki_operation_type operation_type);
 #endif
 /** @} */

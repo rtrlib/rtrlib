@@ -15,7 +15,7 @@
 
 #include <inttypes.h>
 
-#define PFX_DBG1(a) lrtr_dbg("PFX: " a)
+#define PFX_DBG1(a) rtr_dbg("PFX: " a)
 
 /**
  * @brief trie_node
@@ -27,7 +27,7 @@
  * @param len number of elements in data array
  */
 struct trie_node {
-	struct lrtr_ip_addr prefix;
+	struct rtr_ip_addr prefix;
 	struct trie_node *rchild;
 	struct trie_node *lchild;
 	struct trie_node *parent;
@@ -48,7 +48,7 @@ void trie_insert(struct trie_node *root, struct trie_node *new_node, const unsig
  *	  prefix and prefix length. If multiple matching nodes exist, the one
  *	  with the shortest prefix is returned.
  * @param[in] root_node Node were the lookup process starts.
- * @param[in] lrtr_ip_addr IP-Prefix.
+ * @param[in] rtr_ip_addr IP-Prefix.
  * @param[in] mask_len Length of the network mask of the prefix.
  * @param[in,out] level of the the node root in the tree. Is set to the level of
  *		  the node that is returned.
@@ -57,13 +57,13 @@ void trie_insert(struct trie_node *root, struct trie_node *new_node, const unsig
  * @returns NULL if no node that matches the passed prefix and prefix length
  *	    could be found.
  */
-struct trie_node *trie_lookup(const struct trie_node *root_node, const struct lrtr_ip_addr *prefix,
+struct trie_node *trie_lookup(const struct trie_node *root_node, const struct rtr_ip_addr *prefix,
 			      const uint8_t mask_len, unsigned int *level);
 
 /**
  * @brief Search for a node with the same prefix and prefix length.
  * @param[in] root_node Node were the lookup process starts.
- * @param[in] lrtr_ip_addr IP-Prefix.
+ * @param[in] rtr_ip_addr IP-Prefix.
  * @param[in] mask_len Length of the network mask of the prefix.
  * @param[in,out] level of the the node root in the tree. Is set to the level of
  *		  the node that is returned.
@@ -74,7 +74,7 @@ struct trie_node *trie_lookup(const struct trie_node *root_node, const struct lr
  *	   stopped (found==false).
  * @return NULL if root_node is NULL.
  */
-struct trie_node *trie_lookup_exact(struct trie_node *root_node, const struct lrtr_ip_addr *prefix,
+struct trie_node *trie_lookup_exact(struct trie_node *root_node, const struct rtr_ip_addr *prefix,
 				    const uint8_t mask_len, unsigned int *level, bool *found);
 
 /**
@@ -86,7 +86,7 @@ struct trie_node *trie_lookup_exact(struct trie_node *root_node, const struct lr
  * @returns Node that was removed from the tree. The caller has to free it.
  * @returns NULL If the Prefix couldn't be found in the tree.
  */
-struct trie_node *trie_remove(struct trie_node *root_node, const struct lrtr_ip_addr *prefix, const uint8_t mask_len,
+struct trie_node *trie_remove(struct trie_node *root_node, const struct rtr_ip_addr *prefix, const uint8_t mask_len,
 			      const unsigned int level);
 
 /**
