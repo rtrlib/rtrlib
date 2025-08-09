@@ -169,7 +169,7 @@ enum aspa_verification_result aspa_verify_as_path(struct aspa_table *aspa_table,
 						  enum aspa_direction direction);
 
 /**
- * @brief Collapses an `AS_PATH` in-place, replacing in-series repetitions with single occurences
+ * @brief Collapses an `AS_PATH` in-place, replacing in-series repetitions with single occurrences
  *
  * @return Length of the given array.
  */

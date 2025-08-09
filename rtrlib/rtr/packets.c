@@ -35,14 +35,6 @@
 #define TEMPORARY_PDU_STORE_INCREMENT_VALUE 100
 #define MAX_SUPPORTED_PDU_TYPE 10
 
-/**
- * @brief @c ASPA_UPDATE_MECHANISM macro sets the mechanism used in this file to update the ASPA table.
- * @see aspa/aspa_private.h
- */
-#define ASPA_IN_PLACE 'P'
-#define ASPA_SWAP_IN 'S'
-#define ASPA_UPDATE_MECHANISM ASPA_SWAP_IN
-
 struct aspa_pdu_list_node {
 	struct pdu_aspa *pdu;
 	struct aspa_pdu_list_node *next;
@@ -1062,7 +1054,6 @@ static int rtr_update_spki_table(struct rtr_socket *rtr_socket, struct spki_tabl
 	return RTR_SUCCESS;
 }
 
-#if ASPA_UPDATE_MECHANISM == ASPA_SWAP_IN
 static int rtr_compute_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_table *aspa_table,
 					 struct pdu_aspa **aspa_pdus, size_t pdu_count, struct aspa_update **update)
 {
@@ -1137,98 +1128,6 @@ static int rtr_compute_update_aspa_table(struct rtr_socket *rtr_socket, struct a
 	RTR_DBG1("ASPA update computed");
 	return RTR_SUCCESS;
 }
-#endif
-
-#if ASPA_UPDATE_MECHANISM == ASPA_IN_PLACE
-/**
- * @brief Undoes changes made to the given @p aspa_table based on an array of @c aspa_update_operation s.
- */
-static int rtr_undo_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_table *aspa_table,
-				      struct aspa_update_operation *operations, size_t count,
-				      struct aspa_update_operation *failed_operation)
-{
-	enum aspa_status res =
-		aspa_table_update_in_place_undo(aspa_table, rtr_socket, operations, count, failed_operation);
-
-	if (res == ASPA_SUCCESS) {
-		return RTR_SUCCESS;
-	}
-	// Undo failed, cannot recover, remove all records associated with the socket instead
-	RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all ASPA records");
-	aspa_table_src_remove(aspa_table, rtr_socket, true);
-	return RTR_ERROR;
-}
-
-static int rtr_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_table *aspa_table,
-				 struct pdu_aspa **aspa_pdus, size_t pdu_count, struct aspa_update_operation **ops,
-				 struct aspa_update_operation **failed_operation)
-{
-	// Fail hard in debug builds.
-	assert(rtr_socket);
-	assert(failed_operation);
-	assert(ops);
-
-	// no aspa table was configured hence we ignore incoming aspa objects
-	if (aspa_table == NULL) {
-		const char txt[] = "IGNORING INCOMING ASPA OBJECTS";
-		RTR_DBG("%s", txt);
-		retrun RTR_SUCESS;
-	}
-
-	if (!ops || !failed_operation || (pdu_count > 0 && !aspa_pdus))
-		return RTR_ERROR;
-
-	if (!aspa_pdus && pdu_count == 0)
-		return RTR_SUCCESS;
-
-	struct aspa_update_operation *operations = lrtr_malloc(sizeof(struct aspa_update_operation) * pdu_count);
-
-	if (!operations) {
-		const char txt[] = "Malloc failed";
-
-		RTR_DBG("%s", txt);
-		rtr_send_error_pdu_from_host(rtr_socket, NULL, 0, INTERNAL_ERROR, txt, sizeof(txt));
-		rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-		return RTR_ERROR;
-	}
-
-	*ops = operations;
-
-	for (size_t i = 0; i < pdu_count; i++) {
-		rtr_aspa_pdu_2_aspa_operation(aspa_pdus[i], &operations[i]);
-		operations[i].index = i;
-	}
-
-	enum aspa_status res =
-		aspa_table_update_in_place(aspa_table, rtr_socket, operations, pdu_count, failed_operation);
-
-	if (*failed_operation) {
-		struct pdu_aspa *pdu = aspa_pdus[(*failed_operation)->index];
-		size_t pdu_size = pdu->len;
-
-		if (res == ASPA_DUPLICATE_RECORD) {
-			RTR_DBG("Duplicate Announcement for ASPA customer ASN: %u received", pdu->customer_asn);
-			rtr_send_error_pdu_from_host(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT, NULL, 0);
-			rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-			return RTR_ERROR;
-		} else if (res == ASPA_RECORD_NOT_FOUND) {
-			RTR_DBG("Withdrawal of unknown ASPA customer ASN: %u", pdu->customer_asn);
-			rtr_send_error_pdu_from_host(rtr_socket, pdu, pdu_size, WITHDRAWAL_OF_UNKNOWN_RECORD, NULL, 0);
-			rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-			return RTR_ERROR;
-		}
-	} else if (res != ASPA_SUCCESS) {
-		const char txt[] = "aspa_table Error";
-
-		RTR_DBG("%s", txt);
-		rtr_send_error_pdu_from_host(rtr_socket, NULL, 0, INTERNAL_ERROR, txt, sizeof(txt));
-		rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-		return RTR_ERROR;
-	}
-
-	return RTR_SUCCESS;
-}
-#endif
 
 static int rtr_sync_update_tables(struct rtr_socket *rtr_socket, struct pfx_table *pfx_table,
 				  struct spki_table *spki_table, struct aspa_table *aspa_table,
@@ -1240,14 +1139,7 @@ static int rtr_sync_update_tables(struct rtr_socket *rtr_socket, struct pfx_tabl
 {
 	bool proceed = true;
 	bool undo_failed = false;
-#if ASPA_UPDATE_MECHANISM == ASPA_SWAP_IN
 	struct aspa_update *aspa_update = NULL;
-#elif ASPA_UPDATE_MECHANISM == ASPA_IN_PLACE
-	struct aspa_update_operation *aspa_failed_operation = NULL;
-	struct aspa_update_operation *aspa_operations = NULL;
-#else
-#error "Invalid ASPA_UPDATE_MECHANISM value."
-#endif /* ASPA_UPDATE_MECHANISM */
 
 	// add all IPv4 prefix pdu to the pfx_table
 	for (size_t i = 0; i < ipv4_pdu_count; i++) {
@@ -1303,7 +1195,6 @@ static int rtr_sync_update_tables(struct rtr_socket *rtr_socket, struct pfx_tabl
 		}
 	}
 
-#if ASPA_UPDATE_MECHANISM == ASPA_SWAP_IN
 	if (proceed) {
 		RTR_DBG1("spki data added");
 
@@ -1328,38 +1219,6 @@ static int rtr_sync_update_tables(struct rtr_socket *rtr_socket, struct pfx_tabl
 	} else {
 		aspa_table_update_swap_in_discard(&aspa_update);
 	}
-
-#elif ASPA_UPDATE_MECHANISM == ASPA_IN_PLACE
-	if (proceed) {
-		RTR_DBG1("spki data added");
-
-		if (rtr_update_aspa_table(rtr_socket, aspa_table, aspa_pdus, aspa_pdu_count, &aspa_operations,
-					  &aspa_failed_operation) == RTR_ERROR) {
-			RTR_DBG1("error while updating ASPA data");
-			proceed = false;
-
-			if (rtr_undo_update_aspa_table(rtr_socket, aspa_table, aspa_operations, aspa_pdu_count,
-						       aspa_failed_operation) == RTR_ERROR)
-				undo_failed = true;
-
-			if (rtr_undo_update_spki_table_batch(rtr_socket, spki_table, router_key_pdus,
-							     router_key_pdu_count) == RTR_ERROR)
-				undo_failed = true;
-
-			if (rtr_undo_update_pfx_table_batch(rtr_socket, pfx_table, ipv4_pdus, ipv4_pdu_count, ipv6_pdus,
-							    ipv6_pdu_count) == RTR_ERROR)
-				undo_failed = true;
-		}
-	}
-
-	if (proceed)
-		RTR_DBG1("ASPA data added");
-
-	aspa_table_update_in_place_cleanup(&aspa_operations, aspa_pdu_count);
-	aspa_failed_operation = NULL;
-#else
-#error "Invalid ASPA_UPDATE_MECHANISM value."
-#endif /* ASPA_UPDATE_MECHANISM */
 
 	// An update attempted above failed
 	if (!proceed) {
