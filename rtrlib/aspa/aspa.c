@@ -292,7 +292,8 @@ static int compare_asns(const void *a, const void *b)
 static enum aspa_status aspa_table_update_compute_internal(struct rtr_socket *rtr_socket, struct aspa_array *array,
 							   struct aspa_array *new_array,
 							   struct aspa_update_operation *operations, size_t count,
-							   struct aspa_update_operation **failed_operation)
+							   struct aspa_update_operation **failed_operation,
+							   struct aspa_array *replaced_records)
 {
 	// Fail hard in debug builds.
 	assert(rtr_socket);
@@ -401,6 +402,17 @@ static enum aspa_status aspa_table_update_compute_internal(struct rtr_socket *rt
 				return ASPA_ERROR;
 			}
 
+			if (existing_matches_current) {
+				// Store the replaced ASPA record so that its provider ASN list can be freed when all
+				// operations were successful to avoid memory leaks. Copying the provider ASNs must not
+				// be done, otherwise we free the copied list but not the original one and thus have
+				// memory leaks again.
+				if (aspa_array_append(replaced_records, existing_record, false) != ASPA_SUCCESS) {
+					*failed_operation = current;
+					return ASPA_ERROR;
+				}
+			}
+
 			// If it's an add operation, we insert a reference to the newly created record's providers.
 			current->record.provider_asns =
 				aspa_array_get_record(new_array, new_array->size - 1)->provider_asns;
@@ -479,6 +491,7 @@ enum aspa_status aspa_table_update_swap_in_compute(struct aspa_table *aspa_table
 	(*update)->operations = operations;
 	(*update)->operation_count = count;
 	(*update)->failed_operation = NULL;
+	(*update)->replaced_records = NULL;
 
 	// stable sort operations, so operations dealing with the same customer ASN
 	// are located right next to each other
@@ -514,25 +527,38 @@ enum aspa_status aspa_table_update_swap_in_compute(struct aspa_table *aspa_table
 	// Create new array that will hold updated record data
 	struct aspa_array *new_array = NULL;
 
-	if (aspa_array_create(&new_array) != ASPA_SUCCESS)
+	if (aspa_array_create(&new_array) != ASPA_SUCCESS) {
 		return ASPA_ERROR;
+	}
+
+	struct aspa_array *replaced_records = NULL;
+
+	if (aspa_array_create(&replaced_records) != ASPA_SUCCESS) {
+		aspa_array_free(new_array, false);
+		return ASPA_ERROR;
+	}
 
 	// Populate new_array
 	pthread_rwlock_rdlock(&aspa_table->lock);
 	enum aspa_status res = aspa_table_update_compute_internal(rtr_socket, (*node)->aspa_array, new_array,
-								  operations, count, &(*update)->failed_operation);
+								  operations, count, &(*update)->failed_operation,
+								  replaced_records);
 	pthread_rwlock_unlock(&aspa_table->lock);
 
 	if (res == ASPA_SUCCESS) {
 		(*update)->node = *node;
 		(*update)->new_array = new_array;
+		(*update)->replaced_records = replaced_records;
 	} else {
 		(*update)->node = NULL;
 		(*update)->new_array = NULL;
+		(*update)->replaced_records = NULL;
 
-		// Update computation failed so release newly created array.
-		// We must not release associated provider arrays here.
+		// Update computation failed so release newly created array and
+		// the replaced ASPA records that have been stored. We must not
+		// release associated provider arrays here.
 		aspa_array_free(new_array, false);
+		aspa_array_free(replaced_records, false);
 	}
 	return res;
 }
@@ -618,6 +644,11 @@ static void aspa_table_update_swap_in_consume(struct aspa_update **update_pointe
 
 	if (!apply && update->new_array)
 		aspa_array_free(update->new_array, false);
+
+	if (apply && update->replaced_records) {
+		// The new table is now active and thus the replaced ASPA records of the old array can be freed.
+		aspa_array_free(update->replaced_records, true);
+	}
 
 	if (update->operations)
 		lrtr_free(update->operations);

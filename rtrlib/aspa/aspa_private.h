@@ -174,6 +174,12 @@ struct aspa_update {
 	struct aspa_update_operation *failed_operation;
 	struct aspa_store_node *node;
 	struct aspa_array *new_array;
+	/**
+	 * This array is used to keep track of all replaced ASPA records while creating the
+	 * new records array. Once the creation of the new ASPA records array was successful,
+	 * the provider ASN list has to freed for all replaced records to avoid memory leaks.
+	 */
+	struct aspa_array *replaced_records;
 };
 
 /**
