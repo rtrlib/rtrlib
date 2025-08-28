@@ -730,7 +730,7 @@ static int rtr_undo_update_pfx_table(struct rtr_socket *rtr_socket, struct rtr_p
 
 	assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
 
-	struct rtr_pfx_record pfxr;
+	struct rtr_pfx_record pfxr = { 0 };
 
 	rtr_prefix_pdu_2_pfx_record(rtr_socket, pdu, &pfxr, type);
 
@@ -948,7 +948,7 @@ static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, struct rtr_pfx_ta
 
 	assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
 
-	struct rtr_pfx_record pfxr;
+	struct rtr_pfx_record pfxr = { 0 };
 	size_t pdu_size = (type == IPV4_PREFIX ? sizeof(struct pdu_ipv4) : sizeof(struct pdu_ipv6));
 
 	rtr_prefix_pdu_2_pfx_record(rtr_socket, pdu, &pfxr, type);

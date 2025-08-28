@@ -30,7 +30,7 @@ uint32_t max_i = 0xFFFFFFF0;
 static void *rec_add(struct rtr_pfx_table *pfxt)
 {
 	const int tid = getpid();
-	struct rtr_pfx_record rec;
+	struct rtr_pfx_record rec = { 0 };
 
 	rec.min_len = 32;
 	rec.max_len = 32;
@@ -67,7 +67,7 @@ static void *rec_add(struct rtr_pfx_table *pfxt)
 static void *rec_val(struct rtr_pfx_table *pfxt)
 {
 	const int tid = getpid();
-	struct rtr_pfx_record rec;
+	struct rtr_pfx_record rec = {0 };
 	enum rtr_pfxv_state res;
 
 	rec.min_len = 32;
@@ -102,7 +102,7 @@ static void *rec_val(struct rtr_pfx_table *pfxt)
 static void *rec_del(struct rtr_pfx_table *pfxt)
 {
 	const int tid = getpid();
-	struct rtr_pfx_record rec;
+	struct rtr_pfx_record rec = { 0 };
 
 	rec.min_len = 32;
 	rec.max_len = 32;
