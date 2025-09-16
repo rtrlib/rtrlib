@@ -84,7 +84,7 @@
 
 #define ASPA_NOTIFY_NO_OPS 0
 
-#define ASPA_DBG1(a) lrtr_dbg("ASPA: " a)
+#define ASPA_DBG1(a) rtr_dbg("ASPA: " a)
 
 // MARK: - Verification
 
@@ -94,7 +94,7 @@ enum aspa_hop_result { ASPA_NO_ATTESTATION, ASPA_NOT_PROVIDER_PLUS, ASPA_PROVIDE
  * @brief Checks a hop in the given `AS_PATH`.
  * @return @c aspa_hop_result .
  */
-enum aspa_hop_result aspa_check_hop(struct aspa_table *aspa_table, uint32_t customer_asn, uint32_t provider_asn);
+enum aspa_hop_result aspa_check_hop(struct rtr_aspa_table *aspa_table, uint32_t customer_asn, uint32_t provider_asn);
 
 // MARK: - Storage
 /**
@@ -118,9 +118,9 @@ struct aspa_store_node {
  * @param[in] rtr_socket The socket the records are associated with.
  * @param notify_dst A boolean value determining whether to notify the destination table's clients.
  * @param notify_src A boolean value determining whether to notify the source table's clients.
- * @return @c ASPA_SUCCESS if the operation succeeds, @c ASPA_ERROR if it fails.
+ * @return @c RTR_ASPA_SUCCESS if the operation succeeds, @c ASPA_ERROR if it fails.
  */
-enum aspa_status aspa_table_src_replace(struct aspa_table *dst, struct aspa_table *src, struct rtr_socket *rtr_socket,
+enum rtr_aspa_status aspa_table_src_replace(struct rtr_aspa_table *dst, struct rtr_aspa_table *src, struct rtr_socket *rtr_socket,
 					bool notify_dst, bool notify_src);
 
 // MARK: - Updating
@@ -135,8 +135,8 @@ enum aspa_status aspa_table_src_replace(struct aspa_table *dst, struct aspa_tabl
  */
 struct aspa_update_operation {
 	size_t index;
-	enum aspa_operation_type type;
-	struct aspa_record record;
+	enum rtr_aspa_operation_type type;
+	struct rtr_aspa_record record;
 	bool is_no_op;
 };
 
@@ -153,7 +153,7 @@ struct aspa_update_operation {
  * @param new_array The new ASPA array replacing the node's existing array.
  */
 struct aspa_update {
-	struct aspa_table *table;
+	struct rtr_aspa_table *table;
 	struct aspa_update_operation *operations;
 	size_t operation_count;
 	struct aspa_update_operation *failed_operation;
@@ -177,13 +177,13 @@ struct aspa_update {
  * @param[in] count  Number of operations.
  * @param update The computed update. The update pointer must be non-NULL, but may point to a @c NULL
  * value initially. Points to an update struct after  this function returns.
- * @return @c ASPA_SUCCESS On success.
+ * @return @c RTR_ASPA_SUCCESS On success.
  * @return @c ASPA_RECORD_NOT_FOUND If a records is supposed to be removed but cannot be found.
  * @return @c ASPA_DUPLICATE_RECORD If a records is supposed to be added but its corresponding
  * customer ASN already exists.
  * @return @c ASPA_ERROR On other failures.
  */
-enum aspa_status aspa_table_update_swap_in_compute(struct aspa_table *aspa_table, struct rtr_socket *rtr_socket,
+enum rtr_aspa_status aspa_table_update_swap_in_compute(struct rtr_aspa_table *aspa_table, struct rtr_socket *rtr_socket,
 						   struct aspa_update_operation *operations, size_t count,
 						   struct aspa_update **update);
 

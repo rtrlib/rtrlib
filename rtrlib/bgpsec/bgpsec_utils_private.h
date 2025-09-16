@@ -19,8 +19,8 @@
 #include <openssl/x509.h>
 #include <string.h>
 
-#define BGPSEC_DBG(fmt, ...) lrtr_dbg("BGPSEC: " fmt, ##__VA_ARGS__)
-#define BGPSEC_DBG1(a) lrtr_dbg("BGPSEC: " a)
+#define BGPSEC_DBG(fmt, ...) rtr_dbg("BGPSEC: " fmt, ##__VA_ARGS__)
+#define BGPSEC_DBG1(a) rtr_dbg("BGPSEC: " a)
 
 /** The length of a rtr_secure_path_seg without the next pointer:
  * pcount(1) + flags(1) + asn(4)
@@ -81,7 +81,7 @@ size_t req_stream_size(const struct rtr_bgpsec *data, enum align_type type);
 int get_sig_seg_size(const struct rtr_signature_seg *sig_segs, enum align_type type);
 
 /* Check, if there is at least one router key for each SKI from sig_segs. */
-int check_router_keys(const struct rtr_signature_seg *sig_segs, struct spki_table *table);
+int check_router_keys(const struct rtr_signature_seg *sig_segs, struct rtr_spki_table *table);
 
 /* Store the string representation of a BGPsec_PATH segment in buffer. */
 int bgpsec_segment_to_str(char *buffer, struct rtr_signature_seg *sig_seg, struct rtr_secure_path_seg *sec_path);
@@ -103,7 +103,7 @@ int align_byte_sequence(const struct rtr_bgpsec *data, struct stream *s, enum al
 int hash_byte_sequence(uint8_t *bytes, size_t bytes_len, uint8_t alg_suite_id, unsigned char **result_buffer);
 
 /* Validate a signature sig. */
-int validate_signature(const unsigned char *hash, const struct rtr_signature_seg *sig, struct spki_record *record);
+int validate_signature(const unsigned char *hash, const struct rtr_signature_seg *sig, struct rtr_spki_record *record);
 
 /* Load a binary private key bytes_key and store it in the openssl EC_KEY
  * priv_key.

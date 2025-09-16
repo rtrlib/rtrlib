@@ -42,12 +42,12 @@ static void *binary_search_asns(const uint32_t cas, uint32_t *array, size_t len)
 	return NULL;
 }
 
-enum aspa_hop_result aspa_check_hop(struct aspa_table *aspa_table, uint32_t customer_asn, uint32_t provider_asn)
+enum aspa_hop_result aspa_check_hop(struct rtr_aspa_table *aspa_table, uint32_t customer_asn, uint32_t provider_asn)
 {
 	bool customer_found = false;
 
 	for (struct aspa_store_node *node = aspa_table->store; node != NULL; node = node->next) {
-		struct aspa_record *aspa_record = aspa_array_search(node->aspa_array, customer_asn);
+		struct rtr_aspa_record *aspa_record = aspa_array_search(node->aspa_array, customer_asn);
 
 		if (!aspa_record)
 			continue;
@@ -67,12 +67,12 @@ enum aspa_hop_result aspa_check_hop(struct aspa_table *aspa_table, uint32_t cust
 	return customer_found ? ASPA_NOT_PROVIDER_PLUS : ASPA_NO_ATTESTATION;
 }
 
-static enum aspa_verification_result aspa_verify_as_path_upstream(struct aspa_table *aspa_table, uint32_t as_path[],
-								  size_t len)
+static enum rtr_aspa_verification_result aspa_verify_as_path_upstream(struct rtr_aspa_table *aspa_table,
+								      uint32_t as_path[], size_t len)
 {
 	if (aspa_table == NULL) {
 		ASPA_DBG1("TRYING TO VALIDATE A AS_PATH BUT NO ASPA TABLE INITIALIZED");
-		return ASPA_AS_PATH_INVALID;
+		return RTR_ASPA_AS_PATH_INVALID;
 	}
 
 	// Optimized AS_PATH verification algorithm using zero based array
@@ -81,7 +81,7 @@ static enum aspa_verification_result aspa_verify_as_path_upstream(struct aspa_ta
 	// Doesn't check any hop twice.
 	if (len <= 1)
 		// Trivially VALID AS_PATH
-		return ASPA_AS_PATH_VALID;
+		return RTR_ASPA_AS_PATH_VALID;
 
 	pthread_rwlock_rdlock(&aspa_table->lock);
 
@@ -95,7 +95,7 @@ static enum aspa_verification_result aspa_verify_as_path_upstream(struct aspa_ta
 	if (r == 0) {
 		// Complete customer-provider chain, VALID upstream AS_PATH
 		pthread_rwlock_unlock(&aspa_table->lock);
-		return ASPA_AS_PATH_VALID;
+		return RTR_ASPA_AS_PATH_VALID;
 	}
 
 	bool found_nP_from_right = false;
@@ -141,18 +141,18 @@ static enum aspa_verification_result aspa_verify_as_path_upstream(struct aspa_ta
 
 	// If nP+ occurs upstream customer-provider chain, return INVALID.
 	if (found_nP_from_right) {
-		return ASPA_AS_PATH_INVALID;
+		return RTR_ASPA_AS_PATH_INVALID;
 	}
 
-	return ASPA_AS_PATH_UNKNOWN;
+	return RTR_ASPA_AS_PATH_UNKNOWN;
 }
 
-static enum aspa_verification_result aspa_verify_as_path_downstream(struct aspa_table *aspa_table, uint32_t as_path[],
-								    size_t len)
+static enum rtr_aspa_verification_result aspa_verify_as_path_downstream(struct rtr_aspa_table *aspa_table,
+									uint32_t as_path[], size_t len)
 {
 	if (aspa_table == NULL) {
 		ASPA_DBG1("TRYING TO VALIDATE A AS_PATH BUT NO ASPA TABLE INITIALIZED");
-		return ASPA_AS_PATH_INVALID;
+		return RTR_ASPA_AS_PATH_INVALID;
 	}
 
 	// Optimized AS_PATH verification algorithm using zero based array
@@ -161,7 +161,7 @@ static enum aspa_verification_result aspa_verify_as_path_downstream(struct aspa_
 	// Doesn't check any hop twice.
 	if (len <= 2)
 		// Trivially VALID AS_PATH
-		return ASPA_AS_PATH_VALID;
+		return RTR_ASPA_AS_PATH_VALID;
 
 	pthread_rwlock_rdlock(&aspa_table->lock);
 
@@ -187,7 +187,7 @@ static enum aspa_verification_result aspa_verify_as_path_downstream(struct aspa_
 	// there's no way to create a route leak, return VALID.
 	if (r - l <= 1) {
 		pthread_rwlock_unlock(&aspa_table->lock);
-		return ASPA_AS_PATH_VALID;
+		return RTR_ASPA_AS_PATH_VALID;
 	}
 
 	/*
@@ -267,27 +267,28 @@ static enum aspa_verification_result aspa_verify_as_path_downstream(struct aspa_
 	// If two nP+ occur in opposing directions, return INVALID.
 	if (found_nP_from_right && found_nP_from_left) {
 		pthread_rwlock_unlock(&aspa_table->lock);
-		return ASPA_AS_PATH_INVALID;
+		return RTR_ASPA_AS_PATH_INVALID;
 	}
 
 	pthread_rwlock_unlock(&aspa_table->lock);
-	return ASPA_AS_PATH_UNKNOWN;
+	return RTR_ASPA_AS_PATH_UNKNOWN;
 }
 
-RTRLIB_EXPORT enum aspa_verification_result aspa_verify_as_path(struct aspa_table *aspa_table, uint32_t as_path[],
-								size_t len, enum aspa_direction direction)
+RTRLIB_EXPORT enum rtr_aspa_verification_result rtr_aspa_verify_as_path(struct rtr_aspa_table *aspa_table,
+									uint32_t as_path[], size_t len,
+									enum rtr_aspa_direction direction)
 {
 	switch (direction) {
-	case ASPA_UPSTREAM:
+	case RTR_ASPA_UPSTREAM:
 		return aspa_verify_as_path_upstream(aspa_table, as_path, len);
-	case ASPA_DOWNSTREAM:
+	case RTR_ASPA_DOWNSTREAM:
 		return aspa_verify_as_path_downstream(aspa_table, as_path, len);
 	}
 
-	return ASPA_AS_PATH_UNKNOWN;
+	return RTR_ASPA_AS_PATH_UNKNOWN;
 }
 
-RTRLIB_EXPORT size_t aspa_collapse_as_path(uint32_t as_path[], size_t len)
+RTRLIB_EXPORT size_t rtr_aspa_collapse_as_path(uint32_t as_path[], size_t len)
 {
 	if (len == 0)
 		return 0;

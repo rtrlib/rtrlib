@@ -7,8 +7,8 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#ifndef LRTR_ALLOC_UTILS_H
-#define LRTR_ALLOC_UTILS_H
+#ifndef RTR_ALLOC_UTILS_H
+#define RTR_ALLOC_UTILS_H
 
 #include <stdlib.h>
 
@@ -19,7 +19,7 @@
  * @param[in] Pointer to realloc function
  * @param[in] Pointer to free function
  */
-void lrtr_set_alloc_functions(void *(*malloc_function)(size_t size), void *(*realloc_function)(void *ptr, size_t size),
+void rtr_set_alloc_functions(void *(*malloc_function)(size_t size), void *(*realloc_function)(void *ptr, size_t size),
 			      void (*free_function)(void *ptr));
 
 #endif
