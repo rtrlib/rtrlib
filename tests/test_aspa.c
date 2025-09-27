@@ -848,14 +848,10 @@ static void test_withdraw_twice(struct rtr_socket *socket)
 	end_cache_response(RTR_PROTOCOL_VERSION_2, 0, 444);
 
 	EXPECT_ERROR_PDUS_SENT(ERROR_PDU(WITHDRAWAL_OF_UNKNOWN_RECORD));
+	EXPECT_NO_UPDATE_CALLBACKS();
 
-	// Callback behavior deviates for different update mechanisms
-	// Swap-In: No callback because update computation fails
-	// In-Place: Callbacks until failed operation, then callbacks from undo
-	assert_callbacks = false;
 	assert(rtr_sync(socket) == RTR_ERROR);
 	assert(expected_error_pdus_index == expected_error_pdus_count);
-	assert_callbacks = true;
 
 	ASSERT_TABLE(socket,
 		RECORD(1900, ASNS(1901, 1902, 1903, 1904)),
@@ -895,14 +891,10 @@ static void test_announce_withdraw_announce_twice(struct rtr_socket *socket)
 	end_cache_response(RTR_PROTOCOL_VERSION_2, 0, 444);
 
 	EXPECT_ERROR_PDUS_SENT(ERROR_PDU(DUPLICATE_ANNOUNCEMENT));
+	EXPECT_NO_UPDATE_CALLBACKS();
 
-	// Callback behavior deviates for different update mechanisms
-	// Swap-In: No callback because update computation fails
-	// In-Place: Callbacks until failed operation, then callbacks from undo
-	assert_callbacks = false;
 	assert(rtr_sync(socket) == RTR_ERROR);
 	assert(expected_error_pdus_index == expected_error_pdus_count);
-	assert_callbacks = true;
 
 	ASSERT_TABLE(socket,
 		RECORD(1400, ASNS(1401, 1402, 1403, 1404)),
