@@ -15,25 +15,25 @@
 #include <string.h>
 
 struct add_records_args {
-	struct spki_table *table;
+	struct rtr_spki_table *table;
 	int start_asn;
 	int count;
 };
 
 struct remove_records_args {
-	struct spki_table *table;
+	struct rtr_spki_table *table;
 	int start_asn;
 	int count;
 };
 
-static struct spki_record *create_record(int ASN, int ski_offset, int spki_offset, struct rtr_socket *socket);
+static struct rtr_spki_record *create_record(int ASN, int ski_offset, int spki_offset, struct rtr_socket *socket);
 
 /**
  * @brief Compare SPKI records for equality
  *
  * @return true if r1 == r2, false otherwise
  */
-static bool compare_spki_records(struct spki_record *r1, struct spki_record *r2)
+static bool compare_spki_records(struct rtr_spki_record *r1, struct rtr_spki_record *r2)
 {
 	if (r1->asn != r2->asn)
 		return false;
@@ -52,9 +52,9 @@ static bool compare_spki_records(struct spki_record *r1, struct spki_record *r2)
  *
  * @return new SPKI record
  */
-static struct spki_record *create_record(int ASN, int ski_offset, int spki_offset, struct rtr_socket *socket)
+static struct rtr_spki_record *create_record(int ASN, int ski_offset, int spki_offset, struct rtr_socket *socket)
 {
-	struct spki_record *record = lrtr_malloc(sizeof(struct spki_record));
+	struct rtr_spki_record *record = malloc(sizeof(struct rtr_spki_record));
 	uint32_t i;
 
 	record->asn = ASN;
@@ -78,11 +78,11 @@ static void *add_records(struct add_records_args *args)
 {
 	printf("Add %i records: ASN [%i..%i]\n", args->count, args->start_asn, args->count + args->start_asn - 1);
 	for (int i = args->start_asn; i < args->count + args->start_asn; i++) {
-		struct spki_record *record = create_record(i, i, i, NULL);
+		struct rtr_spki_record *record = create_record(i, i, i, NULL);
 		int ret = spki_table_add_entry(args->table, record);
 
-		assert(ret == SPKI_SUCCESS);
-		lrtr_free(record);
+		assert(ret == RTR_SPKI_SUCCESS);
+		free(record);
 	}
 
 	return NULL;
@@ -96,11 +96,11 @@ static void *remove_records(struct remove_records_args *args)
 {
 	printf("Remove %i records: ASN [%i..%i]\n", args->count, args->start_asn, args->count + args->start_asn - 1);
 	for (int i = args->start_asn; i < args->count + args->start_asn; i++) {
-		struct spki_record *record = create_record(i, i, i, NULL);
+		struct rtr_spki_record *record = create_record(i, i, i, NULL);
 		int ret = spki_table_remove_entry(args->table, record);
 
-		assert(ret == SPKI_SUCCESS);
-		lrtr_free(record);
+		assert(ret == RTR_SPKI_SUCCESS);
+		free(record);
 	}
 
 	return NULL;
@@ -113,7 +113,7 @@ static void lock_test1(void)
 {
 	unsigned int max_threads = 20;
 	unsigned int records_per_thread = 10000;
-	struct spki_table spkit;
+	struct rtr_spki_table spkit;
 	struct add_records_args args[max_threads];
 
 	spki_table_init(&spkit, NULL);
@@ -134,17 +134,17 @@ static void lock_test1(void)
 	}
 
 	/* Check all records for successful add */
-	struct spki_record *result;
+	struct rtr_spki_record *result;
 	unsigned int result_size = 0;
 
 	for (unsigned int i = 0; i < records_per_thread * max_threads; i++) {
-		struct spki_record *record = create_record(i, i, i, NULL);
+		struct rtr_spki_record *record = create_record(i, i, i, NULL);
 
 		spki_table_get_all(&spkit, record->asn, record->ski, &result, &result_size);
 		assert(result_size == 1);
 		assert(compare_spki_records(record, &result[0]));
-		lrtr_free(result);
-		lrtr_free(record);
+		free(result);
+		free(record);
 	}
 
 	struct remove_records_args remove_args[max_threads];

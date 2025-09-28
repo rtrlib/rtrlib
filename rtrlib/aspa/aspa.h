@@ -36,7 +36,7 @@
  * @param provider_count The number of providers this customer declares.
  * @param provider_asns An array of provider ASNs.
  */
-struct aspa_record {
+struct rtr_aspa_record {
 	uint32_t customer_asn;
 	size_t provider_count;
 	uint32_t *provider_asns;
@@ -44,21 +44,21 @@ struct aspa_record {
 
 // MARK: - ASPA Table
 
-struct aspa_table;
+struct rtr_aspa_table;
 
 /**
  * @brief An enum describing the type of operation the ASPA table should perform using any given ASPA record.
  */
-enum __attribute__((__packed__)) aspa_operation_type {
+enum __attribute__((__packed__)) rtr_aspa_operation_type {
 	/** The existing record, identified by its customer ASN, shall be withdrawn from the ASPA table. */
-	ASPA_REMOVE = 0,
+	RTR_ASPA_REMOVE = 0,
 
 	/**
 	 * The new record, identified by its customer ASN, shall be added to the ASPA table.
 	 * If a record with the same customer ASN already exists, this operation is supposed
 	 * to replace the existing one with the new record.
 	 */
-	ASPA_ADD = 1
+	RTR_ASPA_ADD = 1
 };
 
 /**
@@ -70,8 +70,9 @@ enum __attribute__((__packed__)) aspa_operation_type {
  * @param rtr_socket The socket the record originated from
  * @param operation_type The type of this operation.
  */
-typedef void (*aspa_update_fp)(struct aspa_table *aspa_table, const struct aspa_record record,
-			       const struct rtr_socket *rtr_socket, const enum aspa_operation_type operation_type);
+typedef void (*rtr_aspa_update_fp)(struct rtr_aspa_table *aspa_table, const struct rtr_aspa_record record,
+				   const struct rtr_socket *rtr_socket,
+				   const enum rtr_aspa_operation_type operation_type);
 
 /**
  * @brief ASPA Table
@@ -84,31 +85,31 @@ typedef void (*aspa_update_fp)(struct aspa_table *aspa_table, const struct aspa_
  * An ASPA table consists of a linked list of a sockets  and ASPA arrays, simplifying removing or replacing records
  * originating from any given socket.
  */
-struct aspa_table {
+struct rtr_aspa_table {
 	pthread_rwlock_t lock;
 	pthread_rwlock_t update_lock;
-	aspa_update_fp update_fp;
+	rtr_aspa_update_fp update_fp;
 	struct aspa_store_node *store;
 };
 
 /**
  * @brief Possible return values for `aspa_*` functions.
  */
-enum aspa_status {
+enum rtr_aspa_status {
 	/** Operation was successful. */
-	ASPA_SUCCESS = 0,
+	RTR_ASPA_SUCCESS = 0,
 
 	/** Error occurred. */
-	ASPA_ERROR = -1,
+	RTR_ASPA_ERROR = -1,
 
 	/** The supplied aspa_record already exists in the aspa_table. */
-	ASPA_DUPLICATE_RECORD = -2,
+	RTR_ASPA_DUPLICATE_RECORD = -2,
 
 	/** aspa_record wasn't found in the aspa_table. */
-	ASPA_RECORD_NOT_FOUND = -3,
+	RTR_ASPA_RECORD_NOT_FOUND = -3,
 
 	/** The ASPA feature was not initialized/enabled. */
-	ASPA_NOT_INITIALIZED = -4,
+	RTR_ASPA_NOT_INITIALIZED = -4,
 };
 
 /**
@@ -117,7 +118,7 @@ enum aspa_status {
  * @param[in] aspa_table aspa_table that will be initialized.
  * @param[in] update_fp Pointer to update function
  */
-void aspa_table_init(struct aspa_table *aspa_table, aspa_update_fp update_fp);
+void rtr_aspa_table_init(struct rtr_aspa_table *aspa_table, rtr_aspa_update_fp update_fp);
 
 /**
  * @brief Frees the memory associated with the @p aspa_table
@@ -125,7 +126,7 @@ void aspa_table_init(struct aspa_table *aspa_table, aspa_update_fp update_fp);
  * @param[in] aspa_table aspa_table that will be initialized.
  * @param notify A boolean value determining whether to notify clients about records being removed from the table.
  */
-void aspa_table_free(struct aspa_table *aspa_table, bool notify);
+void rtr_aspa_table_free(struct rtr_aspa_table *aspa_table, bool notify);
 
 /**
  * @brief Removes all records in the @p aspa_table that originated from the socket.
@@ -136,19 +137,20 @@ void aspa_table_free(struct aspa_table *aspa_table, bool notify);
  * @return @c SPKI_SUCCESS On success.
  * @return @c SPKI_ERROR On error.
  */
-enum aspa_status aspa_table_src_remove(struct aspa_table *aspa_table, struct rtr_socket *rtr_socket, bool notify);
+enum rtr_aspa_status rtr_aspa_table_src_remove(struct rtr_aspa_table *aspa_table, struct rtr_socket *rtr_socket,
+					       bool notify);
 
 // MARK: - AS_PATH Verification
 
-enum aspa_direction { ASPA_UPSTREAM, ASPA_DOWNSTREAM };
+enum rtr_aspa_direction { RTR_ASPA_UPSTREAM, RTR_ASPA_DOWNSTREAM };
 
 /**
  * @brief AS_PATH verification result.
  */
-enum aspa_verification_result {
-	ASPA_AS_PATH_UNKNOWN,
-	ASPA_AS_PATH_INVALID,
-	ASPA_AS_PATH_VALID,
+enum rtr_aspa_verification_result {
+	RTR_ASPA_AS_PATH_UNKNOWN,
+	RTR_ASPA_AS_PATH_INVALID,
+	RTR_ASPA_AS_PATH_VALID,
 };
 
 /**
@@ -165,15 +167,15 @@ enum aspa_verification_result {
  * @return @c ASPA_AS_PATH_INVALID if `AS_PATH` is invalid
  * @return @c ASPA_AS_PATH_VALID if `AS_PATH` is valid
  */
-enum aspa_verification_result aspa_verify_as_path(struct aspa_table *aspa_table, uint32_t as_path[], size_t len,
-						  enum aspa_direction direction);
+enum rtr_aspa_verification_result rtr_aspa_verify_as_path(struct rtr_aspa_table *aspa_table, uint32_t as_path[],
+							  size_t len, enum rtr_aspa_direction direction);
 
 /**
- * @brief Collapses an `AS_PATH` in-place, replacing in-series repetitions with single occurences
+ * @brief Collapses an `AS_PATH` in-place, replacing in-series repetitions with single occurrences
  *
  * @return Length of the given array.
  */
-size_t aspa_collapse_as_path(uint32_t as_path[], size_t len);
+size_t rtr_aspa_collapse_as_path(uint32_t as_path[], size_t len);
 
 #endif /* RTR_ASPA_H */
 /** @} */

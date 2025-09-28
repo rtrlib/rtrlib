@@ -7,8 +7,8 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
-#ifndef LRTR_IPV4_PRIVATE_H
-#define LRTR_IPV4_PRIVATE_H
+#ifndef RTR_IPV4_PRIVATE_H
+#define RTR_IPV4_PRIVATE_H
 
 #include "ipv4.h"
 
@@ -29,7 +29,7 @@
  *
  * @returns An ipv4_addr, with all bits not in the specified range set to 0.
  */
-struct lrtr_ipv4_addr lrtr_ipv4_get_bits(const struct lrtr_ipv4_addr *val, const uint8_t from, const uint8_t number);
+struct rtr_ipv4_addr rtr_ipv4_get_bits(const struct rtr_ipv4_addr *val, const uint8_t from, const uint8_t number);
 
 /**
  * @brief Converts ab IPv4 address from string to ipv4_addr struct.
@@ -40,7 +40,7 @@ struct lrtr_ipv4_addr lrtr_ipv4_get_bits(const struct lrtr_ipv4_addr *val, const
  * @result 0 on success
  * @result -1 on error
  */
-int lrtr_ipv4_str_to_addr(const char *str, struct lrtr_ipv4_addr *ip);
+int rtr_ipv4_str_to_addr(const char *str, struct rtr_ipv4_addr *ip);
 
 /**
  * @brief Converts an ipv4_addr struct to its string representation.
@@ -52,7 +52,7 @@ int lrtr_ipv4_str_to_addr(const char *str, struct lrtr_ipv4_addr *ip);
  * @result 0 on success
  * @result -1 on error
  */
-int lrtr_ipv4_addr_to_str(const struct lrtr_ipv4_addr *ip, char *str, const unsigned int len);
+int rtr_ipv4_addr_to_str(const struct rtr_ipv4_addr *ip, char *str, const unsigned int len);
 
 /**
  * @brief Compares two ipv4_addr structs.
@@ -63,7 +63,7 @@ int lrtr_ipv4_addr_to_str(const struct lrtr_ipv4_addr *ip, char *str, const unsi
  * @return true if a == b
  * @return false if a != b
  */
-bool lrtr_ipv4_addr_equal(const struct lrtr_ipv4_addr *a, const struct lrtr_ipv4_addr *b);
+bool rtr_ipv4_addr_equal(const struct rtr_ipv4_addr *a, const struct rtr_ipv4_addr *b);
 
 /**
  * @ingroup util_h[{
@@ -74,6 +74,6 @@ bool lrtr_ipv4_addr_equal(const struct lrtr_ipv4_addr *a, const struct lrtr_ipv4
  * @param[in] tbo       Target byte order for address conversion.
  * }
  */
-void lrtr_ipv4_addr_convert_byte_order(const uint32_t src, uint32_t *dest, const enum target_byte_order tbo);
+void rtr_ipv4_addr_convert_byte_order(const uint32_t src, uint32_t *dest, const enum target_byte_order tbo);
 
 #endif

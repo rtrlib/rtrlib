@@ -29,7 +29,18 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-struct pfx_table;
+struct rtr_pfx_table;
+
+/**
+ * @brief An enum describing the type of operation that has been performed in the PFX table.
+ */
+enum __attribute__((__packed__)) rtr_pfx_operation_type {
+	/** An existing record has been removed. */
+	RTR_PFX_REMOVE = 0,
+
+	/** A new record has been added. */
+	RTR_PFX_ADD = 1
+};
 
 /**
  * @brief pfx_record.
@@ -39,9 +50,9 @@ struct pfx_table;
  * @param max_len Maximum prefix length.
  * @param socket The rtr_socket that received this record.
  */
-struct pfx_record {
+struct rtr_pfx_record {
 	uint32_t asn;
-	struct lrtr_ip_addr prefix;
+	struct rtr_ip_addr prefix;
 	uint8_t min_len;
 	uint8_t max_len;
 	const struct rtr_socket *socket;
@@ -51,9 +62,10 @@ struct pfx_record {
  * @brief A function pointer that is called if an record was added to the pfx_table or was removed from the pfx_table.
  * @param pfx_table which was updated.
  * @param record pfx_record that was modified.
- * @param added True if the record was added, false if the record was removed.
+ * @param operation_type The type of operation performed on the given record.
  */
-typedef void (*pfx_update_fp)(struct pfx_table *pfx_table, const struct pfx_record record, const bool added);
+typedef void (*rtr_pfx_update_fp)(struct rtr_pfx_table *pfx_table, const struct rtr_pfx_record record,
+				  const enum rtr_pfx_operation_type operation_type);
 
 /**
  * @brief pfx_table.
@@ -62,10 +74,10 @@ typedef void (*pfx_update_fp)(struct pfx_table *pfx_table, const struct pfx_reco
  * @param update_fp
  * @param lock
  */
-struct pfx_table {
+struct rtr_pfx_table {
 	struct trie_node *ipv4;
 	struct trie_node *ipv6;
-	pfx_update_fp update_fp;
+	rtr_pfx_update_fp update_fp;
 	pthread_rwlock_t lock;
 };
 

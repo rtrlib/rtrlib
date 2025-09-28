@@ -16,8 +16,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define RTR_DBG(fmt, ...) lrtr_dbg("RTR Socket: " fmt, ##__VA_ARGS__)
-#define RTR_DBG1(a) lrtr_dbg("RTR Socket: " a)
+#define RTR_DBG(fmt, ...) rtr_dbg("RTR Socket: " fmt, ##__VA_ARGS__)
+#define RTR_DBG1(a) rtr_dbg("RTR Socket: " a)
 
 static const uint32_t RTR_EXPIRATION_MIN = 600; // ten minutes
 static const uint32_t RTR_EXPIRATION_MAX = 172800; // two days
@@ -68,8 +68,8 @@ enum rtr_interval_type { RTR_INTERVAL_TYPE_EXPIRATION, RTR_INTERVAL_TYPE_REFRESH
  * @return RTR_INVALID_PARAM If the refresh_interval or the expire_interval is not valid.
  * @return RTR_SUCCESS On success.
  */
-int rtr_init(struct rtr_socket *rtr_socket, struct tr_socket *tr_socket, struct pfx_table *pfx_table,
-	     struct spki_table *spki_table, struct aspa_table *aspa_table, const unsigned int refresh_interval,
+int rtr_init(struct rtr_socket *rtr_socket, struct rtr_tr_socket *tr_socket, struct rtr_pfx_table *pfx_table,
+	     struct rtr_spki_table *spki_table, struct rtr_aspa_table *aspa_table, const unsigned int refresh_interval,
 	     const unsigned int expire_interval, const unsigned int retry_interval, enum rtr_interval_mode iv_mode,
 	     rtr_connection_state_fp fp, void *fp_data_config, void *fp_data_group);
 

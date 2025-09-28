@@ -31,17 +31,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MGR_DBG1(a) lrtr_dbg("RTR_MGR: " a)
+#define MGR_DBG1(a) rtr_dbg("RTR_MGR: " a)
 #define TEMPORARY_PDU_STORE_INCREMENT_VALUE 100
 #define MAX_SUPPORTED_PDU_TYPE 10
-
-/**
- * @brief @c ASPA_UPDATE_MECHANISM macro sets the mechanism used in this file to update the ASPA table.
- * @see aspa/aspa_private.h
- */
-#define ASPA_IN_PLACE 'P'
-#define ASPA_SWAP_IN 'S'
-#define ASPA_UPDATE_MECHANISM ASPA_SWAP_IN
 
 struct aspa_pdu_list_node {
 	struct pdu_aspa *pdu;
@@ -82,7 +74,7 @@ static inline enum pdu_type rtr_get_pdu_type(const void *pdu)
 
 static int rtr_set_last_update(struct rtr_socket *rtr_socket)
 {
-	if (lrtr_get_monotonic_time(&(rtr_socket->last_update)) == -1) {
+	if (rtr_get_monotonic_time(&(rtr_socket->last_update)) == -1) {
 		RTR_DBG1("get_monotonic_time(..) failed ");
 		rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
 		return RTR_ERROR;
@@ -189,9 +181,9 @@ static void rtr_pdu_convert_header_byte_order(void *pdu, const enum target_byte_
 
 	// The ROUTER_KEY and ASPA PDUs have two 1 Byte fields instead of the 2 Byte reserved field.
 	if (header->type != ROUTER_KEY && header->type != ASPA)
-		header->reserved = lrtr_convert_short(target_byte_order, header->reserved);
+		header->reserved = rtr_convert_short(target_byte_order, header->reserved);
 
-	header->len = lrtr_convert_long(target_byte_order, header->len);
+	header->len = rtr_convert_long(target_byte_order, header->len);
 }
 
 static void rtr_pdu_convert_footer_byte_order(void *pdu, const enum target_byte_order target_byte_order)
@@ -204,72 +196,72 @@ static void rtr_pdu_convert_footer_byte_order(void *pdu, const enum target_byte_
 	switch (type) {
 	case SERIAL_QUERY:
 		((struct pdu_serial_query *)pdu)->sn =
-			lrtr_convert_long(target_byte_order, ((struct pdu_serial_query *)pdu)->sn);
+			rtr_convert_long(target_byte_order, ((struct pdu_serial_query *)pdu)->sn);
 		break;
 
 	case ERROR:
 		err_pdu = (struct pdu_error *)pdu;
 		if (target_byte_order == TO_NETWORK_BYTE_ORDER) {
-			*((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)) = lrtr_convert_long(
+			*((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)) = rtr_convert_long(
 				target_byte_order, *((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)));
-			err_pdu->len_enc_pdu = lrtr_convert_long(target_byte_order, err_pdu->len_enc_pdu);
+			err_pdu->len_enc_pdu = rtr_convert_long(target_byte_order, err_pdu->len_enc_pdu);
 		} else {
-			err_pdu->len_enc_pdu = lrtr_convert_long(target_byte_order, err_pdu->len_enc_pdu);
-			*((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)) = lrtr_convert_long(
+			err_pdu->len_enc_pdu = rtr_convert_long(target_byte_order, err_pdu->len_enc_pdu);
+			*((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)) = rtr_convert_long(
 				target_byte_order, *((uint32_t *)(err_pdu->rest + err_pdu->len_enc_pdu)));
 		}
 		break;
 
 	case SERIAL_NOTIFY:
 		((struct pdu_serial_notify *)pdu)->sn =
-			lrtr_convert_long(target_byte_order, ((struct pdu_serial_notify *)pdu)->sn);
+			rtr_convert_long(target_byte_order, ((struct pdu_serial_notify *)pdu)->sn);
 		break;
 
 	case EOD:
 		if (header->ver == RTR_PROTOCOL_VERSION_1 || header->ver == RTR_PROTOCOL_VERSION_2) {
-			((struct pdu_end_of_data_v1_v2 *)pdu)->expire_interval = lrtr_convert_long(
+			((struct pdu_end_of_data_v1_v2 *)pdu)->expire_interval = rtr_convert_long(
 				target_byte_order, ((struct pdu_end_of_data_v1_v2 *)pdu)->expire_interval);
 
-			((struct pdu_end_of_data_v1_v2 *)pdu)->refresh_interval = lrtr_convert_long(
+			((struct pdu_end_of_data_v1_v2 *)pdu)->refresh_interval = rtr_convert_long(
 				target_byte_order, ((struct pdu_end_of_data_v1_v2 *)pdu)->refresh_interval);
 
-			((struct pdu_end_of_data_v1_v2 *)pdu)->retry_interval = lrtr_convert_long(
+			((struct pdu_end_of_data_v1_v2 *)pdu)->retry_interval = rtr_convert_long(
 				target_byte_order, ((struct pdu_end_of_data_v1_v2 *)pdu)->retry_interval);
 
 			((struct pdu_end_of_data_v1_v2 *)pdu)->sn =
-				lrtr_convert_long(target_byte_order, ((struct pdu_end_of_data_v1_v2 *)pdu)->sn);
+				rtr_convert_long(target_byte_order, ((struct pdu_end_of_data_v1_v2 *)pdu)->sn);
 		} else {
 			((struct pdu_end_of_data_v0 *)pdu)->sn =
-				lrtr_convert_long(target_byte_order, ((struct pdu_end_of_data_v0 *)pdu)->sn);
+				rtr_convert_long(target_byte_order, ((struct pdu_end_of_data_v0 *)pdu)->sn);
 		}
 		break;
 
 	case IPV4_PREFIX:
-		lrtr_ipv4_addr_convert_byte_order(((struct pdu_ipv4 *)pdu)->prefix, &((struct pdu_ipv4 *)pdu)->prefix,
+		rtr_ipv4_addr_convert_byte_order(((struct pdu_ipv4 *)pdu)->prefix, &((struct pdu_ipv4 *)pdu)->prefix,
 						  target_byte_order);
-		((struct pdu_ipv4 *)pdu)->asn = lrtr_convert_long(target_byte_order, ((struct pdu_ipv4 *)pdu)->asn);
+		((struct pdu_ipv4 *)pdu)->asn = rtr_convert_long(target_byte_order, ((struct pdu_ipv4 *)pdu)->asn);
 		break;
 
 	case IPV6_PREFIX:
-		lrtr_ipv6_addr_convert_byte_order(((struct pdu_ipv6 *)pdu)->prefix, addr6, target_byte_order);
+		rtr_ipv6_addr_convert_byte_order(((struct pdu_ipv6 *)pdu)->prefix, addr6, target_byte_order);
 		memcpy(((struct pdu_ipv6 *)pdu)->prefix, addr6, sizeof(addr6));
-		((struct pdu_ipv6 *)pdu)->asn = lrtr_convert_long(target_byte_order, ((struct pdu_ipv6 *)pdu)->asn);
+		((struct pdu_ipv6 *)pdu)->asn = rtr_convert_long(target_byte_order, ((struct pdu_ipv6 *)pdu)->asn);
 		break;
 
 	case ROUTER_KEY:
 		((struct pdu_router_key *)pdu)->asn =
-			lrtr_convert_long(target_byte_order, ((struct pdu_router_key *)pdu)->asn);
+			rtr_convert_long(target_byte_order, ((struct pdu_router_key *)pdu)->asn);
 		break;
 
 	case ASPA:
 		((struct pdu_aspa *)pdu)->customer_asn =
-			lrtr_convert_long(target_byte_order, ((struct pdu_aspa *)pdu)->customer_asn);
+			rtr_convert_long(target_byte_order, ((struct pdu_aspa *)pdu)->customer_asn);
 
 		uint16_t asn_count = rtr_aspa_provider_count(pdu);
 
 		for (size_t i = 0; i < asn_count; i++) {
 			((struct pdu_aspa *)pdu)->provider_asns[i] =
-				lrtr_convert_long(target_byte_order, ((struct pdu_aspa *)pdu)->provider_asns[i]);
+				rtr_convert_long(target_byte_order, ((struct pdu_aspa *)pdu)->provider_asns[i]);
 		}
 		break;
 
@@ -433,7 +425,7 @@ static int rtr_send_pdu(const struct rtr_socket *rtr_socket, const void *pdu, co
 
 	if (rtval > 0)
 		return RTR_SUCCESS;
-	if (rtval == TR_WOULDBLOCK) {
+	if (rtval == RTR_TR_WOULDBLOCK) {
 		RTR_DBG1("send would block");
 		return RTR_ERROR;
 	}
@@ -562,12 +554,12 @@ error:
 	if (error == -1) {
 		rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
 		return RTR_ERROR;
-	} else if (error == TR_WOULDBLOCK) {
+	} else if (error == RTR_TR_WOULDBLOCK) {
 		RTR_DBG1("receive timeout expired");
-		return TR_WOULDBLOCK;
-	} else if (error == TR_INTR) {
+		return RTR_TR_WOULDBLOCK;
+	} else if (error == RTR_TR_INTR) {
 		RTR_DBG1("receive call interrupted");
-		return TR_INTR;
+		return RTR_TR_INTR;
 	} else if (error == CORRUPT_DATA) {
 		RTR_DBG1("corrupt PDU received");
 		const char txt[] = "corrupt data received, length value in PDU is too small";
@@ -684,7 +676,7 @@ static int rtr_handle_cache_response_pdu(struct rtr_socket *rtr_socket, char *pd
 }
 
 static void rtr_key_pdu_2_spki_record(const struct rtr_socket *rtr_socket, const struct pdu_router_key *pdu,
-				      struct spki_record *entry, const enum pdu_type type)
+				      struct rtr_spki_record *entry, const enum pdu_type type)
 {
 	assert(type == ROUTER_KEY);
 	entry->asn = pdu->asn;
@@ -693,7 +685,7 @@ static void rtr_key_pdu_2_spki_record(const struct rtr_socket *rtr_socket, const
 	entry->socket = rtr_socket;
 }
 
-static void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, const void *pdu, struct pfx_record *pfxr,
+static void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, const void *pdu, struct rtr_pfx_record *pfxr,
 					const enum pdu_type type)
 {
 	assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
@@ -702,7 +694,7 @@ static void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, con
 
 		pfxr->prefix.u.addr4.addr = ipv4->prefix;
 		pfxr->asn = ipv4->asn;
-		pfxr->prefix.ver = LRTR_IPV4;
+		pfxr->prefix.ver = RTR_IPV4;
 		pfxr->min_len = ipv4->prefix_len;
 		pfxr->max_len = ipv4->max_prefix_len;
 		pfxr->socket = rtr_socket;
@@ -710,7 +702,7 @@ static void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, con
 		const struct pdu_ipv6 *ipv6 = pdu;
 
 		pfxr->asn = ipv6->asn;
-		pfxr->prefix.ver = LRTR_IPV6;
+		pfxr->prefix.ver = RTR_IPV6;
 		memcpy(pfxr->prefix.u.addr6.addr, ipv6->prefix, sizeof(pfxr->prefix.u.addr6.addr));
 		pfxr->min_len = ipv6->prefix_len;
 		pfxr->max_len = ipv6->max_prefix_len;
@@ -721,33 +713,33 @@ static void rtr_prefix_pdu_2_pfx_record(const struct rtr_socket *rtr_socket, con
 __attribute__((always_inline)) static inline void rtr_aspa_pdu_2_aspa_operation(struct pdu_aspa *pdu,
 										struct aspa_update_operation *op)
 {
-	op->type = (pdu->flags & 1) == 1 ? ASPA_ADD : ASPA_REMOVE;
+	op->type = (pdu->flags & 1) == 1 ? RTR_ASPA_ADD : RTR_ASPA_REMOVE;
 	op->is_no_op = false;
 	op->record.customer_asn = pdu->customer_asn;
-	op->record.provider_count = (op->type == ASPA_ADD) ? rtr_aspa_provider_count(pdu) : 0;
-	op->record.provider_asns = (op->type == ASPA_ADD) ? pdu->provider_asns : NULL;
+	op->record.provider_count = (op->type == RTR_ASPA_ADD) ? rtr_aspa_provider_count(pdu) : 0;
+	op->record.provider_asns = (op->type == RTR_ASPA_ADD) ? pdu->provider_asns : NULL;
 }
 
 /**
  * @brief Removes all prefixes from the @p pfx_table with flag field == ADD, adds all prefixes
  * to the @p pfx_table with if flag field == REMOVE.
  */
-static int rtr_undo_update_pfx_table(struct rtr_socket *rtr_socket, struct pfx_table *pfx_table, void *pdu)
+static int rtr_undo_update_pfx_table(struct rtr_socket *rtr_socket, struct rtr_pfx_table *pfx_table, void *pdu)
 {
 	const enum pdu_type type = rtr_get_pdu_type(pdu);
 
 	assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
 
-	struct pfx_record pfxr;
+	struct rtr_pfx_record pfxr;
 
 	rtr_prefix_pdu_2_pfx_record(rtr_socket, pdu, &pfxr, type);
 
 	int rtval = RTR_ERROR;
 	// invert add/remove operation
 	if (((struct pdu_ipv4 *)pdu)->flags == 1)
-		rtval = pfx_table_remove(pfx_table, &pfxr);
+		rtval = rtr_pfx_table_remove(pfx_table, &pfxr);
 	else if (((struct pdu_ipv4 *)pdu)->flags == 0)
-		rtval = pfx_table_add(pfx_table, &pfxr);
+		rtval = rtr_pfx_table_add(pfx_table, &pfxr);
 	return rtval;
 }
 
@@ -755,18 +747,18 @@ static int rtr_undo_update_pfx_table(struct rtr_socket *rtr_socket, struct pfx_t
  * @brief Removes all prefixes from multiple PDUs from the @p pfx_table with flag field == ADD, adds all prefixes
  * to the @p pfx_table if flag field == REMOVE.
  */
-static int rtr_undo_update_pfx_table_batch(struct rtr_socket *rtr_socket, struct pfx_table *pfx_table,
+static int rtr_undo_update_pfx_table_batch(struct rtr_socket *rtr_socket, struct rtr_pfx_table *pfx_table,
 					   struct pdu_ipv4 *ipv4_pdus, size_t ipv4_pdu_count,
 					   struct pdu_ipv6 *ipv6_pdus, size_t ipv6_pdu_count)
 {
 	for (size_t i = 0; i < ipv4_pdu_count; i++) {
 		int res = rtr_undo_update_pfx_table(rtr_socket, pfx_table, &(ipv4_pdus[i]));
 
-		if (res == RTR_ERROR || res == PFX_ERROR) {
+		if (res == RTR_ERROR || res == RTR_PFX_ERROR) {
 			// Undo failed, cannot recover, remove all records associated with the socket instead
 			RTR_DBG1(
 				"Couldn't undo all update operations from failed data synchronisation: Purging all prefix records");
-			pfx_table_src_remove(pfx_table, rtr_socket);
+			rtr_pfx_table_src_remove(pfx_table, rtr_socket);
 			return RTR_ERROR;
 		}
 	}
@@ -774,11 +766,11 @@ static int rtr_undo_update_pfx_table_batch(struct rtr_socket *rtr_socket, struct
 	for (size_t i = 0; i < ipv6_pdu_count; i++) {
 		int res = rtr_undo_update_pfx_table(rtr_socket, pfx_table, &(ipv6_pdus[i]));
 
-		if (res == RTR_ERROR || res == PFX_ERROR) {
+		if (res == RTR_ERROR || res == RTR_PFX_ERROR) {
 			// Undo failed, cannot recover, remove all records associated with the socket instead
 			RTR_DBG1(
 				"Couldn't undo all update operations from failed data synchronisation: Purging all prefix records");
-			pfx_table_src_remove(pfx_table, rtr_socket);
+			rtr_pfx_table_src_remove(pfx_table, rtr_socket);
 			return RTR_ERROR;
 		}
 	}
@@ -789,13 +781,13 @@ static int rtr_undo_update_pfx_table_batch(struct rtr_socket *rtr_socket, struct
  * @brief Removes router key from the @p spki_table with flag field == ADD, adds router keys
  * to the @p spki_table if flag field == REMOVE.
  */
-static int rtr_undo_update_spki_table(struct rtr_socket *rtr_socket, struct spki_table *spki_table, void *pdu)
+static int rtr_undo_update_spki_table(struct rtr_socket *rtr_socket, struct rtr_spki_table *spki_table, void *pdu)
 {
 	const enum pdu_type type = rtr_get_pdu_type(pdu);
 
 	assert(type == ROUTER_KEY);
 
-	struct spki_record entry;
+	struct rtr_spki_record entry;
 
 	rtr_key_pdu_2_spki_record(rtr_socket, pdu, &entry, type);
 
@@ -812,13 +804,13 @@ static int rtr_undo_update_spki_table(struct rtr_socket *rtr_socket, struct spki
  * @brief Removes router key from multiple PDUs from the @p spki_table with flag field == ADD, adds router keys
  * to the @p spki_table if flag field == REMOVE.
  */
-static int rtr_undo_update_spki_table_batch(struct rtr_socket *rtr_socket, struct spki_table *spki_table,
+static int rtr_undo_update_spki_table_batch(struct rtr_socket *rtr_socket, struct rtr_spki_table *spki_table,
 					    struct pdu_router_key *pdus, size_t pdu_count)
 {
 	for (size_t i = 0; i < pdu_count; i++) {
 		int res = rtr_undo_update_spki_table(rtr_socket, spki_table, &(pdus[i]));
 
-		if (res == RTR_ERROR || res == SPKI_ERROR) {
+		if (res == RTR_ERROR || res == RTR_SPKI_ERROR) {
 			// Undo failed, cannot recover, remove all records associated with the socket instead
 			RTR_DBG1(
 				"Couldn't undo all update operations from failed data synchronisation: Purging all SPKI records");
@@ -844,7 +836,7 @@ static int rtr_store_prefix_pdu(struct rtr_socket *rtr_socket, const void *pdu, 
 	assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
 	if (*ind >= *size) {
 		*size += TEMPORARY_PDU_STORE_INCREMENT_VALUE;
-		void *tmp = lrtr_realloc(*ary, *size * pdu_size);
+		void *tmp = rtr_realloc(*ary, *size * pdu_size);
 
 		if (!tmp) {
 			const char txt[] = "Realloc failed";
@@ -883,7 +875,7 @@ static int rtr_store_router_key_pdu(struct rtr_socket *rtr_socket, const void *p
 
 	if (*ind >= *size) {
 		*size += TEMPORARY_PDU_STORE_INCREMENT_VALUE;
-		void *tmp = lrtr_realloc(*ary, *size * pdu_size);
+		void *tmp = rtr_realloc(*ary, *size * pdu_size);
 
 		if (!tmp) {
 			const char txt[] = "Realloc failed";
@@ -913,7 +905,7 @@ static int rtr_store_aspa_pdu(struct rtr_socket *rtr_socket, const struct pdu_as
 {
 	if (*count >= *capacity) {
 		*capacity += TEMPORARY_PDU_STORE_INCREMENT_VALUE;
-		void *tmp = lrtr_realloc(*array, *capacity * sizeof(struct pdu_aspa *));
+		void *tmp = rtr_realloc(*array, *capacity * sizeof(struct pdu_aspa *));
 
 		if (!tmp) {
 			const char txt[] = "Realloc failed";
@@ -926,7 +918,7 @@ static int rtr_store_aspa_pdu(struct rtr_socket *rtr_socket, const struct pdu_as
 		*array = tmp;
 	}
 	size_t pdu_size = pdu->len;
-	struct pdu_aspa *copy = lrtr_malloc(pdu_size);
+	struct pdu_aspa *copy = rtr_malloc(pdu_size);
 
 	if (!copy) {
 		const char txt[] = "Malloc failed";
@@ -943,7 +935,7 @@ static int rtr_store_aspa_pdu(struct rtr_socket *rtr_socket, const struct pdu_as
 	return RTR_SUCCESS;
 }
 
-static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, struct pfx_table *pfx_table, const void *pdu)
+static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, struct rtr_pfx_table *pfx_table, const void *pdu)
 {
 	// the prefix table was not initialized, hence we ignore incoming ROA Objects
 	if (pfx_table == NULL) {
@@ -956,7 +948,7 @@ static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, struct pfx_table 
 
 	assert(type == IPV4_PREFIX || type == IPV6_PREFIX);
 
-	struct pfx_record pfxr;
+	struct rtr_pfx_record pfxr;
 	size_t pdu_size = (type == IPV4_PREFIX ? sizeof(struct pdu_ipv4) : sizeof(struct pdu_ipv6));
 
 	rtr_prefix_pdu_2_pfx_record(rtr_socket, pdu, &pfxr, type);
@@ -964,9 +956,9 @@ static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, struct pfx_table 
 	int rtval;
 
 	if (((struct pdu_ipv4 *)pdu)->flags == 1) { // add record
-		rtval = pfx_table_add(pfx_table, &pfxr);
+		rtval = rtr_pfx_table_add(pfx_table, &pfxr);
 	} else if (((struct pdu_ipv4 *)pdu)->flags == 0) { // remove record
-		rtval = pfx_table_remove(pfx_table, &pfxr);
+		rtval = rtr_pfx_table_remove(pfx_table, &pfxr);
 	} else {
 		const char txt[] = "Prefix PDU with invalid flags value received";
 
@@ -975,21 +967,21 @@ static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, struct pfx_table 
 		return RTR_ERROR;
 	}
 
-	if (rtval == PFX_DUPLICATE_RECORD) {
+	if (rtval == RTR_PFX_DUPLICATE_RECORD) {
 		char ip[INET6_ADDRSTRLEN];
 
-		lrtr_ip_addr_to_str(&(pfxr.prefix), ip, INET6_ADDRSTRLEN);
+		rtr_ip_addr_to_str(&(pfxr.prefix), ip, INET6_ADDRSTRLEN);
 		RTR_DBG("Duplicate Announcement for record: %s/%u-%u, ASN: %u, received", ip, pfxr.min_len,
 			pfxr.max_len, pfxr.asn);
 		rtr_send_error_pdu_from_host(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT, NULL, 0);
 		rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
 		return RTR_ERROR;
-	} else if (rtval == PFX_RECORD_NOT_FOUND) {
+	} else if (rtval == RTR_PFX_RECORD_NOT_FOUND) {
 		RTR_DBG1("Withdrawal of unknown record");
 		rtr_send_error_pdu_from_host(rtr_socket, pdu, pdu_size, WITHDRAWAL_OF_UNKNOWN_RECORD, NULL, 0);
 		rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
 		return RTR_ERROR;
-	} else if (rtval == PFX_ERROR) {
+	} else if (rtval == RTR_PFX_ERROR) {
 		const char txt[] = "PFX_TABLE Error";
 
 		RTR_DBG("%s", txt);
@@ -1001,7 +993,7 @@ static int rtr_update_pfx_table(struct rtr_socket *rtr_socket, struct pfx_table 
 	return RTR_SUCCESS;
 }
 
-static int rtr_update_spki_table(struct rtr_socket *rtr_socket, struct spki_table *spki_table, const void *pdu)
+static int rtr_update_spki_table(struct rtr_socket *rtr_socket, struct rtr_spki_table *spki_table, const void *pdu)
 {
 	assert(rtr_socket);
 	assert(pdu);
@@ -1017,7 +1009,7 @@ static int rtr_update_spki_table(struct rtr_socket *rtr_socket, struct spki_tabl
 
 	assert(type == ROUTER_KEY);
 
-	struct spki_record entry;
+	struct rtr_spki_record entry;
 
 	size_t pdu_size = sizeof(struct pdu_router_key);
 
@@ -1039,18 +1031,18 @@ static int rtr_update_spki_table(struct rtr_socket *rtr_socket, struct spki_tabl
 		return RTR_ERROR;
 	}
 
-	if (rtval == SPKI_DUPLICATE_RECORD) {
+	if (rtval == RTR_SPKI_DUPLICATE_RECORD) {
 		// TODO: This debug message isn't working yet, how to display SKI/SPKI without %x?
 		RTR_DBG("Duplicate Announcement for router key: ASN: %u received", entry.asn);
 		rtr_send_error_pdu_from_host(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT, NULL, 0);
 		rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
 		return RTR_ERROR;
-	} else if (rtval == SPKI_RECORD_NOT_FOUND) {
+	} else if (rtval == RTR_SPKI_RECORD_NOT_FOUND) {
 		RTR_DBG1("Withdrawal of unknown router key");
 		rtr_send_error_pdu_from_host(rtr_socket, pdu, pdu_size, WITHDRAWAL_OF_UNKNOWN_RECORD, NULL, 0);
 		rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
 		return RTR_ERROR;
-	} else if (rtval == SPKI_ERROR) {
+	} else if (rtval == RTR_SPKI_ERROR) {
 		const char txt[] = "spki_table Error";
 
 		RTR_DBG("%s", txt);
@@ -1062,8 +1054,7 @@ static int rtr_update_spki_table(struct rtr_socket *rtr_socket, struct spki_tabl
 	return RTR_SUCCESS;
 }
 
-#if ASPA_UPDATE_MECHANISM == ASPA_SWAP_IN
-static int rtr_compute_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_table *aspa_table,
+static int rtr_compute_update_aspa_table(struct rtr_socket *rtr_socket, struct rtr_aspa_table *aspa_table,
 					 struct pdu_aspa **aspa_pdus, size_t pdu_count, struct aspa_update **update)
 {
 	// Fail hard in debug builds.
@@ -1081,7 +1072,7 @@ static int rtr_compute_update_aspa_table(struct rtr_socket *rtr_socket, struct a
 	if (pdu_count == 0)
 		return RTR_SUCCESS;
 
-	struct aspa_update_operation *operations = lrtr_malloc(sizeof(struct aspa_update_operation) * pdu_count);
+	struct aspa_update_operation *operations = rtr_malloc(sizeof(struct aspa_update_operation) * pdu_count);
 
 	if (!operations) {
 		const char txt[] = "Malloc failed";
@@ -1100,7 +1091,7 @@ static int rtr_compute_update_aspa_table(struct rtr_socket *rtr_socket, struct a
 			RTR_DBG1("ASPA announcement doesn't contain any provider autonomous system numbers");
 			rtr_send_error_pdu_from_host(rtr_socket, pdu, pdu->len, INCORRECT_ASPA_PROVIDER_LIST, NULL, 0);
 			rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-			lrtr_free(operations);
+			rtr_free(operations);
 
 			return RTR_ERROR;
 		}
@@ -1109,24 +1100,24 @@ static int rtr_compute_update_aspa_table(struct rtr_socket *rtr_socket, struct a
 		operations[i].index = i;
 	}
 
-	enum aspa_status res = aspa_table_update_swap_in_compute(aspa_table, rtr_socket, operations, pdu_count, update);
+	enum rtr_aspa_status res = aspa_table_update_swap_in_compute(aspa_table, rtr_socket, operations, pdu_count, update);
 
 	if (*update && (*update)->failed_operation) {
 		struct pdu_aspa *pdu = aspa_pdus[(*update)->failed_operation->index];
 		size_t pdu_size = pdu->len;
 
-		if (res == ASPA_DUPLICATE_RECORD) {
+		if (res == RTR_ASPA_DUPLICATE_RECORD) {
 			RTR_DBG("Duplicate Announcement for ASPA customer ASN: %u received", pdu->customer_asn);
 			rtr_send_error_pdu_from_host(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT, NULL, 0);
 			rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
 			return RTR_ERROR;
-		} else if (res == ASPA_RECORD_NOT_FOUND) {
+		} else if (res == RTR_ASPA_RECORD_NOT_FOUND) {
 			RTR_DBG("Withdrawal of unknown ASPA customer ASN: %u", pdu->customer_asn);
 			rtr_send_error_pdu_from_host(rtr_socket, pdu, pdu_size, WITHDRAWAL_OF_UNKNOWN_RECORD, NULL, 0);
 			rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
 			return RTR_ERROR;
 		}
-	} else if (res != ASPA_SUCCESS) {
+	} else if (res != RTR_ASPA_SUCCESS) {
 		const char txt[] = "aspa_table Error";
 
 		RTR_DBG("%s", txt);
@@ -1138,101 +1129,9 @@ static int rtr_compute_update_aspa_table(struct rtr_socket *rtr_socket, struct a
 	RTR_DBG1("ASPA update computed");
 	return RTR_SUCCESS;
 }
-#endif
 
-#if ASPA_UPDATE_MECHANISM == ASPA_IN_PLACE
-/**
- * @brief Undoes changes made to the given @p aspa_table based on an array of @c aspa_update_operation s.
- */
-static int rtr_undo_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_table *aspa_table,
-				      struct aspa_update_operation *operations, size_t count,
-				      struct aspa_update_operation *failed_operation)
-{
-	enum aspa_status res =
-		aspa_table_update_in_place_undo(aspa_table, rtr_socket, operations, count, failed_operation);
-
-	if (res == ASPA_SUCCESS) {
-		return RTR_SUCCESS;
-	}
-	// Undo failed, cannot recover, remove all records associated with the socket instead
-	RTR_DBG1("Couldn't undo all update operations from failed data synchronisation: Purging all ASPA records");
-	aspa_table_src_remove(aspa_table, rtr_socket, true);
-	return RTR_ERROR;
-}
-
-static int rtr_update_aspa_table(struct rtr_socket *rtr_socket, struct aspa_table *aspa_table,
-				 struct pdu_aspa **aspa_pdus, size_t pdu_count, struct aspa_update_operation **ops,
-				 struct aspa_update_operation **failed_operation)
-{
-	// Fail hard in debug builds.
-	assert(rtr_socket);
-	assert(failed_operation);
-	assert(ops);
-
-	// no aspa table was configured hence we ignore incoming aspa objects
-	if (aspa_table == NULL) {
-		const char txt[] = "IGNORING INCOMING ASPA OBJECTS";
-		RTR_DBG("%s", txt);
-		retrun RTR_SUCESS;
-	}
-
-	if (!ops || !failed_operation || (pdu_count > 0 && !aspa_pdus))
-		return RTR_ERROR;
-
-	if (!aspa_pdus && pdu_count == 0)
-		return RTR_SUCCESS;
-
-	struct aspa_update_operation *operations = lrtr_malloc(sizeof(struct aspa_update_operation) * pdu_count);
-
-	if (!operations) {
-		const char txt[] = "Malloc failed";
-
-		RTR_DBG("%s", txt);
-		rtr_send_error_pdu_from_host(rtr_socket, NULL, 0, INTERNAL_ERROR, txt, sizeof(txt));
-		rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-		return RTR_ERROR;
-	}
-
-	*ops = operations;
-
-	for (size_t i = 0; i < pdu_count; i++) {
-		rtr_aspa_pdu_2_aspa_operation(aspa_pdus[i], &operations[i]);
-		operations[i].index = i;
-	}
-
-	enum aspa_status res =
-		aspa_table_update_in_place(aspa_table, rtr_socket, operations, pdu_count, failed_operation);
-
-	if (*failed_operation) {
-		struct pdu_aspa *pdu = aspa_pdus[(*failed_operation)->index];
-		size_t pdu_size = pdu->len;
-
-		if (res == ASPA_DUPLICATE_RECORD) {
-			RTR_DBG("Duplicate Announcement for ASPA customer ASN: %u received", pdu->customer_asn);
-			rtr_send_error_pdu_from_host(rtr_socket, pdu, pdu_size, DUPLICATE_ANNOUNCEMENT, NULL, 0);
-			rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-			return RTR_ERROR;
-		} else if (res == ASPA_RECORD_NOT_FOUND) {
-			RTR_DBG("Withdrawal of unknown ASPA customer ASN: %u", pdu->customer_asn);
-			rtr_send_error_pdu_from_host(rtr_socket, pdu, pdu_size, WITHDRAWAL_OF_UNKNOWN_RECORD, NULL, 0);
-			rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-			return RTR_ERROR;
-		}
-	} else if (res != ASPA_SUCCESS) {
-		const char txt[] = "aspa_table Error";
-
-		RTR_DBG("%s", txt);
-		rtr_send_error_pdu_from_host(rtr_socket, NULL, 0, INTERNAL_ERROR, txt, sizeof(txt));
-		rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
-		return RTR_ERROR;
-	}
-
-	return RTR_SUCCESS;
-}
-#endif
-
-static int rtr_sync_update_tables(struct rtr_socket *rtr_socket, struct pfx_table *pfx_table,
-				  struct spki_table *spki_table, struct aspa_table *aspa_table,
+static int rtr_sync_update_tables(struct rtr_socket *rtr_socket, struct rtr_pfx_table *pfx_table,
+				  struct rtr_spki_table *spki_table, struct rtr_aspa_table *aspa_table,
 				  struct pdu_ipv4 *ipv4_pdus, const unsigned int ipv4_pdu_count,
 				  struct pdu_ipv6 *ipv6_pdus, const unsigned int ipv6_pdu_count,
 				  struct pdu_router_key *router_key_pdus, const unsigned int router_key_pdu_count,
@@ -1241,14 +1140,7 @@ static int rtr_sync_update_tables(struct rtr_socket *rtr_socket, struct pfx_tabl
 {
 	bool proceed = true;
 	bool undo_failed = false;
-#if ASPA_UPDATE_MECHANISM == ASPA_SWAP_IN
 	struct aspa_update *aspa_update = NULL;
-#elif ASPA_UPDATE_MECHANISM == ASPA_IN_PLACE
-	struct aspa_update_operation *aspa_failed_operation = NULL;
-	struct aspa_update_operation *aspa_operations = NULL;
-#else
-#error "Invalid ASPA_UPDATE_MECHANISM value."
-#endif /* ASPA_UPDATE_MECHANISM */
 
 	// add all IPv4 prefix pdu to the pfx_table
 	for (size_t i = 0; i < ipv4_pdu_count; i++) {
@@ -1304,7 +1196,6 @@ static int rtr_sync_update_tables(struct rtr_socket *rtr_socket, struct pfx_tabl
 		}
 	}
 
-#if ASPA_UPDATE_MECHANISM == ASPA_SWAP_IN
 	if (proceed) {
 		RTR_DBG1("spki data added");
 
@@ -1329,38 +1220,6 @@ static int rtr_sync_update_tables(struct rtr_socket *rtr_socket, struct pfx_tabl
 	} else {
 		aspa_table_update_swap_in_discard(&aspa_update);
 	}
-
-#elif ASPA_UPDATE_MECHANISM == ASPA_IN_PLACE
-	if (proceed) {
-		RTR_DBG1("spki data added");
-
-		if (rtr_update_aspa_table(rtr_socket, aspa_table, aspa_pdus, aspa_pdu_count, &aspa_operations,
-					  &aspa_failed_operation) == RTR_ERROR) {
-			RTR_DBG1("error while updating ASPA data");
-			proceed = false;
-
-			if (rtr_undo_update_aspa_table(rtr_socket, aspa_table, aspa_operations, aspa_pdu_count,
-						       aspa_failed_operation) == RTR_ERROR)
-				undo_failed = true;
-
-			if (rtr_undo_update_spki_table_batch(rtr_socket, spki_table, router_key_pdus,
-							     router_key_pdu_count) == RTR_ERROR)
-				undo_failed = true;
-
-			if (rtr_undo_update_pfx_table_batch(rtr_socket, pfx_table, ipv4_pdus, ipv4_pdu_count, ipv6_pdus,
-							    ipv6_pdu_count) == RTR_ERROR)
-				undo_failed = true;
-		}
-	}
-
-	if (proceed)
-		RTR_DBG1("ASPA data added");
-
-	aspa_table_update_in_place_cleanup(&aspa_operations, aspa_pdu_count);
-	aspa_failed_operation = NULL;
-#else
-#error "Invalid ASPA_UPDATE_MECHANISM value."
-#endif /* ASPA_UPDATE_MECHANISM */
 
 	// An update attempted above failed
 	if (!proceed) {
@@ -1443,27 +1302,27 @@ void recv_loop_cleanup(void *p)
 		return;
 
 	if (*args->ipv4_pdus) {
-		lrtr_free(*args->ipv4_pdus);
+		rtr_free(*args->ipv4_pdus);
 		*args->ipv4_pdus = NULL;
 	}
 
 	if (*args->ipv6_pdus) {
-		lrtr_free(*args->ipv6_pdus);
+		rtr_free(*args->ipv6_pdus);
 		*args->ipv6_pdus = NULL;
 	}
 
 	if (*args->router_key_pdus) {
-		lrtr_free(*args->router_key_pdus);
+		rtr_free(*args->router_key_pdus);
 		*args->router_key_pdus = NULL;
 	}
 
 	if (*args->aspa_pdus) {
 		for (size_t i = 0; i < *args->aspa_pdu_count; i++) {
 			if ((*args->aspa_pdus)[i])
-				lrtr_free((*args->aspa_pdus)[i]);
+				rtr_free((*args->aspa_pdus)[i]);
 		}
 
-		lrtr_free(*args->aspa_pdus);
+		rtr_free(*args->aspa_pdus);
 		*args->aspa_pdus = NULL;
 		*args->aspa_pdu_count = 0;
 	}
@@ -1499,7 +1358,7 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 						      .aspa_pdus = &aspa_pdus,
 						      .aspa_pdu_count = &aspa_pdus_count};
 
-	// receive LRTR_IPV4/IPV6/ASPA PDUs till EOD
+	// receive RTR_IPV4/IPV6/ASPA PDUs till EOD
 	do {
 		pthread_cleanup_push(recv_loop_cleanup, &cleanup_args);
 		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldcancelstate);
@@ -1510,7 +1369,7 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
 		pthread_cleanup_pop(0);
 
-		if (retval == TR_WOULDBLOCK) {
+		if (retval == RTR_TR_WOULDBLOCK) {
 			rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
 			retval = RTR_ERROR;
 			break;
@@ -1579,23 +1438,23 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 				// Use table copies instead in order to perform an atomic update
 				RTR_DBG1("Reset in progress creating shadow table for atomic reset");
 
-				struct pfx_table *pfx_shadow_table = lrtr_malloc(sizeof(struct pfx_table));
+				struct rtr_pfx_table *pfx_shadow_table = rtr_malloc(sizeof(struct rtr_pfx_table));
 
 				if (!pfx_shadow_table) {
 					RTR_DBG1("Memory allocation for pfx shadow table failed");
 					retval = RTR_ERROR;
 					goto cleanup;
 				}
-				pfx_table_init(pfx_shadow_table, NULL);
+				rtr_pfx_table_init(pfx_shadow_table, NULL);
 				if (pfx_table_copy_except_socket(rtr_socket->pfx_table, pfx_shadow_table, rtr_socket) !=
-				    PFX_SUCCESS) {
+				    RTR_PFX_SUCCESS) {
 					RTR_DBG1("Creation of pfx shadow table failed");
 					rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
 					retval = RTR_ERROR;
 					goto cleanup;
 				}
 
-				struct spki_table *spki_shadow_table = lrtr_malloc(sizeof(struct spki_table));
+				struct rtr_spki_table *spki_shadow_table = rtr_malloc(sizeof(struct rtr_spki_table));
 
 				if (!spki_shadow_table) {
 					RTR_DBG1("Memory allocation for spki shadow table failed");
@@ -1604,21 +1463,21 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 				}
 				spki_table_init(spki_shadow_table, NULL);
 				if (spki_table_copy_except_socket(rtr_socket->spki_table, spki_shadow_table,
-								  rtr_socket) != SPKI_SUCCESS) {
+								  rtr_socket) != RTR_SPKI_SUCCESS) {
 					RTR_DBG1("Creation of spki shadow table failed");
 					rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
 					retval = RTR_ERROR;
 					goto cleanup;
 				}
 
-				struct aspa_table *aspa_shadow_table = lrtr_malloc(sizeof(struct aspa_table));
+				struct rtr_aspa_table *aspa_shadow_table = rtr_malloc(sizeof(struct rtr_aspa_table));
 
 				if (!aspa_shadow_table) {
 					RTR_DBG1("Memory allocation for aspa shadow table failed");
 					retval = RTR_ERROR;
 					goto cleanup;
 				}
-				aspa_table_init(aspa_shadow_table, NULL);
+				rtr_aspa_table_init(aspa_shadow_table, NULL);
 
 				RTR_DBG1("Shadow tables created");
 
@@ -1659,17 +1518,17 @@ static int rtr_sync_receive_and_store_pdus(struct rtr_socket *rtr_socket)
 				RTR_DBG1("Freeing shadow tables.");
 				if (pfx_shadow_table) {
 					pfx_table_free_without_notify(pfx_shadow_table);
-					lrtr_free(pfx_shadow_table);
+					rtr_free(pfx_shadow_table);
 				}
 
 				if (spki_shadow_table) {
 					spki_table_free_without_notify(spki_shadow_table);
-					lrtr_free(spki_shadow_table);
+					rtr_free(spki_shadow_table);
 				}
 
 				if (aspa_shadow_table) {
-					aspa_table_free(aspa_shadow_table, false);
-					lrtr_free(aspa_shadow_table);
+					rtr_aspa_table_free(aspa_shadow_table, false);
+					rtr_free(aspa_shadow_table);
 				}
 
 				rtr_socket->is_resetting = false;
@@ -1714,7 +1573,7 @@ int rtr_sync(struct rtr_socket *rtr_socket)
 		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldcancelstate);
 		// If the cache has closed the connection and we don't have a
 		// session_id (no packages where exchanged) we should downgrade.
-		if (rtval == TR_CLOSED && rtr_socket->request_session_id) {
+		if (rtval == RTR_TR_CLOSED && rtr_socket->request_session_id) {
 			RTR_DBG1("The cache server closed the connection and we have no session_id!");
 			if (rtr_socket->version > RTR_PROTOCOL_MIN_SUPPORTED_VERSION) {
 				RTR_DBG("Downgrading from %i to version %i", rtr_socket->version,
@@ -1725,7 +1584,7 @@ int rtr_sync(struct rtr_socket *rtr_socket)
 			}
 		}
 
-		if (rtval == TR_WOULDBLOCK) {
+		if (rtval == RTR_TR_WOULDBLOCK) {
 			rtr_change_socket_state(rtr_socket, RTR_ERROR_TRANSPORT);
 			return RTR_ERROR;
 		} else if (rtval < 0) {
@@ -1776,7 +1635,7 @@ int rtr_wait_for_sync(struct rtr_socket *rtr_socket)
 
 	time_t cur_time;
 
-	lrtr_get_monotonic_time(&cur_time);
+	rtr_get_monotonic_time(&cur_time);
 	time_t wait = (rtr_socket->last_update + rtr_socket->refresh_interval) - cur_time;
 
 	if (wait < 0)
@@ -1792,7 +1651,7 @@ int rtr_wait_for_sync(struct rtr_socket *rtr_socket)
 			RTR_DBG("Serial Notify received (%u)", ((struct pdu_serial_notify *)pdu)->sn);
 			return RTR_SUCCESS;
 		}
-	} else if (rtval == TR_WOULDBLOCK) {
+	} else if (rtval == RTR_TR_WOULDBLOCK) {
 		RTR_DBG1("Refresh interval expired");
 		return RTR_SUCCESS;
 	}

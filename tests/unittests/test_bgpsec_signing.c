@@ -28,14 +28,14 @@ struct rtr_bgpsec *setup_bgpsec(void)
 	pfx = rtr_bgpsec_nlri_new(3);
 	assert(pfx != NULL);
 	pfx->nlri_len = 24;
-	pfx->afi = 1; /* LRTR_IPV4 */
+	pfx->afi = 1; /* RTR_IPV4 */
 	pfx_int = htonl(3221225984); /* 192.0.2.0 */
 
 	memcpy(pfx->nlri, &pfx_int, 3);
 
 	bgpsec = rtr_bgpsec_new(alg, safi, afi, my_as, target_as, pfx);
-	bgpsec->path = lrtr_malloc(sizeof(struct rtr_secure_path_seg));
-	bgpsec->sigs = lrtr_malloc(sizeof(struct rtr_signature_seg));
+	bgpsec->path = malloc(sizeof(struct rtr_secure_path_seg));
+	bgpsec->sigs = malloc(sizeof(struct rtr_signature_seg));
 	bgpsec->path->next = NULL;
 	bgpsec->sigs->next = NULL;
 	bgpsec->sigs->sig_len = 0;
@@ -93,10 +93,10 @@ int __wrap_sign_byte_sequence(uint8_t *hash_result, EC_KEY *priv_key, uint8_t al
 static void test_sanity_checks(void **state)
 {
 	struct rtr_bgpsec *bgpsec = setup_bgpsec();
-	uint8_t *private_key = lrtr_malloc(20);
+	uint8_t *private_key = malloc(20);
 	struct rtr_signature_seg *new_signature = NULL;
 	enum rtr_bgpsec_rtvals result = RTR_BGPSEC_SUCCESS;
-	struct rtr_signature_seg *not_empty = lrtr_malloc(sizeof(struct rtr_signature_seg));
+	struct rtr_signature_seg *not_empty = malloc(sizeof(struct rtr_signature_seg));
 
 	UNUSED(state);
 
@@ -124,25 +124,25 @@ static void test_sanity_checks(void **state)
 	result = rtr_bgpsec_generate_signature(bgpsec, private_key, &not_empty);
 	assert_int_equal(RTR_BGPSEC_INVALID_ARGUMENTS, result);
 
-	lrtr_free(bgpsec->path);
-	lrtr_free(bgpsec->sigs);
+	free(bgpsec->path);
+	free(bgpsec->sigs);
 	bgpsec->path = NULL;
 
 	result = rtr_bgpsec_generate_signature(bgpsec, private_key, &new_signature);
 	assert_int_equal(RTR_BGPSEC_INVALID_ARGUMENTS, result);
 
-	lrtr_free(private_key);
-	lrtr_free(bgpsec->nlri->nlri);
-	lrtr_free(bgpsec->nlri);
-	lrtr_free(bgpsec);
-	lrtr_free(not_empty);
+	free(private_key);
+	free(bgpsec->nlri->nlri);
+	free(bgpsec->nlri);
+	free(bgpsec);
+	free(not_empty);
 	rtr_bgpsec_free_signatures(new_signature);
 }
 
 static void test_load_private_key(void **state)
 {
 	struct rtr_bgpsec *bgpsec = setup_bgpsec();
-	uint8_t *private_key = lrtr_malloc(20);
+	uint8_t *private_key = malloc(20);
 	struct rtr_signature_seg *new_signature = NULL;
 	enum rtr_bgpsec_rtvals result = RTR_BGPSEC_SUCCESS;
 
@@ -155,19 +155,19 @@ static void test_load_private_key(void **state)
 	result = rtr_bgpsec_generate_signature(bgpsec, private_key, &new_signature);
 	assert_int_equal(RTR_BGPSEC_LOAD_PRIV_KEY_ERROR, result);
 
-	lrtr_free(private_key);
-	lrtr_free(bgpsec->path);
-	lrtr_free(bgpsec->sigs);
-	lrtr_free(bgpsec->nlri->nlri);
-	lrtr_free(bgpsec->nlri);
-	lrtr_free(bgpsec);
+	free(private_key);
+	free(bgpsec->path);
+	free(bgpsec->sigs);
+	free(bgpsec->nlri->nlri);
+	free(bgpsec->nlri);
+	free(bgpsec);
 	rtr_bgpsec_free_signatures(new_signature);
 }
 
 static void test_ecdsa_size(void **state)
 {
 	struct rtr_bgpsec *bgpsec = setup_bgpsec();
-	uint8_t *private_key = lrtr_malloc(20);
+	uint8_t *private_key = malloc(20);
 	struct rtr_signature_seg *new_signature = NULL;
 	enum rtr_bgpsec_rtvals result = RTR_BGPSEC_SUCCESS;
 
@@ -181,19 +181,19 @@ static void test_ecdsa_size(void **state)
 	result = rtr_bgpsec_generate_signature(bgpsec, private_key, &new_signature);
 	assert_int_equal(RTR_BGPSEC_LOAD_PRIV_KEY_ERROR, result);
 
-	lrtr_free(private_key);
-	lrtr_free(bgpsec->path);
-	lrtr_free(bgpsec->sigs);
-	lrtr_free(bgpsec->nlri->nlri);
-	lrtr_free(bgpsec->nlri);
-	lrtr_free(bgpsec);
+	free(private_key);
+	free(bgpsec->path);
+	free(bgpsec->sigs);
+	free(bgpsec->nlri->nlri);
+	free(bgpsec->nlri);
+	free(bgpsec);
 	rtr_bgpsec_free_signatures(new_signature);
 }
 
 static void test_align_byte_sequence(void **state)
 {
 	struct rtr_bgpsec *bgpsec = setup_bgpsec();
-	uint8_t *private_key = lrtr_malloc(20);
+	uint8_t *private_key = malloc(20);
 	struct rtr_signature_seg *new_signature = NULL;
 	enum rtr_bgpsec_rtvals result = RTR_BGPSEC_SUCCESS;
 
@@ -209,19 +209,19 @@ static void test_align_byte_sequence(void **state)
 	result = rtr_bgpsec_generate_signature(bgpsec, private_key, &new_signature);
 	assert_int_equal(RTR_BGPSEC_ERROR, result);
 
-	lrtr_free(private_key);
-	lrtr_free(bgpsec->path);
-	lrtr_free(bgpsec->sigs);
-	lrtr_free(bgpsec->nlri->nlri);
-	lrtr_free(bgpsec->nlri);
-	lrtr_free(bgpsec);
+	free(private_key);
+	free(bgpsec->path);
+	free(bgpsec->sigs);
+	free(bgpsec->nlri->nlri);
+	free(bgpsec->nlri);
+	free(bgpsec);
 	rtr_bgpsec_free_signatures(new_signature);
 }
 
 static void test_hash_byte_sequence(void **state)
 {
 	struct rtr_bgpsec *bgpsec = setup_bgpsec();
-	uint8_t *private_key = lrtr_malloc(20);
+	uint8_t *private_key = malloc(20);
 	struct rtr_signature_seg *new_signature = NULL;
 	enum rtr_bgpsec_rtvals result = RTR_BGPSEC_SUCCESS;
 
@@ -238,19 +238,19 @@ static void test_hash_byte_sequence(void **state)
 	result = rtr_bgpsec_generate_signature(bgpsec, private_key, &new_signature);
 	assert_int_equal(RTR_BGPSEC_ERROR, result);
 
-	lrtr_free(private_key);
-	lrtr_free(bgpsec->path);
-	lrtr_free(bgpsec->sigs);
-	lrtr_free(bgpsec->nlri->nlri);
-	lrtr_free(bgpsec->nlri);
-	lrtr_free(bgpsec);
+	free(private_key);
+	free(bgpsec->path);
+	free(bgpsec->sigs);
+	free(bgpsec->nlri->nlri);
+	free(bgpsec->nlri);
+	free(bgpsec);
 	rtr_bgpsec_free_signatures(new_signature);
 }
 
 static void test_sign_byte_sequence(void **state)
 {
 	struct rtr_bgpsec *bgpsec = setup_bgpsec();
-	uint8_t *private_key = lrtr_malloc(20);
+	uint8_t *private_key = malloc(20);
 	struct rtr_signature_seg *new_signature = NULL;
 	enum rtr_bgpsec_rtvals result = RTR_BGPSEC_SUCCESS;
 
@@ -268,12 +268,12 @@ static void test_sign_byte_sequence(void **state)
 	result = rtr_bgpsec_generate_signature(bgpsec, private_key, &new_signature);
 	assert_int_equal(RTR_BGPSEC_SIGNING_ERROR, result);
 
-	lrtr_free(private_key);
-	lrtr_free(bgpsec->path);
-	lrtr_free(bgpsec->sigs);
-	lrtr_free(bgpsec->nlri->nlri);
-	lrtr_free(bgpsec->nlri);
-	lrtr_free(bgpsec);
+	free(private_key);
+	free(bgpsec->path);
+	free(bgpsec->sigs);
+	free(bgpsec->nlri->nlri);
+	free(bgpsec->nlri);
+	free(bgpsec);
 }
 
 int main(void)

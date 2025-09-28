@@ -26,12 +26,12 @@ struct test_validity_query {
  * (https://www.ripe.net/analyse/internet-measurements/
  *  routing-information-service-ris/current-ris-routing-beacons)
  */
-const struct test_validity_query queries[] = {{"93.175.146.0", 24, 12654, BGP_PFXV_STATE_VALID},
-					      {"2001:7fb:fd02::", 48, 12654, BGP_PFXV_STATE_VALID},
-					      {"93.175.147.0", 24, 12654, BGP_PFXV_STATE_INVALID},
-					      {"2001:7fb:fd03::", 48, 12654, BGP_PFXV_STATE_INVALID},
-					      {"84.205.83.0", 24, 12654, BGP_PFXV_STATE_NOT_FOUND},
-					      {"2001:7fb:ff03::", 48, 12654, BGP_PFXV_STATE_NOT_FOUND},
+const struct test_validity_query queries[] = {{"93.175.146.0", 24, 12654, RTR_BGP_PFXV_STATE_VALID},
+					      {"2001:7fb:fd02::", 48, 12654, RTR_BGP_PFXV_STATE_VALID},
+					      {"93.175.147.0", 24, 12654, RTR_BGP_PFXV_STATE_INVALID},
+					      {"2001:7fb:fd03::", 48, 12654, RTR_BGP_PFXV_STATE_INVALID},
+					      {"84.205.83.0", 24, 12654, RTR_BGP_PFXV_STATE_NOT_FOUND},
+					      {"2001:7fb:ff03::", 48, 12654, RTR_BGP_PFXV_STATE_NOT_FOUND},
 					      {NULL, 0, 0, 0}};
 
 const int connection_timeout = 80;
@@ -61,8 +61,8 @@ int main(void)
 	char RPKI_CACHE_PORT[] = "3323";
 
 	/* create a TCP transport socket */
-	struct tr_socket tr_tcp;
-	struct tr_tcp_config tcp_config = {
+	struct rtr_tr_socket tr_tcp;
+	struct rtr_tr_tcp_config tcp_config = {
 		RPKI_CACHE_HOST, //IP
 		RPKI_CACHE_PORT, //Port
 		NULL, //source address
@@ -74,11 +74,11 @@ int main(void)
 	struct rtr_mgr_group groups[1];
 
 	/* init a TCP transport and create rtr socket */
-	tr_tcp_init(&tcp_config, &tr_tcp);
+	rtr_tr_tcp_init(&tcp_config, &tr_tcp);
 	rtr_tcp.tr_socket = &tr_tcp;
 
 	/* create a rtr_mgr_group array with 1 element */
-	groups[0].sockets = lrtr_malloc(1 * sizeof(struct rtr_socket *));
+	groups[0].sockets = malloc(1 * sizeof(struct rtr_socket *));
 	groups[0].sockets_len = 1;
 	groups[0].sockets[0] = &rtr_tcp;
 	groups[0].preference = 1;
@@ -121,15 +121,15 @@ int main(void)
 	struct test_validity_query q = queries[i];
 	/* test validity of entries in queries[] */
 	while (q.pfx) {
-		struct lrtr_ip_addr pref;
-		enum pfxv_state result;
-		struct pfx_record *reason = NULL;
+		struct rtr_ip_addr pref;
+		enum rtr_pfxv_state result;
+		struct rtr_pfx_record *reason = NULL;
 		unsigned int reason_len = 0;
 
-		lrtr_ip_str_to_addr(q.pfx, &pref);
-		pfx_table_validate_r(groups[0].sockets[0]->pfx_table, &reason, &reason_len, q.asn, &pref, q.len,
-				     &result);
-		lrtr_free(reason);
+		rtr_ip_str_to_addr(q.pfx, &pref);
+		rtr_pfx_table_validate_r(groups[0].sockets[0]->pfx_table, &reason, &reason_len, q.asn, &pref, q.len,
+					 &result);
+		free(reason);
 		if (result != q.val) {
 			printf("ERROR: prefix validation mismatch.\n");
 			return EXIT_FAILURE;
@@ -140,7 +140,7 @@ int main(void)
 
 	rtr_mgr_stop(conf);
 	rtr_mgr_free(conf);
-	lrtr_free(groups[0].sockets);
+	free(groups[0].sockets);
 
 	return EXIT_SUCCESS;
 }

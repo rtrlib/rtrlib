@@ -29,14 +29,14 @@ struct rtr_bgpsec *setup_bgpsec(void)
 	pfx = rtr_bgpsec_nlri_new(3);
 	assert(pfx != NULL);
 	pfx->nlri_len = 24;
-	pfx->afi = 1; /* LRTR_IPV4 */
+	pfx->afi = 1; /* RTR_IPV4 */
 	pfx_int = htonl(3221225984); /* 192.0.2.0 */
 
 	memcpy(pfx->nlri, &pfx_int, 3);
 
 	bgpsec = rtr_bgpsec_new(alg, safi, afi, my_as, target_as, pfx);
-	bgpsec->path = lrtr_malloc(sizeof(struct rtr_secure_path_seg));
-	bgpsec->sigs = lrtr_malloc(sizeof(struct rtr_signature_seg));
+	bgpsec->path = malloc(sizeof(struct rtr_secure_path_seg));
+	bgpsec->sigs = malloc(sizeof(struct rtr_signature_seg));
 	bgpsec->path->next = NULL;
 	bgpsec->sigs->next = NULL;
 	bgpsec->sigs->sig_len = 0;
@@ -96,7 +96,7 @@ int __wrap_spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski,
 static void test_sanity_checks(void **state)
 {
 	struct rtr_bgpsec *bgpsec = setup_bgpsec();
-	struct spki_table *table = lrtr_malloc(16);
+	struct spki_table *table = malloc(16);
 	enum rtr_bgpsec_rtvals result = RTR_BGPSEC_SUCCESS;
 
 	UNUSED(state);
@@ -129,8 +129,8 @@ static void test_sanity_checks(void **state)
 	result = rtr_bgpsec_validate_as_path(bgpsec, table);
 	assert_int_equal(RTR_BGPSEC_UNSUPPORTED_AFI, result);
 
-	lrtr_free(bgpsec->path);
-	lrtr_free(bgpsec->sigs);
+	free(bgpsec->path);
+	free(bgpsec->sigs);
 
 	bgpsec->path = NULL;
 	bgpsec->sigs = NULL;
@@ -138,16 +138,16 @@ static void test_sanity_checks(void **state)
 	result = rtr_bgpsec_validate_as_path(bgpsec, table);
 	assert_int_equal(RTR_BGPSEC_INVALID_ARGUMENTS, result);
 
-	lrtr_free(table);
-	lrtr_free(bgpsec->nlri->nlri);
-	lrtr_free(bgpsec->nlri);
-	lrtr_free(bgpsec);
+	free(table);
+	free(bgpsec->nlri->nlri);
+	free(bgpsec->nlri);
+	free(bgpsec);
 }
 
 static void test_check_router_keys(void **state)
 {
 	struct rtr_bgpsec *bgpsec = setup_bgpsec();
-	struct spki_table *table = lrtr_malloc(16);
+	struct spki_table *table = malloc(16);
 	enum rtr_bgpsec_rtvals result = RTR_BGPSEC_SUCCESS;
 
 	UNUSED(state);
@@ -157,18 +157,18 @@ static void test_check_router_keys(void **state)
 
 	assert_int_equal(RTR_BGPSEC_ROUTER_KEY_NOT_FOUND, result);
 
-	lrtr_free(table);
-	lrtr_free(bgpsec->path);
-	lrtr_free(bgpsec->sigs);
-	lrtr_free(bgpsec->nlri->nlri);
-	lrtr_free(bgpsec->nlri);
-	lrtr_free(bgpsec);
+	free(table);
+	free(bgpsec->path);
+	free(bgpsec->sigs);
+	free(bgpsec->nlri->nlri);
+	free(bgpsec->nlri);
+	free(bgpsec);
 }
 
 static void test_align_byte_sequence(void **state)
 {
 	struct rtr_bgpsec *bgpsec = setup_bgpsec();
-	struct spki_table *table = lrtr_malloc(16);
+	struct spki_table *table = malloc(16);
 	enum rtr_bgpsec_rtvals result = RTR_BGPSEC_SUCCESS;
 
 	UNUSED(state);
@@ -180,18 +180,18 @@ static void test_align_byte_sequence(void **state)
 
 	assert_int_equal(RTR_BGPSEC_ERROR, result);
 
-	lrtr_free(table);
-	lrtr_free(bgpsec->path);
-	lrtr_free(bgpsec->sigs);
-	lrtr_free(bgpsec->nlri->nlri);
-	lrtr_free(bgpsec->nlri);
-	lrtr_free(bgpsec);
+	free(table);
+	free(bgpsec->path);
+	free(bgpsec->sigs);
+	free(bgpsec->nlri->nlri);
+	free(bgpsec->nlri);
+	free(bgpsec);
 }
 
 static void test_hash_byte_sequence(void **state)
 {
 	struct rtr_bgpsec *bgpsec = setup_bgpsec();
-	struct spki_table *table = lrtr_malloc(16);
+	struct spki_table *table = malloc(16);
 	enum rtr_bgpsec_rtvals result = RTR_BGPSEC_SUCCESS;
 
 	UNUSED(state);
@@ -204,18 +204,18 @@ static void test_hash_byte_sequence(void **state)
 
 	assert_int_equal(RTR_BGPSEC_ERROR, result);
 
-	lrtr_free(table);
-	lrtr_free(bgpsec->path);
-	lrtr_free(bgpsec->sigs);
-	lrtr_free(bgpsec->nlri->nlri);
-	lrtr_free(bgpsec->nlri);
-	lrtr_free(bgpsec);
+	free(table);
+	free(bgpsec->path);
+	free(bgpsec->sigs);
+	free(bgpsec->nlri->nlri);
+	free(bgpsec->nlri);
+	free(bgpsec);
 }
 
 static void test_validate_signature(void **state)
 {
 	struct rtr_bgpsec *bgpsec = setup_bgpsec();
-	struct spki_table *table = lrtr_malloc(16);
+	struct spki_table *table = malloc(16);
 	enum rtr_bgpsec_rtvals result = RTR_BGPSEC_SUCCESS;
 
 	UNUSED(state);
@@ -230,12 +230,12 @@ static void test_validate_signature(void **state)
 
 	assert_int_equal(RTR_BGPSEC_ERROR, result);
 
-	lrtr_free(table);
-	lrtr_free(bgpsec->path);
-	lrtr_free(bgpsec->sigs);
-	lrtr_free(bgpsec->nlri->nlri);
-	lrtr_free(bgpsec->nlri);
-	lrtr_free(bgpsec);
+	free(table);
+	free(bgpsec->path);
+	free(bgpsec->sigs);
+	free(bgpsec->nlri->nlri);
+	free(bgpsec->nlri);
+	free(bgpsec);
 }
 
 int main(void)
