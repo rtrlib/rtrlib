@@ -100,7 +100,7 @@ int rtr_init(struct rtr_socket *rtr_socket, struct rtr_tr_socket *tr, struct rtr
 	return RTR_SUCCESS;
 }
 
-static void make_key()
+static void create_processing_thread_destructor_key()
 {
 	(void)pthread_key_create(&processing_thread_destructor_key, rtr_fsm_start_cleanup);
 }
@@ -113,7 +113,7 @@ int rtr_start(struct rtr_socket *rtr_socket, const rtr_mgr_on_processing_thread_
 
 	// Since the processing thread destructor key is shared between all threads, it must
 	// only be created once. However, each thread can store different data for that key.
-	if (pthread_once(&processing_thread_destructor_key_once, make_key) != 0) {
+	if (pthread_once(&processing_thread_destructor_key_once, create_processing_thread_destructor_key) != 0) {
 		RTR_DBG1("Could not initialize processing thread destructor key");
 		return RTR_ERROR;
 	}
