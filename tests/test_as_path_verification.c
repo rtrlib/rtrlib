@@ -37,14 +37,14 @@
 })
 
 #define BUILD_ASPA_TABLE(tablename, socketname, ...) \
-	struct rtr_aspa_table *(tablename) = malloc(sizeof(*tablename)); \
+	struct rtr_aspa_table *(tablename) = rtr_malloc(sizeof(*tablename)); \
 	assert((tablename)); \
 	rtr_aspa_table_init((tablename), NULL); \
 	\
 	NEW_SOCKET_ADD_RECORDS((tablename), (socketname), __VA_ARGS__) \
 
 #define NEW_SOCKET_ADD_RECORDS(tablename, socketname, ...) \
-	struct rtr_socket *socketname = malloc(sizeof(struct rtr_socket)); \
+	struct rtr_socket *socketname = rtr_malloc(sizeof(struct rtr_socket)); \
 	assert(socketname); \
 	socketname->aspa_table = (tablename); \
 	{ \
@@ -54,7 +54,7 @@
 		if (len) { \
 			struct aspa_update *update = NULL; \
 			struct aspa_update_operation *operations = \
-				malloc(len * sizeof(struct aspa_update_operation)); \
+				rtr_malloc(len * sizeof(struct aspa_update_operation)); \
 			for (size_t i = 0; i < len; i++) \
 				operations[i] = ADD_OPERATION(i, records[i]); \
 			\
@@ -70,7 +70,7 @@
 
 static struct rtr_aspa_table *test_create_aspa_table(void)
 {
-	struct rtr_aspa_table *aspa_table = malloc(sizeof(*aspa_table));
+	struct rtr_aspa_table *aspa_table = rtr_malloc(sizeof(*aspa_table));
 
 	assert(aspa_table);
 	rtr_aspa_table_init(aspa_table, NULL);
@@ -237,8 +237,8 @@ static void test_verify_example_1(void)
 		ASNS(20, 30, 40, 70, 80));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -270,8 +270,8 @@ static void test_verify_example_2(void)
 		ASNS(20, 30, 90, 40, 70, 80));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -307,8 +307,8 @@ static void test_verify_example_2b(void)
 		ASNS(20, 30, 90, 40, 70, 80));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -338,8 +338,8 @@ static void test_verify_example_3a(void)
 		ASNS(20, 30, 90, 40, 70, 80));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -369,8 +369,8 @@ static void test_verify_example_3b(void)
 		ASNS(20, 30, 90, 100, 40, 70, 80));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -404,8 +404,8 @@ static void test_verify_example_3c(void)
 		ASNS(20, 30, 90, 100, 40, 70, 80));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -439,8 +439,8 @@ static void test_verify_example_3d(void)
 		ASNS(20, 30, 40, 100, 90, 70, 80));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -474,8 +474,8 @@ static void test_verify_example_3f(void)
 		ASNS(20, 30, 40, 100, 90, 70, 80));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -500,8 +500,8 @@ static void test_verify_example_4(void)
 		ASNS(20, 30, 40, 50, 60, 70, 80));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -531,8 +531,8 @@ static void test_verify_example_4_fixed(void)
 		ASNS(20, 30, 40, 50, 60, 70, 80));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -560,8 +560,8 @@ static void test_verify_example_5(void)
 		ASNS(20, 30, 40));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -604,8 +604,8 @@ static void test_verify_example_6(void)
 		ASNS(20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -654,8 +654,8 @@ static void test_verify_example_7(void)
 		ASNS(20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -679,8 +679,8 @@ static void test_verify_example_8(void)
 		ASNS(20));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -704,8 +704,8 @@ static void test_verify_example_9(void)
 		ASNS(20));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -731,8 +731,8 @@ static void test_verify_example_11(void)
 		ASNS(20, 30));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -755,8 +755,8 @@ static void test_verify_example_12(void)
 		ASNS(20, 30));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -791,8 +791,8 @@ static void test_verify_example_13(void)
 		ASNS(20, 30, 40, 50, 60));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -825,8 +825,8 @@ static void test_verify_example_14(void)
 		ASNS(20, 30, 40, 50, 60));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -859,8 +859,8 @@ static void test_verify_example_15(void)
 		ASNS(20, 30, 40, 50, 60));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -889,8 +889,8 @@ static void test_verify_example_16(void)
 		ASNS(10, 20, 30, 40));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -922,8 +922,8 @@ static void test_verify_example_17(void)
 		ASNS(10, 20, 30, 40));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 /**
@@ -947,8 +947,8 @@ static void test_verify_example_18(void)
 		ASNS(30, 20, 40));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 
@@ -984,8 +984,8 @@ static void test_sriram_example_19(void)
 	VERIFY_AS_PATH(aspa_table, RTR_ASPA_DOWNSTREAM, RTR_ASPA_AS_PATH_VALID , ASNS(5, 3, 1));
 
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
-	free(rtr_socket);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
 }
 
 // clang-format on
@@ -1021,10 +1021,10 @@ int main(void)
 	test_upstream(aspa_table);
 	test_downstream(aspa_table);
 
-	free(aspa_table->store->next->rtr_socket);
-	free(aspa_table->store->rtr_socket);
+	rtr_free(aspa_table->store->next->rtr_socket);
+	rtr_free(aspa_table->store->rtr_socket);
 	rtr_aspa_table_free(aspa_table, false);
-	free(aspa_table);
+	rtr_free(aspa_table);
 
 	test_verify_example_1();
 	test_verify_example_2();

@@ -145,7 +145,7 @@ static int custom_recv(const struct rtr_tr_socket *socket __attribute__((unused)
 static struct pdu_cache_response *begin_cache_response(uint8_t version, uint16_t session_id)
 {
 	if (!data)
-		data = malloc(sizeof(struct pdu_cache_response));
+		data = rtr_malloc(sizeof(struct pdu_cache_response));
 	else
 		data = rtr_realloc(data, data_size + sizeof(struct pdu_cache_response));
 
@@ -302,7 +302,7 @@ static void aspa_update_callback(struct rtr_aspa_table *s, const struct rtr_aspa
 	}
 
 	printf(" ]\n");
-	free(record.provider_asns);
+	rtr_free(record.provider_asns);
 }
 
 static void assert_table(struct rtr_socket *socket, struct rtr_aspa_record records[], size_t record_count)
@@ -734,7 +734,7 @@ static void test_regular_swap(struct rtr_socket *socket)
 	);
 
 	struct rtr_aspa_table *src_table = socket->aspa_table;
-	struct rtr_aspa_table *dst_table = malloc(sizeof(struct rtr_aspa_table));
+	struct rtr_aspa_table *dst_table = rtr_malloc(sizeof(struct rtr_aspa_table));
 
 	assert(dst_table);
 	rtr_aspa_table_init(dst_table, aspa_update_callback);
@@ -788,7 +788,7 @@ static void test_regular_swap(struct rtr_socket *socket)
 	assert(expected_error_pdus_index == expected_error_pdus_count);
 
 	rtr_aspa_table_free(dst_table, false);
-	free(dst_table);
+	rtr_free(dst_table);
 }
 
 static void test_withdraw_twice(struct rtr_socket *socket)
@@ -1210,7 +1210,7 @@ static void cleanup(struct rtr_socket **socket)
 	printf("cleaning...\n");
 
 	if (data) {
-		free(data);
+		rtr_free(data);
 		data = NULL;
 		data_size = 0;
 		data_index = 0;
@@ -1219,23 +1219,23 @@ static void cleanup(struct rtr_socket **socket)
 	if (socket && *socket) {
 		if ((*socket)->aspa_table) {
 			rtr_aspa_table_free((*socket)->aspa_table, false);
-			free((*socket)->aspa_table);
+			rtr_free((*socket)->aspa_table);
 		}
 
 		if ((*socket)->spki_table) {
 			spki_table_free_without_notify((*socket)->spki_table);
-			free((*socket)->spki_table);
+			rtr_free((*socket)->spki_table);
 		}
 
 		if ((*socket)->pfx_table) {
 			pfx_table_free_without_notify((*socket)->pfx_table);
-			free((*socket)->pfx_table);
+			rtr_free((*socket)->pfx_table);
 		}
 
 		if ((*socket)->tr_socket)
-			free((*socket)->tr_socket);
+			rtr_free((*socket)->tr_socket);
 
-		free(*socket);
+		rtr_free(*socket);
 		*socket = NULL;
 	}
 
@@ -1245,12 +1245,12 @@ static void cleanup(struct rtr_socket **socket)
 
 static struct rtr_socket *create_socket(bool is_resetting)
 {
-	struct rtr_tr_socket *tr_socket = calloc(1, sizeof(struct rtr_tr_socket));
+	struct rtr_tr_socket *tr_socket = rtr_calloc(1, sizeof(struct rtr_tr_socket));
 
 	tr_socket->recv_fp = (tr_recv_fp)&custom_recv;
 	tr_socket->send_fp = (tr_send_fp)&custom_send;
 
-	struct rtr_socket *socket = calloc(1, sizeof(struct rtr_socket));
+	struct rtr_socket *socket = rtr_calloc(1, sizeof(struct rtr_socket));
 
 	assert(socket);
 	socket->is_resetting = is_resetting;
@@ -1258,18 +1258,18 @@ static struct rtr_socket *create_socket(bool is_resetting)
 	socket->state = RTR_SYNC;
 	socket->tr_socket = tr_socket;
 
-	struct rtr_aspa_table *aspa_table = malloc(sizeof(struct rtr_aspa_table));
+	struct rtr_aspa_table *aspa_table = rtr_malloc(sizeof(struct rtr_aspa_table));
 
 	assert(aspa_table);
 	rtr_aspa_table_init(aspa_table, aspa_update_callback);
 	socket->aspa_table = aspa_table;
 
-	struct rtr_spki_table *spki_table = malloc(sizeof(struct rtr_spki_table));
+	struct rtr_spki_table *spki_table = rtr_malloc(sizeof(struct rtr_spki_table));
 
 	spki_table_init(spki_table, NULL);
 	socket->spki_table = spki_table;
 
-	struct rtr_pfx_table *pfx_table = malloc(sizeof(struct rtr_pfx_table));
+	struct rtr_pfx_table *pfx_table = rtr_malloc(sizeof(struct rtr_pfx_table));
 
 	rtr_pfx_table_init(pfx_table, NULL);
 	socket->pfx_table = pfx_table;

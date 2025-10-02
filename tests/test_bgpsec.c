@@ -80,7 +80,7 @@ static uint8_t wrong_private_key[] = {
 /* Helper function to create a spki_record */
 static struct rtr_spki_record *create_record(int ASN, uint8_t *ski, uint8_t *spki)
 {
-	struct rtr_spki_record *record = malloc(sizeof(struct rtr_spki_record));
+	struct rtr_spki_record *record = rtr_malloc(sizeof(struct rtr_spki_record));
 
 	memset(record, 0, sizeof(*record));
 	record->asn = ASN;
@@ -205,9 +205,9 @@ static void validate_bgpsec_path_test(void)
 
 	/* Free all allocated memory. */
 	spki_table_free(&table);
-	free(record1);
-	free(record2);
-	free(duplicate_record);
+	rtr_free(record1);
+	rtr_free(record2);
+	rtr_free(duplicate_record);
 	rtr_mgr_bgpsec_free(bgpsec);
 }
 
@@ -305,8 +305,8 @@ static void generate_signature_test(void)
 
 	/* Free all allocated memory. */
 	spki_table_free(&table);
-	free(record1);
-	free(record2);
+	rtr_free(record1);
+	rtr_free(record2);
 	rtr_mgr_bgpsec_free(bgpsec);
 	rtr_mgr_bgpsec_free_signatures(new_sig);
 }
@@ -379,8 +379,8 @@ static void originate_and_validate_test(void)
 
 	/* Free all allocated memory. */
 	spki_table_free(&table);
-	free(record1);
-	free(record2);
+	rtr_free(record1);
+	rtr_free(record2);
 	rtr_mgr_bgpsec_free(bgpsec);
 }
 

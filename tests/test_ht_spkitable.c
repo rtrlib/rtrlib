@@ -53,7 +53,7 @@ static bool spki_records_are_equal(struct rtr_spki_record *r1, struct rtr_spki_r
  */
 static struct rtr_spki_record *create_record(int ASN, int ski_offset, int spki_offset, struct rtr_socket *socket)
 {
-	struct rtr_spki_record *record = malloc(sizeof(struct rtr_spki_record));
+	struct rtr_spki_record *record = rtr_malloc(sizeof(struct rtr_spki_record));
 	uint32_t i;
 
 	memset(record, 0, sizeof(*record));
@@ -100,7 +100,7 @@ static void _spki_table_search_assert(struct rtr_spki_table *table, uint8_t *ski
 
 	assert(spki_table_search_by_ski(table, ski, &result, &result_len) == RTR_SPKI_SUCCESS);
 	assert(result_len == NUM_SKIS_RECORDS);
-	free(result);
+	rtr_free(result);
 }
 
 /* ----- TESTS FUNCTIONS ----- */
@@ -115,8 +115,8 @@ static void _spki_table_search_assert(struct rtr_spki_table *table, uint8_t *ski
 static void test_ht_1(void)
 {
 	struct rtr_spki_table table;
-	struct rtr_socket *socket_one = malloc(sizeof(struct rtr_socket));
-	struct rtr_socket *socket_two = malloc(sizeof(struct rtr_socket));
+	struct rtr_socket *socket_one = rtr_malloc(sizeof(struct rtr_socket));
+	struct rtr_socket *socket_two = rtr_malloc(sizeof(struct rtr_socket));
 	uint8_t ski[SKI_SIZE];
 	uint32_t asn = 1;
 
@@ -125,7 +125,7 @@ static void test_ht_1(void)
 
 	spki_table_init(&table, NULL);
 	memcpy(ski, record->ski, 20);
-	free(record);
+	rtr_free(record);
 
 	/* create and add records with either socket_one or socket_two */
 	for (int i = 0; i < 255; i++) {
@@ -135,7 +135,7 @@ static void test_ht_1(void)
 			record = create_record(1, 0, i, socket_two);
 
 		_spki_table_add_assert(&table, record);
-		free(record);
+		rtr_free(record);
 	}
 
 	struct rtr_spki_record *result;
@@ -149,7 +149,7 @@ static void test_ht_1(void)
 		count++;
 	}
 	assert(count == 255);
-	free(result);
+	rtr_free(result);
 
 	/* remove all records with socket_one */
 	spki_table_src_remove(&table, socket_one);
@@ -163,9 +163,9 @@ static void test_ht_1(void)
 
 	/* cleanup: free memory */
 	spki_table_free(&table);
-	free(result);
-	free(socket_one);
-	free(socket_two);
+	rtr_free(result);
+	rtr_free(socket_one);
+	rtr_free(socket_two);
 	printf("%s() complete\n", __func__);
 }
 
@@ -192,14 +192,14 @@ static void test_ht_2(void)
 	/* TEST2: check that returned records are the same we added. */
 	assert(spki_records_are_equal(&result[0], record1) != spki_records_are_equal(&result[0], record2));
 	assert(spki_records_are_equal(&result[1], record1) != spki_records_are_equal(&result[1], record2));
-	free(result);
+	rtr_free(result);
 
 	/* TEST3: remove record1 and verify result is record2 */
 	_spki_table_remove_assert(&table, record1);
 	spki_table_get_all(&table, 10, record1->ski, &result, &result_len);
 	assert(result_len == 1);
 	assert(spki_records_are_equal(&result[0], record2));
-	free(result);
+	rtr_free(result);
 
 	/*TEST4: remove record2 and verify search result is empty */
 	_spki_table_remove_assert(&table, record2);
@@ -211,8 +211,8 @@ static void test_ht_2(void)
 	assert(!result);
 
 	/* cleanup: free memory */
-	free(record1);
-	free(record2);
+	rtr_free(record1);
+	rtr_free(record2);
 	spki_table_free(&table);
 	printf("%s() complete\n", __func__);
 }
@@ -247,15 +247,15 @@ static void test_ht_3(void)
 	/* Check if other records are still there */
 	assert(spki_table_get_all(&table, record2->asn, record2->ski, &result, &result_len) == RTR_SPKI_SUCCESS);
 	assert(result_len == 1);
-	free(result);
+	rtr_free(result);
 
 	assert(spki_table_get_all(&table, record3->asn, record3->ski, &result, &result_len) == RTR_SPKI_SUCCESS);
 	assert(result_len == 1);
-	free(result);
+	rtr_free(result);
 
 	assert(spki_table_get_all(&table, record4->asn, record4->ski, &result, &result_len) == RTR_SPKI_SUCCESS);
 	assert(result_len == 1);
-	free(result);
+	rtr_free(result);
 	/* (re)add record1 */
 	_spki_table_add_assert(&table, record1);
 
@@ -264,15 +264,15 @@ static void test_ht_3(void)
 	/* Check if other records are still there */
 	assert(spki_table_get_all(&table, record1->asn, record1->ski, &result, &result_len) == RTR_SPKI_SUCCESS);
 	assert(result_len == 1);
-	free(result);
+	rtr_free(result);
 
 	assert(spki_table_get_all(&table, record3->asn, record3->ski, &result, &result_len) == RTR_SPKI_SUCCESS);
 	assert(result_len == 1);
-	free(result);
+	rtr_free(result);
 
 	assert(spki_table_get_all(&table, record4->asn, record4->ski, &result, &result_len) == RTR_SPKI_SUCCESS);
 	assert(result_len == 1);
-	free(result);
+	rtr_free(result);
 	/* (re)add record2 */
 	_spki_table_add_assert(&table, record2);
 
@@ -281,15 +281,15 @@ static void test_ht_3(void)
 	/* Check if other records are still there */
 	assert(spki_table_get_all(&table, record1->asn, record1->ski, &result, &result_len) == RTR_SPKI_SUCCESS);
 	assert(result_len == 2);
-	free(result);
+	rtr_free(result);
 
 	assert(spki_table_get_all(&table, record2->asn, record2->ski, &result, &result_len) == RTR_SPKI_SUCCESS);
 	assert(result_len == 2);
-	free(result);
+	rtr_free(result);
 
 	assert(spki_table_get_all(&table, record4->asn, record4->ski, &result, &result_len) == RTR_SPKI_SUCCESS);
 	assert(result_len == 1);
-	free(result);
+	rtr_free(result);
 	/* (re)add record3 */
 	_spki_table_add_assert(&table, record3);
 
@@ -298,22 +298,22 @@ static void test_ht_3(void)
 	/* Check if other records are still there */
 	assert(spki_table_get_all(&table, record1->asn, record1->ski, &result, &result_len) == RTR_SPKI_SUCCESS);
 	assert(result_len == 2);
-	free(result);
+	rtr_free(result);
 
 	assert(spki_table_get_all(&table, record2->asn, record2->ski, &result, &result_len) == RTR_SPKI_SUCCESS);
 	assert(result_len == 2);
-	free(result);
+	rtr_free(result);
 
 	assert(spki_table_get_all(&table, record3->asn, record3->ski, &result, &result_len) == RTR_SPKI_SUCCESS);
 	assert(result_len == 1);
-	free(result);
+	rtr_free(result);
 
 	/* cleanup: free memory */
 	spki_table_free(&table);
-	free(record1);
-	free(record2);
-	free(record3);
-	free(record4);
+	rtr_free(record1);
+	rtr_free(record2);
+	rtr_free(record3);
+	rtr_free(record4);
 	printf("%s complete\n", __func__);
 }
 
@@ -345,8 +345,8 @@ static void test_ht_4(void)
 						  &result_len) == RTR_SPKI_SUCCESS);
 			assert(result_len == 1);
 			_spki_table_remove_assert(&table, records[i][j]);
-			free(result);
-			free(records[i][j]);
+			rtr_free(result);
+			rtr_free(records[i][j]);
 		}
 	}
 
@@ -355,7 +355,7 @@ static void test_ht_4(void)
 		for (int j = 0; j < NUM_TABLE_Y; j++) {
 			records[i][j] = create_record(i, j, j, NULL);
 			_spki_table_add_assert(&table, records[i][j]);
-			free(records[i][j]);
+			rtr_free(records[i][j]);
 		}
 	}
 
@@ -387,12 +387,12 @@ static void test_ht_5(void)
 	/* check that only record1 is in table and matches query */
 	spki_table_get_all(&table, 10, record1->ski, &result, &result_len);
 	assert(result_len == 1);
-	free(result);
+	rtr_free(result);
 
 	/* cleanup: free memory */
 	spki_table_free(&table);
-	free(record1);
-	free(record2);
+	rtr_free(record1);
+	rtr_free(record2);
 	printf("%s() complete\n", __func__);
 }
 
@@ -417,7 +417,7 @@ static void test_ht_6(void)
 	for (unsigned int i = 0; i < NUM_SKIS; i++) {
 		for (unsigned int j = 0; j < NUM_SKIS_RECORDS; j++) {
 			_spki_table_search_assert(&table, records[i][j]->ski);
-			free(records[i][j]);
+			rtr_free(records[i][j]);
 		}
 	}
 
@@ -454,8 +454,8 @@ static void test_ht_7(void)
 
 		assert(size == 1);
 		assert(spki_records_are_equal(records[i], &result[0]));
-		free(result);
-		free(records[i]);
+		rtr_free(result);
+		rtr_free(records[i]);
 	}
 	spki_table_free(&table);
 
@@ -476,8 +476,8 @@ static void test_ht_7(void)
 
 		assert(size == 1);
 		assert(spki_records_are_equal(records[i], &result[0]));
-		free(result);
-		free(records[i]);
+		rtr_free(result);
+		rtr_free(records[i]);
 	}
 	spki_table_free(&table);
 
@@ -503,8 +503,8 @@ static void test_ht_7(void)
 
 			assert(size == 1);
 			assert(spki_records_are_equal(records_n_n[i][j], &result[0]));
-			free(result);
-			free(records_n_n[i][j]);
+			rtr_free(result);
+			rtr_free(records_n_n[i][j]);
 		}
 	}
 
@@ -532,30 +532,30 @@ static void test_table_swap(void)
 
 	assert(spki_table_search_by_ski(&table1, test_record1->ski, &result, &result_len) == RTR_SPKI_SUCCESS);
 	assert(result_len == 1);
-	free(result);
+	rtr_free(result);
 	result = NULL;
 
 	assert(spki_table_search_by_ski(&table2, test_record2->ski, &result, &result_len) == RTR_SPKI_SUCCESS);
 	assert(result_len == 1);
-	free(result);
+	rtr_free(result);
 	result = NULL;
 
 	spki_table_swap(&table1, &table2);
 
 	assert(spki_table_search_by_ski(&table1, test_record2->ski, &result, &result_len) == RTR_SPKI_SUCCESS);
 	assert(result_len == 1);
-	free(result);
+	rtr_free(result);
 	result = NULL;
 
 	assert(spki_table_search_by_ski(&table2, test_record1->ski, &result, &result_len) == RTR_SPKI_SUCCESS);
 	assert(result_len == 1);
-	free(result);
+	rtr_free(result);
 	result = NULL;
 
 	spki_table_free(&table1);
 	spki_table_free(&table2);
-	free(test_record1);
-	free(test_record2);
+	rtr_free(test_record1);
+	rtr_free(test_record2);
 
 	printf("%s() complete\n", __func__);
 }
@@ -628,9 +628,9 @@ static void test_table_diff(void)
 	printf("Freeing tables\n");
 	spki_table_free(&table1);
 	spki_table_free(&table2);
-	free(test_record1);
-	free(test_record2);
-	free(test_record3);
+	rtr_free(test_record1);
+	rtr_free(test_record2);
+	rtr_free(test_record3);
 
 	printf("%s() complete\n", __func__);
 }
