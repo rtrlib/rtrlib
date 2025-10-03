@@ -68,7 +68,7 @@ struct sent_pdu {
 			      .provider_count = (size_t)(sizeof(providers) / sizeof(uint32_t)), \
 			      .provider_asns = sizeof(providers) == 0 ? NULL : providers})
 
-#define _CAT_(a, b) a## b
+#define _CAT_(a, b) a##b
 #define _CAT(a, b) _CAT_(a, b)
 #define _LINEVAR(V) _CAT(V, __LINE__)
 
