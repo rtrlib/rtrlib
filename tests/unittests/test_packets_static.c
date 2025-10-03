@@ -113,9 +113,7 @@ static void test_rtr_get_pdu_type(void **state)
 static void test_pdu_to_network_byte_order(void **state)
 {
 	struct pdu_serial_query pdu_serial;
-	struct pdu_aspa *aspa = rtr_malloc(24);
-
-	memset(aspa, 0, 24);
+	struct pdu_aspa *aspa = rtr_calloc(1, sizeof(*aspa));
 
 	UNUSED(state);
 
@@ -162,9 +160,7 @@ static void test_pdu_to_host_byte_order(void **state)
 {
 	struct pdu_serial_notify pdu_serial;
 	struct pdu_end_of_data_v1_v2 pdu_eod;
-	struct pdu_aspa *aspa = rtr_malloc(24);
-
-	memset(aspa, 0, 24);
+	struct pdu_aspa *aspa = rtr_calloc(1, sizeof(*aspa));
 
 	UNUSED(state);
 
