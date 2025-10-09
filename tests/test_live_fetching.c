@@ -27,7 +27,7 @@ struct test_validity_query {
  * (https://www.ripe.net/analyse/internet-measurements/
  *  routing-information-service-ris/current-ris-routing-beacons)
  */
-const int connection_timeout = 20;
+const int connection_timeout = 80;
 enum rtr_mgr_status connection_status = -1;
 
 static void connection_status_callback(const struct rtr_mgr_group *group __attribute__((unused)),
@@ -50,13 +50,8 @@ int main(void)
 	/* These variables are not in the global scope
 	 * because it would cause warnings about discarding constness
 	 */
-
-	//char RPKI_CACHE_HOST[] = "rpki-validator.realmv6.org";
-	//char RPKI_CACHE_PORT[] = "8283";
-
-	// REPLACE THIS BY YOUR RTR SERVER
 	char RPKI_CACHE_HOST[] = "rpki-cache.netd.cs.tu-dresden.de";
-	char RPKI_CACHE_PORT[] = "3323"; // rir rtr
+	char RPKI_CACHE_PORT[] = "3323";
 
 	/* create a TCP transport socket */
 	struct rtr_tr_socket tr_tcp;
@@ -69,7 +64,7 @@ int main(void)
 	rtr_tcp.tr_socket = &tr_tcp;
 
 	/* create a rtr_mgr_group array with 1 element */
-	groups[0].sockets = malloc(1 * sizeof(struct rtr_socket *));
+	groups[0].sockets = rtr_malloc(1 * sizeof(struct rtr_socket *));
 	groups[0].sockets_len = 1;
 	groups[0].sockets[0] = &rtr_tcp;
 	groups[0].preference = 1;
@@ -81,14 +76,17 @@ int main(void)
 
 	if (rtr_mgr_add_roa_support(conf, NULL) == RTR_ERROR) {
 		fprintf(stderr, "Failed initializing ROA support\n");
+		return EXIT_FAILURE;
 	}
 
 	if (rtr_mgr_add_aspa_support(conf, NULL) == RTR_ERROR) {
 		fprintf(stderr, "Failed initializing ASPA support\n");
+		return EXIT_FAILURE;
 	}
 
 	if (rtr_mgr_add_spki_support(conf, NULL) == RTR_ERROR) {
 		fprintf(stderr, "Failed initializing BGPSEC support\n");
+		return EXIT_FAILURE;
 	}
 
 	rtr_mgr_setup_sockets(conf, groups, 1, 50, 600, 600);
@@ -126,6 +124,7 @@ int main(void)
 
 	rtr_mgr_stop(conf);
 	rtr_mgr_free(conf);
+	rtr_free(groups[0].sockets);
 
 	return EXIT_SUCCESS;
 }

@@ -504,10 +504,16 @@ RTRLIB_EXPORT void rtr_mgr_free(struct rtr_mgr_config *config)
 	pthread_rwlock_wrlock(&config->mutex);
 
 	rtr_pfx_table_free(config->pfx_table);
-	spki_table_free(config->spki_table);
-	rtr_aspa_table_free(config->aspa_table, true);
-	rtr_free(config->spki_table);
 	rtr_free(config->pfx_table);
+	config->pfx_table = NULL;
+
+	spki_table_free(config->spki_table);
+	rtr_free(config->spki_table);
+	config->spki_table = NULL;
+
+	rtr_aspa_table_free(config->aspa_table, true);
+	rtr_free(config->aspa_table);
+	config->aspa_table = NULL;
 
 	/* Free linked list */
 	tommy_node *head = tommy_list_head(&config->groups->list);

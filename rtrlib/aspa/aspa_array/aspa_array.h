@@ -35,7 +35,7 @@ struct aspa_array {
 /**
  * @brief Creates an vector object
  * @param[in,out] array_ptr Pointer to a variable that will hold a reference to the newly created array.
- * @return @c RTR_ASPA_SUCCESS if the operation succeeds, @c ASPA_ERROR if it fails.
+ * @return @c RTR_ASPA_SUCCESS if the operation succeeds, @c RTR_ASPA_ERROR if it fails.
  */
 enum rtr_aspa_status aspa_array_create(struct aspa_array **array_ptr);
 
@@ -56,7 +56,7 @@ void aspa_array_free(struct aspa_array *array, bool free_provider_arrays);
  * @param record The new record.
  * @param copy_providers A boolean value indicating whether the array should copy the record's
  * providers before inserting the record.
- * @return @c RTR_ASPA_SUCCESS if the operation succeeds, @c ASPA_ERROR if it fails.
+ * @return @c RTR_ASPA_SUCCESS if the operation succeeds, @c RTR_ASPA_ERROR if it fails.
  */
 enum rtr_aspa_status aspa_array_insert(struct aspa_array *array, size_t index, struct rtr_aspa_record *record,
 				   bool copy_providers);
@@ -68,7 +68,7 @@ enum rtr_aspa_status aspa_array_insert(struct aspa_array *array, size_t index, s
  * @param record The record that will be appended to the array.
  * @param copy_providers A boolean value indicating whether the array should copy the record's
  * providers before appending the record.
- * @return @c RTR_ASPA_SUCCESS if the operation succeeds, @c ASPA_ERROR if it fails.
+ * @return @c RTR_ASPA_SUCCESS if the operation succeeds, @c RTR_ASPA_ERROR if it fails.
  */
 enum rtr_aspa_status aspa_array_append(struct aspa_array *array, struct rtr_aspa_record *record, bool copy_providers);
 
@@ -79,7 +79,7 @@ enum rtr_aspa_status aspa_array_append(struct aspa_array *array, struct rtr_aspa
  * @param index The record's index.
  * @param free_providers A boolean value determining whether to free the existing record's provider array.
  * @return @c RTR_ASPA_SUCCESS if the operation succeeds, @c ASPA_RECORD_NOT_FOUND if the record's index doesn't exist,
- * @c ASPA_ERROR otherwise.
+ * @c RTR_ASPA_ERROR otherwise.
  */
 enum rtr_aspa_status aspa_array_remove(struct aspa_array *array, size_t index, bool free_providers);
 
@@ -108,7 +108,7 @@ struct rtr_aspa_record *aspa_array_search(struct aspa_array *array, uint32_t cus
  *
  * @param array The array to remove the record from.
  * @param size the number of object that should definetly fit into the array
- * @return @c RTR_ASPA_SUCCESS if the operation succeeds @c ASPA_ERROR otherwise.
+ * @return @c RTR_ASPA_SUCCESS if the operation succeeds @c RTR_ASPA_ERROR otherwise.
  */
 enum rtr_aspa_status aspa_array_reserve(struct aspa_array *array, size_t size);
 

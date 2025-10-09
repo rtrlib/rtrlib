@@ -43,7 +43,7 @@ struct rtr_bgpsec *setup_bgpsec(void)
 	return bgpsec;
 }
 
-int __wrap_check_router_keys(const struct rtr_signature_seg *sig_segs, struct spki_table *table)
+int __wrap_check_router_keys(const struct rtr_signature_seg *sig_segs, struct rtr_spki_table *table)
 {
 	UNUSED(sig_segs);
 	UNUSED(table);
@@ -83,7 +83,7 @@ int __wrap_validate_signature(const unsigned char *hash, const struct rtr_signat
 	return (int)mock();
 }
 
-int __wrap_spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski, struct spki_record **result,
+int __wrap_spki_table_search_by_ski(struct rtr_spki_table *spki_table, uint8_t *ski, struct spki_record **result,
 				    unsigned int *result_size)
 {
 	UNUSED(spki_table);
@@ -96,7 +96,7 @@ int __wrap_spki_table_search_by_ski(struct spki_table *spki_table, uint8_t *ski,
 static void test_sanity_checks(void **state)
 {
 	struct rtr_bgpsec *bgpsec = setup_bgpsec();
-	struct spki_table *table = rtr_malloc(16);
+	struct rtr_spki_table *table = rtr_malloc(16);
 	enum rtr_bgpsec_rtvals result = RTR_BGPSEC_SUCCESS;
 
 	UNUSED(state);
@@ -147,7 +147,7 @@ static void test_sanity_checks(void **state)
 static void test_check_router_keys(void **state)
 {
 	struct rtr_bgpsec *bgpsec = setup_bgpsec();
-	struct spki_table *table = rtr_malloc(16);
+	struct rtr_spki_table *table = rtr_malloc(16);
 	enum rtr_bgpsec_rtvals result = RTR_BGPSEC_SUCCESS;
 
 	UNUSED(state);
@@ -168,7 +168,7 @@ static void test_check_router_keys(void **state)
 static void test_align_byte_sequence(void **state)
 {
 	struct rtr_bgpsec *bgpsec = setup_bgpsec();
-	struct spki_table *table = rtr_malloc(16);
+	struct rtr_spki_table *table = rtr_malloc(16);
 	enum rtr_bgpsec_rtvals result = RTR_BGPSEC_SUCCESS;
 
 	UNUSED(state);
@@ -191,7 +191,7 @@ static void test_align_byte_sequence(void **state)
 static void test_hash_byte_sequence(void **state)
 {
 	struct rtr_bgpsec *bgpsec = setup_bgpsec();
-	struct spki_table *table = rtr_malloc(16);
+	struct rtr_spki_table *table = rtr_malloc(16);
 	enum rtr_bgpsec_rtvals result = RTR_BGPSEC_SUCCESS;
 
 	UNUSED(state);
@@ -215,7 +215,7 @@ static void test_hash_byte_sequence(void **state)
 static void test_validate_signature(void **state)
 {
 	struct rtr_bgpsec *bgpsec = setup_bgpsec();
-	struct spki_table *table = rtr_malloc(16);
+	struct rtr_spki_table *table = rtr_malloc(16);
 	enum rtr_bgpsec_rtvals result = RTR_BGPSEC_SUCCESS;
 
 	UNUSED(state);

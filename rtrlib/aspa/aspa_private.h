@@ -118,7 +118,7 @@ struct aspa_store_node {
  * @param[in] rtr_socket The socket the records are associated with.
  * @param notify_dst A boolean value determining whether to notify the destination table's clients.
  * @param notify_src A boolean value determining whether to notify the source table's clients.
- * @return @c RTR_ASPA_SUCCESS if the operation succeeds, @c ASPA_ERROR if it fails.
+ * @return @c RTR_ASPA_SUCCESS if the operation succeeds, @c RTR_ASPA_ERROR if it fails.
  */
 enum rtr_aspa_status aspa_table_src_replace(struct rtr_aspa_table *dst, struct rtr_aspa_table *src, struct rtr_socket *rtr_socket,
 					bool notify_dst, bool notify_src);
@@ -159,6 +159,12 @@ struct aspa_update {
 	struct aspa_update_operation *failed_operation;
 	struct aspa_store_node *node;
 	struct aspa_array *new_array;
+	/**
+	 * This array is used to keep track of all replaced ASPA records while creating the
+	 * new records array. Once the creation of the new ASPA records array was successful,
+	 * the provider ASN list has to freed for all replaced records to avoid memory leaks.
+	 */
+	struct aspa_array *replaced_records;
 };
 
 /**
@@ -181,7 +187,7 @@ struct aspa_update {
  * @return @c ASPA_RECORD_NOT_FOUND If a records is supposed to be removed but cannot be found.
  * @return @c ASPA_DUPLICATE_RECORD If a records is supposed to be added but its corresponding
  * customer ASN already exists.
- * @return @c ASPA_ERROR On other failures.
+ * @return @c RTR_ASPA_ERROR On other failures.
  */
 enum rtr_aspa_status aspa_table_update_swap_in_compute(struct rtr_aspa_table *aspa_table, struct rtr_socket *rtr_socket,
 						   struct aspa_update_operation *operations, size_t count,
