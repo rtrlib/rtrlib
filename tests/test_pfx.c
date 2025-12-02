@@ -107,7 +107,7 @@ static void remove_src_test(void)
 static void mass_test(void)
 {
 	struct rtr_pfx_table pfxt;
-	struct rtr_pfx_record pfx;
+	struct rtr_pfx_record pfx = { 0 };
 	enum rtr_pfxv_state res;
 	const uint32_t min_i = 0xFFFF0000;
 	const uint32_t max_i = 0xFFFFFFF0;

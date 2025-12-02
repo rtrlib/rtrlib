@@ -540,7 +540,7 @@ int pfx_table_remove_id(struct rtr_pfx_table *pfx_table, struct trie_node **root
 
 static void pfx_table_for_each_rec(struct trie_node *n, rtr_pfx_for_each_fp fp, void *data)
 {
-	struct rtr_pfx_record pfxr;
+	struct rtr_pfx_record pfxr = { 0 };
 	struct node_data *nd;
 
 	assert(n);
