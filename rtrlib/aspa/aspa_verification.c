@@ -46,6 +46,13 @@ enum aspa_hop_result aspa_check_hop(struct rtr_aspa_table *aspa_table, uint32_t 
 {
 	bool customer_found = false;
 
+	// ASPA validation must be performed on the compressed AS path, i.e. if the same AS number appears
+	// multiple times in consecutive order in the AS path, they are merged together to one occurrence.
+	// Returning ASPA_PROVIDER_PLUS in this case yields the same result as ignoring that hop all together.
+	if (customer_asn == provider_asn) {
+		return ASPA_PROVIDER_PLUS;
+	}
+
 	for (struct aspa_store_node *node = aspa_table->store; node != NULL; node = node->next) {
 		struct rtr_aspa_record *aspa_record = aspa_array_search(node->aspa_array, customer_asn);
 
