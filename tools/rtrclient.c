@@ -342,18 +342,17 @@ static int template_enter(void *closure, const char *name)
 {
 	struct exporter_state *state = closure;
 
+	if (tommy_array_size(state->roas) == 0)
+		return 0;
+
 	if (strncmp("roas", name, strlen(name)) == 0) {
 		state->roa_section = true;
 		state->current_roa = 0;
-
-		return 1;
-
-	} else if (state->current_roa && strcmp("last", name) == 0 &&
-		   state->current_roa == tommy_array_size(state->roas) - 1) {
 		return 1;
 	}
 
-	return 0;
+	return (state->current_roa && strcmp("last", name) == 0 &&
+		state->current_roa == tommy_array_size(state->roas) - 1);
 }
 
 static int template_leave(void *closure)
