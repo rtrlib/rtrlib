@@ -92,7 +92,13 @@ enum aspa_hop_result { ASPA_NO_ATTESTATION, ASPA_NOT_PROVIDER_PLUS, ASPA_PROVIDE
 
 /**
  * @brief Checks a hop in the given `AS_PATH`.
- * @return @c aspa_hop_result .
+ *
+ * If the given customer ASN and the provider ASN are equal @c ASPA_PROVIDER_PLUS is immediately returned
+ * without consulting the ASPA table. This is equivalent to ignoring that specific hop and is done because the
+ * <a href="https://www.ietf.org/archive/id/draft-ietf-sidrops-aspa-verification-24.html#name-principles">
+ * ASPA RFC; Section 5.1</a> mandates that ASPA validation must be performed on the compressed AS path.
+ *
+ * @return @c aspa_hop_result.
  */
 enum aspa_hop_result aspa_check_hop(struct rtr_aspa_table *aspa_table, uint32_t customer_asn, uint32_t provider_asn);
 
