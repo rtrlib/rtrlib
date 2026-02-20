@@ -51,7 +51,12 @@ void tommy_array_done(tommy_array* array)
 	tommy_free(array->bucket[0]);
 	for (i = TOMMY_ARRAY_BIT; i < array->bucket_bit; ++i) {
 		void** segment = array->bucket[i];
+// Ignore the `-Wfree-nonheap-object` warning for the following line
+// because it is a false-positive in GCC 15 (and maybe other versions).
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfree-nonheap-object"
 		tommy_free(&segment[((tommy_ptrdiff_t)1) << i]);
+#pragma GCC diagnostic pop
 	}
 }
 
