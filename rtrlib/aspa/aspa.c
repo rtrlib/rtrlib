@@ -278,9 +278,16 @@ static int compare_update_operations(const void *a, const void *b)
 		return 0;
 }
 
-static int compare_asns(const void *a, const void *b)
+static int compare_asns(const void *aptr, const void *bptr)
 {
-	return *(uint32_t *)a - *(uint32_t *)b;
+	uint32_t a = *((uint32_t *)aptr);
+	uint32_t b = *((uint32_t *)bptr);
+
+	if (a < b)
+		return -1;
+	if (a > b)
+		return 1;
+	return 0;
 }
 
 // MARK: - Swap-In Update Mechanism
