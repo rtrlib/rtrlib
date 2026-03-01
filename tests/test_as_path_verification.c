@@ -117,8 +117,6 @@ static void test_hopping(struct rtr_aspa_table *aspa_table)
 	assert(aspa_check_hop(aspa_table, 200, 300) == ASPA_PROVIDER_PLUS);
 	assert(aspa_check_hop(aspa_table, 500, 999) == ASPA_NO_ATTESTATION);
 
-	assert(aspa_check_hop(aspa_table, 999, 999) == ASPA_NO_ATTESTATION);
-
 	// multiple dissimilar aspas
 	assert(aspa_check_hop(aspa_table, 100, 201) == ASPA_PROVIDER_PLUS);
 	assert(aspa_check_hop(aspa_table, 100, 202) == ASPA_PROVIDER_PLUS);
@@ -172,7 +170,7 @@ static void test_downstream(struct rtr_aspa_table *aspa_table)
 
 	// two highest-level hops are nP
 	VERIFY_AS_PATH(aspa_table, RTR_ASPA_DOWNSTREAM, RTR_ASPA_AS_PATH_INVALID,
-		       ASNS(301, 401, 501, 502, 502, 402, 302));
+		       ASNS(301, 401, 501, 502, 999, 402, 302));
 	VERIFY_AS_PATH(aspa_table, RTR_ASPA_DOWNSTREAM, RTR_ASPA_AS_PATH_UNKNOWN,
 		       ASNS(302, 402, 502, 999, 500, 400, 300));
 
@@ -211,9 +209,9 @@ static void test_downstream(struct rtr_aspa_table *aspa_table)
 // clang-format off
 
 /**
- * Example 1 (downstream) (valid)
+ * Example 1 (downstream with AS path prepending) (valid)
  *
- * as_path: 20, 30, 40, 70, 80
+ * as_path: 20, 20, 20, 30, 30, 30, 40, 40, 40, 70, 70, 70, 80, 80, 80
  *
  *          30   40
  *  10  20           70
@@ -234,7 +232,7 @@ static void test_verify_example_1(void)
 	)
 
 	VERIFY_AS_PATH(aspa_table, RTR_ASPA_DOWNSTREAM, RTR_ASPA_AS_PATH_VALID,
-		ASNS(20, 30, 40, 70, 80));
+		ASNS(20, 20, 20, 30, 30, 30, 40, 40, 40, 70, 70, 70, 80, 80, 80));
 
 	rtr_aspa_table_free(aspa_table, false);
 	rtr_free(aspa_table);
@@ -536,9 +534,9 @@ static void test_verify_example_4_fixed(void)
 }
 
 /**
- * Example 5 (upstream) (valid)
+ * Example 5 (upstream, with AS path prepending) (valid)
  *
- * as_path: 20, 30, 40
+ * as_path: 20, 20, 20, 30, 30, 30, 40, 40, 40
  *
  * 10  20
  *        30
@@ -557,7 +555,7 @@ static void test_verify_example_5(void)
 	)
 
 	VERIFY_AS_PATH(aspa_table, RTR_ASPA_UPSTREAM, RTR_ASPA_AS_PATH_VALID,
-		ASNS(20, 30, 40));
+		ASNS(20, 20, 20, 30, 30, 30, 40, 40, 40));
 
 	rtr_aspa_table_free(aspa_table, false);
 	rtr_free(aspa_table);
