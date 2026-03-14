@@ -624,6 +624,10 @@ static void parse_global_opts(int argc, char **argv)
 			print_status_updates = true;
 			break;
 
+		case 'h':
+			print_usage(argv);
+			exit(EXIT_SUCCESS);
+
 		default:
 			print_usage(argv);
 			exit(EXIT_FAILURE);
