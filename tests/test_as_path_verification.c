@@ -1118,29 +1118,6 @@ static void test_sriram_example_19(void)
 
 // clang-format on
 
-static void test_single_collapse(uint32_t input[], size_t input_len, uint32_t output[], size_t output_len)
-{
-	size_t retlen = rtr_aspa_collapse_as_path(input, input_len);
-
-	assert(retlen == output_len);
-
-	for (size_t i = 0; i < output_len; i++)
-		assert(input[i] == output[i]);
-}
-
-static void test_collapse(void)
-{
-	test_single_collapse(NULL, 0, NULL, 0);
-	test_single_collapse((uint32_t[]){1}, 1, (uint32_t[]){1}, 1);
-	test_single_collapse((uint32_t[]){1, 1}, 2, (uint32_t[]){1}, 1);
-	test_single_collapse((uint32_t[]){1, 2}, 2, (uint32_t[]){1, 2}, 2);
-	test_single_collapse((uint32_t[]){1, 1, 1}, 3, (uint32_t[]){1}, 1);
-	test_single_collapse((uint32_t[]){1, 1, 2}, 3, (uint32_t[]){1, 2}, 2);
-	test_single_collapse((uint32_t[]){1, 2, 2}, 3, (uint32_t[]){1, 2}, 2);
-	test_single_collapse((uint32_t[]){1, 2, 2, 2}, 4, (uint32_t[]){1, 2}, 2);
-	test_single_collapse((uint32_t[]){1, 2, 2, 3}, 4, (uint32_t[]){1, 2, 3}, 3);
-}
-
 int main(void)
 {
 	struct rtr_aspa_table *aspa_table = test_create_aspa_table();
@@ -1181,6 +1158,4 @@ int main(void)
 	test_verify_example_17();
 	test_verify_example_18();
 	test_sriram_example_19();
-
-	test_collapse();
 }

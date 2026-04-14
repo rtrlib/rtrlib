@@ -296,33 +296,3 @@ RTRLIB_EXPORT enum rtr_aspa_verification_result rtr_aspa_verify_as_path(struct r
 
 	return RTR_ASPA_AS_PATH_UNKNOWN;
 }
-
-RTRLIB_EXPORT size_t rtr_aspa_collapse_as_path(uint32_t as_path[], size_t len)
-{
-	if (len == 0)
-		return 0;
-
-	size_t i = 1;
-
-	while (i < len && as_path[i - 1] != as_path[i])
-		i++;
-
-	if (i == len)
-		return len;
-
-	size_t j = i;
-
-	i++;
-
-	while (true) { // equivalent to while (i < len)
-		while (i < len && as_path[i - 1] == as_path[i])
-			i++;
-
-		if (i == len)
-			break;
-
-		as_path[j++] = as_path[i++];
-	}
-
-	return j;
-}

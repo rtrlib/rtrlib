@@ -170,12 +170,5 @@ enum rtr_aspa_verification_result {
 enum rtr_aspa_verification_result rtr_aspa_verify_as_path(struct rtr_aspa_table *aspa_table, uint32_t as_path[],
 							  size_t len, enum rtr_aspa_direction direction);
 
-/**
- * @brief Collapses an `AS_PATH` in-place, replacing in-series repetitions with single occurrences
- *
- * @return Length of the given array.
- */
-size_t rtr_aspa_collapse_as_path(uint32_t as_path[], size_t len);
-
 #endif /* RTR_ASPA_H */
 /** @} */
