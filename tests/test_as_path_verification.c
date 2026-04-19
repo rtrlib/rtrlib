@@ -565,7 +565,7 @@ static void test_verify_example_5(void)
 }
 
 /**
- * Example 6 (downstream) (unknown)
+ * Example 6 (downstream) (invalid)
  *
  * as_path: 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120
  *
@@ -584,8 +584,6 @@ static void test_verify_example_5(void)
  *   40: 50
  *   30: 40
  *   20: 30
- *
- * result is unknown because no nP+ will be found between the two ramps
  */
 static void test_verify_example_6(void)
 {
@@ -595,6 +593,138 @@ static void test_verify_example_6(void)
 		RECORD(100, ASNS(90)),
 		RECORD(80, ASNS(90)),
 		RECORD(60, ASNS(50)),
+		RECORD(40, ASNS(50)),
+		RECORD(30, ASNS(40)),
+		RECORD(20, ASNS(30)),
+	)
+
+	VERIFY_AS_PATH(aspa_table, RTR_ASPA_DOWNSTREAM, RTR_ASPA_AS_PATH_INVALID,
+		ASNS(20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120));
+
+	rtr_aspa_table_free(aspa_table, false);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
+}
+
+/**
+ * Example 6b (downstream) (invalid)
+ *
+ * as_path: 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120
+ *
+ *         50         90
+ *       40  60 70 80   100
+ *     30                  110
+ *   20                       120
+ * 10
+ *
+ * customer-providers:
+ *   120: 110
+ *   110: 100
+ *   100: 90
+ *   90: 80
+ *   80: 60
+ *   60: 50
+ *   50: 60
+ *   40: 50
+ *   30: 40
+ *   20: 30
+ */
+static void test_verify_example_6b(void)
+{
+	BUILD_ASPA_TABLE(aspa_table, rtr_socket,
+		RECORD(120, ASNS(110)),
+		RECORD(110, ASNS(100)),
+		RECORD(100, ASNS(90)),
+		RECORD(90, ASNS(80)),
+		RECORD(80, ASNS(60)),
+		RECORD(60, ASNS(50)),
+		RECORD(50, ASNS(60)),
+		RECORD(40, ASNS(50)),
+		RECORD(30, ASNS(40)),
+		RECORD(20, ASNS(30)),
+	)
+
+	VERIFY_AS_PATH(aspa_table, RTR_ASPA_DOWNSTREAM, RTR_ASPA_AS_PATH_INVALID,
+		ASNS(20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120));
+
+	rtr_aspa_table_free(aspa_table, false);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
+}
+
+/**
+ * Example 6c (downstream) (unknown)
+ *
+ * as_path: 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120
+ *
+ *         50         90
+ *       40  60 70 80   100
+ *     30                  110
+ *   20                       120
+ * 10
+ *
+ * customer-providers:
+ *   120: 110
+ *   110: 100
+ *   100: 90
+ *   90: 80
+ *   50: 60
+ *   40: 50
+ *   30: 40
+ *   20: 30
+ */
+static void test_verify_example_6c(void)
+{
+	BUILD_ASPA_TABLE(aspa_table, rtr_socket,
+		RECORD(120, ASNS(110)),
+		RECORD(110, ASNS(100)),
+		RECORD(100, ASNS(90)),
+		RECORD(90, ASNS(80)),
+		RECORD(50, ASNS(60)),
+		RECORD(40, ASNS(50)),
+		RECORD(30, ASNS(40)),
+		RECORD(20, ASNS(30)),
+	)
+
+	VERIFY_AS_PATH(aspa_table, RTR_ASPA_DOWNSTREAM, RTR_ASPA_AS_PATH_UNKNOWN,
+		ASNS(20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120));
+
+	rtr_aspa_table_free(aspa_table, false);
+	rtr_free(aspa_table);
+	rtr_free(rtr_socket);
+}
+
+/**
+ * Example 6d (downstream) (unknown)
+ *
+ * as_path: 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120
+ *
+ *         50         90
+ *       40  60 70 80   100
+ *     30                  110
+ *   20                       120
+ * 10
+ *
+ * customer-providers:
+ *   120: 110
+ *   110: 100
+ *   100: 90
+ *   90: 80
+ *   60: 80
+ *   50: 60
+ *   40: 50
+ *   30: 40
+ *   20: 30
+ */
+static void test_verify_example_6d(void)
+{
+	BUILD_ASPA_TABLE(aspa_table, rtr_socket,
+		RECORD(120, ASNS(110)),
+		RECORD(110, ASNS(100)),
+		RECORD(100, ASNS(90)),
+		RECORD(90, ASNS(80)),
+		RECORD(60, ASNS(80)),
+		RECORD(50, ASNS(60)),
 		RECORD(40, ASNS(50)),
 		RECORD(30, ASNS(40)),
 		RECORD(20, ASNS(30)),
@@ -1038,6 +1168,9 @@ int main(void)
 	test_verify_example_4_fixed();
 	test_verify_example_5();
 	test_verify_example_6();
+	test_verify_example_6b();
+	test_verify_example_6c();
+	test_verify_example_6d();
 	test_verify_example_7();
 	test_verify_example_8();
 	test_verify_example_9();

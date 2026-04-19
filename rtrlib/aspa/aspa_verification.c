@@ -212,18 +212,15 @@ static enum rtr_aspa_verification_result aspa_verify_as_path_downstream(struct r
 	 */
 
 	size_t rr = r;
-
 	if (last_hop_right == ASPA_NOT_PROVIDER_PLUS) {
 		found_nP_from_right = true;
 	} else {
 		while (rr > l + 1) {
-			size_t c = rr;
-
-			rr--;
-			if (aspa_check_hop(aspa_table, as_path[c], as_path[rr]) == ASPA_NOT_PROVIDER_PLUS) {
+			if (aspa_check_hop(aspa_table, as_path[rr], as_path[rr - 1]) == ASPA_NOT_PROVIDER_PLUS) {
 				found_nP_from_right = true;
 				break;
 			}
+			rr--;
 		}
 	}
 
@@ -247,19 +244,24 @@ static enum rtr_aspa_verification_result aspa_verify_as_path_downstream(struct r
 		 * 0
 		 *
 		 */
-		size_t ll = l + 1;
-
 		if (last_hop_left == ASPA_NOT_PROVIDER_PLUS) {
 			found_nP_from_left = true;
 		} else {
-			while (ll + 1 < rr) {
-				size_t c = ll;
+			// The hop from l to l + 1 has already been checked above,
+			// and it resulted in `ASPA_NO_ATTESTATION`. If it resulted
+			// in `ASPA_NOT_PROVIDER_PLUS`, this else case would not execute.
+			size_t ll = l + 1;
 
-				ll++;
-				if (aspa_check_hop(aspa_table, as_path[c], as_path[ll]) == ASPA_NOT_PROVIDER_PLUS) {
+			// Only check the next hop (ll -> ll + 1) if there is at least
+			// one AS between ll (the down-ramp) and rr (the up-ramp), i.e.,
+			// the apex of the up- and down-ramp has not been reached.
+			while (ll + 1 < rr) {
+				if (aspa_check_hop(aspa_table, as_path[ll], as_path[ll + 1]) ==
+				    ASPA_NOT_PROVIDER_PLUS) {
 					found_nP_from_left = true;
 					break;
 				}
+				ll++;
 			}
 		}
 	}
