@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 project(rtrlib C)
 
 set(PROJECT_DESCRIPTION "Lightweight C library that implements the RPKI/RTR protocol and prefix origin validation.")
@@ -49,10 +49,10 @@ set(RTRLIB_SRC rtrlib/rtr_mgr.c rtrlib/lib/utils.c rtrlib/lib/alloc_utils.c rtrl
 	rtrlib/aspa/aspa.c rtrlib/aspa/aspa_verification.c ${tommyds})
 set(RTRLIB_LINK ${RT_LIB} ${CMAKE_THREAD_LIBS_INIT})
 
-include(FindPkgConfig)
+find_package(PkgConfig REQUIRED)
 
 if (NOT DEFINED RTRLIB_TRANSPORT_SSH OR RTRLIB_TRANSPORT_SSH)
-    pkg_check_modules(LIBSSH libssh>=0.5.0)
+    pkg_check_modules(LIBSSH IMPORTED_TARGET GLOBAL libssh>=0.5.0)
 
     if(LIBSSH_FOUND)
         # extract version number components
@@ -68,7 +68,7 @@ if (NOT DEFINED RTRLIB_TRANSPORT_SSH OR RTRLIB_TRANSPORT_SSH)
         set(RTRLIB_HAVE_LIBSSH 1)
         include_directories(${LIBSSH_INCLUDE_DIRS})
         set(RTRLIB_SRC ${RTRLIB_SRC} rtrlib/transport/ssh/ssh_transport.c)
-        set(RTRLIB_LINK ${RTRLIB_LINK} ${LIBSSH_LIBRARIES})
+        set(RTRLIB_LINK ${RTRLIB_LINK} PkgConfig::LIBSSH)
         message(STATUS "libssh found, building librtr with SSH ${LibSSH_VERSION} support")
     elseif(NOT LIBSSH_FOUND AND RTRLIB_TRANSPORT_SSH)
         message(FATAL_ERROR "libssh >= 0.5.0 not found but ssh support was requested. Omit RTRLIB_TRANSPORT_SSH to build without ssh support.")
