@@ -80,7 +80,7 @@ int main(void)
 	}
 
 	if (rtr_mgr_add_aspa_support(conf, NULL) == RTR_ERROR) {
-		fprintf(stderr, "Failed initializing ASPA support\n");
+		fprintf(stderr, "Failed initializing ASPA support.\n");
 		return EXIT_FAILURE;
 	}
 
