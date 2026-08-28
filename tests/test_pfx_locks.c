@@ -27,8 +27,9 @@ uint32_t max_i = 0xFFFFFFF0;
 /**
  * @brief Add records to prefix table
  */
-static void *rec_add(struct rtr_pfx_table *pfxt)
+static void *rec_add(void* args)
 {
+	struct rtr_pfx_table *pfxt = args;
 	const int tid = getpid();
 	struct rtr_pfx_record rec = { 0 };
 
@@ -64,10 +65,11 @@ static void *rec_add(struct rtr_pfx_table *pfxt)
 /**
  * @brief Validate records in prefix table
  */
-static void *rec_val(struct rtr_pfx_table *pfxt)
+static void *rec_val(void *args)
 {
+	struct rtr_pfx_table *pfxt = args;
 	const int tid = getpid();
-	struct rtr_pfx_record rec = {0 };
+	struct rtr_pfx_record rec = {0};
 	enum rtr_pfxv_state res;
 
 	rec.min_len = 32;
@@ -99,8 +101,9 @@ static void *rec_val(struct rtr_pfx_table *pfxt)
 /**
  * @brief Delete records from prefix table
  */
-static void *rec_del(struct rtr_pfx_table *pfxt)
+static void *rec_del(void *args)
 {
+	struct rtr_pfx_table *pfxt = args;
 	const int tid = getpid();
 	struct rtr_pfx_record rec = { 0 };
 
@@ -154,11 +157,11 @@ int main(void)
 		int r = rand() / (RAND_MAX / 3);
 
 		if (r == 0)
-			pthread_create(&threads[i], NULL, (void *(*)(void *))rec_add, &pfxt);
+			pthread_create(&threads[i], NULL, rec_add, &pfxt);
 		else if (r == 1)
-			pthread_create(&threads[i], NULL, (void *(*)(void *))rec_del, &pfxt);
+			pthread_create(&threads[i], NULL, rec_del, &pfxt);
 		else if (r == 2)
-			pthread_create(&threads[i], NULL, (void *(*)(void *))rec_val, &pfxt);
+			pthread_create(&threads[i], NULL, rec_val, &pfxt);
 		printf("Started Thread %d\n", i);
 		usleep(200);
 	}

@@ -74,8 +74,9 @@ static struct rtr_spki_record *create_record(int ASN, int ski_offset, int spki_o
  * Add 'args->count' records to the spki table 'args->table', start with
  * ASN 'args->start_asn'.
  */
-static void *add_records(struct add_records_args *args)
+static void *add_records(void *raw_args)
 {
+	struct add_records_args *args = raw_args;
 	printf("Add %i records: ASN [%i..%i]\n", args->count, args->start_asn, args->count + args->start_asn - 1);
 	for (int i = args->start_asn; i < args->count + args->start_asn; i++) {
 		struct rtr_spki_record *record = create_record(i, i, i, NULL);
@@ -92,8 +93,9 @@ static void *add_records(struct add_records_args *args)
  * @brief remove records from spki table
  * Remove 'args->count' records from the spki table 'args->table'.
  */
-static void *remove_records(struct remove_records_args *args)
+static void *remove_records(void *raw_args)
 {
+	struct remove_records_args *args = raw_args;
 	printf("Remove %i records: ASN [%i..%i]\n", args->count, args->start_asn, args->count + args->start_asn - 1);
 	for (int i = args->start_asn; i < args->count + args->start_asn; i++) {
 		struct rtr_spki_record *record = create_record(i, i, i, NULL);
@@ -124,7 +126,7 @@ static void lock_test1(void)
 		args[i].table = &spkit;
 		args[i].start_asn = i * records_per_thread;
 		args[i].count = records_per_thread;
-		pthread_create(&threads[i], NULL, (void *(*)(void *))add_records, &args[i]);
+		pthread_create(&threads[i], NULL, add_records, &args[i]);
 	}
 
 	/* Wait for parallel add operations to finish */
@@ -153,7 +155,7 @@ static void lock_test1(void)
 		remove_args[i].table = &spkit;
 		remove_args[i].start_asn = i * records_per_thread;
 		remove_args[i].count = records_per_thread;
-		pthread_create(&threads[i], NULL, (void *(*)(void *))remove_records, &remove_args[i]);
+		pthread_create(&threads[i], NULL, remove_records, &remove_args[i]);
 	}
 
 	/* Wait for parallel delete operation to finish */
