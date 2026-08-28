@@ -76,6 +76,7 @@
 #define RTR_ASPA_PRIVATE_H
 
 #include "aspa.h"
+#include "rtrlib/lib/alloc_utils_private.h"
 #include "rtrlib/lib/log_private.h"
 #include "rtrlib/rtr/rtr.h"
 
