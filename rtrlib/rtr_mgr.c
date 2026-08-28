@@ -704,7 +704,7 @@ RTRLIB_EXPORT enum rtr_rtvals rtr_mgr_remove_group(struct rtr_mgr_config *config
 	// If group isn't closed, make it so!
 	if (remove_group->status != RTR_MGR_CLOSED) {
 		for (unsigned int j = 0; j < remove_group->sockets_len; j++) {
-			rtr_stop(remove_group->sockets[j]);
+ 			rtr_stop(remove_group->sockets[j]);
 			tr_free(remove_group->sockets[j]->tr_socket);
 		}
 		set_status(config, remove_group, RTR_MGR_CLOSED, NULL);

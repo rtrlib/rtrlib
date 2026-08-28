@@ -56,12 +56,12 @@ static void test_add_element(void)
 	aspa_array_free(array, true);
 }
 
-static void test_insert(void)
+static void test_insert(const bool with_reallocation)
 {
 	struct aspa_array *array;
 
 	assert(aspa_array_create(&array) == RTR_ASPA_SUCCESS);
-	array->capacity = 2;
+	array->capacity = with_reallocation ? 2 : 4;
 	struct rtr_aspa_record *old_pointer = array->data;
 
 	struct rtr_aspa_record record_4 = RECORD(4, SEEDED_ASNS(600));
@@ -81,7 +81,12 @@ static void test_insert(void)
 
 	assert(aspa_array_insert(array, 3, &record_3, true) == RTR_ASPA_SUCCESS);
 
-	assert(old_pointer == array->data);
+	if (!with_reallocation) {
+		// Make sure the data pointer is still the same if
+		// no reallocation should have been performed.
+		assert(old_pointer == array->data);
+	}
+
 	assert(array->capacity >= 4);
 	assert(array->size == 4);
 
@@ -93,12 +98,12 @@ static void test_insert(void)
 	aspa_array_free(array, true);
 }
 
-static void test_append(void)
+static void test_append(const bool with_reallocation)
 {
 	struct aspa_array *array;
 
 	assert(aspa_array_create(&array) == RTR_ASPA_SUCCESS);
-	array->capacity = 2;
+	array->capacity = with_reallocation ? 2 : 4;
 	struct rtr_aspa_record *old_pointer = array->data;
 
 	struct rtr_aspa_record record_4 = RECORD(4, SEEDED_ASNS(600));
@@ -117,7 +122,11 @@ static void test_append(void)
 
 	assert(aspa_array_append(array, &record_3, true) == RTR_ASPA_SUCCESS);
 
-	assert(old_pointer == array->data);
+	if (!with_reallocation) {
+		// Make sure the data pointer is still the same if
+		// no reallocation should have been performed.
+		assert(old_pointer == array->data);
+	}
 	assert(array->capacity >= 4);
 	assert(array->size == 4);
 
@@ -203,8 +212,10 @@ int main(void)
 {
 	test_create_array();
 	test_add_element();
-	test_insert();
-	test_append();
+	test_insert(true); // With array reallocation
+	test_insert(false); // Without array reallocation
+	test_append(true); // With array reallocation
+	test_append(false); // Without array reallocation
 	test_remove_element();
 	test_find_element();
 }

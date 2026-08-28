@@ -47,7 +47,7 @@ static pthread_key_t processing_thread_destructor_key;
 static pthread_once_t processing_thread_destructor_key_once = PTHREAD_ONCE_INIT;
 
 static void rtr_purge_outdated_records(struct rtr_socket *rtr_socket);
-static void *rtr_fsm_start(struct rtr_fsm_start_args *args);
+static void *rtr_fsm_start(void *raw_args);
 inline static void rtr_free_fsm_start_args(struct rtr_fsm_start_args *args);
 static void rtr_fsm_start_cleanup(void *args);
 
@@ -128,7 +128,7 @@ int rtr_start(struct rtr_socket *rtr_socket, const rtr_mgr_on_processing_thread_
 	args->processing_thread_event_callback = processing_thread_event_callback;
 	args->processing_thread_event_callback_data = processing_thread_event_callback_data;
 
-	int rtval = pthread_create(&(rtr_socket->thread_id), NULL, (void *(*)(void *)) & rtr_fsm_start, args);
+	int rtval = pthread_create(&(rtr_socket->thread_id), NULL, rtr_fsm_start, args);
 
 	if (rtval == 0) {
 		return RTR_SUCCESS;
@@ -179,8 +179,9 @@ static void rtr_fsm_start_cleanup(void *args)
 }
 
 /* WARNING: This Function has cancelable sections*/
-void *rtr_fsm_start(struct rtr_fsm_start_args *args)
+void *rtr_fsm_start(void *raw_args)
 {
+	struct rtr_fsm_start_args *args = raw_args;
 	struct rtr_socket *rtr_socket = args->rtr_socket;
 
 	if (pthread_setspecific(processing_thread_destructor_key, args) != 0) {

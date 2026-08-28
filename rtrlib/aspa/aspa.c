@@ -151,6 +151,7 @@ RTRLIB_EXPORT enum rtr_aspa_status rtr_aspa_table_src_remove(struct rtr_aspa_tab
 	if (!node || !*node) {
 		// Already gone
 		pthread_rwlock_unlock(&(aspa_table->lock));
+		pthread_rwlock_unlock(&aspa_table->update_lock);
 		return RTR_ASPA_SUCCESS;
 	}
 

@@ -108,7 +108,7 @@ struct sent_pdu {
 #define ASPA_ANNOUNCE 1
 #define ASPA_WITHDRAW 0
 
-static int custom_send(const struct rtr_tr_socket *socket __attribute__((unused)), const void *pdu, const size_t len,
+static int custom_send(const void *socket __attribute__((unused)), const void *pdu, const size_t len,
 		       const time_t timeout __attribute__((unused)))
 {
 	const struct pdu_error *err = pdu;
@@ -129,7 +129,7 @@ static int custom_send(const struct rtr_tr_socket *socket __attribute__((unused)
 	return len;
 }
 
-static int custom_recv(const struct rtr_tr_socket *socket __attribute__((unused)), const void *buf, const size_t len,
+static int custom_recv(const void *socket __attribute__((unused)), void *buf, const size_t len,
 		       const time_t timeout __attribute__((unused)))
 {
 	size_t rlen = len;
@@ -1247,8 +1247,8 @@ static struct rtr_socket *create_socket(bool is_resetting)
 {
 	struct rtr_tr_socket *tr_socket = rtr_calloc(1, sizeof(struct rtr_tr_socket));
 
-	tr_socket->recv_fp = (tr_recv_fp)&custom_recv;
-	tr_socket->send_fp = (tr_send_fp)&custom_send;
+	tr_socket->recv_fp = custom_recv;
+	tr_socket->send_fp = custom_send;
 
 	struct rtr_socket *socket = rtr_calloc(1, sizeof(struct rtr_socket));
 
