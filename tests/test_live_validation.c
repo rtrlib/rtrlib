@@ -8,6 +8,7 @@
  */
 
 #include "rtrlib/rtrlib.h"
+#include "rtrlib/lib/alloc_utils_private.h"
 
 #include <stdio.h>
 #include <stdlib.h>

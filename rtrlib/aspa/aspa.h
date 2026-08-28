@@ -21,7 +21,6 @@
 #define RTR_ASPA_H
 
 #include "rtrlib/aspa/aspa_array/aspa_array.h"
-#include "rtrlib/lib/alloc_utils_private.h"
 #include "rtrlib/rtr/rtr.h"
 
 #include <stdint.h>

@@ -7,6 +7,7 @@
  * Website: http://rtrlib.realmv6.org/
  */
 
+#include "rtrlib/lib/alloc_utils_private.h"
 #include "rtrlib/lib/ip_private.h"
 #include "rtrlib/lib/utils_private.h"
 #include "rtrlib/pfx/pfx.h"
