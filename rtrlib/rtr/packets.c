@@ -1246,7 +1246,7 @@ static inline int rtr_handle_eod_pdu(struct rtr_socket *rtr_socket, struct pdu_e
 
 		snprintf(txt, sizeof(txt), "Expected session_id: %u, received session_id. %u in EOD PDU",
 			 rtr_socket->session_id, eod_pdu->session_id);
-		rtr_send_error_pdu_from_host(rtr_socket, pdu_data, RTR_MAX_PDU_LEN, CORRUPT_DATA, txt, strlen(txt) + 1);
+		rtr_send_error_pdu_from_host(rtr_socket, pdu_data, eod_pdu->len, CORRUPT_DATA, txt, strlen(txt) + 1);
 		rtr_change_socket_state(rtr_socket, RTR_ERROR_FATAL);
 		return RTR_ERROR;
 	}
