@@ -6,6 +6,9 @@ wrap_functions(test_packets_static rtr_get_monotonic_time tr_send_all)
 add_rtr_unit_test(test_packets test_packets.c rtrlib_static cmocka)
 wrap_functions(test_packets rtr_change_socket_state tr_send_all)
 
+add_rtr_unit_test(test_packets_prefix test_packets_prefix.c rtrlib_static cmocka)
+wrap_functions(test_packets_prefix tr_recv_all tr_send_all)
+
 if(RTRLIB_BGPSEC_ENABLED)
     add_rtr_unit_test(test_bgpsec_utils test_bgpsec_utils.c rtrlib_static cmocka)
 

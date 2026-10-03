@@ -296,6 +296,11 @@ static void rtr_pdu_header_to_host_byte_order(void *pdu)
 	rtr_pdu_convert_header_byte_order(pdu, TO_HOST_HOST_BYTE_ORDER);
 }
 
+static bool rtr_prefix_pdu_has_valid_lengths(uint8_t prefix_len, uint8_t max_prefix_len, uint8_t family_len)
+{
+	return prefix_len <= family_len && max_prefix_len <= family_len && prefix_len <= max_prefix_len;
+}
+
 /*
  * Check if the PDU is big enough for the PDU type it
  * pretend to be.
@@ -320,12 +325,18 @@ static bool rtr_pdu_check_size(const struct pdu_header *pdu)
 			retval = true;
 		break;
 	case IPV4_PREFIX:
-		if (sizeof(struct pdu_ipv4) == pdu->len)
-			retval = true;
+		if (sizeof(struct pdu_ipv4) == pdu->len) {
+			const struct pdu_ipv4 *ipv4_pdu = (const struct pdu_ipv4 *)pdu;
+
+			retval = rtr_prefix_pdu_has_valid_lengths(ipv4_pdu->prefix_len, ipv4_pdu->max_prefix_len, 32);
+		}
 		break;
 	case IPV6_PREFIX:
-		if (sizeof(struct pdu_ipv6) == pdu->len)
-			retval = true;
+		if (sizeof(struct pdu_ipv6) == pdu->len) {
+			const struct pdu_ipv6 *ipv6_pdu = (const struct pdu_ipv6 *)pdu;
+
+			retval = rtr_prefix_pdu_has_valid_lengths(ipv6_pdu->prefix_len, ipv6_pdu->max_prefix_len, 128);
+		}
 		break;
 	case EOD:
 		if ((pdu->ver == RTR_PROTOCOL_VERSION_0 && (sizeof(struct pdu_end_of_data_v0) == pdu->len)) ||
